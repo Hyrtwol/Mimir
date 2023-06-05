@@ -1,0 +1,26 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.associations": {
+        "*.recipe": "xml",
+        "*.targets": "xml",
+        "*.meta": "yaml",
+        "*.prefab": "yaml",
+        "*.asset": "yaml",
+        "*.unity": "yaml",
+        "*.inc": "pascal"
+    },
+    "editor.rulers": [120],
+    "omnisharp.autoStart": false,
+    "cSpell.words": [
+        "exitcode",
+        "writeln"
+    ],
+    "markdownlint.config": {
+        "no-hard-tabs": false,
+        "line-length": false
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+    },
+    "editor.wordWrapColumn": 120
+}

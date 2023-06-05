@@ -1,0 +1,37 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "odin build",
+            "type": "shell",
+            "command": "odin",
+            "args": [
+                "build",
+                "${relativeFile}",
+                "-file"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "odin run",
+            "type": "shell",
+            "command": "odin",
+            "args": [
+                "run",
+                "${relativeFile}",
+                "-file"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
