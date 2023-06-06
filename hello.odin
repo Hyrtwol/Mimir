@@ -9,4 +9,14 @@ main :: proc() {
     title2, err2 := win32.wstring_to_utf8(wtitle, 256, context.allocator)
     fmt.printf("title1 \"%s\"\n", title1)
     fmt.printf("title2 \"%s\" %v\n", title2, err2)
+    assert(title1 == title2)
+
+    // app title
+    wtitle : win32.wstring = win32.utf8_to_wstring(TITLE)
+    fmt.printf("wtitle %d\n", wtitle)
+
+    // win32.MessageBoxW(nil, win32.utf8_to_wstring("Title should be " + TITLE), wtitle, win32.MB_OK)
+    // win32.VK_ESCAPE
+
+    // return 0 if string(substr) == string(s) else -1
 }

@@ -1,114 +1,89 @@
 package main
 
-import "core:fmt"
-import "core:runtime"
-import "core:strings"
-import win32 "core:sys/windows"
+import fmt          "core:fmt"
+import intrinsics   "core:intrinsics"
+import math         "core:math"
+import linalg       "core:math/linalg"
+import hlm          "core:math/linalg/hlsl"
+import noise        "core:math/noise"
+import rand         "core:math/rand"
+import mem          "core:mem"
+import runtime      "core:runtime"
+import simd         "core:simd"
+import strings      "core:strings"
+import win32        "core:sys/windows"
+import win32app     "win32app"
 
-// to learn and investigate how to interpo a dll or lib (cool that odin can import libs directly)
-foreign import user32 "system:User32.lib"
-//@(default_calling_convention="stdcall") // not sure if stdcall here is scoped to foreign only? moved it inline for now.
-foreign user32 {
-
-	DrawTextA :: proc "stdcall" (hDC: win32.HDC, lpchText: win32.LPCSTR, cchText: win32.c_int, lprc: win32.LPRECT, format: u32) -> win32.c_int ---
-	DrawTextW :: proc "stdcall" (hDC: win32.HDC, lpchText: win32.LPCWSTR, cchText: win32.c_int, lprc: win32.LPRECT, format: u32) -> win32.c_int ---
-
-    // had touble with lpClassName where it only show the first char so tried to use CreateWindowExA (without any luck)
-    /*
-	CreateWindowExA :: proc "stdcall" (
-		dwExStyle: win32.DWORD,
-		lpClassName: win32.LPVOID,
-		//lpClassName: win32.LPVOID,
-		lpWindowName: win32.LPCSTR,
-		dwStyle: win32.DWORD,
-		X: win32.c_int,
-		Y: win32.c_int,
-		nWidth: win32.c_int,
-		nHeight: win32.c_int,
-		hWndParent: win32.HWND,
-		hMenu: win32.HMENU,
-		hInstance: win32.HINSTANCE,
-		lpParam: win32.LPVOID,
-	) -> win32.HWND ---
-	CreateWindowExW :: proc "stdcall" (
-		dwExStyle: win32.DWORD,
-		lpClassName: win32.LPVOID, // try with void
-		lpWindowName: win32.LPCWSTR,
-		dwStyle: win32.DWORD,
-		X: win32.c_int,
-		Y: win32.c_int,
-		nWidth: win32.c_int,
-		nHeight: win32.c_int,
-		hWndParent: win32.HWND,
-		hMenu: win32.HMENU,
-		hInstance: win32.HINSTANCE,
-		lpParam: win32.LPVOID,
-	) -> win32.HWND ---
-    */
-}
+L :: intrinsics.constant_utf16_cstring
 
 TITLE 	:: "Mimir"
-WIDTH  	:: 640
-HEIGHT 	:: 480
-CENTER  :: true;
+WIDTH  	:: 640 / 2
+HEIGHT 	:: 480 / 2
+CENTER  :: true
+
+hbrGray : win32.HBRUSH
 
 wm_create :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.print("WM_CREATE\n")
-    //_hbrGray = win32.HBRUSH(win32.GetStockObject(win32.GRAY_BRUSH))
+
+    hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
 
     clientRect: win32.RECT
     win32.GetClientRect(hWnd, &clientRect)
     fmt.printf("clientRect %d, %d, %d, %d\n", clientRect.left, clientRect.top, clientRect.right, clientRect.bottom)
 
-    hDC := win32.GetDC(hWnd);
+    hDC := win32.GetDC(hWnd)
+    //defer win32.ReleaseDC(hWnd, hDC)
 
-    win32.ReleaseDC(hWnd, hDC); // todo check if defer can be used for releasing
+    // todo
 
-    return 0 // win32.LRESULT(win32.FALSE) // how to cast FALSE to LRESULT ?
+    win32.ReleaseDC(hWnd, hDC)
+    return 0
 }
 
-wm_destroy :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT
-{
+wm_destroy :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.print("WM_DESTROY\n")
+
+    hbrGray = nil
+
     win32.PostQuitMessage(666) // exitcode
     return 0
 }
 
-wm_erasebkgnd :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT
-{
-    // paint should fill out the client area so no need to erase the background
-    return 1 // win32.LRESULT(win32.TRUE) // how to cast TRUE to LRESULT ?
+wm_erasebkgnd :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+    return 1 // paint should fill out the client area so no need to erase the background
 }
 
-wm_char :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT
-{
-    fmt.printf("WM_CHAR %4d 0x%8x 0x%8x\n", wparam, wparam, lparam)
-    if wparam == 27 // esc
-    {
-        win32.DestroyWindow(hWnd);
+wm_char :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+    fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+    switch wparam {
+        case '\x1b': return win32app.MAKELRESULT(win32.DestroyWindow(hWnd))
+        case '\t':   fmt.print("tab\n"); return 0
+        case '\r':   fmt.print("return\n"); return 0
+        case 'p':    win32app.show_error_and_panic("Test Panic"); return 0
+        case:        return 0
     }
+}
+
+wm_size :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+    size := [2]i32{win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
+    fmt.printf("WM_SIZE %v\n", size)
     return 0
 }
 
-wm_size :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT
-{
-    fmt.print("WM_SIZE\n")
-    return 0
-}
-
-wm_paint :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT
-{
-    ps : win32.PAINTSTRUCT;
+wm_paint :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+    ps : win32.PAINTSTRUCT
     hdc := win32.BeginPaint(hWnd, &ps) // todo check if defer can be used for EndPaint
 
     rect: win32.RECT
     win32.GetClientRect(hWnd, &rect)
-    // if (_hbrGray != nil) win32.FillRect(hDC, ref rect, _hbrGray);
 
-    DrawTextA(hdc, "Hello, Windows 98!", -1, &rect,
-        //DrawTextFormat.DT_SINGLELINE | DrawTextFormat.DT_CENTER | DrawTextFormat.DT_VCENTER
-        0x00000020 | 0x00000001 | 0x00000004 // todo add conts for DrawTextFormat
-        )
+    if hbrGray != nil {
+        win32.FillRect(hdc, &rect, hbrGray)
+    }
+
+    dtf :: win32app.DrawTextFormat.DT_SINGLELINE | win32app.DrawTextFormat.DT_CENTER | win32app.DrawTextFormat.DT_VCENTER
+    win32app.DrawTextW(hdc, L("Hello, Windows 98!"), -1, &rect, dtf)
 
     win32.EndPaint(hWnd, &ps)
     win32.ValidateRect(hWnd, nil)
@@ -125,150 +100,83 @@ wndproc :: proc "stdcall" (hWnd: win32.HWND, msg: win32.UINT, wparam: win32.WPAR
         case win32.WM_SIZE:       return wm_size(hWnd, wparam, lparam)
         case win32.WM_PAINT:      return wm_paint(hWnd, wparam, lparam)
         case win32.WM_CHAR:       return wm_char(hWnd, wparam, lparam)
-        case:                     return win32.DefWindowProcA(hWnd, msg, wparam, lparam)
+        case:                     return win32.DefWindowProcW(hWnd, msg, wparam, lparam)
     }
 }
 
 main :: proc() {
 
-    fmt.print("win32 test\n")
-
-    className : win32.wstring = win32.utf8_to_wstring("Odin")
-
     instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
-    fmt.printf("instance %d\n", instance)
+    if(instance == nil)
+    {
+        win32app.show_error_and_panic("No instance")
+    }
 
-    icon : win32.HICON = win32.LoadIconA(instance, win32.IDI_APPLICATION)
-    // how do i use LoadIconW with win32.IDI_APPLICATION?
-    // icon : win32.HICON = win32.LoadIconW(instance, win32.utf8_to_wstring(string(win32.IDI_APPLICATION)))
-    fmt.printf("icon %d\n", icon)
+    icon : win32.HICON = win32.LoadIconW(instance, win32.wstring(win32._IDI_APPLICATION))
+    if icon == nil {
+        icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
+    }
+    if(icon == nil)
+    {
+        win32app.show_error_and_panic("Missing icon")
+    }
 
-    cursor : win32.HCURSOR = win32.LoadCursorA(nil, win32.IDC_ARROW)
-    // how do i use LoadCursorW with win32.IDC_ARROW ?
-    // cursor : win32.HCURSOR = win32.LoadCursorW(nil, win32.utf8_to_wstring(string(win32.IDC_ARROW)))
-    fmt.printf("cursor %d\n", cursor)
+    cursor : win32.HCURSOR = win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
+    if(cursor == nil)
+    {
+        win32app.show_error_and_panic("Missing cursor")
+    }
 
-    wndclass := win32.WNDCLASSEXW {
-        cbSize = size_of(win32.WNDCLASSEXA),
+    wcx := win32.WNDCLASSEXW {
+        cbSize = size_of(win32.WNDCLASSEXW),
         style = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC,
+        lpfnWndProc = wndproc,
+        cbClsExtra = 0,
+        cbWndExtra = 0,
         hInstance = instance,
         hIcon = icon,
-        hIconSm = icon,
         hCursor = cursor,
-        lpszClassName = className,
-        lpfnWndProc = wndproc
-        //hbrBackground = win32.HBRUSH(win32.GetStockObject(win32.GRAY_BRUSH))
-    };
-
-    atom : win32.ATOM = win32.RegisterClassExW(&wndclass);
-    if atom == 0 {
-        // todo call GetLastWin32Error
-        panic("Failed to register window class")
+        hbrBackground = nil,
+        lpszMenuName = nil,
+        lpszClassName = L("OdinMainClass"),
+        hIconSm = icon
     }
-    fmt.printf("atom %d\n", atom)
-    fmt.printf("lpwatom %d\n", win32.LPCWSTR(uintptr(atom)))
+
+    atom : win32.ATOM = win32.RegisterClassExW(&wcx) // ATOM :: distinct WORD
+    if atom == 0 {
+        win32app.show_error_and_panic("Failed to register window class")
+    }
 
     dwStyle := win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
-    dwExStyle := win32.WS_EX_OVERLAPPEDWINDOW;
+    dwExStyle := win32.WS_EX_OVERLAPPEDWINDOW
 
-    size := [2]i32{WIDTH, HEIGHT}
-    // adjust size for style
-    rect := win32.RECT{0,0,size.x,size.y};
-    if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle)
-    {
-        size = [2]i32{i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
-    }
-    fmt.printf("size %d, %d\n", size.x, size.y)
-
-    position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
-    if CENTER
-    {
-        if deviceMode:win32.DEVMODEW ; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) == win32.TRUE
-        {
-            dmsize := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
-            position = (dmsize - size) / 2
-        }
-    }
-    fmt.printf("position %d, %d\n", position.x, position.y)
-
-    // app title
-    wtitle : win32.wstring = win32.utf8_to_wstring(TITLE)
-    fmt.printf("wtitle %d\n", wtitle)
-
-    win32.MessageBoxW(nil, win32.utf8_to_wstring("Title should be " + TITLE), wtitle, win32.MB_OK)
-
-    title1, err1 := win32.wstring_to_utf8(wtitle, 256, context.allocator)
-    fmt.printf("title \"%s\"\n", title1) // is does print TITLE as expected
-    assert(TITLE == title1)
+    size := win32app.adjust_window_size([2]i32{WIDTH, HEIGHT}, dwStyle, dwExStyle)
+    position := win32app.get_window_position(size, CENTER);
 
     hwnd : win32.HWND = win32.CreateWindowExW(
-                dwExStyle,
-                win32.LPCWSTR(uintptr(atom)), // is this right? if so is there a better way to do this?
-                wtitle, // the window title only shows the first char?!
-                // i suspect it maps to CreateWindowExA somehow https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexa
-                dwStyle,
-                position.x, position.y,
-                size.x, size.y,
-                nil,
-                nil,
-                instance,
-                nil
-            );
-    /*
-    // no luck with CreateWindowExA either
-    hwnd : win32.HWND = CreateWindowExA(
-            dwExStyle,
-            win32.LPCWSTR(uintptr(atom)),
-            title,
-            dwStyle,
-            position.x, position.y,
-            size.x, size.y,
-            nil,
-            nil,
-            instance,
-            nil
-        );
-    */
-    if hwnd == nil {
-        // todo call GetLastWin32Error
-        panic("CreateWindowEx failed")
-    }
-    fmt.printf("hwnd %d\n", hwnd)
+        dwExStyle,
+        win32.LPCWSTR(uintptr(atom)),
+        L(TITLE),
+        dwStyle,
+        position.x, position.y,
+        size.x, size.y,
+        nil,
+        nil,
+        instance,
+        nil)
 
-    // try to set the windows title again
-    //win32.SetWindowTextW(hwnd, wtitle);
-    //win32.SetWindowTextW(hwnd, win32.utf8_to_wstring("XYZ")); // only shows X ?!?
+    if hwnd == nil {
+        win32app.show_error_and_panic("CreateWindowEx failed")
+    }
 
     win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
     win32.UpdateWindow(hwnd)
 
-    msg : win32.MSG // is there an easy way to zero out the msg struct ?
-    res : win32.BOOL =  win32.TRUE
-    //res : i32 = 1
-
-    fmt.print("MainLoop\n")
-
-    for res == win32.TRUE
-    {
-        // From https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmessagew#return-value
-        // "If there is an error, the return value is -1. For example, the function fails if hWnd is an invalid window handle or lpMsg is an invalid pointer.
-        // To get extended error information, call GetLastError."
-        // how to handle the -1 ?
-        res = win32.GetMessageW(&msg, hwnd, 0, 0)
-        // if res == -1
-        // {
-        //     // handle the error and possibly exit
-        //     //win32.MessageBoxW(nil, "User32.GetMessage returned -1", "Error", win32.MB_OK)
-        //     //panic("GetMessage")
-        // }
-        // else
-        if res == win32.TRUE
-        {
-            win32.TranslateMessage(&msg);
-            win32.DispatchMessageW(&msg);
-        }
+    msg : win32.MSG
+    for result := win32.GetMessageW(&msg, hwnd, 0, 0);
+        result == win32.TRUE;
+        result = win32.GetMessageW(&msg, hwnd, 0, 0) {
+        win32.TranslateMessage(&msg)
+        win32.DispatchMessageW(&msg)
     }
-    //return msg.wParam.ToInt32();
-    fmt.printf("wParam %d\n", msg.wParam)
-    fmt.print("done!\n")
 }
