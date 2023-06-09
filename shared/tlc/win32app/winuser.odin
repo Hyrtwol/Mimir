@@ -1,11 +1,11 @@
 package win32app
 
-import "core:fmt"
-import "core:intrinsics"
-import "core:math/linalg"
+import       "core:fmt"
+import       "core:intrinsics"
+import       "core:math/linalg"
 import hlm   "core:math/linalg/hlsl"
-import "core:runtime"
-import "core:strings"
+import       "core:runtime"
+import       "core:strings"
 import win32 "core:sys/windows"
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/

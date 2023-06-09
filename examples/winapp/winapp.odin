@@ -1,58 +1,51 @@
 package main
 
-import fmt          "core:fmt"
-import intrinsics   "core:intrinsics"
-import math         "core:math"
-import linalg       "core:math/linalg"
-import hlm          "core:math/linalg/hlsl"
-import noise        "core:math/noise"
-import rand         "core:math/rand"
-import mem          "core:mem"
-import runtime      "core:runtime"
-import simd         "core:simd"
-import strings      "core:strings"
-import win32        "core:sys/windows"
-import win32app     "../../shared/tlc/win32app"
+import          "core:fmt"
+import          "core:intrinsics"
+import          "core:math"
+import          "core:math/linalg"
+import hlm      "core:math/linalg/hlsl"
+import          "core:math/noise"
+import          "core:math/rand"
+import          "core:mem"
+import          "core:runtime"
+import          "core:simd"
+import          "core:strings"
+import win32    "core:sys/windows"
+import          "core:time"
+import win32app "../../shared/tlc/win32app"
+import canvas   "../../shared/tlc/canvas"
 
 L :: intrinsics.constant_utf16_cstring
 
-TITLE 	:: "Mimir 2"
-
-ZOOM  	:: 8
-
+TITLE 	:: "Mimir"
 WIDTH  	:: 640
-//HEIGHT 	:: WIDTH * 3 / 4
 HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
+ZOOM  	:: 8
 
-hbrGray       : win32.HBRUSH
-hbitmap       : win32.HGDIOBJ // win32.HBITMAP
-hbitmap_size  : hlm.int2
-hbitmap_count : i32
-pvBits        : win32app.screenbuffer
+bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
+bitmap_size   : hlm.int2
+bitmap_count  : i32
+pvBits        : canvas.screenbuffer
+pixel_size    : hlm.int2 : {ZOOM, ZOOM}
 
-fill_screen :: proc(p: win32app.screenbuffer, count: i32, col: win32app.byte4) {
+fill_screen2 :: proc(p: canvas.screenbuffer, count: i32) {
     for i in 0..<count {
-        p[i] = col
-    }
-}
-
-fill_screen2 :: proc(p: win32app.screenbuffer, count: i32, col: win32app.byte4) {
-    for i in 0..<count {
-        p[i] = win32app.byte4{u8(i*17), u8(i*29), u8(i*37), 255}
+        p[i] = canvas.byte4{u8(i*17), u8(i*29), u8(i*37), 255}
     }
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> hlm.int2 {
     size := hlm.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
     scrpos := size / ZOOM
-    scrpos.y = (hbitmap_size.y - 1) - scrpos.y
+    scrpos.y = bitmap_size.y - 1 - scrpos.y
     return scrpos
 }
 
-setdot :: proc(pos: hlm.int2, col: win32app.byte4) {
-    i := pos.y * hbitmap_size.x + pos.x
-    if i >= 0 && i < hbitmap_count {
+setdot :: proc(pos: hlm.int2, col: canvas.byte4) {
+    i := pos.y * bitmap_size.x + pos.x
+    if i >= 0 && i < bitmap_count {
         pvBits[i] =  col
     }
 }
@@ -60,25 +53,23 @@ setdot :: proc(pos: hlm.int2, col: win32app.byte4) {
 WM_CREATE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.print("WM_CREATE\n")
 
-    hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
-
     client_size := win32app.get_client_size(hWnd)
-    hbitmap_size = client_size / ZOOM
+    bitmap_size = client_size / ZOOM
 
     hDC := win32.GetDC(hWnd)
     // todo defer win32.ReleaseDC(hWnd, hDC)
 
-    PelsPerMeter :: 3780
-    BitPerByte :: 8
+    PelsPerMeter     :: 3780
     ColorSizeInBytes :: 4
+    BitCount         :: ColorSizeInBytes * 8
 
     bitmapInfo := win32.BITMAPINFO {
         bmiHeader = win32.BITMAPINFOHEADER {
             biSize = size_of(win32.BITMAPINFOHEADER),
-            biWidth = hbitmap_size.x,
-            biHeight = hbitmap_size.y,
+            biWidth = bitmap_size.x,
+            biHeight = bitmap_size.y,
             biPlanes = 1,
-            biBitCount = ColorSizeInBytes * BitPerByte,
+            biBitCount = BitCount,
             biCompression = win32.BI_RGB,
             biSizeImage = 0,
             biXPelsPerMeter = PelsPerMeter,
@@ -88,16 +79,16 @@ WM_CREATE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
         }
     }
 
-    hbitmap = win32.HGDIOBJ(win32.CreateDIBSection(hDC, &bitmapInfo, 0, &pvBits, nil, 0))
+    bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hDC, &bitmapInfo, 0, &pvBits, nil, 0))
 
     if pvBits != nil {
-        hbitmap_count = hbitmap_size.x * hbitmap_size.y
-        //fill_screen(pvBits, hbitmap_count,win32app.BLUE)
-        fill_screen(pvBits, hbitmap_count, {150, 100, 50, 255})
+        bitmap_count = bitmap_size.x * bitmap_size.y
+        //fill_screen2(pvBits, bitmap_count)
+        canvas.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
     }
     else {
-        hbitmap_size = win32app.ZERO2;
-        hbitmap_count = 0
+        bitmap_size = canvas.ZERO2;
+        bitmap_count = 0
     }
 
     win32.ReleaseDC(hWnd, hDC)
@@ -107,18 +98,20 @@ WM_CREATE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 WM_DESTROY :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.print("WM_DESTROY\n")
 
-    if hbitmap != nil {
-        win32.DeleteObject(hbitmap)
-        hbitmap = nil
+    if bitmap_handle != nil {
+        win32.DeleteObject(bitmap_handle)
     }
-    hbrGray = nil
+    bitmap_handle = nil
+    bitmap_size = canvas.ZERO2;
+    bitmap_count = 0
+    pvBits = nil
 
-    win32.PostQuitMessage(666) // exitcode
+    win32.PostQuitMessage(0)
     return 0
 }
 
 WM_ERASEBKGND :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-    return 1 // paint should fill out the client area so no need to erase the background
+    return 1
 }
 
 WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -136,24 +129,24 @@ WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_SIZE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     size := hlm.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
     fmt.printf("WM_SIZE %v %v\n", WM_SIZE, size)
-    newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, hbitmap_size)
+    newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, bitmap_size)
     win32.SetWindowTextW(hWnd, win32.utf8_to_wstring(newtitle));
     return 0
 }
 
 WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     ps : win32.PAINTSTRUCT
-    hDC := win32.BeginPaint(hWnd, &ps) // todo check if defer can be used for EndPaint
+    hDC_target := win32.BeginPaint(hWnd, &ps) // todo check if defer can be used for EndPaint
 
-    clientSize := win32app.get_client_size(hWnd)
+    client_size := win32app.get_client_size(hWnd)
 
-    hDCBits := win32app.CreateCompatibleDC(hDC);
-    win32.SelectObject(hDCBits, hbitmap);
+    hDC_source := win32app.CreateCompatibleDC(hDC_target);
+    win32.SelectObject(hDC_source, bitmap_handle);
     win32.StretchBlt(
-         hDC, 0, 0, clientSize.x, clientSize.y, // dest
-         hDCBits, 0, 0, hbitmap_size.x, hbitmap_size.y, // source
+         hDC_target, 0, 0, client_size.x, client_size.y,
+         hDC_source, 0, 0, bitmap_size.x, bitmap_size.y,
          win32.SRCCOPY)
-    win32app.DeleteDC(hDCBits)
+    win32app.DeleteDC(hDC_source)
 
     win32.EndPaint(hWnd, &ps)
     win32.ValidateRect(hWnd, nil)
@@ -162,40 +155,38 @@ WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 }
 
 WM_MOUSEMOVE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-    handle_input(hWnd, wparam, lparam)
-    return 0
+    return handle_input(hWnd, wparam, lparam)
 }
 
 WM_LBUTTONDOWN :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-    handle_input(hWnd, wparam, lparam)
-    return 0
+    return handle_input(hWnd, wparam, lparam)
 }
 
 WM_RBUTTONDOWN :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-    handle_input(hWnd, wparam, lparam)
-    return 0
+    return handle_input(hWnd, wparam, lparam)
 }
 
-handle_input :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) {
+handle_input :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     switch wparam {
         case 1:
             pos := decode_scrpos(lparam)
-            setdot(pos, win32app.RED)
+            setdot(pos, canvas.RED)
             win32.InvalidateRect(hWnd, nil, false)
         case 2:
             pos := decode_scrpos(lparam)
-            setdot(pos, win32app.BLUE)
+            setdot(pos, canvas.BLUE)
             win32.InvalidateRect(hWnd, nil, false)
         case 3:
             pos := decode_scrpos(lparam)
-            setdot(pos, win32app.GREEN)
+            setdot(pos, canvas.GREEN)
             win32.InvalidateRect(hWnd, nil, false)
         case 4:
             fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
         case:
             //fmt.printf("input %v %d\n", scrpos, wparam)
-            //setdot(pos, win32app.byte4{u8(255), u8(255), u8(0), 255})
+            //setdot(pos, canvas.byte4{u8(255), u8(255), u8(0), 255})
     }
+    return 0
 }
 
 wndproc :: proc "stdcall" (hWnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {

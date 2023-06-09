@@ -8,16 +8,6 @@ import       "core:runtime"
 import       "core:strings"
 import win32 "core:sys/windows"
 
-byte4 :: distinct [4]u8
-bytebgra :: distinct [4]u8
-screenbuffer :: [^]byte4
-
-ZERO2 : hlm.int2 : {0,0}
-
-RED   : byte4 : {  0,   0, 255, 255}
-GREEN : byte4 : {  0, 255,   0, 255}
-BLUE  : byte4 : {255,   0,   0, 255}
-
 show_error_and_panic :: proc (msg: string) {
     errormsg := win32.utf8_to_wstring(fmt.tprintf("%s\nLast error: %x\n", msg, win32.GetLastError()))
     win32.MessageBoxW(nil, errormsg, L("Panic"), win32.MB_ICONSTOP | win32.MB_OK)
@@ -64,7 +54,10 @@ get_instance :: proc () -> win32.HINSTANCE {
 
 register_window_class :: proc (instance: win32.HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
 
-    icon : win32.HICON = win32.LoadIconW(instance, win32.wstring(win32._IDI_APPLICATION))
+    icon : win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
+    if icon == nil {
+        icon = win32.LoadIconW(instance, win32.wstring(win32._IDI_APPLICATION))
+    }
     if icon == nil {
         icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
     }

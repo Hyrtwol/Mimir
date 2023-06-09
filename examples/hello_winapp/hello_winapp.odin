@@ -10,14 +10,14 @@ import win32app "../../shared/tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 
-TITLE 	:: "Mimir 1"
-WIDTH  	:: 640
-HEIGHT 	:: WIDTH * 9 / 16
+TITLE 	:: "Mimir Hello"
+WIDTH  	:: 320
+HEIGHT 	:: WIDTH * 3 / 4
 CENTER  :: true
 
 hbrGray : win32.HBRUSH
 
-wm_create :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CREATE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.print("WM_CREATE\n")
 
     hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
@@ -26,26 +26,23 @@ wm_create :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
     win32.GetClientRect(hWnd, &clientRect)
     fmt.printf("clientRect %d, %d, %d, %d\n", clientRect.left, clientRect.top, clientRect.right, clientRect.bottom)
 
-    hDC := win32.GetDC(hWnd)
-
-    win32.ReleaseDC(hWnd, hDC)
     return 0
 }
 
-wm_destroy :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_DESTROY :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.print("WM_DESTROY\n")
 
     hbrGray = nil
 
-    win32.PostQuitMessage(666) // exitcode
+    win32.PostQuitMessage(/*exitcode?*/666)
     return 0
 }
 
-wm_erasebkgnd :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_ERASEBKGND :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     return 1 // paint should fill out the client area so no need to erase the background
 }
 
-wm_char :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
     if wparam == 27  {
         win32.DestroyWindow(hWnd)
@@ -53,13 +50,13 @@ wm_char :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
     return 0
 }
 
-wm_size :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_SIZE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     size := [2]i32{win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
     fmt.printf("WM_SIZE %v\n", size)
     return 0
 }
 
-wm_paint :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     ps : win32.PAINTSTRUCT
     hdc := win32.BeginPaint(hWnd, &ps) // todo check if defer can be used for EndPaint
 
@@ -82,12 +79,12 @@ wm_paint :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 wndproc :: proc "stdcall" (hWnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     context = runtime.default_context()
     switch msg {
-        case win32.WM_CREATE:     return wm_create(hWnd, wparam, lparam)
-        case win32.WM_DESTROY:    return wm_destroy(hWnd, wparam, lparam)
-        case win32.WM_ERASEBKGND: return wm_erasebkgnd(hWnd, wparam, lparam)
-        case win32.WM_SIZE:       return wm_size(hWnd, wparam, lparam)
-        case win32.WM_PAINT:      return wm_paint(hWnd, wparam, lparam)
-        case win32.WM_CHAR:       return wm_char(hWnd, wparam, lparam)
+        case win32.WM_CREATE:     return WM_CREATE(hWnd, wparam, lparam)
+        case win32.WM_DESTROY:    return WM_DESTROY(hWnd, wparam, lparam)
+        case win32.WM_ERASEBKGND: return WM_ERASEBKGND(hWnd, wparam, lparam)
+        case win32.WM_SIZE:       return WM_SIZE(hWnd, wparam, lparam)
+        case win32.WM_PAINT:      return WM_PAINT(hWnd, wparam, lparam)
+        case win32.WM_CHAR:       return WM_CHAR(hWnd, wparam, lparam)
         case:                     return win32.DefWindowProcW(hWnd, msg, wparam, lparam)
     }
 }
