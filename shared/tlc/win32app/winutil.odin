@@ -99,14 +99,10 @@ register_window_class :: proc (instance: win32.HINSTANCE, wndproc: win32.WNDPROC
     return atom
 }
 
-create_window :: proc (instance: win32.HINSTANCE, title: string, window_size: hlm.int2, center: bool, atom: win32.ATOM) -> win32.HWND {
+create_window :: proc (instance: win32.HINSTANCE, atom: win32.ATOM, title: string, window_size: hlm.int2, center: bool) -> win32.HWND {
 
     dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
     dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
-
-    //dwStyle :: win32.WS_OVERLAPPED
-    //dwStyle :: win32.WS_VISIBLE | win32.WS_POPUP
-    //dwStyle :: win32.WS_POPUPWINDOW
 
     //dwStyle :: win32.WS_POPUP | win32.WS_BORDER
     //dwExStyle :: 0
@@ -146,8 +142,8 @@ main_loop :: proc (hwnd: win32.HWND) {
 }
 
 run :: proc (title: string, window_size: hlm.int2, center: bool, wndproc: win32.WNDPROC) {
-    instance := get_instance()
-    atom := register_window_class(instance, wndproc)
-    hwnd := create_window(instance, title, window_size, center, atom)
+    inst := get_instance()
+    atom := register_window_class(inst, wndproc)
+    hwnd := create_window(inst, atom, title, window_size, center)
     main_loop(hwnd)
 }
