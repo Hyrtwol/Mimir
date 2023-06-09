@@ -10,12 +10,11 @@ import win32 "core:sys/windows"
 
 L :: intrinsics.constant_utf16_cstring
 
-// how to cast TRUE to LRESULT ?
-// win32.FALSE win32.TRUE
 
 LRESULT_FALSE : win32.LRESULT : 0
 LRESULT_TRUE  : win32.LRESULT : 1
 
+// how to cast TRUE to LRESULT ?
 MAKELRESULT :: proc(result: win32.BOOL) -> win32.LRESULT {
     return LRESULT_TRUE if result else LRESULT_FALSE
 }

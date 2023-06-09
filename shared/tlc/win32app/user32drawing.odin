@@ -14,21 +14,13 @@ foreign user32 {
 	DrawTextA :: proc "stdcall" (hDC: win32.HDC, lpchText: win32.LPCSTR, cchText: win32.c_int, lprc: win32.LPRECT, format: DrawTextFormat) -> win32.c_int ---
 	DrawTextW :: proc "stdcall" (hDC: win32.HDC, lpchText: win32.LPCWSTR, cchText: win32.c_int, lprc: win32.LPRECT, format: DrawTextFormat) -> win32.c_int ---
 
-    /*
-    HDC CreateCompatibleDC(
-    [in] HDC hdc
-    );
-    */
     CreateCompatibleDC :: proc "stdcall" (hDC: win32.HDC) -> win32.HDC ---
-    /*
-    BOOL DeleteDC(
-    [in] HDC hdc
-    );
-    */
     DeleteDC :: proc "stdcall" (hDC: win32.HDC) -> win32.BOOL ---
 }
 
 /*
+the style in core:sys/windows is consts but wnated to try to use the enum to scope it a bit
+
 DT_TOP                  :: 0x00000000
 DT_LEFT                 :: 0x00000000
 DT_CENTER               :: 0x00000001
