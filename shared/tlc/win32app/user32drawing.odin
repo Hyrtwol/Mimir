@@ -1,43 +1,31 @@
-package user32ex
+package win32app
 
 import "core:fmt"
 import "core:intrinsics"
 import "core:math/linalg"
+import hlm   "core:math/linalg/hlsl"
 import "core:runtime"
 import "core:strings"
 import win32 "core:sys/windows"
-
-L :: intrinsics.constant_utf16_cstring
-
-USE_ANSI :: false
-
-MAKELRESULT :: proc(result: win32.BOOL) -> win32.LRESULT {
-    return 1 if result else 0
-}
-
-// how to cast TRUE to LRESULT ?
-// win32.FALSE win32.TRUE
-LRESULT_FALSE : win32.LRESULT : 0
-LRESULT_TRUE  : win32.LRESULT : 1
 
 foreign import user32 "system:User32.lib"
 @(default_calling_convention="stdcall") // not sure if stdcall here is scoped to foreign only? moved it inline for now.
 foreign user32 {
 	DrawTextA :: proc "stdcall" (hDC: win32.HDC, lpchText: win32.LPCSTR, cchText: win32.c_int, lprc: win32.LPRECT, format: DrawTextFormat) -> win32.c_int ---
 	DrawTextW :: proc "stdcall" (hDC: win32.HDC, lpchText: win32.LPCWSTR, cchText: win32.c_int, lprc: win32.LPRECT, format: DrawTextFormat) -> win32.c_int ---
-}
 
-when USE_ANSI {
-    DefWindowProc :: win32.DefWindowProcA
-    LoadIcon      :: win32.LoadIconA
-    LoadCursor    :: win32.LoadCursorA
-    DrawText      :: DrawTextA
-}
-else {
-    DefWindowProc :: win32.DefWindowProcW
-    LoadIcon      :: win32.LoadIconW
-    LoadCursor    :: win32.LoadCursorW
-    DrawText      :: DrawTextW
+    /*
+    HDC CreateCompatibleDC(
+    [in] HDC hdc
+    );
+    */
+    CreateCompatibleDC :: proc "stdcall" (hDC: win32.HDC) -> win32.HDC ---
+    /*
+    BOOL DeleteDC(
+    [in] HDC hdc
+    );
+    */
+    DeleteDC :: proc "stdcall" (hDC: win32.HDC) -> win32.BOOL ---
 }
 
 /*

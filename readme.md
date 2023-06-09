@@ -209,7 +209,7 @@ Usage:
 		If not set, the default max error count is 36
 
 	-foreign-error-procedures
-		States that the error procedues used in the runtime are defined in a separate translation unit
+		States that the error procedures used in the runtime are defined in a separate translation unit
 
 	-ignore-vs-search
 		[Windows only]
@@ -232,3 +232,7 @@ Usage:
 			console
 			windows
 ```
+
+## VSCode setup
+
+* <https://code.visualstudio.com/docs/editor/variables-reference>

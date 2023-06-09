@@ -1,24 +1,18 @@
 package main
 
-import fmt          "core:fmt"
-import intrinsics   "core:intrinsics"
-import math         "core:math"
-import linalg       "core:math/linalg"
-import hlm          "core:math/linalg/hlsl"
-import noise        "core:math/noise"
-import rand         "core:math/rand"
-import mem          "core:mem"
-import runtime      "core:runtime"
-import simd         "core:simd"
-import strings      "core:strings"
-import win32        "core:sys/windows"
-import win32app     "win32app"
+import          "core:fmt"
+import          "core:intrinsics"
+import          "core:os"
+import          "core:runtime"
+import          "core:strings"
+import win32    "core:sys/windows"
+import win32app "../../shared/tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 
-TITLE 	:: "Mimir"
-WIDTH  	:: 640 / 2
-HEIGHT 	:: 480 / 2
+TITLE 	:: "Mimir 1"
+WIDTH  	:: 640
+HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 
 hbrGray : win32.HBRUSH
@@ -33,9 +27,6 @@ wm_create :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
     fmt.printf("clientRect %d, %d, %d, %d\n", clientRect.left, clientRect.top, clientRect.right, clientRect.bottom)
 
     hDC := win32.GetDC(hWnd)
-    //defer win32.ReleaseDC(hWnd, hDC)
-
-    // todo
 
     win32.ReleaseDC(hWnd, hDC)
     return 0
@@ -56,13 +47,10 @@ wm_erasebkgnd :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 
 wm_char :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
-    switch wparam {
-        case '\x1b': return win32app.MAKELRESULT(win32.DestroyWindow(hWnd))
-        case '\t':   fmt.print("tab\n"); return 0
-        case '\r':   fmt.print("return\n"); return 0
-        case 'p':    win32app.show_error_and_panic("Test Panic"); return 0
-        case:        return 0
+    if wparam == 27  {
+        win32.DestroyWindow(hWnd)
     }
+    return 0
 }
 
 wm_size :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -107,8 +95,7 @@ wndproc :: proc "stdcall" (hWnd: win32.HWND, msg: win32.UINT, wparam: win32.WPAR
 main :: proc() {
 
     instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
-    if(instance == nil)
-    {
+    if(instance == nil) {
         win32app.show_error_and_panic("No instance")
     }
 
@@ -116,14 +103,12 @@ main :: proc() {
     if icon == nil {
         icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
     }
-    if(icon == nil)
-    {
+    if(icon == nil) {
         win32app.show_error_and_panic("Missing icon")
     }
 
     cursor : win32.HCURSOR = win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
-    if(cursor == nil)
-    {
+    if(cursor == nil) {
         win32app.show_error_and_panic("Missing cursor")
     }
 
@@ -142,16 +127,33 @@ main :: proc() {
         hIconSm = icon
     }
 
-    atom : win32.ATOM = win32.RegisterClassExW(&wcx) // ATOM :: distinct WORD
+    atom : win32.ATOM = win32.RegisterClassExW(&wcx)
     if atom == 0 {
         win32app.show_error_and_panic("Failed to register window class")
     }
 
-    dwStyle := win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
-    dwExStyle := win32.WS_EX_OVERLAPPEDWINDOW
+    dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
+    dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
 
-    size := win32app.adjust_window_size([2]i32{WIDTH, HEIGHT}, dwStyle, dwExStyle)
-    position := win32app.get_window_position(size, CENTER);
+    size := [2]i32{WIDTH, HEIGHT}
+    // adjust size for style
+    rect := win32.RECT{0,0,size.x,size.y};
+    if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle)
+    {
+        size = [2]i32{i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
+    }
+    fmt.printf("size %d, %d\n", size.x, size.y)
+
+    position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
+    if CENTER
+    {
+        if deviceMode:win32.DEVMODEW ; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) == win32.TRUE
+        {
+            dmsize := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
+            position = (dmsize - size) / 2
+        }
+    }
+    fmt.printf("position %d, %d\n", position.x, position.y)
 
     hwnd : win32.HWND = win32.CreateWindowExW(
         dwExStyle,
@@ -164,14 +166,19 @@ main :: proc() {
         nil,
         instance,
         nil)
-
     if hwnd == nil {
         win32app.show_error_and_panic("CreateWindowEx failed")
     }
+    fmt.printf("hwnd %d\n", hwnd)
+
+    // try to set the windows title again
+    //win32.SetWindowTextW(hwnd, wtitle);
+    //win32.SetWindowTextW(hwnd, win32.utf8_to_wstring("XYZ"));
 
     win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
     win32.UpdateWindow(hwnd)
 
+    fmt.print("MainLoop\n")
     msg : win32.MSG
     for result := win32.GetMessageW(&msg, hwnd, 0, 0);
         result == win32.TRUE;
@@ -179,4 +186,8 @@ main :: proc() {
         win32.TranslateMessage(&msg)
         win32.DispatchMessageW(&msg)
     }
+
+    fmt.print("Done!\n")
+
+    //os.exit(666)
 }

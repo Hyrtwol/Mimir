@@ -2,3 +2,6 @@ desktop.ini
 *.exe
 *.bak
 *.log
+.DS_Store
+Thumbs.db
+bin/

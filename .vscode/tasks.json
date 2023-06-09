@@ -9,28 +9,90 @@
             "command": "odin",
             "args": [
                 "build",
-                "${relativeFile}",
-                "-file"
+                "..\\${relativeFileDirname}"
             ],
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": false
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
             }
         },
         {
             "label": "odin run",
-            "type": "shell",
+            "type": "process",
             "command": "odin",
             "args": [
                 "run",
-                "${relativeFile}",
-                "-file"
+                "..\\${relativeFileDirname}"
             ],
             "problemMatcher": [],
             "group": {
                 "kind": "build",
-                "isDefault": true
+                "isDefault": "**/*.odin"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
+            }
+        },
+        {
+            "label": "odin doc",
+            "type": "shell",
+            "command": "odin",
+            "args": [
+                "doc",
+                "..\\${relativeFileDirname}", //"-doc-format",
+                ">", "${fileBasenameNoExtension}.txt"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
+            }
+        },
+        {
+            "label": "echo vars",
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "vars:",
+                "${workspaceFolder}",
+                //"${workspaceFolder:src}",
+                "${cwd}",
+                "${relativeFile}",
+                "${relativeFileDirname}"
+            ],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "bin"
+            }
+        },
+        {
+            "label": "pandoc md",
+            "type": "shell",
+            "command": "pandoc",
+            "args": [
+                //"--help"
+                "-o","${fileBasenameNoExtension}.html",
+                "-f", "markdown",
+                "-t", "html",
+                "../${relativeFile}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": "**/*.md"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
             }
         }
     ]

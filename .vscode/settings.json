@@ -2,18 +2,16 @@
 {
     "files.associations": {
         "*.recipe": "xml",
-        "*.targets": "xml",
-        "*.meta": "yaml",
-        "*.prefab": "yaml",
-        "*.asset": "yaml",
-        "*.unity": "yaml",
-        "*.inc": "pascal"
+        "*.targets": "xml"
     },
-    "editor.rulers": [120],
-    "omnisharp.autoStart": false,
+    "editor.rulers": [
+        120
+    ],
     "cSpell.words": [
-        "exitcode",
-        "writeln"
+        "metaprogramming",
+        "microarch",
+        "reloc",
+        "sandybridge"
     ],
     "markdownlint.config": {
         "no-hard-tabs": false,
@@ -22,5 +20,16 @@
     "[markdown]": {
         "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
     },
-    "editor.wordWrapColumn": 120
+    "editor.wordWrapColumn": 120,
+    "omnisharp.autoStart": false,
+    "typescript.tsc.autoDetect": "off",
+    "grunt.autoDetect": "off",
+    "jake.autoDetect": "off",
+    "gulp.autoDetect": "off",
+    "npm.autoDetect": "off",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    }
 }
