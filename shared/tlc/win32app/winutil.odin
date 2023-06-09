@@ -42,7 +42,7 @@ adjust_window_size :: proc (size: hlm.int2, dwStyle, dwExStyle: u32) -> hlm.int2
     return size
 }
 
-CW_USEDEFAULT2 : hlm.int2 : {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
+CW_USEDEFAULT_INT2 : hlm.int2 : {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
 
 get_window_position :: proc (size: hlm.int2, center: bool) -> hlm.int2 {
     if center {
@@ -51,9 +51,8 @@ get_window_position :: proc (size: hlm.int2, center: bool) -> hlm.int2 {
             return (dmsize - size) / 2
         }
     }
-    return CW_USEDEFAULT2
+    return CW_USEDEFAULT_INT2
 }
-
 
 get_instance :: proc () -> win32.HINSTANCE {
     instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
