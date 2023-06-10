@@ -1,7 +1,8 @@
-desktop.ini
 *.exe
 *.bak
 *.log
-.DS_Store
-Thumbs.db
+*.res
 bin/
+desktop.ini
+Thumbs.db
+.DS_Store
