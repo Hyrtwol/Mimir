@@ -14,6 +14,10 @@ show_error_and_panic :: proc (msg: string) {
     panic(msg)
 }
 
+decode_scrpos :: proc(lparam: win32.LPARAM) -> int2 {
+    return int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+}
+
 get_rect_size :: proc (rect: ^win32.RECT) -> int2 {
     return {(rect.right - rect.left), (rect.bottom - rect.top)}
 }

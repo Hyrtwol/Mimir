@@ -30,6 +30,8 @@ bitmap_count  : i32
 pvBits        : canvas.screenbuffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
+dib           : canvas.DIB
+
 fill_screen2 :: proc(p: canvas.screenbuffer, count: i32) {
     for i in 0..<count {
         p[i] = canvas.byte4{u8(i*17), u8(i*29), u8(i*37), 255}
