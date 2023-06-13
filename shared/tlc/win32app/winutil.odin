@@ -14,17 +14,17 @@ show_error_and_panic :: proc (msg: string) {
     panic(msg)
 }
 
-get_rect_size :: proc (rect: ^win32.RECT) -> hlm.int2  {
+get_rect_size :: proc (rect: ^win32.RECT) -> int2 {
     return {(rect.right - rect.left), (rect.bottom - rect.top)}
 }
 
-get_client_size :: proc (hWnd: win32.HWND) -> hlm.int2  {
+get_client_size :: proc (hWnd: win32.HWND) -> int2 {
     rect: win32.RECT
     win32.GetClientRect(hWnd, &rect)
     return get_rect_size(&rect)
 }
 
-adjust_window_size :: proc (size: hlm.int2, dwStyle, dwExStyle: u32) -> hlm.int2 {
+adjust_window_size :: proc (size: int2, dwStyle, dwExStyle: u32) -> int2 {
     rect := win32.RECT{0, 0, size.x, size.y}
     if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle) {
         return get_rect_size(&rect)
@@ -32,12 +32,12 @@ adjust_window_size :: proc (size: hlm.int2, dwStyle, dwExStyle: u32) -> hlm.int2
     return size
 }
 
-CW_USEDEFAULT_INT2 : hlm.int2 : {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
+CW_USEDEFAULT_INT2 : int2 : {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
 
-get_window_position :: proc (size: hlm.int2, center: bool) -> hlm.int2 {
+get_window_position :: proc (size: int2, center: bool) -> int2 {
     if center {
         if deviceMode:win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) == win32.TRUE {
-            dmsize : hlm.int2 = {i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
+            dmsize : int2 = {i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
             return (dmsize - size) / 2
         }
     }
@@ -92,7 +92,7 @@ register_window_class :: proc (instance: win32.HINSTANCE, wndproc: win32.WNDPROC
     return atom
 }
 
-create_window :: proc (instance: win32.HINSTANCE, atom: win32.ATOM, title: string, window_size: hlm.int2, center: bool) -> win32.HWND {
+create_window :: proc (instance: win32.HINSTANCE, atom: win32.ATOM, title: string, window_size: int2, center: bool) -> win32.HWND {
 
     dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
     dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
@@ -134,7 +134,7 @@ main_loop :: proc (hwnd: win32.HWND) {
     }
 }
 
-run :: proc (title: string, window_size: hlm.int2, center: bool, wndproc: win32.WNDPROC) {
+run :: proc (title: string, window_size: int2, center: bool, wndproc: win32.WNDPROC) {
     inst := get_instance()
     atom := register_window_class(inst, wndproc)
     hwnd := create_window(inst, atom, title, window_size, center)

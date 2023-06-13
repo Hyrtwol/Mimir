@@ -44,8 +44,12 @@ WM_ERASEBKGND :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 
 WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
     fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
-    if wparam == 27  {
-        win32.DestroyWindow(hWnd)
+    switch wparam {
+        case '\x1b': win32.DestroyWindow(hWnd)
+        case '\t':   fmt.print("tab\n")
+        case '\r':   fmt.print("return\n")
+        case 'p':    win32app.show_error_and_panic("Test Panic")
+        case:
     }
     return 0
 }
