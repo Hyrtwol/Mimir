@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Odin Debug Launch",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "preLaunchTask": "odin build",
+      "program": "${workspaceFolder}/bin/${fileDirnameBasename}.exe",
+      "args": [],
+      "environment": [{ "name": "config", "value": "Debug" }],
+      "cwd": "${workspaceFolder}/bin",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
+}
