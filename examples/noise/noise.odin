@@ -169,30 +169,17 @@ WM_TIMER :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
-wndproc :: proc "stdcall" (
-	hWnd: win32.HWND,
-	msg: win32.UINT,
-	wparam: win32.WPARAM,
-	lparam: win32.LPARAM,
-) -> win32.LRESULT {
+wndproc :: proc "stdcall" (hWnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
-	case win32.WM_CREATE:
-		return WM_CREATE(hWnd, wparam, lparam)
-	case win32.WM_DESTROY:
-		return WM_DESTROY(hWnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:
-		return WM_ERASEBKGND(hWnd, wparam, lparam)
-	case win32.WM_SIZE:
-		return WM_SIZE(hWnd, wparam, lparam)
-	case win32.WM_PAINT:
-		return WM_PAINT(hWnd, wparam, lparam)
-	case win32.WM_CHAR:
-		return WM_CHAR(hWnd, wparam, lparam)
-	case win32.WM_TIMER:
-		return WM_TIMER(hWnd, wparam, lparam)
-	case:
-		return win32.DefWindowProcW(hWnd, msg, wparam, lparam)
+	case win32.WM_CREATE:		return WM_CREATE(hWnd, wparam, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hWnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hWnd, wparam, lparam)
+	case win32.WM_SIZE:			return WM_SIZE(hWnd, wparam, lparam)
+	case win32.WM_PAINT:		return WM_PAINT(hWnd, wparam, lparam)
+	case win32.WM_CHAR:			return WM_CHAR(hWnd, wparam, lparam)
+	case win32.WM_TIMER:		return WM_TIMER(hWnd, wparam, lparam)
+	case:						return win32.DefWindowProcW(hWnd, msg, wparam, lparam)
 	}
 }
 

@@ -4,6 +4,10 @@
         {
             "name": "core",
             "path": "..\\Odin\\core"
+        },
+        {
+            "name": "vendor",
+            "path": "..\\Odin\\vendor"
         }
     ],
     "enable_document_symbols": true,

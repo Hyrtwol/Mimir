@@ -196,6 +196,4 @@ main :: proc() {
 	}
 
 	fmt.print("Done!\n")
-
-	//os.exit(666)
 }
