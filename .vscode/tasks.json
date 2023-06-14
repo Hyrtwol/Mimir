@@ -2,6 +2,24 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "odin run",
+            "type": "process",
+            "command": "odin",
+            "args": [
+                "run",
+                "..\\${relativeFileDirname}",
+                "-resource:..\\doc\\odin.rc"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": "**/*.odin"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
+            }
+        },
+        {
             "label": "odin build",
             "type": "shell",
             "command": "odin",
@@ -20,18 +38,19 @@
             }
         },
         {
-            "label": "odin run",
-            "type": "process",
+            "label": "odin debug build",
+            "type": "shell",
             "command": "odin",
             "args": [
-                "run",
+                "build",
                 "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc"
+                "-resource:..\\doc\\odin.rc",
+                "-debug"
             ],
             "problemMatcher": [],
             "group": {
                 "kind": "build",
-                "isDefault": "**/*.odin"
+                "isDefault": false
             },
             "options": {
                 "cwd": "${workspaceFolder}/bin"
