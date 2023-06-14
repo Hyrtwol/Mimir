@@ -1,17 +1,14 @@
-// Place your settings in this file to overwrite default and user settings.
 {
-    "files.associations": {
-        "*.recipe": "xml",
-        "*.targets": "xml"
-    },
+    "editor.wordWrapColumn": 200,
     "editor.rulers": [
-        120
+        200
     ],
     "cSpell.words": [
         "metaprogramming",
         "microarch",
         "reloc",
-        "sandybridge"
+        "sandybridge",
+        "struct"
     ],
     "markdownlint.config": {
         "no-hard-tabs": false,
@@ -20,16 +17,13 @@
     "[markdown]": {
         "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
     },
-    "editor.wordWrapColumn": 120,
     "omnisharp.autoStart": false,
     "typescript.tsc.autoDetect": "off",
-    "grunt.autoDetect": "off",
-    "jake.autoDetect": "off",
-    "gulp.autoDetect": "off",
     "npm.autoDetect": "off",
     "files.exclude": {
         "**/.git": true,
         "**/.DS_Store": true,
-        "**/Thumbs.db": true
+        "**/Thumbs.db": true,
+        "**/desktop.ini": true
     }
 }

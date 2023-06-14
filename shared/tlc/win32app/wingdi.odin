@@ -11,7 +11,7 @@ import win32 "core:sys/windows"
 // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/
 /*
 foreign import user32 "system:User32.lib"
-@(default_calling_convention="stdcall") // not sure if stdcall here is scoped to foreign only? moved it inline for now.
+@(default_calling_convention="stdcall")
 foreign user32 {
 }
 */
@@ -23,7 +23,7 @@ CIEXYZ :: FXPT2DOT30
 CIEXYZTRIPLE :: struct {
     ciexyzRed:          CIEXYZ,
     ciexyzGreen:        CIEXYZ,
-    ciexyzBlue:         CIEXYZ
+    ciexyzBlue:         CIEXYZ,
 }
 
 BITMAPV5HEADER :: struct {
@@ -50,5 +50,5 @@ BITMAPV5HEADER :: struct {
     bV5Intent:          win32.DWORD,
     bV5ProfileData:     win32.DWORD,
     bV5ProfileSize:     win32.DWORD,
-    bV5Reserved:        win32.DWORD
+    bV5Reserved:        win32.DWORD,
 }

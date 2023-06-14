@@ -1,6 +1,8 @@
 {
     "recommendations": [
-        "aesl.odin",
-        "editorconfig.editorconfig"
+        "editorconfig.editorconfig",
+        "danielgavin.ols",
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint"
     ]
 }

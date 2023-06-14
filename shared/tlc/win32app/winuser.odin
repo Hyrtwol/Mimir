@@ -73,5 +73,5 @@ DrawTextFormat :: enum u32 {
     DT_WORD_ELLIPSIS        = 0x00040000,
     DT_NOFULLWIDTHCHARBREAK = 0x00080000,
     DT_HIDEPREFIX           = 0x00100000,
-    DT_PREFIXONLY           = 0x00200000
+    DT_PREFIXONLY           = 0x00200000,
 }

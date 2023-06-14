@@ -16,7 +16,7 @@ DIB :: struct {
     hbitmap : win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
     pvBits  : screenbuffer,
     size : int2,
-    pixel_count: i32
+    pixel_count: i32,
 }
 
 dib_create_section :: proc (dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
@@ -55,12 +55,9 @@ dib_create_v1 :: proc (hdc: win32.HDC, size: int2) -> DIB  {
         biXPelsPerMeter = PelsPerMeter,
         biYPelsPerMeter = PelsPerMeter,
         biClrImportant  = 0,
-        biClrUsed       = 0
+        biClrUsed       = 0,
     }
-    dib := DIB {
-        size = size,
-        pixel_count = size.x * size.y
-    }
+    dib := DIB {size = size, pixel_count = size.x * size.y}
     dib_create_section(
         &dib,
         hdc,
@@ -79,12 +76,9 @@ dib_create :: proc (hdc: win32.HDC, size: int2) -> DIB  {
         bV5RedMask      = 0x000000ff,
         bV5GreenMask    = 0x0000ff00,
         bV5BlueMask     = 0x00ff0000,
-        bV5AlphaMask    = 0xff000000
+        bV5AlphaMask    = 0xff000000,
     }
-    dib := DIB {
-        size = size,
-        pixel_count = size.x * size.y
-    }
+    dib := DIB {size = size, pixel_count = size.x * size.y}
     dib_create_section(
         &dib,
         hdc,

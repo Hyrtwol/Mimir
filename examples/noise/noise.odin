@@ -43,7 +43,7 @@ dib_noise2 :: proc(dib: ^DIB) {
     w := dib.size.x
     h := dib.size.y
     i : i32 = 0
-    n : f32 = 0
+    n, n1, n2 : f32
     ni : u8 = 0
     pp : double2 = npos
     ofs : double2
@@ -53,7 +53,9 @@ dib_noise2 :: proc(dib: ^DIB) {
         for x in 0..<w {
             ofs.x = f64(x)
             np := pp + ofs * scale
-            n = noise.noise_2d(nseed, noise.Vec2(np))
+            n1 = noise.noise_2d(nseed, noise.Vec2(np))
+            n2 = noise.noise_2d(nseed, noise.Vec2(np * 2))
+            n = (n1 * 2/3) + (n2 * 0.5 * 1/3)
             ni = u8(n*127.74+127.74)
             p[i] = {ni,ni,ni,255}
             i += 1
@@ -67,7 +69,7 @@ dib_noise3 :: proc(dib: ^DIB) {
     w := dib.size.x
     h := dib.size.y
     i : i32 = 0
-    n : f32 = 0
+    n, n1, n2 : f32
     ni : u8 = 0
     pp : double3 = npos3
     ofs : double3 = {0,0,0}
@@ -77,9 +79,12 @@ dib_noise3 :: proc(dib: ^DIB) {
         for x in 0..<w {
             ofs.x = f64(x)
             np := pp + ofs * scale
-            n = noise.noise_3d_improve_xy(nseed, noise.Vec3(np))
+            //n = noise.noise_3d_improve_xy(nseed, noise.Vec3(np))
+            n1 = noise.noise_3d_improve_xy(nseed, noise.Vec3(np))
+            n2 = noise.noise_3d_improve_xy(nseed, noise.Vec3(np * -2.0))
+            n = (n1 * 2/3) + (n2 * 0.5 * 1/3)
             ni = u8(n*127.74+127.74)
-            p[i] = {ni,ni,ni,255}
+            p[i] = {ni,u8(n1*127.74+127.74),u8(n2*127.74+127.74),255}
             i += 1
         }
     }

@@ -16,12 +16,12 @@ LRESULT_TRUE  : win32.LRESULT : 1
 
 // how to cast TRUE to LRESULT ?
 MAKELRESULT :: proc(result: win32.BOOL) -> win32.LRESULT {
-    return LRESULT_TRUE if result else LRESULT_FALSE
+	return LRESULT_TRUE if result else LRESULT_FALSE
 }
 
 /*
 thought i should remap the win32 calls but didn't find all mappings so will stick with W for now
-also note sure how to "map" the string constants without alot of when's :p
+also not sure how to "map" the string constants without alot of when's :p
 maybe i'll try again when i learned a bit more odin...
 
 USE_ANSI :: false

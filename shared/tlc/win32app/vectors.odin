@@ -10,4 +10,4 @@ import win32 "core:sys/windows"
 
 byte4 :: distinct [4]u8
 int2  :: hlm.int2
-ZERO2 : int2 : {0,0}
+ZERO2 : int2 : {0, 0}
