@@ -2,9 +2,9 @@
 // By Soren Saket
 
 // semi-colons ; are not requied in odin
-// 
+//
 
-// Every Odin script belongs to a package 
+// Every Odin script belongs to a package
 // Define the package with the package [packageName] statement
 // The main package name is reserved for the program entry point package
 // You cannot have two different packages in the same directory
@@ -43,14 +43,14 @@ PROGRAMNAME :: "Program"
 // GL_VERSION define the version of OpenGL to use. Here we use 4.6 which is the newest version
 // You might need to lower this to 3.3 depending on how old your graphics card is.
 // Constant with explicit type for example
-GL_MAJOR_VERSION : c.int : 4
+GL_MAJOR_VERSION: c.int : 4
 // Constant with type inference
 GL_MINOR_VERSION :: 6
 
 // Our own boolean storing if the application is running
 // We use b32 for allignment and easy compatibility with the glfw.WindowShouldClose procedure
 // See https://odin-lang.org/docs/overview/#basic-types for more information on the types in Odin
-running : b32 = true
+running: b32 = true
 
 // The main function is the entry point for the application
 // In Odin functions/methods are more precisely named procedures
@@ -61,16 +61,16 @@ main :: proc() {
 	// https://www.glfw.org/docs/3.3/window_guide.html#window_hints
 	// https://www.glfw.org/docs/3.3/group__window.html#ga7d9c8c62384b1e2821c4dc48952d2033
 	glfw.WindowHint(glfw.RESIZABLE, 1)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR,GL_MAJOR_VERSION) 
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR,GL_MINOR_VERSION)
-	glfw.WindowHint(glfw.OPENGL_PROFILE,glfw.OPENGL_CORE_PROFILE)
-	
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
+	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+
 	// Initialize glfw
 	// GLFW_TRUE if successful, or GLFW_FALSE if an error occurred.
 	// GLFW_TRUE = 1
 	// GLFW_FALSE = 0
 	// https://www.glfw.org/docs/latest/group__init.html#ga317aac130a235ab08c6db0834907d85e
-	if(glfw.Init() != 1){
+	if (glfw.Init() != 1) {
 		// Print Line
 		fmt.println("Failed to initialize GLFW")
 		// Return early
@@ -95,11 +95,11 @@ main :: proc() {
 		fmt.println("Unable to create window")
 		return
 	}
-	
+
 	//
 	// https://www.glfw.org/docs/3.3/group__context.html#ga1c04dc242268f827290fe40aa1c91157
 	glfw.MakeContextCurrent(window)
-	
+
 	// Enable vsync
 	// https://www.glfw.org/docs/3.3/group__context.html#ga6d4e0cdf151b5e579bd67f13202994ed
 	glfw.SwapInterval(1)
@@ -119,17 +119,17 @@ main :: proc() {
 
 	// casting the c.int to int
 	// This is needed because the GL_MAJOR_VERSION has an explicit type of c.int
-	gl.load_up_to(int(GL_MAJOR_VERSION), GL_MINOR_VERSION, glfw.gl_set_proc_address) 
-	
+	gl.load_up_to(int(GL_MAJOR_VERSION), GL_MINOR_VERSION, glfw.gl_set_proc_address)
+
 	init()
-	
+
 	// There is only one kind of loop in Odin called for
 	// https://odin-lang.org/docs/overview/#for-statement
 	for (!glfw.WindowShouldClose(window) && running) {
 		// Process waiting events in queue
 		// https://www.glfw.org/docs/3.3/group__window.html#ga37bd57223967b4211d60ca1a0bf3c832
 		glfw.PollEvents()
-		
+
 		update()
 		draw()
 
@@ -140,19 +140,19 @@ main :: proc() {
 	}
 
 	exit()
-	
+
 }
 
 
-init :: proc(){
+init :: proc() {
 	// Own initialization code there
 }
 
-update :: proc(){
+update :: proc() {
 	// Own update code here
 }
 
-draw :: proc(){
+draw :: proc() {
 	// Set the opengl clear color
 	// 0-1 rgba values
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
@@ -162,7 +162,7 @@ draw :: proc(){
 	// Own drawing code here
 }
 
-exit :: proc(){
+exit :: proc() {
 	// Own termination code here
 }
 

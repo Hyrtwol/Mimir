@@ -40,23 +40,24 @@ W95_FUCHSIA     : byte4 : { 0xFF, 0xFF, 0xFF, 0xFF }
 W95_AQUA        : byte4 : { 0x00, 0xFF, 0xFF, 0xFF }
 W95_WHITE       : byte4 : { 0xFF, 0xFF, 0xFF, 0xFF }
 
-W95_COLORS : [16]byte4 : {
-    W95_BLACK       ,
-    W95_MAROON      ,
-    W95_GREEN       ,
-    W95_OLIVE       ,
-    W95_NAVY        ,
-    W95_PURPLE      ,
-    W95_TEAL        ,
-    W95_SILVER      ,
-    W95_GRAY        ,
-    W95_RED         ,
-    W95_LIME        ,
-    W95_YELLOW      ,
-    W95_BLUE        ,
-    W95_FUCHSIA     ,
-    W95_AQUA        ,
-    W95_WHITE      	}
+W95_COLORS: [16]byte4 : {
+	W95_BLACK,
+	W95_MAROON,
+	W95_GREEN,
+	W95_OLIVE,
+	W95_NAVY,
+	W95_PURPLE,
+	W95_TEAL,
+	W95_SILVER,
+	W95_GRAY,
+	W95_RED,
+	W95_LIME,
+	W95_YELLOW,
+	W95_BLUE,
+	W95_FUCHSIA,
+	W95_AQUA,
+	W95_WHITE,
+}
 
 // C64 Palette
 
@@ -77,20 +78,21 @@ C64_LIGHT_GREEN : byte4 : { 0x9A, 0xD2, 0x84, 0xFF }
 C64_LIGHT_BLUE  : byte4 : { 0x6C, 0x5E, 0xB5, 0xFF }
 C64_LIGHT_GREY	: byte4 : { 0x95, 0x95, 0x95, 0xFF }
 
-C64_COLORS : [16]byte4 : {
-    C64_BLACK       ,
-    C64_WHITE       ,
-    C64_RED         ,
-    C64_CYAN	    ,
-    C64_PURPLE      ,
-    C64_GREEN       ,
-    C64_BLUE	    ,
-    C64_YELLOW      ,
-    C64_ORANGE      ,
-    C64_BROWN       ,
-    C64_LIGHT_RED	,
-    C64_DARK_GREY   ,
-    C64_GREY	    ,
-    C64_LIGHT_GREEN ,
-    C64_LIGHT_BLUE  ,
-    C64_LIGHT_GREY	}
+C64_COLORS: [16]byte4 : {
+	C64_BLACK,
+	C64_WHITE,
+	C64_RED,
+	C64_CYAN,
+	C64_PURPLE,
+	C64_GREEN,
+	C64_BLUE,
+	C64_YELLOW,
+	C64_ORANGE,
+	C64_BROWN,
+	C64_LIGHT_RED,
+	C64_DARK_GREY,
+	C64_GREY,
+	C64_LIGHT_GREEN,
+	C64_LIGHT_BLUE,
+	C64_LIGHT_GREY,
+}
