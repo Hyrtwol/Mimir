@@ -2,6 +2,7 @@ package win32app
 
 import       "core:fmt"
 import       "core:intrinsics"
+import       "core:math/fixed"
 import       "core:math/linalg"
 import hlm   "core:math/linalg/hlsl"
 import       "core:runtime"
@@ -10,14 +11,14 @@ import win32 "core:sys/windows"
 
 // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/
 /*
-foreign import user32 "system:User32.lib"
+foreign import gdi32 "system:Gdi32.lib"
+
 @(default_calling_convention="stdcall")
-foreign user32 {
+foreign gdi32 {
 }
 */
 
-FXPT2DOT30 :: distinct i32
-
+FXPT2DOT30 :: distinct fixed.Fixed(i32, 30)
 CIEXYZ :: FXPT2DOT30
 
 CIEXYZTRIPLE :: struct {

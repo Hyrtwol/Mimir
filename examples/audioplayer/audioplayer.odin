@@ -53,12 +53,6 @@ cols            := canvas.C64_COLORS
 
 create_count    := 0;
 
-fill_screen2 :: proc(p: canvas.screenbuffer, count: i32) {
-	for i in 0 ..< count {
-		p[i] = canvas.byte4{u8(i * 17), u8(i * 29), u8(i * 37), 255}
-	}
-}
-
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
 	scrpos := size / ZOOM
@@ -106,7 +100,7 @@ WM_ERASEBKGND :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 }
 
 WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hWnd)
 	case '\t':		fmt.print("tab\n")
@@ -134,7 +128,6 @@ WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	client_size := win32app.get_client_size(hWnd)
 
 	hDC_source := win32app.CreateCompatibleDC(hDC_target)
-	//win32.SelectObject(hDC_source, dib.hbitmap);
 	win32.SelectObject(hDC_source, win32.HGDIOBJ(dib.hbitmap))
 	win32.StretchBlt(
 		hDC_target, 0, 0, client_size.x, client_size.y,

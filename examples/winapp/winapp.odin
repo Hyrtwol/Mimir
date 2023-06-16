@@ -24,21 +24,23 @@ HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 ZOOM  	:: 8
 
+screenbuffer  :: canvas.screenbuffer
+
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2
 bitmap_count  : i32
-pvBits        : canvas.screenbuffer
+pvBits        : screenbuffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
 dib           : canvas.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
-fill_screen2 :: proc(p: canvas.screenbuffer, count: i32) {
+/*fill_screen2 :: proc(p: screenbuffer, count: i32) {
 	for i in 0 ..< count {
 		p[i] = canvas.byte4{u8(i * 17), u8(i * 29), u8(i * 37), 255}
 	}
-}
+}*/
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
@@ -149,7 +151,6 @@ WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
-	fmt.printf("WM_SIZE %v %v\n", WM_SIZE, size)
 	newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, bitmap_size)
 	win32.SetWindowTextW(hWnd, win32.utf8_to_wstring(newtitle))
 	return 0
@@ -158,8 +159,9 @@ WM_SIZE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hDC_target := win32.BeginPaint(hWnd, &ps) // todo check if defer can be used for EndPaint
-
+	assert(hDC_target == ps.hdc)
 	client_size := win32app.get_client_size(hWnd)
+	assert(client_size == win32app.get_rect_size(&ps.rcPaint))
 
 	hDC_source := win32app.CreateCompatibleDC(hDC_target)
 	win32.SelectObject(hDC_source, bitmap_handle)
@@ -178,7 +180,6 @@ WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 // https://learn.microsoft.com/en-us/windows/win32/winmsg/using-timers
 WM_TIMER :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printf("WM_TIMER %v %v\n", wparam, lparam)
 	switch (wparam)
 	{
 	case win32app.IDT_TIMER1: fmt.print("TIK\n")
@@ -216,8 +217,7 @@ handle_input :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	case 4:
 		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	case:
-	//fmt.printf("input %v %d\n", scrpos, wparam)
-	//setdot(pos, canvas.byte4{u8(255), u8(255), u8(0), 255})
+		//fmt.printf("input %v %d\n", scrpos, wparam)
 	}
 	return 0
 }

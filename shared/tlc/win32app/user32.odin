@@ -10,11 +10,13 @@ import win32 "core:sys/windows"
 
 L :: intrinsics.constant_utf16_cstring
 
+// BOOL :: distinct b32
+// LRESULT :: LONG_PTR -> LONG_PTR :: int
 
 LRESULT_FALSE : win32.LRESULT : 0
 LRESULT_TRUE  : win32.LRESULT : 1
 
-// how to cast TRUE to LRESULT ?
+// how to cast win32.BOOL to win32.LRESULT ?
 MAKELRESULT :: proc(result: win32.BOOL) -> win32.LRESULT {
 	return LRESULT_TRUE if result else LRESULT_FALSE
 }
