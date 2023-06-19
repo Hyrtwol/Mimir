@@ -1,3 +1,4 @@
+// +build windows
 package win32app
 
 import win32 "core:sys/windows"
@@ -37,12 +38,12 @@ foreign winmm {
 	PlaySoundW :: proc(pszSound: LPCWSTR, hmod: HMODULE, fdwSound: DWORD) -> BOOL ---
 }
 
-// https://learn.microsoft.com/en-us/previous-versions/dd757713(v=vs.85)
-
-MM_WOM_OPEN  :: 0x3BB           /* waveform output */
+/* waveform output */
+MM_WOM_OPEN  :: 0x3BB
 MM_WOM_CLOSE :: 0x3BC
 MM_WOM_DONE  :: 0x3BD
-MM_WIM_OPEN  :: 0x3BE           /* waveform input */
+/* waveform input */
+MM_WIM_OPEN  :: 0x3BE
 MM_WIM_CLOSE :: 0x3BF
 MM_WIM_DATA  :: 0x3C0
 
@@ -62,12 +63,11 @@ WAVE_FORMAT_DIRECT                       :: 0x0008
 WAVE_FORMAT_DIRECT_QUERY                 :: (WAVE_FORMAT_QUERY | WAVE_FORMAT_DIRECT)
 WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE :: 0x0010
 
-
-WHDR_DONE      :: 0x00000001  /* done bit */
-WHDR_PREPARED  :: 0x00000002  /* set if this header has been prepared */
-WHDR_BEGINLOOP :: 0x00000004  /* loop start block */
-WHDR_ENDLOOP   :: 0x00000008  /* loop end block */
-WHDR_INQUEUE   :: 0x00000010  /* reserved for driver */
+WHDR_DONE      :: 0x00000001 /* done bit */
+WHDR_PREPARED  :: 0x00000002 /* set if this header has been prepared */
+WHDR_BEGINLOOP :: 0x00000004 /* loop start block */
+WHDR_ENDLOOP   :: 0x00000008 /* loop end block */
+WHDR_INQUEUE   :: 0x00000010 /* reserved for driver */
 
 WAVECAPS_PITCH          :: 0x0001 /* supports pitch control */
 WAVECAPS_PLAYBACKRATE   :: 0x0002 /* supports playback rate control */
@@ -115,7 +115,9 @@ HWAVEOUT :: distinct HANDLE
 
 LPHWAVEIN :: ^HWAVEIN
 LPHWAVEOUT :: ^HWAVEOUT
-//WAVECALLBACK :: win32.DRVCALLBACK // typedef void (CALLBACK DRVCALLBACK)(HDRVR hdrvr, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
+
+//typedef void (CALLBACK DRVCALLBACK)(HDRVR hdrvr, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
+//WAVECALLBACK :: DRVCALLBACK
 //LPWAVECALLBACK :: ^WAVECALLBACK
 /*
 MMTIME :: struct {

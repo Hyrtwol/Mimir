@@ -96,7 +96,7 @@
             "args": [
                 "doc",
                 "..\\${relativeFileDirname}", //"-doc-format",
-                ">", "${fileBasenameNoExtension}.txt"
+                ">", "${fileDirnameBasename}.txt"
             ],
             "problemMatcher": [],
             "group": {

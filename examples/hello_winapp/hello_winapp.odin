@@ -2,6 +2,7 @@ package main
 
 import          "core:fmt"
 import          "core:intrinsics"
+import			"core:os"
 import          "core:runtime"
 import win32    "core:sys/windows"
 import win32app "../../shared/tlc/win32app"
@@ -14,6 +15,14 @@ HEIGHT 	:: WIDTH * 3 / 4
 CENTER  :: true
 
 hbrGray : win32.HBRUSH
+
+write_hello_txt :: proc() {
+	path := "hello.txt"
+	fmt.printf("writing %s\n", path)
+	data: []byte = {65,66,67,68} // "ABCD"
+	ok := os.write_entire_file(path, data)
+	fmt.printf("ok %v\n", ok)
+}
 
 WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_CREATE\n")
