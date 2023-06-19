@@ -1,12 +1,5 @@
+// +build windows
 package win32app
-
-import       "core:fmt"
-import       "core:intrinsics"
-import       "core:math/linalg"
-import hlm   "core:math/linalg/hlsl"
-import       "core:runtime"
-import       "core:strings"
-import win32 "core:sys/windows"
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/
 
@@ -21,12 +14,7 @@ foreign user32 {
 	DeleteDC :: proc "stdcall" (hdc: HDC) -> BOOL ---
 
 	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-redrawwindow
-	RedrawWindow :: proc "stdcall" (
-		hwnd: HWND,
-		lprcUpdate: LPRECT,
-		hrgnUpdate: HRGN,
-		flags: UINT,
-	  ) -> BOOL ---
+	RedrawWindow :: proc "stdcall" (hwnd: HWND, lprcUpdate: LPRECT, hrgnUpdate: HRGN, flags: UINT) -> BOOL ---
 }
 
 // DrawText() Format Flags

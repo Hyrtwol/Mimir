@@ -84,7 +84,6 @@ dib_noise1 :: proc(dib: ^DIB) {
 				c -= 1
 			}
 			setdot(x, y, u8(c))
-
 		}
 	}
 
@@ -147,7 +146,6 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
 	case '1':	    noise_func = dib_noise1
-	//case '2':	    noise_func = dib_noise2
 	case:
 	}
 	return 0
@@ -198,9 +196,7 @@ WM_RBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
-	scrpos := size / ZOOM
-	return scrpos
+ 	return win32app.GET_XY_LPARAM(lparam) / ZOOM
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {

@@ -2,9 +2,7 @@ package main
 
 import          "core:fmt"
 import          "core:intrinsics"
-import          "core:os"
 import          "core:runtime"
-import          "core:strings"
 import win32    "core:sys/windows"
 import win32app "../../shared/tlc/win32app"
 
@@ -43,11 +41,12 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
 	case '\t':		fmt.print("tab\n")
 	case '\r':		fmt.print("return\n")
+	case 'm':		win32app.PlaySoundW(L("62a.wav"), nil, win32app.SND_FILENAME);
 	case 'p':		win32app.show_error_and_panic("Test Panic")
 	case:
 	}

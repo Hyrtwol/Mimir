@@ -1,61 +1,17 @@
-// GLFW and OpenGL example with very verbose comments and links to documentation for learning
-// By Soren Saket
-
-// semi-colons ; are not requied in odin
-//
-
-// Every Odin script belongs to a package
-// Define the package with the package [packageName] statement
-// The main package name is reserved for the program entry point package
-// You cannot have two different packages in the same directory
-// If you want to create another package create a new directory and name the package the same as the directory
-// You can then import the package with the import keyword
-// https://odin-lang.org/docs/overview/#packages
 package main
 
-// Import statement
-// https://odin-lang.org/docs/overview/#packages
-
-// Odin by default has two library collections. Core and Vendor
-// Core contains the default library all implemented in the Odin language
-// Vendor contains bindings for common useful packages aimed at game and software development
-// https://odin-lang.org/docs/overview/#import-statement
-
-// fmt contains formatted I/O procedures.
-// https://pkg.odin-lang.org/core/fmt/
 import "core:fmt"
-// C interoperation compatibility
 import "core:c"
-
-// Here we import OpenGL and rename it to gl for short
 import gl "vendor:OpenGL"
-// We use GLFW for cross platform window creation and input handling
 import "vendor:glfw"
-
-
-// Odin has type type inference
-// variableName := value
-// variableName : type = value
-// You can set constants with ::
 
 PROGRAMNAME :: "Program"
 
-// GL_VERSION define the version of OpenGL to use. Here we use 4.6 which is the newest version
-// You might need to lower this to 3.3 depending on how old your graphics card is.
-// Constant with explicit type for example
-GL_MAJOR_VERSION: c.int : 4
-// Constant with type inference
+GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
 
-// Our own boolean storing if the application is running
-// We use b32 for allignment and easy compatibility with the glfw.WindowShouldClose procedure
-// See https://odin-lang.org/docs/overview/#basic-types for more information on the types in Odin
 running: b32 = true
 
-// The main function is the entry point for the application
-// In Odin functions/methods are more precisely named procedures
-// procedureName :: proc() -> returnType
-// https://odin-lang.org/docs/overview/#procedures
 main :: proc() {
 	// Set Window Hints
 	// https://www.glfw.org/docs/3.3/window_guide.html#window_hints

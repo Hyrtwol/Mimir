@@ -1,13 +1,7 @@
+// +build windows
 package win32app
 
-import       "core:fmt"
-import       "core:intrinsics"
-import       "core:math/fixed"
-import       "core:math/linalg"
-import hlm   "core:math/linalg/hlsl"
-import       "core:runtime"
-import       "core:strings"
-import win32 "core:sys/windows"
+import "core:math/fixed"
 
 // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/
 /*

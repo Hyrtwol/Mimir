@@ -78,7 +78,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	// todo defer win32.ReleaseDC(hwnd, hdc)
 
 	dib = canvas.dib_create(hdc, client_size / ZOOM)
-	fmt.printf("hbitmap %v\n", dib)
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {50, 100, 150, 255})
 	}

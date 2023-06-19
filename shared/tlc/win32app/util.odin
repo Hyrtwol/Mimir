@@ -1,23 +1,18 @@
 package win32app
 
 import			"core:fmt"
-import			"core:intrinsics"
-import			"core:math/linalg"
-import hlm		"core:math/linalg/hlsl"
-import			"core:runtime"
-import			"core:strings"
 import win32	"core:sys/windows"
 
-IDT_TIMER1  : win32.UINT_PTR : 10001
-IDT_TIMER2  : win32.UINT_PTR : 10002
-IDT_TIMER3  : win32.UINT_PTR : 10003
-IDT_TIMER4  : win32.UINT_PTR : 10004
-IDT_TIMER5  : win32.UINT_PTR : 10005
-IDT_TIMER6  : win32.UINT_PTR : 10006
-IDT_TIMER7  : win32.UINT_PTR : 10007
-IDT_TIMER8  : win32.UINT_PTR : 10008
-IDT_TIMER9  : win32.UINT_PTR : 10009
-IDT_TIMER10 : win32.UINT_PTR : 10010
+IDT_TIMER1  : UINT_PTR : 10001
+IDT_TIMER2  : UINT_PTR : 10002
+IDT_TIMER3  : UINT_PTR : 10003
+IDT_TIMER4  : UINT_PTR : 10004
+IDT_TIMER5  : UINT_PTR : 10005
+IDT_TIMER6  : UINT_PTR : 10006
+IDT_TIMER7  : UINT_PTR : 10007
+IDT_TIMER8  : UINT_PTR : 10008
+IDT_TIMER9  : UINT_PTR : 10009
+IDT_TIMER10 : UINT_PTR : 10010
 
 show_error_and_panic :: proc(msg: string) {
 	errormsg := win32.utf8_to_wstring(fmt.tprintf("%s\nLast error: %x\n", msg, win32.GetLastError()))
@@ -25,29 +20,27 @@ show_error_and_panic :: proc(msg: string) {
 	panic(msg)
 }
 
-decode_scrpos :: proc(lparam: win32.LPARAM) -> int2 {
-	return int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
-}
+// decode_lparam :: #force_inline proc "contextless" proc(lparam: LPARAM) -> int2 {
+// 	return int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+// }
 
-get_rect_size :: proc(rect: ^win32.RECT) -> int2 {
+get_rect_size :: proc(rect: ^RECT) -> int2 {
 	return {(rect.right - rect.left), (rect.bottom - rect.top)}
 }
 
-get_client_size :: proc(hwnd: win32.HWND) -> int2 {
-	rect: win32.RECT
+get_client_size :: proc(hwnd: HWND) -> int2 {
+	rect: RECT
 	win32.GetClientRect(hwnd, &rect)
 	return get_rect_size(&rect)
 }
 
 adjust_window_size :: proc(size: int2, dwStyle, dwExStyle: u32) -> int2 {
-	rect := win32.RECT{0, 0, size.x, size.y}
+	rect := RECT{0, 0, size.x, size.y}
 	if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle) {
 		return get_rect_size(&rect)
 	}
 	return size
 }
-
-CW_USEDEFAULT_INT2: int2 : {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
 
 get_window_position :: proc(size: int2, center: bool) -> int2 {
 	if center {
@@ -56,10 +49,10 @@ get_window_position :: proc(size: int2, center: bool) -> int2 {
 			return (dmsize - size) / 2
 		}
 	}
-	return CW_USEDEFAULT_INT2
+	return {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
 }
 
-get_instance :: proc() -> win32.HINSTANCE {
+get_instance :: proc() -> HINSTANCE {
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {
 		show_error_and_panic("No instance")
@@ -67,7 +60,7 @@ get_instance :: proc() -> win32.HINSTANCE {
 	return instance
 }
 
-register_window_class :: proc(instance: win32.HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
+register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
 
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
 	if icon == nil {
