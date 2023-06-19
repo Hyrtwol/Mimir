@@ -38,6 +38,24 @@
             }
         },
         {
+            "label": "odin test",
+            "type": "shell",
+            "command": "odin",
+            "args": [
+                "test",
+                "..\\${relativeFileDirname}",
+                "-resource:..\\doc\\odin.rc"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
+            }
+        },
+        {
             "label": "odin debug build",
             "type": "shell",
             "command": "odin",

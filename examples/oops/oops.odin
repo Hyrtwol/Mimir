@@ -19,7 +19,6 @@ setup_windows :: proc() -> int {
 main :: proc() {
 	//fmt.printf("%s (%v %v %v %v)\n", TITLE, ODIN_VENDOR, ODIN_VERSION, ODIN_OS, ODIN_ARCH)
 	fmt.printf("%s\n", TITLE)
-	//fmt.printf("Environment: %v %v\n", ODIN_OS, ODIN_ARCH)
 	fmt.printf("%v %v %v\n", ODIN_VENDOR, ODIN_VERSION, ODIN_ROOT)
 	fmt.printf("%v %v\n", ODIN_OS, ODIN_ARCH)
 	exitcode: int = 0

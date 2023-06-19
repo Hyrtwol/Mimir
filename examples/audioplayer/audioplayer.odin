@@ -24,6 +24,12 @@ HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 ZOOM  	:: 8
 
+settings : win32app.window_settings = {
+	title = TITLE,
+	window_size = {WIDTH, HEIGHT},
+	center = CENTER,
+}
+
 // audio
 
 NUM_BUFFERS             :: 8
@@ -49,9 +55,6 @@ PNoiseDisplay   :: ^TNoiseDisplay
 dib             : canvas.DIB
 colidx          := 1
 cols            := canvas.C64_COLORS
-// debug
-
-create_count    := 0;
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
@@ -66,28 +69,26 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 	}
 }
 
-WM_CREATE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_CREATE\n")
-	create_count += 1
 
-	client_size := win32app.get_client_size(hWnd)
+	client_size := win32app.get_client_size(hwnd)
 
-	hDC := win32.GetDC(hWnd)
-	// todo defer win32.ReleaseDC(hWnd, hDC)
+	hdc := win32.GetDC(hwnd)
+	// todo defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = canvas.dib_create(hDC, client_size / ZOOM)
+	dib = canvas.dib_create(hdc, client_size / ZOOM)
 	fmt.printf("hbitmap %v\n", dib)
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {50, 100, 150, 255})
 	}
 
-	win32.ReleaseDC(hWnd, hDC)
+	win32.ReleaseDC(hwnd, hdc)
 	return 0
 }
 
-WM_DESTROY :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_DESTROY\n")
-	create_count -= 1
 
 	canvas.dib_free_section(&dib)
 
@@ -95,14 +96,14 @@ WM_DESTROY :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	return 1
 }
 
-WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	switch wparam {
-	case '\x1b':	win32.DestroyWindow(hWnd)
+	case '\x1b':	win32.DestroyWindow(hwnd)
 	case '\t':		fmt.print("tab\n")
 	case '\r':		fmt.print("return\n")
 	case '1':		if colidx > 0 {colidx -= 1}
@@ -114,92 +115,86 @@ WM_CHAR :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-WM_SIZE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
 	newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, dib.size)
-	win32.SetWindowTextW(hWnd, win32.utf8_to_wstring(newtitle))
+	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	return 0
 }
 
-WM_PAINT :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	hDC_target := win32.BeginPaint(hWnd, &ps) // todo check if defer can be used for EndPaint
+	hdc_target := win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 
-	client_size := win32app.get_client_size(hWnd)
+	client_size := win32app.get_client_size(hwnd)
 
-	hDC_source := win32app.CreateCompatibleDC(hDC_target)
-	win32.SelectObject(hDC_source, win32.HGDIOBJ(dib.hbitmap))
+	hdc_source := win32app.CreateCompatibleDC(hdc_target)
+	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 	win32.StretchBlt(
-		hDC_target, 0, 0, client_size.x, client_size.y,
-		hDC_source, 0, 0, dib.size.x, dib.size.y,
+		hdc_target, 0, 0, client_size.x, client_size.y,
+		hdc_source, 0, 0, dib.size.x, dib.size.y,
 		win32.SRCCOPY,
 	)
-	win32app.DeleteDC(hDC_source)
+	win32app.DeleteDC(hdc_source)
 
-	win32.EndPaint(hWnd, &ps)
-	win32.ValidateRect(hWnd, nil)
-
+	win32.EndPaint(hwnd, &ps)
 	return 0
 }
 
-WM_MOUSEMOVE :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hWnd, wparam, lparam)
+WM_MOUSEMOVE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	return handle_input(hwnd, wparam, lparam)
 }
 
-WM_LBUTTONDOWN :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hWnd, wparam, lparam)
+WM_LBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	return handle_input(hwnd, wparam, lparam)
 }
 
-WM_RBUTTONDOWN :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hWnd, wparam, lparam)
+WM_RBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	return handle_input(hwnd, wparam, lparam)
 }
 
-handle_input :: proc(hWnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case 1:
 		pos := decode_scrpos(lparam)
 		setdot(pos, cols[colidx])
-		win32.InvalidateRect(hWnd, nil, false)
+		win32.InvalidateRect(hwnd, nil, false)
 	case 2:
 		pos := decode_scrpos(lparam)
 		setdot(pos, canvas.C64_BLUE)
-		win32.InvalidateRect(hWnd, nil, false)
+		win32.InvalidateRect(hwnd, nil, false)
 	case 3:
 		pos := decode_scrpos(lparam)
 		setdot(pos, canvas.C64_GREEN)
-		win32.InvalidateRect(hWnd, nil, false)
+		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
 		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	case:
-	//fmt.printf("input %v %d\n", scrpos, wparam)
-	//setdot(pos, canvas.byte4{u8(255), u8(255), u8(0), 255})
 	}
 	return 0
 }
 
 wndproc :: proc "stdcall" (
-	hWnd: win32.HWND,
+	hwnd: win32.HWND,
 	msg: win32.UINT,
 	wparam: win32.WPARAM,
 	lparam: win32.LPARAM,
 ) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
-	case win32.WM_CREATE:		return WM_CREATE(hWnd, wparam, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hWnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hWnd, wparam, lparam)
-	case win32.WM_SIZE:			return WM_SIZE(hWnd, wparam, lparam)
-	case win32.WM_PAINT:		return WM_PAINT(hWnd, wparam, lparam)
-	case win32.WM_CHAR:			return WM_CHAR(hWnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hWnd, wparam, lparam)
-	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hWnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:	return WM_RBUTTONDOWN(hWnd, wparam, lparam)
-	case:						return win32.DefWindowProcW(hWnd, msg, wparam, lparam)
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
+	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
+	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN:	return WM_RBUTTONDOWN(hwnd, wparam, lparam)
+	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 }
 
 main :: proc() {
-	assert(create_count == 0)
-	win32app.run(TITLE, {WIDTH, HEIGHT}, CENTER, wndproc)
-	assert(create_count == 0)
+	win32app.run(&settings, wndproc)
 }

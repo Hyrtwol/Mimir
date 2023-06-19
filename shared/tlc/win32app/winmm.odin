@@ -179,7 +179,7 @@ WAVEFORMATEX :: struct {
 LPCWAVEFORMATEX :: ^WAVEFORMATEX
 
 WAVEHDR :: struct {
-	lpData:          win32.LPSTR, /* pointer to locked data buffer */
+	lpData:          LPSTR, /* pointer to locked data buffer */
 	dwBufferLength:  DWORD, /* length of data buffer */
 	dwBytesRecorded: DWORD, /* used for input only */
 	dwUser:          DWORD_PTR, /* for client's use */
@@ -194,7 +194,7 @@ WAVEINCAPSW :: struct {
 	wMid:           WORD, /* manufacturer ID */
 	wPid:           WORD, /* product ID */
 	vDriverVersion: MMVERSION, /* version of the driver */
-	szPname:        [MAXPNAMELEN]win32.WCHAR, /* product name (NULL terminated string) */
+	szPname:        [MAXPNAMELEN]WCHAR, /* product name (NULL terminated string) */
 	dwFormats:      DWORD, /* formats supported */
 	wChannels:      WORD, /* number of channels supported */
 	wReserved1:     WORD, /* structure packing */

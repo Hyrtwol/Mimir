@@ -8,6 +8,17 @@ import			"core:runtime"
 import			"core:strings"
 import win32	"core:sys/windows"
 
+IDT_TIMER1  : win32.UINT_PTR : 10001
+IDT_TIMER2  : win32.UINT_PTR : 10002
+IDT_TIMER3  : win32.UINT_PTR : 10003
+IDT_TIMER4  : win32.UINT_PTR : 10004
+IDT_TIMER5  : win32.UINT_PTR : 10005
+IDT_TIMER6  : win32.UINT_PTR : 10006
+IDT_TIMER7  : win32.UINT_PTR : 10007
+IDT_TIMER8  : win32.UINT_PTR : 10008
+IDT_TIMER9  : win32.UINT_PTR : 10009
+IDT_TIMER10 : win32.UINT_PTR : 10010
+
 show_error_and_panic :: proc(msg: string) {
 	errormsg := win32.utf8_to_wstring(fmt.tprintf("%s\nLast error: %x\n", msg, win32.GetLastError()))
 	win32.MessageBoxW(nil, errormsg, L("Panic"), win32.MB_ICONSTOP | win32.MB_OK)
@@ -22,9 +33,9 @@ get_rect_size :: proc(rect: ^win32.RECT) -> int2 {
 	return {(rect.right - rect.left), (rect.bottom - rect.top)}
 }
 
-get_client_size :: proc(hWnd: win32.HWND) -> int2 {
+get_client_size :: proc(hwnd: win32.HWND) -> int2 {
 	rect: win32.RECT
-	win32.GetClientRect(hWnd, &rect)
+	win32.GetClientRect(hwnd, &rect)
 	return get_rect_size(&rect)
 }
 
@@ -96,21 +107,28 @@ register_window_class :: proc(instance: win32.HINSTANCE, wndproc: win32.WNDPROC)
 	return atom
 }
 
-create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, title: string, window_size: int2, center: bool) -> win32.HWND {
+window_settings :: struct {
+	title: string,
+	window_size: int2,
+	center: bool,
+}
 
+create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^window_settings) -> win32.HWND {
+
+	//dwStyle :: win32.WS_OVERLAPPEDWINDOW
 	dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
 	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
 
 	//dwStyle :: win32.WS_POPUP | win32.WS_BORDER
 	//dwExStyle :: 0
 
-	size := adjust_window_size(window_size, dwStyle, dwExStyle)
-	position := get_window_position(size, center)
+	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
+	position := get_window_position(size, settings.center)
 
 	hwnd: win32.HWND = win32.CreateWindowExW(
 		dwExStyle,
 		win32.LPCWSTR(uintptr(atom)),
-		win32.utf8_to_wstring(title),
+		win32.utf8_to_wstring(settings.title),
 		dwStyle,
 		position.x, position.y,
 		size.x, size.y,
@@ -139,9 +157,9 @@ main_loop :: proc(hwnd: win32.HWND) {
 	}
 }
 
-run :: proc(title: string, window_size: int2, center: bool, wndproc: win32.WNDPROC) {
+run :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) {
 	inst := get_instance()
 	atom := register_window_class(inst, wndproc)
-	hwnd := create_window(inst, atom, title, window_size, center)
+	hwnd := create_window(inst, atom, settings)
 	main_loop(hwnd)
 }

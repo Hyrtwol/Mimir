@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import win32 "core:sys/windows"
+import win32app "../../shared/tlc/win32app"
 
 TITLE :: "Mimir"
 
@@ -18,7 +19,4 @@ main :: proc() {
 	fmt.printf("wtitle %d\n", wtitle2)
 
 	// win32.MessageBoxW(nil, win32.utf8_to_wstring("Title should be " + TITLE), wtitle, win32.MB_OK)
-	// win32.VK_ESCAPE
-
-	// return 0 if string(substr) == string(s) else -1
 }
