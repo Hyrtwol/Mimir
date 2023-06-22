@@ -5,6 +5,21 @@ USE_LINALG :: #config(RAYLIB_USE_LINALG, true)
 import "core:math/linalg"
 import _c "core:c"
 
+int :: _c.int
+uint :: _c.uint
+
+FMOD_BOOL :: _c.int;
+FMOD_MODE :: _c.uint;
+FMOD_TIMEUNIT :: _c.uint;
+FMOD_INITFLAGS :: _c.uint;
+FMOD_CAPS :: _c.uint;
+FMOD_DEBUGLEVEL :: _c.uint;
+FMOD_MEMORY_TYPE :: _c.uint;
+
+//FMOD_VECTOR :: distinct [3]_c.float
+FMOD_VECTOR :: linalg.Vector3f32
+FMOD_VECTOR_ZERO :: FMOD_VECTOR{0, 0, 0}
+
 /*
     FMOD version number.  Check this against FMOD::System::getVersion.
     0xaaaabbcc -> aaaa = major version number.  bb = minor version number.  cc = development version number.
@@ -15,7 +30,7 @@ FMOD_VERSION :: struct {
 	Major:       _c.ushort,
 }
 
-CAPS :: enum i32 {
+FMOD_CAPS_ENUM :: enum _c.uint {
 	// Device has no special capabilities.
 	NONE                   = 0x00000000,
 

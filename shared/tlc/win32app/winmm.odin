@@ -5,7 +5,9 @@ import win32 "core:sys/windows"
 
 foreign import winmm "system:Winmm.lib"
 
-@(default_calling_convention = "stdcall")
+MMRESULT :: win32.MMRESULT
+
+@(default_calling_convention="stdcall")
 foreign winmm {
 
 	waveOutGetNumDevs :: proc() -> UINT ---
@@ -37,6 +39,17 @@ foreign winmm {
 
 	PlaySoundW :: proc(pszSound: LPCWSTR, hmod: HMODULE, fdwSound: DWORD) -> BOOL ---
 }
+
+// String resource number bases (internal use)
+MMSYSERR_BASE :: win32.MMSYSERR_BASE
+WAVERR_BASE :: win32.WAVERR_BASE
+
+/* waveform audio error return values */
+WAVERR_BADFORMAT    :: WAVERR_BASE + 0 /* unsupported wave format */
+WAVERR_STILLPLAYING :: WAVERR_BASE + 1 /* still something playing */
+WAVERR_UNPREPARED   :: WAVERR_BASE + 2 /* header not prepared */
+WAVERR_SYNC         :: WAVERR_BASE + 3 /* device is synchronous */
+WAVERR_LASTERROR    :: WAVERR_BASE + 3 /* last error in range */
 
 /* waveform output */
 MM_WOM_OPEN  :: 0x3BB
@@ -102,13 +115,6 @@ WAVE_FORMAT_96S08  :: 0x00020000 /* 96     kHz, Stereo, 8-bit  */
 WAVE_FORMAT_96M16  :: 0x00040000 /* 96     kHz, Mono,   16-bit */
 WAVE_FORMAT_96S16  :: 0x00080000 /* 96     kHz, Stereo, 16-bit */
 
-/* waveform audio error return values */
-WAVERR_BADFORMAT    :: WAVERR_BASE + 0 /* unsupported wave format */
-WAVERR_STILLPLAYING :: WAVERR_BASE + 1 /* still something playing */
-WAVERR_UNPREPARED   :: WAVERR_BASE + 2 /* header not prepared */
-WAVERR_SYNC         :: WAVERR_BASE + 3 /* device is synchronous */
-WAVERR_LASTERROR    :: WAVERR_BASE + 3 /* last error in range */
-
 HWAVE    :: distinct HANDLE
 HWAVEIN  :: distinct HANDLE
 HWAVEOUT :: distinct HANDLE
@@ -119,29 +125,8 @@ LPHWAVEOUT :: ^HWAVEOUT
 //typedef void (CALLBACK DRVCALLBACK)(HDRVR hdrvr, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 //WAVECALLBACK :: DRVCALLBACK
 //LPWAVECALLBACK :: ^WAVECALLBACK
-/*
-MMTIME :: struct {
-  UINT  wType;
-  union {
-    DWORD  ms;
-    DWORD  sample;
-    DWORD  cb;
-    DWORD  ticks;
-    struct {
-      BYTE hour;
-      BYTE min;
-      BYTE sec;
-      BYTE frame;
-      BYTE fps;
-      BYTE dummy;
-      BYTE pad[2];
-    } smpte;
-    struct {
-      DWORD songptrpos;
-    } midi;
-  } u;
-} MMTIME, *PMMTIME, *LPMMTIME;
-*/
+
+// https://github.com/tpn/winsdk-7/blob/f8a2d5f306b400f355ed3713b93725e6b8f69f1c/v7.1A/Include/MMSystem.h#L118
 MMTIME :: struct {
 	wType: UINT,
 	u: struct #raw_union {
@@ -215,7 +200,7 @@ WAVEOUTCAPSW :: struct {
 }
 LPWAVEOUTCAPSW :: ^WAVEOUTCAPSW
 
-// flag values for fuSound and fdwSound arguments on [snd]PlaySound
+// flag values for PlaySound
 SND_SYNC		:: 0x0000  /* play synchronously (default) */
 SND_ASYNC		:: 0x0001  /* play asynchronously */
 SND_NODEFAULT	:: 0x0002  /* silence (!default) if sound not found */

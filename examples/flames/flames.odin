@@ -196,7 +196,7 @@ WM_RBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
- 	return win32app.GET_XY_LPARAM(lparam) / ZOOM
+ 	return win32app.decode_lparam(lparam) / ZOOM
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {

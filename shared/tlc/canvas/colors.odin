@@ -1,18 +1,5 @@
 package canvas
 
-import          "core:fmt"
-import          "core:intrinsics"
-import          "core:math/linalg"
-import hlm      "core:math/linalg/hlsl"
-import          "core:runtime"
-import          "core:strings"
-import win32    "core:sys/windows"
-import win32app "../win32app"
-
-byte4 :: win32app.byte4
-int2  :: win32app.int2
-ZERO2 :: win32app.ZERO2
-
 // Color Palette
 
 COLOR_BLACK     : byte4 : { 0x00, 0x00, 0x00, 0xFF }

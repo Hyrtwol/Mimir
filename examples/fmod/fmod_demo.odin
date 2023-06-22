@@ -100,7 +100,7 @@ main :: proc() {
 		fmt.printf("Driver guid : %v\n", guid)
 	}
 
-	caps: fmod.CAPS
+	caps: fmod.FMOD_CAPS_ENUM
 	controlpaneloutputrate: _c.int
 	controlpanelspeakermode: fmod.FMOD_SPEAKERMODE
 	//speakerMode : fmod.FMOD_SPEAKERMODE = 0
@@ -201,8 +201,8 @@ main :: proc() {
 	*/
 	// return FMOD_Event_Set3DAttributes(_eventraw, ref position, ref velocity, (IntPtr)null);
 
-	position := fmod.FMOD_VECTOR{ x=0, y=0, z=0 }
-	velocity := fmod.FMOD_VECTOR{ x=0, y=0, z=0 }
+	position := fmod.FMOD_VECTOR{0, 0, 0}
+	velocity := fmod.FMOD_VECTOR{0, 0, 0}
 	fmod.FMOD_Event_Set3DAttributes(event, &position, &velocity, nil)
 
 	res = fmod.FMOD_Event_Start(event)

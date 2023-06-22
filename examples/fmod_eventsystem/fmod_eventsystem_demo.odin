@@ -50,6 +50,7 @@ song : ^fmod.FMOD_SOUND = nil
 
 title: string
 dsp, stream, geometry, update, total : f32
+channels_playing: i32
 
 play_event :: proc(event_id: i32)
 {
@@ -67,8 +68,8 @@ play_event :: proc(event_id: i32)
 		return
 	}
 
-	position := fmod.FMOD_VECTOR{ x=0, y=0, z=0 }
-	velocity := fmod.FMOD_VECTOR{ x=0, y=0, z=0 }
+	position := fmod.FMOD_VECTOR{0, 0, 0}
+	velocity := fmod.FMOD_VECTOR{0, 0, 0}
 	res = fmod.FMOD_Event_Set3DAttributes(event, &position, &velocity, nil)
 
 	res = fmod.FMOD_Event_Start(event)
@@ -100,7 +101,7 @@ play_song :: proc()
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	scrpos := win32app.GET_XY_LPARAM(lparam) / ZOOM
+	scrpos := win32app.decode_lparam(lparam) / ZOOM
 	scrpos.y = bitmap_size.y - 1 - scrpos.y
 	return scrpos
 }
@@ -211,6 +212,8 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '7':		play_event(wolf.EVENT_WOLFENSTEINSFX_PLAYER_FOOTSTEPS_STONE)
 	case '8':		play_event(wolf.EVENT_WOLFENSTEINSFX_PLAYER_FOOTSTEPS_WATER)
 	case '9':		play_event(wolf.EVENT_WOLFENSTEINSFX_PLAYER_FOOTSTEPS_WOOD)
+	case '0':		play_event(wolf.EVENTGROUPCOUNT_WOLFENSTEINSFX_PLAYER_FOOTSTEPS + wolf.EVENT_WOLFENSTEINSFX_PLAYER_GASP)
+	case '+':		play_event(wolf.EVENTGROUPCOUNT_WOLFENSTEINSFX_PLAYER_FOOTSTEPS + wolf.EVENT_WOLFENSTEINSFX_PLAYER_GIB)
 	case 'm':		play_song()
 	case:
 	}
@@ -252,7 +255,8 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	case win32app.IDT_TIMER1: //fmt.print("TIK\n")
 	{
 	    fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
-		newtitle := fmt.tprintf("%s cpu %v\n", title, total)
+	    fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
+		newtitle := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
 		win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	}
 	case win32app.IDT_TIMER2: fmt.print("TOK\n")
@@ -339,7 +343,7 @@ main :: proc() {
 		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriver, res)
 		return
 	}
-	caps: fmod.CAPS
+	caps: fmod.FMOD_CAPS_ENUM
 	outputrate: i32
 	speakermode: fmod.FMOD_SPEAKERMODE
 	res = fmod.FMOD_System_GetDriverCaps(

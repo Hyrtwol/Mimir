@@ -37,7 +37,7 @@ timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	scrpos := win32app.GET_XY_LPARAM(lparam) / ZOOM
+	scrpos := win32app.decode_lparam(lparam) / ZOOM
 	scrpos.y = bitmap_size.y - 1 - scrpos.y
 	return scrpos
 }

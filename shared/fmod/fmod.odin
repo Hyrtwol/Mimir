@@ -149,8 +149,10 @@ FMOD_EVENT_NONBLOCKING :: 1;
 FMOD_EVENT_ERROR_ON_DISKACCESS :: 2;
 FMOD_EVENT_INFOONLY :: 4;
 FMOD_EVENT_USERDSP :: 8;
+
 FMOD_EVENT_NONBLOCKING_THREAD0 :: 1;
 FMOD_EVENT_NONBLOCKING_THREAD_MAX :: 5;
+
 FMOD_EVENT_STATE_READY :: 1;
 FMOD_EVENT_STATE_LOADING :: 2;
 FMOD_EVENT_STATE_ERROR :: 4;
@@ -163,13 +165,14 @@ FMOD_EVENT_STATE_NEEDSTOLOAD :: 128;
 FMOD_EVENT_NET_VERSION :: 279600;
 FMOD_EVENT_NET_PORT :: 17997;
 
-FMOD_BOOL :: _c.int;
-FMOD_MODE :: _c.uint;
-FMOD_TIMEUNIT :: _c.uint;
-FMOD_INITFLAGS :: _c.uint;
-FMOD_CAPS :: _c.uint;
-FMOD_DEBUGLEVEL :: _c.uint;
-FMOD_MEMORY_TYPE :: _c.uint;
+// FMOD_BOOL :: _c.int;
+// FMOD_MODE :: _c.uint;
+// FMOD_TIMEUNIT :: _c.uint;
+// FMOD_INITFLAGS :: _c.uint;
+// FMOD_CAPS :: _c.uint;
+// FMOD_DEBUGLEVEL :: _c.uint;
+// FMOD_MEMORY_TYPE :: _c.uint;
+
 FMOD_SYSTEM_CALLBACK :: #type proc(system : ^FMOD_SYSTEM, type : FMOD_SYSTEM_CALLBACKTYPE, commanddata1 : rawptr, commanddata2 : rawptr) -> FMOD_RESULT;
 FMOD_CHANNEL_CALLBACK :: #type proc(channel : ^FMOD_CHANNEL, type : FMOD_CHANNEL_CALLBACKTYPE, commanddata1 : rawptr, commanddata2 : rawptr) -> FMOD_RESULT;
 FMOD_SOUND_NONBLOCKCALLBACK :: #type proc(sound : ^FMOD_SOUND, result : FMOD_RESULT) -> FMOD_RESULT;
@@ -869,11 +872,11 @@ FMOD_GEOMETRY :: struct {};
 
 FMOD_SYNCPOINT :: struct {};
 
-FMOD_VECTOR :: struct {
-    x : _c.float,
-    y : _c.float,
-    z : _c.float,
-};
+// FMOD_VECTOR :: struct {
+//     x : _c.float,
+//     y : _c.float,
+//     z : _c.float,
+// };
 
 FMOD_GUID :: struct {
     Data1 : _c.uint,
@@ -1308,7 +1311,7 @@ foreign fmodex_vc {
     FMOD_System_GetDriverInfoW :: proc(system : ^FMOD_SYSTEM, id : _c.int, name : ^_c.short, namelen : _c.int, guid : ^FMOD_GUID) -> FMOD_RESULT ---;
 
     @(link_name="FMOD_System_GetDriverCaps")
-    FMOD_System_GetDriverCaps :: proc(system : ^FMOD_SYSTEM, id : _c.int, caps : ^CAPS, controlpaneloutputrate : ^_c.int, controlpanelspeakermode : ^FMOD_SPEAKERMODE) -> FMOD_RESULT ---;
+    FMOD_System_GetDriverCaps :: proc(system : ^FMOD_SYSTEM, id : _c.int, caps : ^FMOD_CAPS_ENUM, controlpaneloutputrate : ^_c.int, controlpanelspeakermode : ^FMOD_SPEAKERMODE) -> FMOD_RESULT ---;
 
     @(link_name="FMOD_System_SetDriver")
     FMOD_System_SetDriver :: proc(system : ^FMOD_SYSTEM, driver : _c.int) -> FMOD_RESULT ---;
