@@ -13,7 +13,15 @@ eventsys: ^fmod.FMOD_EVENTSYSTEM = nil
 
 DistanceFactor :: 1.0
 
+GetVersion :: proc() -> (res: int, err: bool) {
+	return 666, false
+}
+
 main :: proc() {
+
+	//GetVersion() or_return
+
+
 	fmt.print("FMOD\n")
 
 	/*
