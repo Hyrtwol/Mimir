@@ -8,7 +8,9 @@
         "microarch",
         "reloc",
         "sandybridge",
-        "struct"
+        "struct",
+        "fmodex",
+        "libfmodex"
     ],
     "markdownlint.config": {
         "no-hard-tabs": false,
@@ -25,5 +27,13 @@
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
         "**/desktop.ini": true
-    }
+    },
+    "files.associations": {
+        "*.lst": "plaintext",
+        "*.fdp": "xml"
+    },
+    "workbench.editorAssociations": {
+        "*.fsb": "hexEditor.hexedit",
+        "*.fev": "hexEditor.hexedit"
+    },
 }

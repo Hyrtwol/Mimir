@@ -9,9 +9,17 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 [*.odin]
+max_line_length = off
 indent_style = tab
+
+[*{.h,*.cpp}]
+indent_size = 4
 max_line_length = off
 
 [*.md]
-indent_style = tab
 max_line_length = off
+indent_style = tab
+indent_size = 4
+
+[*.{json,code-workspace}]
+indent_size = 4
