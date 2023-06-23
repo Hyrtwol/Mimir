@@ -90,6 +90,24 @@
             }
         },
         {
+            "label": "odin strip semicolon",
+            "type": "shell",
+            "command": "odin",
+            "args": [
+                "strip-semicolon",
+                "..\\${relativeFileDirname}",
+                "-no-entry-point"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bin"
+            }
+        },
+        {
             "label": "odin doc",
             "type": "shell",
             "command": "odin",

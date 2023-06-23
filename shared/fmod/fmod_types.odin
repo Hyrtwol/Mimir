@@ -8,13 +8,20 @@ import _c "core:c"
 int :: _c.int
 uint :: _c.uint
 
-FMOD_BOOL :: _c.int;
-FMOD_MODE :: _c.uint;
-FMOD_TIMEUNIT :: _c.uint;
-FMOD_INITFLAGS :: _c.uint;
-FMOD_CAPS :: _c.uint;
-FMOD_DEBUGLEVEL :: _c.uint;
-FMOD_MEMORY_TYPE :: _c.uint;
+FMOD_BOOL :: _c.int
+FMOD_MODE :: _c.uint
+FMOD_TIMEUNIT :: _c.uint
+FMOD_INITFLAGS :: _c.uint
+FMOD_CAPS :: _c.uint
+FMOD_DEBUGLEVEL :: _c.uint
+FMOD_MEMORY_TYPE :: _c.uint
+
+FMOD_EVENT_INITFLAGS :: _c.uint
+FMOD_EVENT_MODE :: _c.uint
+FMOD_EVENT_STATE :: _c.uint
+FMOD_MUSIC_ID :: _c.uint
+FMOD_MUSIC_CUE_ID :: _c.uint
+FMOD_MUSIC_PARAM_ID :: _c.uint
 
 //FMOD_VECTOR :: distinct [3]_c.float
 FMOD_VECTOR :: linalg.Vector3f32
