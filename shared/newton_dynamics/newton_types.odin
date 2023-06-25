@@ -3,6 +3,11 @@ package newton
 USE_LINALG :: #config(RAYLIB_USE_LINALG, true)
 
 import "core:math/linalg"
+import _c "core:c"
+
+int :: _c.int
+uint :: _c.uint
+float :: _c.float
 
 dFloat32 :: f32
 dFloat64 :: f64

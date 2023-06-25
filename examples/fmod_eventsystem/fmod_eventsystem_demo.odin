@@ -157,13 +157,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 		win32app.show_error_and_panic("No timer 1")
 	}
 
-	/*
-	timer2_id = win32.SetTimer(hwnd, win32app.IDT_TIMER2, 3000, nil)
-	if timer2_id == 0 {
-		win32app.show_error_and_panic("No timer 2")
-	}
-	*/
-
 	return 0
 }
 
@@ -175,14 +168,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 			win32.MessageBoxW(nil, L("Unable to kill timer1"), L("Error"), win32.MB_OK)
 		}
 	}
-	/*
-	if timer2_id != 0 {
-		if !win32.KillTimer(hwnd, timer2_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer2"), L("Error"), win32.MB_OK)
-		}
-	}
-	*/
-
 	if bitmap_handle != nil {
 		win32.DeleteObject(bitmap_handle)
 	}
@@ -220,15 +205,6 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-/*
-WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
-	newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, bitmap_size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
-	return 0
-}
-*/
-
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc_target := win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
@@ -252,14 +228,13 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch (wparam)
 	{
-	case win32app.IDT_TIMER1: //fmt.print("TIK\n")
+	case win32app.IDT_TIMER1:
 	{
 	    fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
 	    fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
 		newtitle := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
 		win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	}
-	case win32app.IDT_TIMER2: fmt.print("TOK\n")
 	}
 	return 0
 }

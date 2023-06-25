@@ -7,6 +7,7 @@ import _c "core:c"
 
 int :: _c.int
 uint :: _c.uint
+float :: _c.float
 
 FMOD_BOOL :: _c.int
 FMOD_MODE :: _c.uint

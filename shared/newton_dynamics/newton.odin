@@ -182,7 +182,21 @@ NewtonCollisionInfoRecord :: struct {
     m_offsetMatrix : [4][4]_c.float,
     m_collisionMaterial : NewtonCollisionMaterial,
     m_collisionType : _c.int,
-    unamed0 : AnonymousUnion1,
+    u : struct #raw_union {
+		m_box : NewtonBoxParam,
+		m_cone : NewtonConeParam,
+		m_sphere : NewtonSphereParam,
+		m_capsule : NewtonCapsuleParam,
+		m_cylinder : NewtonCylinderParam,
+		m_chamferCylinder : NewtonChamferCylinderParam,
+		m_convexHull : NewtonConvexHullParam,
+		m_deformableMesh : NewtonDeformableMeshParam,
+		m_compoundCollision : NewtonCompoundCollisionParam,
+		m_collisionTree : NewtonCollisionTreeParam,
+		m_heightField : NewtonHeightFieldCollisionParam,
+		m_sceneCollision : NewtonSceneCollisionParam,
+		m_paramArray : [64]_c.float,
+	},
 }
 
 NewtonJointRecord :: struct {
@@ -286,22 +300,6 @@ NewtonMaterialData :: struct #raw_union {
     m_ptr : rawptr,
     m_int : _c.longlong,
     m_float : _c.float,
-}
-
-AnonymousUnion1 :: struct #raw_union {
-    m_box : NewtonBoxParam,
-    m_cone : NewtonConeParam,
-    m_sphere : NewtonSphereParam,
-    m_capsule : NewtonCapsuleParam,
-    m_cylinder : NewtonCylinderParam,
-    m_chamferCylinder : NewtonChamferCylinderParam,
-    m_convexHull : NewtonConvexHullParam,
-    m_deformableMesh : NewtonDeformableMeshParam,
-    m_compoundCollision : NewtonCompoundCollisionParam,
-    m_collisionTree : NewtonCollisionTreeParam,
-    m_heightField : NewtonHeightFieldCollisionParam,
-    m_sceneCollision : NewtonSceneCollisionParam,
-    m_paramArray : [64]_c.float,
 }
 
 @(default_calling_convention="c")
