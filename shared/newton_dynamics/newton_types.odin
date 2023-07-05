@@ -1,48 +1,46 @@
 package newton
 
-USE_LINALG :: #config(RAYLIB_USE_LINALG, true)
+USE_LINALG :: #config(NEWTON_USE_LINALG, true)
+_NEWTON_USE_DOUBLE :: #config(_NEWTON_USE_DOUBLE, true)
 
 import "core:math/linalg"
 import _c "core:c"
 
-int :: _c.int
-uint :: _c.uint
-float :: _c.float
+_short   :: _c.short    // i16
+_ushort  :: _c.ushort    // u16
+_int     :: _c.int      // i32
+_uint    :: _c.uint     // u32
+dLong    :: _c.longlong // i64
+dFloat32 :: _c.float    // f32
+dFloat64 :: _c.double   // f64
 
-dFloat32 :: f32
-dFloat64 :: f64
-dFloat   :: dFloat32
-dLong    :: i64 // aka _c.longlong
+when _NEWTON_USE_DOUBLE {
+	dFloat :: dFloat64
+} else {
+	dFloat :: dFloat32
+}
+
+int2 :: [2]_int
+int3 :: [3]_int
 
 when USE_LINALG {
-	// Vector2 type
-	Vector2 :: linalg.Vector2f32
-	// Vector3 type
-	Vector3 :: linalg.Vector3f32
-	// Vector4 type
-	Vector4 :: linalg.Vector4f32
-
-	// Quaternion type
-	Quaternion :: linalg.Quaternionf32
-
-	// Matrix type (OpenGL style 4x4 - right handed, column major)
-	Matrix :: linalg.Matrix4x4f32
-} else {
-	// Vector2 type
-	Vector2 :: distinct [2]f32
-	// Vector3 type
-	Vector3 :: distinct [3]f32
-	// Vector4 type
-	Vector4 :: distinct [4]f32
-
-	// Quaternion type
-	Quaternion :: distinct quaternion128
-
-	// Matrix, 4x4 components, column major, OpenGL style, right handed
-	Matrix :: struct {
-		m0, m4, m8, m12:  f32, // Matrix first row (4 components)
-		m1, m5, m9, m13:  f32, // Matrix second row (4 components)
-		m2, m6, m10, m14: f32, // Matrix third row (4 components)
-		m3, m7, m11, m15: f32, // Matrix fourth row (4 components)
+	when _NEWTON_USE_DOUBLE {
+		float2 :: linalg.Vector2f64
+		float3 :: linalg.Vector3f64
+		float4 :: linalg.Vector4f64
+		quaternion :: linalg.Quaternionf64
+		float4x4 :: linalg.Matrix4x4f64
+	} else {
+		float2 :: linalg.Vector2f32
+		float3 :: linalg.Vector3f32
+		float4 :: linalg.Vector4f32
+		quaternion :: linalg.Quaternionf32
+		float4x4 :: linalg.Matrix4x4f32
 	}
+} else {
+	float2 :: [2]dFloat
+	float3 :: [3]dFloat
+	float4 :: [4]dFloat
+	quaternion :: quaternion128
+	float4x4 :: matrix[4, 4]dFloat
 }
