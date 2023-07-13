@@ -149,17 +149,18 @@ main :: proc() {
 	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
 
 	size := [2]i32{WIDTH, HEIGHT}
-	// adjust size for style
-	rect := win32.RECT{0, 0, size.x, size.y}
-	if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle) {
-		size = [2]i32{i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
+	{
+		// adjust size for style
+		rect := win32.RECT{0, 0, size.x, size.y}
+		if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle) {
+			size = {i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
+		}
 	}
 	fmt.printf("size %d, %d\n", size.x, size.y)
 
 	position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
 	if CENTER {
-		if deviceMode: win32.DEVMODEW;
-		   win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) == win32.TRUE {
+		if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) == win32.TRUE {
 			dmsize := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
 			position = (dmsize - size) / 2
 		}
