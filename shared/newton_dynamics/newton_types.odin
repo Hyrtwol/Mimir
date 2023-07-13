@@ -3,25 +3,21 @@ package newton
 USE_LINALG :: #config(NEWTON_USE_LINALG, true)
 _NEWTON_USE_DOUBLE :: #config(_NEWTON_USE_DOUBLE, true)
 
+import glm "core:math/linalg/glsl"
 import "core:math/linalg"
 import _c "core:c"
 
-_short   :: _c.short    // i16
-_ushort  :: _c.ushort    // u16
-_int     :: _c.int      // i32
-_uint    :: _c.uint     // u32
-dLong    :: _c.longlong // i64
-dFloat32 :: _c.float    // f32
-dFloat64 :: _c.double   // f64
-
 when _NEWTON_USE_DOUBLE {
-	dFloat :: dFloat64
+	dFloat :: f64
 } else {
-	dFloat :: dFloat32
+	dFloat :: f32
 }
 
-int2 :: [2]_int
-int3 :: [3]_int
+//ff::float
+//ll::long
+
+int2 :: [2]i32
+int3 :: [3]i32
 
 when USE_LINALG {
 	when _NEWTON_USE_DOUBLE {
@@ -43,4 +39,21 @@ when USE_LINALG {
 	float4 :: [4]dFloat
 	quaternion :: quaternion128
 	float4x4 :: matrix[4, 4]dFloat
+
+	ivec2 :: glm.ivec2
+	ivec3 :: glm.ivec3
+	when _NEWTON_USE_DOUBLE {
+		vec2 :: glm.vec2
+		vec3 :: glm.vec3
+		vec4 :: glm.vec4
+		quat :: glm.quat
+		mat4x4 :: glm.dmat4x4
+
+	} else {
+		vec2 :: glm.dvec2
+		vec3 :: glm.dvec3
+		vec4 :: glm.dvec4
+		quat :: glm.dquat
+		mat4x4 :: glm.mat4x4
+	}
 }
