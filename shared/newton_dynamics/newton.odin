@@ -305,1537 +305,518 @@ NewtonMaterialData :: struct #raw_union {
     m_float : dFloat,
 }
 
-@(default_calling_convention="c")
+@(default_calling_convention="c", link_prefix="Newton")
 foreign newton {
-
     @(link_name="NewtonWorldGetVersion")
-    NewtonWorldGetVersion :: proc() -> i32 ---
-
+    GetVersion :: proc() -> i32 ---
     @(link_name="NewtonWorldFloatSize")
-    NewtonWorldFloatSize :: proc() -> i32 ---
-
-    @(link_name="NewtonGetMemoryUsed")
-    NewtonGetMemoryUsed :: proc() -> i32 ---
-
-    @(link_name="NewtonSetMemorySystem")
-    NewtonSetMemorySystem :: proc(malloc : NewtonAllocMemory, free : NewtonFreeMemory) ---
-
-    @(link_name="NewtonCreate")
-    NewtonCreate :: proc() -> ^NewtonWorld ---
-
-    @(link_name="NewtonDestroy")
-    NewtonDestroy :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonDestroyAllBodies")
-    NewtonDestroyAllBodies :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonGetPostUpdateCallback")
-    NewtonGetPostUpdateCallback :: proc(newtonWorld : ^NewtonWorld) -> NewtonPostUpdateCallback ---
-
-    @(link_name="NewtonSetPostUpdateCallback")
-    NewtonSetPostUpdateCallback :: proc(newtonWorld : ^NewtonWorld, callback : NewtonPostUpdateCallback) ---
-
-    @(link_name="NewtonAlloc")
-    NewtonAlloc :: proc(sizeInBytes : i32) -> rawptr ---
-
-    @(link_name="NewtonFree")
-    NewtonFree :: proc(ptr : rawptr) ---
-
-    @(link_name="NewtonLoadPlugins")
-    NewtonLoadPlugins :: proc(newtonWorld : ^NewtonWorld, plugInPath : cstring) ---
-
-    @(link_name="NewtonUnloadPlugins")
-    NewtonUnloadPlugins :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonCurrentPlugin")
-    NewtonCurrentPlugin :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
-
-    @(link_name="NewtonGetFirstPlugin")
-    NewtonGetFirstPlugin :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
-
-    @(link_name="NewtonGetPreferedPlugin")
-    NewtonGetPreferedPlugin :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
-
-    @(link_name="NewtonGetNextPlugin")
-    NewtonGetNextPlugin :: proc(newtonWorld : ^NewtonWorld, plugin : rawptr) -> rawptr ---
-
-    @(link_name="NewtonGetPluginString")
-    NewtonGetPluginString :: proc(newtonWorld : ^NewtonWorld, plugin : rawptr) -> cstring ---
-
-    @(link_name="NewtonSelectPlugin")
-    NewtonSelectPlugin :: proc(newtonWorld : ^NewtonWorld, plugin : rawptr) ---
-
-    @(link_name="NewtonGetContactMergeTolerance")
-    NewtonGetContactMergeTolerance :: proc(newtonWorld : ^NewtonWorld) -> dFloat ---
-
-    @(link_name="NewtonSetContactMergeTolerance")
-    NewtonSetContactMergeTolerance :: proc(newtonWorld : ^NewtonWorld, tolerance : dFloat) ---
-
-    @(link_name="NewtonInvalidateCache")
-    NewtonInvalidateCache :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonSetSolverIterations")
-    NewtonSetSolverIterations :: proc(newtonWorld : ^NewtonWorld, model : i32) ---
-
-    @(link_name="NewtonGetSolverIterations")
-    NewtonGetSolverIterations :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonSetParallelSolverOnLargeIsland")
-    NewtonSetParallelSolverOnLargeIsland :: proc(newtonWorld : ^NewtonWorld, mode : i32) ---
-
-    @(link_name="NewtonGetParallelSolverOnLargeIsland")
-    NewtonGetParallelSolverOnLargeIsland :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonGetBroadphaseAlgorithm")
-    NewtonGetBroadphaseAlgorithm :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonSelectBroadphaseAlgorithm")
-    NewtonSelectBroadphaseAlgorithm :: proc(newtonWorld : ^NewtonWorld, algorithmType : i32) ---
-
-    @(link_name="NewtonResetBroadphase")
-    NewtonResetBroadphase :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonUpdate")
-    NewtonUpdate :: proc(newtonWorld : ^NewtonWorld, timestep : dFloat) ---
-
-    @(link_name="NewtonUpdateAsync")
-    NewtonUpdateAsync :: proc(newtonWorld : ^NewtonWorld, timestep : dFloat) ---
-
-    @(link_name="NewtonWaitForUpdateToFinish")
-    NewtonWaitForUpdateToFinish :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonGetNumberOfSubsteps")
-    NewtonGetNumberOfSubsteps :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonSetNumberOfSubsteps")
-    NewtonSetNumberOfSubsteps :: proc(newtonWorld : ^NewtonWorld, subSteps : i32) ---
-
-    @(link_name="NewtonGetLastUpdateTime")
-    NewtonGetLastUpdateTime :: proc(newtonWorld : ^NewtonWorld) -> dFloat ---
-
-    @(link_name="NewtonSerializeToFile")
-    NewtonSerializeToFile :: proc(newtonWorld : ^NewtonWorld, filename : cstring, bodyCallback : NewtonOnBodySerializationCallback, bodyUserData : rawptr) ---
-
-    @(link_name="NewtonDeserializeFromFile")
-    NewtonDeserializeFromFile :: proc(newtonWorld : ^NewtonWorld, filename : cstring, bodyCallback : NewtonOnBodyDeserializationCallback, bodyUserData : rawptr) ---
-
-    @(link_name="NewtonSerializeScene")
-    NewtonSerializeScene :: proc(newtonWorld : ^NewtonWorld, bodyCallback : NewtonOnBodySerializationCallback, bodyUserData : rawptr, serializeCallback : NewtonSerializeCallback, serializeHandle : rawptr) ---
-
-    @(link_name="NewtonDeserializeScene")
-    NewtonDeserializeScene :: proc(newtonWorld : ^NewtonWorld, bodyCallback : NewtonOnBodyDeserializationCallback, bodyUserData : rawptr, serializeCallback : NewtonDeserializeCallback, serializeHandle : rawptr) ---
-
-    @(link_name="NewtonFindSerializedBody")
-    NewtonFindSerializedBody :: proc(newtonWorld : ^NewtonWorld, bodySerializedID : i32) -> ^NewtonBody ---
-
-    @(link_name="NewtonSetJointSerializationCallbacks")
-    NewtonSetJointSerializationCallbacks :: proc(newtonWorld : ^NewtonWorld, serializeJoint : NewtonOnJointSerializationCallback, deserializeJoint : NewtonOnJointDeserializationCallback) ---
-
-    @(link_name="NewtonGetJointSerializationCallbacks")
-    NewtonGetJointSerializationCallbacks :: proc(newtonWorld : ^NewtonWorld, serializeJoint : ^NewtonOnJointSerializationCallback, deserializeJoint : ^NewtonOnJointDeserializationCallback) ---
-
-    @(link_name="NewtonWorldCriticalSectionLock")
-    NewtonWorldCriticalSectionLock :: proc(newtonWorld : ^NewtonWorld, threadIndex : i32) ---
-
-    @(link_name="NewtonWorldCriticalSectionUnlock")
-    NewtonWorldCriticalSectionUnlock :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonSetThreadsCount")
-    NewtonSetThreadsCount :: proc(newtonWorld : ^NewtonWorld, threads : i32) ---
-
-    @(link_name="NewtonGetThreadsCount")
-    NewtonGetThreadsCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonGetMaxThreadsCount")
-    NewtonGetMaxThreadsCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonDispachThreadJob")
-    NewtonDispachThreadJob :: proc(newtonWorld : ^NewtonWorld, task : NewtonJobTask, usedData : rawptr, functionName : cstring) ---
-
-    @(link_name="NewtonSyncThreadJobs")
-    NewtonSyncThreadJobs :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonAtomicAdd")
-    NewtonAtomicAdd :: proc(ptr : ^i32, value : i32) -> i32 ---
-
-    @(link_name="NewtonAtomicSwap")
-    NewtonAtomicSwap :: proc(ptr : ^i32, value : i32) -> i32 ---
-
-    @(link_name="NewtonYield")
-    NewtonYield :: proc() ---
-
-    @(link_name="NewtonSetIslandUpdateEvent")
-    NewtonSetIslandUpdateEvent :: proc(newtonWorld : ^NewtonWorld, islandUpdate : NewtonIslandUpdate) ---
-
-    @(link_name="NewtonWorldForEachJointDo")
-    NewtonWorldForEachJointDo :: proc(newtonWorld : ^NewtonWorld, callback : NewtonJointIterator, userData : rawptr) ---
-
-    @(link_name="NewtonWorldForEachBodyInAABBDo")
-    NewtonWorldForEachBodyInAABBDo :: proc(newtonWorld : ^NewtonWorld, p0 : ^dFloat, p1 : ^dFloat, callback : NewtonBodyIterator, userData : rawptr) ---
-
-    @(link_name="NewtonWorldSetUserData")
-    NewtonWorldSetUserData :: proc(newtonWorld : ^NewtonWorld, userData : rawptr) ---
-
-    @(link_name="NewtonWorldGetUserData")
-    NewtonWorldGetUserData :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
-
-    @(link_name="NewtonWorldAddListener")
-    NewtonWorldAddListener :: proc(newtonWorld : ^NewtonWorld, nameId : cstring, listenerUserData : rawptr) -> rawptr ---
-
-    @(link_name="NewtonWorldGetListener")
-    NewtonWorldGetListener :: proc(newtonWorld : ^NewtonWorld, nameId : cstring) -> rawptr ---
-
-    @(link_name="NewtonWorldListenerSetDebugCallback")
-    NewtonWorldListenerSetDebugCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldListenerDebugCallback) ---
-
-    @(link_name="NewtonWorldListenerSetPostStepCallback")
-    NewtonWorldListenerSetPostStepCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldUpdateListenerCallback) ---
-
-    @(link_name="NewtonWorldListenerSetPreUpdateCallback")
-    NewtonWorldListenerSetPreUpdateCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldUpdateListenerCallback) ---
-
-    @(link_name="NewtonWorldListenerSetPostUpdateCallback")
-    NewtonWorldListenerSetPostUpdateCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldUpdateListenerCallback) ---
-
-    @(link_name="NewtonWorldListenerSetDestructorCallback")
-    NewtonWorldListenerSetDestructorCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldDestroyListenerCallback) ---
-
-    @(link_name="NewtonWorldListenerSetBodyDestroyCallback")
-    NewtonWorldListenerSetBodyDestroyCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldListenerBodyDestroyCallback) ---
-
-    @(link_name="NewtonWorldListenerDebug")
-    NewtonWorldListenerDebug :: proc(newtonWorld : ^NewtonWorld, _context : rawptr) ---
-
-    @(link_name="NewtonWorldGetListenerUserData")
-    NewtonWorldGetListenerUserData :: proc(newtonWorld : ^NewtonWorld, listener : rawptr) -> rawptr ---
-
-    @(link_name="NewtonWorldListenerGetBodyDestroyCallback")
-    NewtonWorldListenerGetBodyDestroyCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr) -> NewtonWorldListenerBodyDestroyCallback ---
-
-    @(link_name="NewtonWorldSetDestructorCallback")
-    NewtonWorldSetDestructorCallback :: proc(newtonWorld : ^NewtonWorld, destructor : NewtonWorldDestructorCallback) ---
-
-    @(link_name="NewtonWorldGetDestructorCallback")
-    NewtonWorldGetDestructorCallback :: proc(newtonWorld : ^NewtonWorld) -> NewtonWorldDestructorCallback ---
-
-    @(link_name="NewtonWorldSetCollisionConstructorDestructorCallback")
-    NewtonWorldSetCollisionConstructorDestructorCallback :: proc(newtonWorld : ^NewtonWorld, constructor : NewtonCollisionCopyConstructionCallback, destructor : NewtonCollisionDestructorCallback) ---
-
-    @(link_name="NewtonWorldSetCreateDestroyContactCallback")
-    NewtonWorldSetCreateDestroyContactCallback :: proc(newtonWorld : ^NewtonWorld, createContact : NewtonCreateContactCallback, destroyContact : NewtonDestroyContactCallback) ---
-
-    @(link_name="NewtonWorldRayCast")
-    NewtonWorldRayCast :: proc(newtonWorld : ^NewtonWorld, p0 : ^dFloat, p1 : ^dFloat, filter : NewtonWorldRayFilterCallback, userData : rawptr, prefilter : NewtonWorldRayPrefilterCallback, threadIndex : i32) ---
-
-    @(link_name="NewtonWorldConvexCast")
-    NewtonWorldConvexCast :: proc(newtonWorld : ^NewtonWorld, matrix4x4 : ^dFloat, target : ^dFloat, shape : ^NewtonCollision, param : ^dFloat, userData : rawptr, prefilter : NewtonWorldRayPrefilterCallback, info : ^NewtonWorldConvexCastReturnInfo, maxContactsCount : i32, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonWorldCollide")
-    NewtonWorldCollide :: proc(newtonWorld : ^NewtonWorld, matrix4x4 : ^dFloat, shape : ^NewtonCollision, userData : rawptr, prefilter : NewtonWorldRayPrefilterCallback, info : ^NewtonWorldConvexCastReturnInfo, maxContactsCount : i32, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonWorldGetBodyCount")
-    NewtonWorldGetBodyCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonWorldGetConstraintCount")
-    NewtonWorldGetConstraintCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonWorldFindJoint")
-    NewtonWorldFindJoint :: proc(body0 : ^NewtonBody, body1 : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonIslandGetBody")
-    NewtonIslandGetBody :: proc(island : rawptr, bodyIndex : i32) -> ^NewtonBody ---
-
-    @(link_name="NewtonIslandGetBodyAABB")
-    NewtonIslandGetBodyAABB :: proc(island : rawptr, bodyIndex : i32, p0 : ^dFloat, p1 : ^dFloat) ---
-
-    @(link_name="NewtonMaterialCreateGroupID")
-    NewtonMaterialCreateGroupID :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonMaterialGetDefaultGroupID")
-    NewtonMaterialGetDefaultGroupID :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
-
-    @(link_name="NewtonMaterialDestroyAllGroupID")
-    NewtonMaterialDestroyAllGroupID :: proc(newtonWorld : ^NewtonWorld) ---
-
-    @(link_name="NewtonMaterialGetUserData")
-    NewtonMaterialGetUserData :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32) -> rawptr ---
-
-    @(link_name="NewtonMaterialSetSurfaceThickness")
-    NewtonMaterialSetSurfaceThickness :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, thickness : dFloat) ---
-
-    @(link_name="NewtonMaterialSetCallbackUserData")
-    NewtonMaterialSetCallbackUserData :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, userData : rawptr) ---
-
-    @(link_name="NewtonMaterialSetContactGenerationCallback")
-    NewtonMaterialSetContactGenerationCallback :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, contactGeneration : NewtonOnContactGeneration) ---
-
-    @(link_name="NewtonMaterialSetCompoundCollisionCallback")
-    NewtonMaterialSetCompoundCollisionCallback :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, compoundAabbOverlap : NewtonOnCompoundSubCollisionAABBOverlap) ---
-
-    @(link_name="NewtonMaterialSetCollisionCallback")
-    NewtonMaterialSetCollisionCallback :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, aabbOverlap : NewtonOnAABBOverlap, process : NewtonContactsProcess) ---
-
-    @(link_name="NewtonMaterialSetDefaultSoftness")
-    NewtonMaterialSetDefaultSoftness :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, value : dFloat) ---
-
-    @(link_name="NewtonMaterialSetDefaultElasticity")
-    NewtonMaterialSetDefaultElasticity :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, elasticCoef : dFloat) ---
-
-    @(link_name="NewtonMaterialSetDefaultCollidable")
-    NewtonMaterialSetDefaultCollidable :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, state : i32) ---
-
-    @(link_name="NewtonMaterialSetDefaultFriction")
-    NewtonMaterialSetDefaultFriction :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, staticFriction : dFloat, kineticFriction : dFloat) ---
-
-    @(link_name="NewtonMaterialJointResetIntraJointCollision")
-    NewtonMaterialJointResetIntraJointCollision :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32) ---
-
-    @(link_name="NewtonMaterialJointResetSelftJointCollision")
-    NewtonMaterialJointResetSelftJointCollision :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32) ---
-
-    @(link_name="NewtonWorldGetFirstMaterial")
-    NewtonWorldGetFirstMaterial :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonMaterial ---
-
-    @(link_name="NewtonWorldGetNextMaterial")
-    NewtonWorldGetNextMaterial :: proc(newtonWorld : ^NewtonWorld, material : ^NewtonMaterial) -> ^NewtonMaterial ---
-
-    @(link_name="NewtonWorldGetFirstBody")
-    NewtonWorldGetFirstBody :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonBody ---
-
-    @(link_name="NewtonWorldGetNextBody")
-    NewtonWorldGetNextBody :: proc(newtonWorld : ^NewtonWorld, curBody : ^NewtonBody) -> ^NewtonBody ---
-
-    @(link_name="NewtonMaterialGetMaterialPairUserData")
-    NewtonMaterialGetMaterialPairUserData :: proc(material : ^NewtonMaterial) -> rawptr ---
-
-    @(link_name="NewtonMaterialGetContactFaceAttribute")
-    NewtonMaterialGetContactFaceAttribute :: proc(material : ^NewtonMaterial) -> u32 ---
-
-    @(link_name="NewtonMaterialGetBodyCollidingShape")
-    NewtonMaterialGetBodyCollidingShape :: proc(material : ^NewtonMaterial, body : ^NewtonBody) -> ^NewtonCollision ---
-
-    @(link_name="NewtonMaterialGetContactNormalSpeed")
-    NewtonMaterialGetContactNormalSpeed :: proc(material : ^NewtonMaterial) -> dFloat ---
-
-    @(link_name="NewtonMaterialGetContactForce")
-    NewtonMaterialGetContactForce :: proc(material : ^NewtonMaterial, body : ^NewtonBody, force : ^dFloat) ---
-
-    @(link_name="NewtonMaterialGetContactPositionAndNormal")
-    NewtonMaterialGetContactPositionAndNormal :: proc(material : ^NewtonMaterial, body : ^NewtonBody, posit : ^dFloat, normal : ^dFloat) ---
-
-    @(link_name="NewtonMaterialGetContactTangentDirections")
-    NewtonMaterialGetContactTangentDirections :: proc(material : ^NewtonMaterial, body : ^NewtonBody, dir0 : ^dFloat, dir1 : ^dFloat) ---
-
-    @(link_name="NewtonMaterialGetContactTangentSpeed")
-    NewtonMaterialGetContactTangentSpeed :: proc(material : ^NewtonMaterial, index : i32) -> dFloat ---
-
-    @(link_name="NewtonMaterialGetContactMaxNormalImpact")
-    NewtonMaterialGetContactMaxNormalImpact :: proc(material : ^NewtonMaterial) -> dFloat ---
-
-    @(link_name="NewtonMaterialGetContactMaxTangentImpact")
-    NewtonMaterialGetContactMaxTangentImpact :: proc(material : ^NewtonMaterial, index : i32) -> dFloat ---
-
-    @(link_name="NewtonMaterialGetContactPenetration")
-    NewtonMaterialGetContactPenetration :: proc(material : ^NewtonMaterial) -> dFloat ---
-
-    @(link_name="NewtonMaterialSetAsSoftContact")
-    NewtonMaterialSetAsSoftContact :: proc(material : ^NewtonMaterial, relaxation : dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactSoftness")
-    NewtonMaterialSetContactSoftness :: proc(material : ^NewtonMaterial, softness : dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactThickness")
-    NewtonMaterialSetContactThickness :: proc(material : ^NewtonMaterial, thickness : dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactElasticity")
-    NewtonMaterialSetContactElasticity :: proc(material : ^NewtonMaterial, restitution : dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactFrictionState")
-    NewtonMaterialSetContactFrictionState :: proc(material : ^NewtonMaterial, state : i32, index : i32) ---
-
-    @(link_name="NewtonMaterialSetContactFrictionCoef")
-    NewtonMaterialSetContactFrictionCoef :: proc(material : ^NewtonMaterial, staticFrictionCoef : dFloat, kineticFrictionCoef : dFloat, index : i32) ---
-
-    @(link_name="NewtonMaterialSetContactNormalAcceleration")
-    NewtonMaterialSetContactNormalAcceleration :: proc(material : ^NewtonMaterial, accel : dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactNormalDirection")
-    NewtonMaterialSetContactNormalDirection :: proc(material : ^NewtonMaterial, directionVector : ^dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactPosition")
-    NewtonMaterialSetContactPosition :: proc(material : ^NewtonMaterial, position : ^dFloat) ---
-
-    @(link_name="NewtonMaterialSetContactTangentFriction")
-    NewtonMaterialSetContactTangentFriction :: proc(material : ^NewtonMaterial, friction : dFloat, index : i32) ---
-
-    @(link_name="NewtonMaterialSetContactTangentAcceleration")
-    NewtonMaterialSetContactTangentAcceleration :: proc(material : ^NewtonMaterial, accel : dFloat, index : i32) ---
-
-    @(link_name="NewtonMaterialContactRotateTangentDirections")
-    NewtonMaterialContactRotateTangentDirections :: proc(material : ^NewtonMaterial, directionVector : ^dFloat) ---
-
-    @(link_name="NewtonMaterialGetContactPruningTolerance")
-    NewtonMaterialGetContactPruningTolerance :: proc(contactJoint : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonMaterialSetContactPruningTolerance")
-    NewtonMaterialSetContactPruningTolerance :: proc(contactJoint : ^NewtonJoint, tolerance : dFloat) ---
-
-    @(link_name="NewtonCreateNull")
-    NewtonCreateNull :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateSphere")
-    NewtonCreateSphere :: proc(newtonWorld : ^NewtonWorld, radius : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateBox")
-    NewtonCreateBox :: proc(newtonWorld : ^NewtonWorld, dx : dFloat, dy : dFloat, dz : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateCone")
-    NewtonCreateCone :: proc(newtonWorld : ^NewtonWorld, radius : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateCapsule")
-    NewtonCreateCapsule :: proc(newtonWorld : ^NewtonWorld, radius0 : dFloat, radius1 : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateCylinder")
-    NewtonCreateCylinder :: proc(newtonWorld : ^NewtonWorld, radio0 : dFloat, radio1 : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateChamferCylinder")
-    NewtonCreateChamferCylinder :: proc(newtonWorld : ^NewtonWorld, radius : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateConvexHull")
-    NewtonCreateConvexHull :: proc(newtonWorld : ^NewtonWorld, count : i32, vertexCloud : ^dFloat, strideInBytes : i32, tolerance : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateConvexHullFromMesh")
-    NewtonCreateConvexHullFromMesh :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, tolerance : dFloat, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCollisionGetMode")
-    NewtonCollisionGetMode :: proc(convexCollision : ^NewtonCollision) -> i32 ---
-
-    @(link_name="NewtonCollisionSetMode")
-    NewtonCollisionSetMode :: proc(convexCollision : ^NewtonCollision, mode : i32) ---
-
-    @(link_name="NewtonConvexHullGetFaceIndices")
-    NewtonConvexHullGetFaceIndices :: proc(convexHullCollision : ^NewtonCollision, face : i32, faceIndices : ^i32) -> i32 ---
-
-    @(link_name="NewtonConvexHullGetVertexData")
-    NewtonConvexHullGetVertexData :: proc(convexHullCollision : ^NewtonCollision, vertexData : ^^dFloat, strideInBytes : ^i32) -> i32 ---
-
-    @(link_name="NewtonConvexCollisionCalculateVolume")
-    NewtonConvexCollisionCalculateVolume :: proc(convexCollision : ^NewtonCollision) -> dFloat ---
-
-    @(link_name="NewtonConvexCollisionCalculateInertialMatrix")
-    NewtonConvexCollisionCalculateInertialMatrix :: proc(convexCollision : ^NewtonCollision, inertia : ^dFloat, origin : ^dFloat) ---
-
-    @(link_name="NewtonConvexCollisionCalculateBuoyancyVolume")
-    NewtonConvexCollisionCalculateBuoyancyVolume :: proc(convexCollision : ^NewtonCollision, matrix4x4 : ^dFloat, fluidPlane : ^dFloat, centerOfBuoyancy : ^dFloat) -> dFloat ---
-
-    @(link_name="NewtonCollisionDataPointer")
-    NewtonCollisionDataPointer :: proc(convexCollision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonCreateCompoundCollision")
-    NewtonCreateCompoundCollision :: proc(newtonWorld : ^NewtonWorld, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateCompoundCollisionFromMesh")
-    NewtonCreateCompoundCollisionFromMesh :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, hullTolerance : dFloat, shapeID : i32, subShapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCompoundCollisionBeginAddRemove")
-    NewtonCompoundCollisionBeginAddRemove :: proc(compoundCollision : ^NewtonCollision) ---
-
-    @(link_name="NewtonCompoundCollisionAddSubCollision")
-    NewtonCompoundCollisionAddSubCollision :: proc(compoundCollision : ^NewtonCollision, convexCollision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonCompoundCollisionRemoveSubCollision")
-    NewtonCompoundCollisionRemoveSubCollision :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) ---
-
-    @(link_name="NewtonCompoundCollisionRemoveSubCollisionByIndex")
-    NewtonCompoundCollisionRemoveSubCollisionByIndex :: proc(compoundCollision : ^NewtonCollision, nodeIndex : i32) ---
-
-    @(link_name="NewtonCompoundCollisionSetSubCollisionMatrix")
-    NewtonCompoundCollisionSetSubCollisionMatrix :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonCompoundCollisionEndAddRemove")
-    NewtonCompoundCollisionEndAddRemove :: proc(compoundCollision : ^NewtonCollision) ---
-
-    @(link_name="NewtonCompoundCollisionGetFirstNode")
-    NewtonCompoundCollisionGetFirstNode :: proc(compoundCollision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonCompoundCollisionGetNextNode")
-    NewtonCompoundCollisionGetNextNode :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) -> rawptr ---
-
-    @(link_name="NewtonCompoundCollisionGetNodeByIndex")
-    NewtonCompoundCollisionGetNodeByIndex :: proc(compoundCollision : ^NewtonCollision, index : i32) -> rawptr ---
-
-    @(link_name="NewtonCompoundCollisionGetNodeIndex")
-    NewtonCompoundCollisionGetNodeIndex :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) -> i32 ---
-
-    @(link_name="NewtonCompoundCollisionGetCollisionFromNode")
-    NewtonCompoundCollisionGetCollisionFromNode :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateFracturedCompoundCollision")
-    NewtonCreateFracturedCompoundCollision :: proc(newtonWorld : ^NewtonWorld, solidMesh : ^NewtonMesh, shapeID : i32, fracturePhysicsMaterialID : i32, pointcloudCount : i32, vertexCloud : ^dFloat, strideInBytes : i32, materialID : i32, textureMatrix : ^dFloat, regenerateMainMeshCallback : NewtonFractureCompoundCollisionReconstructMainMeshCallBack, emitFracturedCompound : NewtonFractureCompoundCollisionOnEmitCompoundFractured, emitFracfuredChunk : NewtonFractureCompoundCollisionOnEmitChunk) -> ^NewtonCollision ---
-
-    @(link_name="NewtonFracturedCompoundPlaneClip")
-    NewtonFracturedCompoundPlaneClip :: proc(fracturedCompound : ^NewtonCollision, plane : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonFracturedCompoundSetCallbacks")
-    NewtonFracturedCompoundSetCallbacks :: proc(fracturedCompound : ^NewtonCollision, regenerateMainMeshCallback : NewtonFractureCompoundCollisionReconstructMainMeshCallBack, emitFracturedCompound : NewtonFractureCompoundCollisionOnEmitCompoundFractured, emitFracfuredChunk : NewtonFractureCompoundCollisionOnEmitChunk) ---
-
-    @(link_name="NewtonFracturedCompoundIsNodeFreeToDetach")
-    NewtonFracturedCompoundIsNodeFreeToDetach :: proc(fracturedCompound : ^NewtonCollision, collisionNode : rawptr) -> i32 ---
-
-    @(link_name="NewtonFracturedCompoundNeighborNodeList")
-    NewtonFracturedCompoundNeighborNodeList :: proc(fracturedCompound : ^NewtonCollision, collisionNode : rawptr, list : ^rawptr, maxCount : i32) -> i32 ---
-
-    @(link_name="NewtonFracturedCompoundGetMainMesh")
-    NewtonFracturedCompoundGetMainMesh :: proc(fracturedCompound : ^NewtonCollision) -> ^NewtonFracturedCompoundMeshPart ---
-
-    @(link_name="NewtonFracturedCompoundGetFirstSubMesh")
-    NewtonFracturedCompoundGetFirstSubMesh :: proc(fracturedCompound : ^NewtonCollision) -> ^NewtonFracturedCompoundMeshPart ---
-
-    @(link_name="NewtonFracturedCompoundGetNextSubMesh")
-    NewtonFracturedCompoundGetNextSubMesh :: proc(fracturedCompound : ^NewtonCollision, subMesh : ^NewtonFracturedCompoundMeshPart) -> ^NewtonFracturedCompoundMeshPart ---
-
-    @(link_name="NewtonFracturedCompoundCollisionGetVertexCount")
-    NewtonFracturedCompoundCollisionGetVertexCount :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> i32 ---
-
-    @(link_name="NewtonFracturedCompoundCollisionGetVertexPositions")
-    NewtonFracturedCompoundCollisionGetVertexPositions :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> ^dFloat ---
-
-    @(link_name="NewtonFracturedCompoundCollisionGetVertexNormals")
-    NewtonFracturedCompoundCollisionGetVertexNormals :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> ^dFloat ---
-
-    @(link_name="NewtonFracturedCompoundCollisionGetVertexUVs")
-    NewtonFracturedCompoundCollisionGetVertexUVs :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> ^dFloat ---
-
-    @(link_name="NewtonFracturedCompoundMeshPartGetIndexStream")
-    NewtonFracturedCompoundMeshPartGetIndexStream :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart, segment : rawptr, index : ^i32) -> i32 ---
-
-    @(link_name="NewtonFracturedCompoundMeshPartGetFirstSegment")
-    NewtonFracturedCompoundMeshPartGetFirstSegment :: proc(fractureCompoundMeshPart : ^NewtonFracturedCompoundMeshPart) -> rawptr ---
-
-    @(link_name="NewtonFracturedCompoundMeshPartGetNextSegment")
-    NewtonFracturedCompoundMeshPartGetNextSegment :: proc(fractureCompoundMeshSegment : rawptr) -> rawptr ---
-
-    @(link_name="NewtonFracturedCompoundMeshPartGetMaterial")
-    NewtonFracturedCompoundMeshPartGetMaterial :: proc(fractureCompoundMeshSegment : rawptr) -> i32 ---
-
-    @(link_name="NewtonFracturedCompoundMeshPartGetIndexCount")
-    NewtonFracturedCompoundMeshPartGetIndexCount :: proc(fractureCompoundMeshSegment : rawptr) -> i32 ---
-
-    @(link_name="NewtonCreateSceneCollision")
-    NewtonCreateSceneCollision :: proc(newtonWorld : ^NewtonWorld, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonSceneCollisionBeginAddRemove")
-    NewtonSceneCollisionBeginAddRemove :: proc(sceneCollision : ^NewtonCollision) ---
-
-    @(link_name="NewtonSceneCollisionAddSubCollision")
-    NewtonSceneCollisionAddSubCollision :: proc(sceneCollision : ^NewtonCollision, collision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonSceneCollisionRemoveSubCollision")
-    NewtonSceneCollisionRemoveSubCollision :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) ---
-
-    @(link_name="NewtonSceneCollisionRemoveSubCollisionByIndex")
-    NewtonSceneCollisionRemoveSubCollisionByIndex :: proc(sceneCollision : ^NewtonCollision, nodeIndex : i32) ---
-
-    @(link_name="NewtonSceneCollisionSetSubCollisionMatrix")
-    NewtonSceneCollisionSetSubCollisionMatrix :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonSceneCollisionEndAddRemove")
-    NewtonSceneCollisionEndAddRemove :: proc(sceneCollision : ^NewtonCollision) ---
-
-    @(link_name="NewtonSceneCollisionGetFirstNode")
-    NewtonSceneCollisionGetFirstNode :: proc(sceneCollision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonSceneCollisionGetNextNode")
-    NewtonSceneCollisionGetNextNode :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr) -> rawptr ---
-
-    @(link_name="NewtonSceneCollisionGetNodeByIndex")
-    NewtonSceneCollisionGetNodeByIndex :: proc(sceneCollision : ^NewtonCollision, index : i32) -> rawptr ---
-
-    @(link_name="NewtonSceneCollisionGetNodeIndex")
-    NewtonSceneCollisionGetNodeIndex :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr) -> i32 ---
-
-    @(link_name="NewtonSceneCollisionGetCollisionFromNode")
-    NewtonSceneCollisionGetCollisionFromNode :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateUserMeshCollision")
-    NewtonCreateUserMeshCollision :: proc(newtonWorld : ^NewtonWorld, minBox : ^dFloat, maxBox : ^dFloat, userData : rawptr, collideCallback : NewtonUserMeshCollisionCollideCallback, rayHitCallback : NewtonUserMeshCollisionRayHitCallback, destroyCallback : NewtonUserMeshCollisionDestroyCallback, getInfoCallback : NewtonUserMeshCollisionGetCollisionInfo, getLocalAABBCallback : NewtonUserMeshCollisionAABBTest, facesInAABBCallback : NewtonUserMeshCollisionGetFacesInAABB, serializeCallback : NewtonOnUserCollisionSerializationCallback, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonUserMeshCollisionContinuousOverlapTest")
-    NewtonUserMeshCollisionContinuousOverlapTest :: proc(collideDescData : ^NewtonUserMeshCollisionCollideDesc, continueCollisionHandle : rawptr, minAabb : ^dFloat, maxAabb : ^dFloat) -> i32 ---
-
-    @(link_name="NewtonCreateCollisionFromSerialization")
-    NewtonCreateCollisionFromSerialization :: proc(newtonWorld : ^NewtonWorld, deserializeFunction : NewtonDeserializeCallback, serializeHandle : rawptr) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCollisionSerialize")
-    NewtonCollisionSerialize :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, serializeFunction : NewtonSerializeCallback, serializeHandle : rawptr) ---
-
-    @(link_name="NewtonCollisionGetInfo")
-    NewtonCollisionGetInfo :: proc(collision : ^NewtonCollision, collisionInfo : ^NewtonCollisionInfoRecord) ---
-
-    @(link_name="NewtonCreateHeightFieldCollision")
-    NewtonCreateHeightFieldCollision :: proc(newtonWorld : ^NewtonWorld, width : i32, height : i32, gridsDiagonals : i32, elevationdatType : i32, elevationMap : rawptr, attributeMap : cstring, verticalScale : dFloat, horizontalScale_x : dFloat, horizontalScale_z : dFloat, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonHeightFieldSetUserRayCastCallback")
-    NewtonHeightFieldSetUserRayCastCallback :: proc(heightfieldCollision : ^NewtonCollision, rayHitCallback : NewtonHeightFieldRayCastCallback) ---
-
-    @(link_name="NewtonCreateTreeCollision")
-    NewtonCreateTreeCollision :: proc(newtonWorld : ^NewtonWorld, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateTreeCollisionFromMesh")
-    NewtonCreateTreeCollisionFromMesh :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonTreeCollisionSetUserRayCastCallback")
-    NewtonTreeCollisionSetUserRayCastCallback :: proc(treeCollision : ^NewtonCollision, rayHitCallback : NewtonCollisionTreeRayCastCallback) ---
-
-    @(link_name="NewtonTreeCollisionBeginBuild")
-    NewtonTreeCollisionBeginBuild :: proc(treeCollision : ^NewtonCollision) ---
-
-    @(link_name="NewtonTreeCollisionAddFace")
-    NewtonTreeCollisionAddFace :: proc(treeCollision : ^NewtonCollision, vertexCount : i32, vertexPtr : ^dFloat, strideInBytes : i32, faceAttribute : i32) ---
-
-    @(link_name="NewtonTreeCollisionEndBuild")
-    NewtonTreeCollisionEndBuild :: proc(treeCollision : ^NewtonCollision, optimize : i32) ---
-
-    @(link_name="NewtonTreeCollisionGetFaceAttribute")
-    NewtonTreeCollisionGetFaceAttribute :: proc(treeCollision : ^NewtonCollision, faceIndexArray : ^i32, indexCount : i32) -> i32 ---
-
-    @(link_name="NewtonTreeCollisionSetFaceAttribute")
-    NewtonTreeCollisionSetFaceAttribute :: proc(treeCollision : ^NewtonCollision, faceIndexArray : ^i32, indexCount : i32, attribute : i32) ---
-
-    @(link_name="NewtonTreeCollisionForEachFace")
-    NewtonTreeCollisionForEachFace :: proc(treeCollision : ^NewtonCollision, forEachFaceCallback : NewtonTreeCollisionFaceCallback, _context : rawptr) ---
-
-    @(link_name="NewtonTreeCollisionGetVertexListTriangleListInAABB")
-    NewtonTreeCollisionGetVertexListTriangleListInAABB :: proc(treeCollision : ^NewtonCollision, p0 : ^dFloat, p1 : ^dFloat, vertexArray : ^^dFloat, vertexCount : ^i32, vertexStrideInBytes : ^i32, indexList : ^i32, maxIndexCount : i32, faceAttribute : ^i32) -> i32 ---
-
-    @(link_name="NewtonStaticCollisionSetDebugCallback")
-    NewtonStaticCollisionSetDebugCallback :: proc(staticCollision : ^NewtonCollision, userCallback : NewtonTreeCollisionCallback) ---
-
-    @(link_name="NewtonCollisionCreateInstance")
-    NewtonCollisionCreateInstance :: proc(collision : ^NewtonCollision) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCollisionGetType")
-    NewtonCollisionGetType :: proc(collision : ^NewtonCollision) -> i32 ---
-
-    @(link_name="NewtonCollisionIsConvexShape")
-    NewtonCollisionIsConvexShape :: proc(collision : ^NewtonCollision) -> i32 ---
-
-    @(link_name="NewtonCollisionIsStaticShape")
-    NewtonCollisionIsStaticShape :: proc(collision : ^NewtonCollision) -> i32 ---
-
-    @(link_name="NewtonCollisionSetUserData")
-    NewtonCollisionSetUserData :: proc(collision : ^NewtonCollision, userData : rawptr) ---
-
-    @(link_name="NewtonCollisionGetUserData")
-    NewtonCollisionGetUserData :: proc(collision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonCollisionSetUserID")
-    NewtonCollisionSetUserID :: proc(collision : ^NewtonCollision, id : i64) ---
-
-    @(link_name="NewtonCollisionGetUserID")
-    NewtonCollisionGetUserID :: proc(collision : ^NewtonCollision) -> i64 ---
-
-    @(link_name="NewtonCollisionGetMaterial")
-    NewtonCollisionGetMaterial :: proc(collision : ^NewtonCollision, userData : ^NewtonCollisionMaterial) ---
-
-    @(link_name="NewtonCollisionSetMaterial")
-    NewtonCollisionSetMaterial :: proc(collision : ^NewtonCollision, userData : ^NewtonCollisionMaterial) ---
-
-    @(link_name="NewtonCollisionGetSubCollisionHandle")
-    NewtonCollisionGetSubCollisionHandle :: proc(collision : ^NewtonCollision) -> rawptr ---
-
-    @(link_name="NewtonCollisionGetParentInstance")
-    NewtonCollisionGetParentInstance :: proc(collision : ^NewtonCollision) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCollisionSetMatrix")
-    NewtonCollisionSetMatrix :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonCollisionGetMatrix")
-    NewtonCollisionGetMatrix :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonCollisionSetScale")
-    NewtonCollisionSetScale :: proc(collision : ^NewtonCollision, scaleX : dFloat, scaleY : dFloat, scaleZ : dFloat) ---
-
-    @(link_name="NewtonCollisionGetScale")
-    NewtonCollisionGetScale :: proc(collision : ^NewtonCollision, scaleX : ^dFloat, scaleY : ^dFloat, scaleZ : ^dFloat) ---
-
-    @(link_name="NewtonDestroyCollision")
-    NewtonDestroyCollision :: proc(collision : ^NewtonCollision) ---
-
-    @(link_name="NewtonCollisionGetSkinThickness")
-    NewtonCollisionGetSkinThickness :: proc(collision : ^NewtonCollision) -> dFloat ---
-
-    @(link_name="NewtonCollisionSetSkinThickness")
-    NewtonCollisionSetSkinThickness :: proc(collision : ^NewtonCollision, thickness : dFloat) ---
-
-    @(link_name="NewtonCollisionIntersectionTest")
-    NewtonCollisionIntersectionTest :: proc(newtonWorld : ^NewtonWorld, collisionA : ^NewtonCollision, matrixA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonCollisionPointDistance")
-    NewtonCollisionPointDistance :: proc(newtonWorld : ^NewtonWorld, point : ^dFloat, collision : ^NewtonCollision, matrix4x4 : ^dFloat, contact : ^dFloat, normal : ^dFloat, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonCollisionClosestPoint")
-    NewtonCollisionClosestPoint :: proc(newtonWorld : ^NewtonWorld, collisionA : ^NewtonCollision, matrixA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, contactA : ^dFloat, contactB : ^dFloat, normalAB : ^dFloat, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonCollisionCollide")
-    NewtonCollisionCollide :: proc(newtonWorld : ^NewtonWorld, maxSize : i32, collisionA : ^NewtonCollision, matrixA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, contacts : ^dFloat, normals : ^dFloat, penetration : ^dFloat, attributeA : ^i64, attributeB : ^i64, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonCollisionCollideContinue")
-    NewtonCollisionCollideContinue :: proc(newtonWorld : ^NewtonWorld, maxSize : i32, timestep : dFloat, collisionA : ^NewtonCollision, matrixA : ^dFloat, velocA : ^dFloat, omegaA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, velocB : ^dFloat, omegaB : ^dFloat, timeOfImpact : ^dFloat, contacts : ^dFloat, normals : ^dFloat, penetration : ^dFloat, attributeA : ^i64, attributeB : ^i64, threadIndex : i32) -> i32 ---
-
-    @(link_name="NewtonCollisionSupportVertex")
-    NewtonCollisionSupportVertex :: proc(collision : ^NewtonCollision, dir : ^dFloat, vertex : ^dFloat) ---
-
-    @(link_name="NewtonCollisionRayCast")
-    NewtonCollisionRayCast :: proc(collision : ^NewtonCollision, p0 : ^dFloat, p1 : ^dFloat, normal : ^dFloat, attribute : ^i64) -> dFloat ---
-
-    @(link_name="NewtonCollisionCalculateAABB")
-    NewtonCollisionCalculateAABB :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat, p0 : ^dFloat, p1 : ^dFloat) ---
-
-    @(link_name="NewtonCollisionForEachPolygonDo")
-    NewtonCollisionForEachPolygonDo :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat, callback : NewtonCollisionIterator, userData : rawptr) ---
-
-    @(link_name="NewtonCollisionAggregateCreate")
-    NewtonCollisionAggregateCreate :: proc(world : ^NewtonWorld) -> rawptr ---
-
-    @(link_name="NewtonCollisionAggregateDestroy")
-    NewtonCollisionAggregateDestroy :: proc(aggregate : rawptr) ---
-
-    @(link_name="NewtonCollisionAggregateAddBody")
-    NewtonCollisionAggregateAddBody :: proc(aggregate : rawptr, body : ^NewtonBody) ---
-
-    @(link_name="NewtonCollisionAggregateRemoveBody")
-    NewtonCollisionAggregateRemoveBody :: proc(aggregate : rawptr, body : ^NewtonBody) ---
-
-    @(link_name="NewtonCollisionAggregateGetSelfCollision")
-    NewtonCollisionAggregateGetSelfCollision :: proc(aggregate : rawptr) -> i32 ---
-
-    @(link_name="NewtonCollisionAggregateSetSelfCollision")
-    NewtonCollisionAggregateSetSelfCollision :: proc(aggregate : rawptr, state : i32) ---
-
-    @(link_name="NewtonSetEulerAngle")
-    NewtonSetEulerAngle :: proc(eulersAngles : ^dFloat, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonGetEulerAngle")
-    NewtonGetEulerAngle :: proc(matrix4x4 : ^dFloat, eulersAngles0 : ^dFloat, eulersAngles1 : ^dFloat) ---
-
-    @(link_name="NewtonCalculateSpringDamperAcceleration")
-    NewtonCalculateSpringDamperAcceleration :: proc(dt : dFloat, ks : dFloat, x : dFloat, kd : dFloat, s : dFloat) -> dFloat ---
-
-    @(link_name="NewtonCreateDynamicBody")
-    NewtonCreateDynamicBody :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, matrix4x4 : ^dFloat) -> ^NewtonBody ---
-
-    @(link_name="NewtonCreateKinematicBody")
-    NewtonCreateKinematicBody :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, matrix4x4 : ^dFloat) -> ^NewtonBody ---
-
-    @(link_name="NewtonCreateAsymetricDynamicBody")
-    NewtonCreateAsymetricDynamicBody :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, matrix4x4 : ^dFloat) -> ^NewtonBody ---
-
-    @(link_name="NewtonDestroyBody")
-    NewtonDestroyBody :: proc(body : ^NewtonBody) ---
-
-    @(link_name="NewtonBodyGetSimulationState")
-    NewtonBodyGetSimulationState :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetSimulationState")
-    NewtonBodySetSimulationState :: proc(bodyPtr : ^NewtonBody, state : i32) ---
-
-    @(link_name="NewtonBodyGetType")
-    NewtonBodyGetType :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodyGetCollidable")
-    NewtonBodyGetCollidable :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetCollidable")
-    NewtonBodySetCollidable :: proc(body : ^NewtonBody, collidableState : i32) ---
-
-    @(link_name="NewtonBodyAddForce")
-    NewtonBodyAddForce :: proc(body : ^NewtonBody, force : ^dFloat) ---
-
-    @(link_name="NewtonBodyAddTorque")
-    NewtonBodyAddTorque :: proc(body : ^NewtonBody, torque : ^dFloat) ---
-
-    @(link_name="NewtonBodySetCentreOfMass")
-    NewtonBodySetCentreOfMass :: proc(body : ^NewtonBody, com : ^dFloat) ---
-
-    @(link_name="NewtonBodySetMassMatrix")
-    NewtonBodySetMassMatrix :: proc(body : ^NewtonBody, mass : dFloat, Ixx : dFloat, Iyy : dFloat, Izz : dFloat) ---
-
-    @(link_name="NewtonBodySetFullMassMatrix")
-    NewtonBodySetFullMassMatrix :: proc(body : ^NewtonBody, mass : dFloat, inertiaMatrix : ^dFloat) ---
-
-    @(link_name="NewtonBodySetMassProperties")
-    NewtonBodySetMassProperties :: proc(body : ^NewtonBody, mass : dFloat, collision : ^NewtonCollision) ---
-
-    @(link_name="NewtonBodySetMatrix")
-    NewtonBodySetMatrix :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonBodySetMatrixNoSleep")
-    NewtonBodySetMatrixNoSleep :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonBodySetMatrixRecursive")
-    NewtonBodySetMatrixRecursive :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonBodySetMaterialGroupID")
-    NewtonBodySetMaterialGroupID :: proc(body : ^NewtonBody, id : i32) ---
-
-    @(link_name="NewtonBodySetContinuousCollisionMode")
-    NewtonBodySetContinuousCollisionMode :: proc(body : ^NewtonBody, state : u32) ---
-
-    @(link_name="NewtonBodySetJointRecursiveCollision")
-    NewtonBodySetJointRecursiveCollision :: proc(body : ^NewtonBody, state : u32) ---
-
-    @(link_name="NewtonBodySetOmega")
-    NewtonBodySetOmega :: proc(body : ^NewtonBody, omega : ^dFloat) ---
-
-    @(link_name="NewtonBodySetOmegaNoSleep")
-    NewtonBodySetOmegaNoSleep :: proc(body : ^NewtonBody, omega : ^dFloat) ---
-
-    @(link_name="NewtonBodySetVelocity")
-    NewtonBodySetVelocity :: proc(body : ^NewtonBody, velocity : ^dFloat) ---
-
-    @(link_name="NewtonBodySetVelocityNoSleep")
-    NewtonBodySetVelocityNoSleep :: proc(body : ^NewtonBody, velocity : ^dFloat) ---
-
-    @(link_name="NewtonBodySetForce")
-    NewtonBodySetForce :: proc(body : ^NewtonBody, force : ^dFloat) ---
-
-    @(link_name="NewtonBodySetTorque")
-    NewtonBodySetTorque :: proc(body : ^NewtonBody, torque : ^dFloat) ---
-
-    @(link_name="NewtonBodySetLinearDamping")
-    NewtonBodySetLinearDamping :: proc(body : ^NewtonBody, linearDamp : dFloat) ---
-
-    @(link_name="NewtonBodySetAngularDamping")
-    NewtonBodySetAngularDamping :: proc(body : ^NewtonBody, angularDamp : ^dFloat) ---
-
-    @(link_name="NewtonBodySetCollision")
-    NewtonBodySetCollision :: proc(body : ^NewtonBody, collision : ^NewtonCollision) ---
-
-    @(link_name="NewtonBodySetCollisionScale")
-    NewtonBodySetCollisionScale :: proc(body : ^NewtonBody, scaleX : dFloat, scaleY : dFloat, scaleZ : dFloat) ---
-
-    @(link_name="NewtonBodyGetSleepState")
-    NewtonBodyGetSleepState :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetSleepState")
-    NewtonBodySetSleepState :: proc(body : ^NewtonBody, state : i32) ---
-
-    @(link_name="NewtonBodyGetAutoSleep")
-    NewtonBodyGetAutoSleep :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetAutoSleep")
-    NewtonBodySetAutoSleep :: proc(body : ^NewtonBody, state : i32) ---
-
-    @(link_name="NewtonBodyGetFreezeState")
-    NewtonBodyGetFreezeState :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetFreezeState")
-    NewtonBodySetFreezeState :: proc(body : ^NewtonBody, state : i32) ---
-
-    @(link_name="NewtonBodyGetGyroscopicTorque")
-    NewtonBodyGetGyroscopicTorque :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetGyroscopicTorque")
-    NewtonBodySetGyroscopicTorque :: proc(body : ^NewtonBody, state : i32) ---
-
-    @(link_name="NewtonBodySetDestructorCallback")
-    NewtonBodySetDestructorCallback :: proc(body : ^NewtonBody, callback : NewtonBodyDestructor) ---
-
-    @(link_name="NewtonBodyGetDestructorCallback")
-    NewtonBodyGetDestructorCallback :: proc(body : ^NewtonBody) -> NewtonBodyDestructor ---
-
-    @(link_name="NewtonBodySetTransformCallback")
-    NewtonBodySetTransformCallback :: proc(body : ^NewtonBody, callback : NewtonSetTransform) ---
-
-    @(link_name="NewtonBodyGetTransformCallback")
-    NewtonBodyGetTransformCallback :: proc(body : ^NewtonBody) -> NewtonSetTransform ---
-
-    @(link_name="NewtonBodySetForceAndTorqueCallback")
-    NewtonBodySetForceAndTorqueCallback :: proc(body : ^NewtonBody, callback : NewtonApplyForceAndTorque) ---
-
-    @(link_name="NewtonBodyGetForceAndTorqueCallback")
-    NewtonBodyGetForceAndTorqueCallback :: proc(body : ^NewtonBody) -> NewtonApplyForceAndTorque ---
-
-    @(link_name="NewtonBodyGetID")
-    NewtonBodyGetID :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodySetUserData")
-    NewtonBodySetUserData :: proc(body : ^NewtonBody, userData : rawptr) ---
-
-    @(link_name="NewtonBodyGetUserData")
-    NewtonBodyGetUserData :: proc(body : ^NewtonBody) -> rawptr ---
-
-    @(link_name="NewtonBodyGetWorld")
-    NewtonBodyGetWorld :: proc(body : ^NewtonBody) -> ^NewtonWorld ---
-
-    @(link_name="NewtonBodyGetCollision")
-    NewtonBodyGetCollision :: proc(body : ^NewtonBody) -> ^NewtonCollision ---
-
-    @(link_name="NewtonBodyGetMaterialGroupID")
-    NewtonBodyGetMaterialGroupID :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodyGetSerializedID")
-    NewtonBodyGetSerializedID :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodyGetContinuousCollisionMode")
-    NewtonBodyGetContinuousCollisionMode :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodyGetJointRecursiveCollision")
-    NewtonBodyGetJointRecursiveCollision :: proc(body : ^NewtonBody) -> i32 ---
-
-    @(link_name="NewtonBodyGetPosition")
-    NewtonBodyGetPosition :: proc(body : ^NewtonBody, pos : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetMatrix")
-    NewtonBodyGetMatrix :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetRotation")
-    NewtonBodyGetRotation :: proc(body : ^NewtonBody, rotation : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetMass")
-    NewtonBodyGetMass :: proc(body : ^NewtonBody, mass : ^dFloat, Ixx : ^dFloat, Iyy : ^dFloat, Izz : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetInvMass")
-    NewtonBodyGetInvMass :: proc(body : ^NewtonBody, invMass : ^dFloat, invIxx : ^dFloat, invIyy : ^dFloat, invIzz : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetInertiaMatrix")
-    NewtonBodyGetInertiaMatrix :: proc(body : ^NewtonBody, inertiaMatrix : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetInvInertiaMatrix")
-    NewtonBodyGetInvInertiaMatrix :: proc(body : ^NewtonBody, invInertiaMatrix : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetOmega")
-    NewtonBodyGetOmega :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetVelocity")
-    NewtonBodyGetVelocity :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetAlpha")
-    NewtonBodyGetAlpha :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetAcceleration")
-    NewtonBodyGetAcceleration :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetForce")
-    NewtonBodyGetForce :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetTorque")
-    NewtonBodyGetTorque :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetCentreOfMass")
-    NewtonBodyGetCentreOfMass :: proc(body : ^NewtonBody, com : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetPointVelocity")
-    NewtonBodyGetPointVelocity :: proc(body : ^NewtonBody, point : ^dFloat, velocOut : ^dFloat) ---
-
-    @(link_name="NewtonBodyApplyImpulsePair")
-    NewtonBodyApplyImpulsePair :: proc(body : ^NewtonBody, linearImpulse : ^dFloat, angularImpulse : ^dFloat, timestep : dFloat) ---
-
-    @(link_name="NewtonBodyAddImpulse")
-    NewtonBodyAddImpulse :: proc(body : ^NewtonBody, pointDeltaVeloc : ^dFloat, pointPosit : ^dFloat, timestep : dFloat) ---
-
-    @(link_name="NewtonBodyApplyImpulseArray")
-    NewtonBodyApplyImpulseArray :: proc(body : ^NewtonBody, impuleCount : i32, strideInByte : i32, impulseArray : ^dFloat, pointArray : ^dFloat, timestep : dFloat) ---
-
-    @(link_name="NewtonBodyIntegrateVelocity")
-    NewtonBodyIntegrateVelocity :: proc(body : ^NewtonBody, timestep : dFloat) ---
-
-    @(link_name="NewtonBodyGetLinearDamping")
-    NewtonBodyGetLinearDamping :: proc(body : ^NewtonBody) -> dFloat ---
-
-    @(link_name="NewtonBodyGetAngularDamping")
-    NewtonBodyGetAngularDamping :: proc(body : ^NewtonBody, vector : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetAABB")
-    NewtonBodyGetAABB :: proc(body : ^NewtonBody, p0 : ^dFloat, p1 : ^dFloat) ---
-
-    @(link_name="NewtonBodyGetFirstJoint")
-    NewtonBodyGetFirstJoint :: proc(body : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonBodyGetNextJoint")
-    NewtonBodyGetNextJoint :: proc(body : ^NewtonBody, joint : ^NewtonJoint) -> ^NewtonJoint ---
-
-    @(link_name="NewtonBodyGetFirstContactJoint")
-    NewtonBodyGetFirstContactJoint :: proc(body : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonBodyGetNextContactJoint")
-    NewtonBodyGetNextContactJoint :: proc(body : ^NewtonBody, contactJoint : ^NewtonJoint) -> ^NewtonJoint ---
-
-    @(link_name="NewtonBodyFindContact")
-    NewtonBodyFindContact :: proc(body0 : ^NewtonBody, body1 : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonContactJointGetFirstContact")
-    NewtonContactJointGetFirstContact :: proc(contactJoint : ^NewtonJoint) -> rawptr ---
-
-    @(link_name="NewtonContactJointGetNextContact")
-    NewtonContactJointGetNextContact :: proc(contactJoint : ^NewtonJoint, contact : rawptr) -> rawptr ---
-
-    @(link_name="NewtonContactJointGetContactCount")
-    NewtonContactJointGetContactCount :: proc(contactJoint : ^NewtonJoint) -> i32 ---
-
-    @(link_name="NewtonContactJointRemoveContact")
-    NewtonContactJointRemoveContact :: proc(contactJoint : ^NewtonJoint, contact : rawptr) ---
-
-    @(link_name="NewtonContactJointGetClosestDistance")
-    NewtonContactJointGetClosestDistance :: proc(contactJoint : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonContactJointResetSelftJointCollision")
-    NewtonContactJointResetSelftJointCollision :: proc(contactJoint : ^NewtonJoint) ---
-
-    @(link_name="NewtonContactJointResetIntraJointCollision")
-    NewtonContactJointResetIntraJointCollision :: proc(contactJoint : ^NewtonJoint) ---
-
-    @(link_name="NewtonContactGetMaterial")
-    NewtonContactGetMaterial :: proc(contact : rawptr) -> ^NewtonMaterial ---
-
-    @(link_name="NewtonContactGetCollision0")
-    NewtonContactGetCollision0 :: proc(contact : rawptr) -> ^NewtonCollision ---
-
-    @(link_name="NewtonContactGetCollision1")
-    NewtonContactGetCollision1 :: proc(contact : rawptr) -> ^NewtonCollision ---
-
-    @(link_name="NewtonContactGetCollisionID0")
-    NewtonContactGetCollisionID0 :: proc(contact : rawptr) -> rawptr ---
-
-    @(link_name="NewtonContactGetCollisionID1")
-    NewtonContactGetCollisionID1 :: proc(contact : rawptr) -> rawptr ---
-
-    @(link_name="NewtonJointGetUserData")
-    NewtonJointGetUserData :: proc(joint : ^NewtonJoint) -> rawptr ---
-
-    @(link_name="NewtonJointSetUserData")
-    NewtonJointSetUserData :: proc(joint : ^NewtonJoint, userData : rawptr) ---
-
-    @(link_name="NewtonJointGetBody0")
-    NewtonJointGetBody0 :: proc(joint : ^NewtonJoint) -> ^NewtonBody ---
-
-    @(link_name="NewtonJointGetBody1")
-    NewtonJointGetBody1 :: proc(joint : ^NewtonJoint) -> ^NewtonBody ---
-
-    @(link_name="NewtonJointGetInfo")
-    NewtonJointGetInfo :: proc(joint : ^NewtonJoint, info : ^NewtonJointRecord) ---
-
-    @(link_name="NewtonJointGetCollisionState")
-    NewtonJointGetCollisionState :: proc(joint : ^NewtonJoint) -> i32 ---
-
-    @(link_name="NewtonJointSetCollisionState")
-    NewtonJointSetCollisionState :: proc(joint : ^NewtonJoint, state : i32) ---
-
-    @(link_name="NewtonJointGetStiffness")
-    NewtonJointGetStiffness :: proc(joint : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonJointSetStiffness")
-    NewtonJointSetStiffness :: proc(joint : ^NewtonJoint, state : dFloat) ---
-
-    @(link_name="NewtonDestroyJoint")
-    NewtonDestroyJoint :: proc(newtonWorld : ^NewtonWorld, joint : ^NewtonJoint) ---
-
-    @(link_name="NewtonJointSetDestructor")
-    NewtonJointSetDestructor :: proc(joint : ^NewtonJoint, destructor : NewtonConstraintDestructor) ---
-
-    @(link_name="NewtonJointIsActive")
-    NewtonJointIsActive :: proc(joint : ^NewtonJoint) -> i32 ---
-
-    @(link_name="NewtonCreateMassSpringDamperSystem")
-    NewtonCreateMassSpringDamperSystem :: proc(newtonWorld : ^NewtonWorld, shapeID : i32, points : ^dFloat, pointCount : i32, strideInBytes : i32, pointMass : ^dFloat, links : ^i32, linksCount : i32, linksSpring : ^dFloat, linksDamper : ^dFloat) -> ^NewtonCollision ---
-
-    @(link_name="NewtonCreateDeformableSolid")
-    NewtonCreateDeformableSolid :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, shapeID : i32) -> ^NewtonCollision ---
-
-    @(link_name="NewtonDeformableMeshGetParticleCount")
-    NewtonDeformableMeshGetParticleCount :: proc(deformableMesh : ^NewtonCollision) -> i32 ---
-
-    @(link_name="NewtonDeformableMeshGetParticleStrideInBytes")
-    NewtonDeformableMeshGetParticleStrideInBytes :: proc(deformableMesh : ^NewtonCollision) -> i32 ---
-
-    @(link_name="NewtonDeformableMeshGetParticleArray")
-    NewtonDeformableMeshGetParticleArray :: proc(deformableMesh : ^NewtonCollision) -> ^dFloat ---
-
-    @(link_name="NewtonConstraintCreateBall")
-    NewtonConstraintCreateBall :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonBallSetUserCallback")
-    NewtonBallSetUserCallback :: proc(ball : ^NewtonJoint, callback : NewtonBallCallback) ---
-
-    @(link_name="NewtonBallGetJointAngle")
-    NewtonBallGetJointAngle :: proc(ball : ^NewtonJoint, angle : ^dFloat) ---
-
-    @(link_name="NewtonBallGetJointOmega")
-    NewtonBallGetJointOmega :: proc(ball : ^NewtonJoint, omega : ^dFloat) ---
-
-    @(link_name="NewtonBallGetJointForce")
-    NewtonBallGetJointForce :: proc(ball : ^NewtonJoint, force : ^dFloat) ---
-
-    @(link_name="NewtonBallSetConeLimits")
-    NewtonBallSetConeLimits :: proc(ball : ^NewtonJoint, pin : ^dFloat, maxConeAngle : dFloat, maxTwistAngle : dFloat) ---
-
-    @(link_name="NewtonConstraintCreateHinge")
-    NewtonConstraintCreateHinge :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonHingeSetUserCallback")
-    NewtonHingeSetUserCallback :: proc(hinge : ^NewtonJoint, callback : NewtonHingeCallback) ---
-
-    @(link_name="NewtonHingeGetJointAngle")
-    NewtonHingeGetJointAngle :: proc(hinge : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonHingeGetJointOmega")
-    NewtonHingeGetJointOmega :: proc(hinge : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonHingeGetJointForce")
-    NewtonHingeGetJointForce :: proc(hinge : ^NewtonJoint, force : ^dFloat) ---
-
-    @(link_name="NewtonHingeCalculateStopAlpha")
-    NewtonHingeCalculateStopAlpha :: proc(hinge : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
-
-    @(link_name="NewtonConstraintCreateSlider")
-    NewtonConstraintCreateSlider :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonSliderSetUserCallback")
-    NewtonSliderSetUserCallback :: proc(slider : ^NewtonJoint, callback : NewtonSliderCallback) ---
-
-    @(link_name="NewtonSliderGetJointPosit")
-    NewtonSliderGetJointPosit :: proc(slider : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonSliderGetJointVeloc")
-    NewtonSliderGetJointVeloc :: proc(slider : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonSliderGetJointForce")
-    NewtonSliderGetJointForce :: proc(slider : ^NewtonJoint, force : ^dFloat) ---
-
-    @(link_name="NewtonSliderCalculateStopAccel")
-    NewtonSliderCalculateStopAccel :: proc(slider : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, position : dFloat) -> dFloat ---
-
-    @(link_name="NewtonConstraintCreateCorkscrew")
-    NewtonConstraintCreateCorkscrew :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonCorkscrewSetUserCallback")
-    NewtonCorkscrewSetUserCallback :: proc(corkscrew : ^NewtonJoint, callback : NewtonCorkscrewCallback) ---
-
-    @(link_name="NewtonCorkscrewGetJointPosit")
-    NewtonCorkscrewGetJointPosit :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonCorkscrewGetJointAngle")
-    NewtonCorkscrewGetJointAngle :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonCorkscrewGetJointVeloc")
-    NewtonCorkscrewGetJointVeloc :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonCorkscrewGetJointOmega")
-    NewtonCorkscrewGetJointOmega :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonCorkscrewGetJointForce")
-    NewtonCorkscrewGetJointForce :: proc(corkscrew : ^NewtonJoint, force : ^dFloat) ---
-
-    @(link_name="NewtonCorkscrewCalculateStopAlpha")
-    NewtonCorkscrewCalculateStopAlpha :: proc(corkscrew : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
-
-    @(link_name="NewtonCorkscrewCalculateStopAccel")
-    NewtonCorkscrewCalculateStopAccel :: proc(corkscrew : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, position : dFloat) -> dFloat ---
-
-    @(link_name="NewtonConstraintCreateUniversal")
-    NewtonConstraintCreateUniversal :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir0 : ^dFloat, pinDir1 : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonUniversalSetUserCallback")
-    NewtonUniversalSetUserCallback :: proc(universal : ^NewtonJoint, callback : NewtonUniversalCallback) ---
-
-    @(link_name="NewtonUniversalGetJointAngle0")
-    NewtonUniversalGetJointAngle0 :: proc(universal : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonUniversalGetJointAngle1")
-    NewtonUniversalGetJointAngle1 :: proc(universal : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonUniversalGetJointOmega0")
-    NewtonUniversalGetJointOmega0 :: proc(universal : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonUniversalGetJointOmega1")
-    NewtonUniversalGetJointOmega1 :: proc(universal : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonUniversalGetJointForce")
-    NewtonUniversalGetJointForce :: proc(universal : ^NewtonJoint, force : ^dFloat) ---
-
-    @(link_name="NewtonUniversalCalculateStopAlpha0")
-    NewtonUniversalCalculateStopAlpha0 :: proc(universal : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
-
-    @(link_name="NewtonUniversalCalculateStopAlpha1")
-    NewtonUniversalCalculateStopAlpha1 :: proc(universal : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
-
-    @(link_name="NewtonConstraintCreateUpVector")
-    NewtonConstraintCreateUpVector :: proc(newtonWorld : ^NewtonWorld, pinDir : ^dFloat, body : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonUpVectorGetPin")
-    NewtonUpVectorGetPin :: proc(upVector : ^NewtonJoint, pin : ^dFloat) ---
-
-    @(link_name="NewtonUpVectorSetPin")
-    NewtonUpVectorSetPin :: proc(upVector : ^NewtonJoint, pin : ^dFloat) ---
-
-    @(link_name="NewtonConstraintCreateUserJoint")
-    NewtonConstraintCreateUserJoint :: proc(newtonWorld : ^NewtonWorld, maxDOF : i32, callback : NewtonUserBilateralCallback, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
-
-    @(link_name="NewtonUserJointGetSolverModel")
-    NewtonUserJointGetSolverModel :: proc(joint : ^NewtonJoint) -> i32 ---
-
-    @(link_name="NewtonUserJointSetSolverModel")
-    NewtonUserJointSetSolverModel :: proc(joint : ^NewtonJoint, model : i32) ---
-
-    @(link_name="NewtonUserJointMassScale")
-    NewtonUserJointMassScale :: proc(joint : ^NewtonJoint, scaleBody0 : dFloat, scaleBody1 : dFloat) ---
-
-    @(link_name="NewtonUserJointSetFeedbackCollectorCallback")
-    NewtonUserJointSetFeedbackCollectorCallback :: proc(joint : ^NewtonJoint, getFeedback : NewtonUserBilateralCallback) ---
-
-    @(link_name="NewtonUserJointAddLinearRow")
-    NewtonUserJointAddLinearRow :: proc(joint : ^NewtonJoint, pivot0 : ^dFloat, pivot1 : ^dFloat, dir : ^dFloat) ---
-
-    @(link_name="NewtonUserJointAddAngularRow")
-    NewtonUserJointAddAngularRow :: proc(joint : ^NewtonJoint, relativeAngle : dFloat, dir : ^dFloat) ---
-
-    @(link_name="NewtonUserJointAddGeneralRow")
-    NewtonUserJointAddGeneralRow :: proc(joint : ^NewtonJoint, jacobian0 : ^dFloat, jacobian1 : ^dFloat) ---
-
-    @(link_name="NewtonUserJointSetRowMinimumFriction")
-    NewtonUserJointSetRowMinimumFriction :: proc(joint : ^NewtonJoint, friction : dFloat) ---
-
-    @(link_name="NewtonUserJointSetRowMaximumFriction")
-    NewtonUserJointSetRowMaximumFriction :: proc(joint : ^NewtonJoint, friction : dFloat) ---
-
-    @(link_name="NewtonUserJointCalculateRowZeroAcceleration")
-    NewtonUserJointCalculateRowZeroAcceleration :: proc(joint : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonUserJointGetRowAcceleration")
-    NewtonUserJointGetRowAcceleration :: proc(joint : ^NewtonJoint) -> dFloat ---
-
-    @(link_name="NewtonUserJointGetRowJacobian")
-    NewtonUserJointGetRowJacobian :: proc(joint : ^NewtonJoint, linear0 : ^dFloat, angula0 : ^dFloat, linear1 : ^dFloat, angula1 : ^dFloat) ---
-
-    @(link_name="NewtonUserJointSetRowAcceleration")
-    NewtonUserJointSetRowAcceleration :: proc(joint : ^NewtonJoint, acceleration : dFloat) ---
-
-    @(link_name="NewtonUserJointSetRowMassDependentSpringDamperAcceleration")
-    NewtonUserJointSetRowMassDependentSpringDamperAcceleration :: proc(joint : ^NewtonJoint, spring : dFloat, damper : dFloat) ---
-
-    @(link_name="NewtonUserJointSetRowMassIndependentSpringDamperAcceleration")
-    NewtonUserJointSetRowMassIndependentSpringDamperAcceleration :: proc(joint : ^NewtonJoint, rowStiffness : dFloat, spring : dFloat, damper : dFloat) ---
-
-    @(link_name="NewtonUserJointSetRowStiffness")
-    NewtonUserJointSetRowStiffness :: proc(joint : ^NewtonJoint, stiffness : dFloat) ---
-
-    @(link_name="NewtonUserJoinRowsCount")
-    NewtonUserJoinRowsCount :: proc(joint : ^NewtonJoint) -> i32 ---
-
-    @(link_name="NewtonUserJointGetGeneralRow")
-    NewtonUserJointGetGeneralRow :: proc(joint : ^NewtonJoint, index : i32, jacobian0 : ^dFloat, jacobian1 : ^dFloat) ---
-
-    @(link_name="NewtonUserJointGetRowForce")
-    NewtonUserJointGetRowForce :: proc(joint : ^NewtonJoint, row : i32) -> dFloat ---
-
-    @(link_name="NewtonMeshCreate")
-    NewtonMeshCreate :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateFromMesh")
-    NewtonMeshCreateFromMesh :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateFromCollision")
-    NewtonMeshCreateFromCollision :: proc(collision : ^NewtonCollision) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateTetrahedraIsoSurface")
-    NewtonMeshCreateTetrahedraIsoSurface :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateConvexHull")
-    NewtonMeshCreateConvexHull :: proc(newtonWorld : ^NewtonWorld, pointCount : i32, vertexCloud : ^dFloat, strideInBytes : i32, tolerance : dFloat) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateVoronoiConvexDecomposition")
-    NewtonMeshCreateVoronoiConvexDecomposition :: proc(newtonWorld : ^NewtonWorld, pointCount : i32, vertexCloud : ^dFloat, strideInBytes : i32, materialID : i32, textureMatrix : ^dFloat) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateFromSerialization")
-    NewtonMeshCreateFromSerialization :: proc(newtonWorld : ^NewtonWorld, deserializeFunction : NewtonDeserializeCallback, serializeHandle : rawptr) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshDestroy")
-    NewtonMeshDestroy :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshSerialize")
-    NewtonMeshSerialize :: proc(mesh : ^NewtonMesh, serializeFunction : NewtonSerializeCallback, serializeHandle : rawptr) ---
-
-    @(link_name="NewtonMeshSaveOFF")
-    NewtonMeshSaveOFF :: proc(mesh : ^NewtonMesh, filename : cstring) ---
-
-    @(link_name="NewtonMeshLoadOFF")
-    NewtonMeshLoadOFF :: proc(newtonWorld : ^NewtonWorld, filename : cstring) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshLoadTetrahedraMesh")
-    NewtonMeshLoadTetrahedraMesh :: proc(newtonWorld : ^NewtonWorld, filename : cstring) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshFlipWinding")
-    NewtonMeshFlipWinding :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshApplyTransform")
-    NewtonMeshApplyTransform :: proc(mesh : ^NewtonMesh, matrix4x4 : ^dFloat) ---
-
-    @(link_name="NewtonMeshCalculateOOBB")
-    NewtonMeshCalculateOOBB :: proc(mesh : ^NewtonMesh, matrix4x4 : ^dFloat, x : ^dFloat, y : ^dFloat, z : ^dFloat) ---
-
-    @(link_name="NewtonMeshCalculateVertexNormals")
-    NewtonMeshCalculateVertexNormals :: proc(mesh : ^NewtonMesh, angleInRadians : dFloat) ---
-
-    @(link_name="NewtonMeshApplySphericalMapping")
-    NewtonMeshApplySphericalMapping :: proc(mesh : ^NewtonMesh, material : i32, aligmentMatrix : ^dFloat) ---
-
-    @(link_name="NewtonMeshApplyCylindricalMapping")
-    NewtonMeshApplyCylindricalMapping :: proc(mesh : ^NewtonMesh, cylinderMaterial : i32, capMaterial : i32, aligmentMatrix : ^dFloat) ---
-
-    @(link_name="NewtonMeshApplyBoxMapping")
-    NewtonMeshApplyBoxMapping :: proc(mesh : ^NewtonMesh, frontMaterial : i32, sideMaterial : i32, topMaterial : i32, aligmentMatrix : ^dFloat) ---
-
-    @(link_name="NewtonMeshApplyAngleBasedMapping")
-    NewtonMeshApplyAngleBasedMapping :: proc(mesh : ^NewtonMesh, material : i32, reportPrograssCallback : NewtonReportProgress, reportPrgressUserData : rawptr, aligmentMatrix : ^dFloat) ---
-
-    @(link_name="NewtonCreateTetrahedraLinearBlendSkinWeightsChannel")
-    NewtonCreateTetrahedraLinearBlendSkinWeightsChannel :: proc(tetrahedraMesh : ^NewtonMesh, skinMesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshOptimize")
-    NewtonMeshOptimize :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshOptimizePoints")
-    NewtonMeshOptimizePoints :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshOptimizeVertex")
-    NewtonMeshOptimizeVertex :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshIsOpenMesh")
-    NewtonMeshIsOpenMesh :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshFixTJoints")
-    NewtonMeshFixTJoints :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshPolygonize")
-    NewtonMeshPolygonize :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshTriangulate")
-    NewtonMeshTriangulate :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshUnion")
-    NewtonMeshUnion :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshDifference")
-    NewtonMeshDifference :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshIntersection")
-    NewtonMeshIntersection :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshClip")
-    NewtonMeshClip :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat, topMesh : ^^NewtonMesh, bottomMesh : ^^NewtonMesh) ---
-
-    @(link_name="NewtonMeshConvexMeshIntersection")
-    NewtonMeshConvexMeshIntersection :: proc(mesh : ^NewtonMesh, convexMesh : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshSimplify")
-    NewtonMeshSimplify :: proc(mesh : ^NewtonMesh, maxVertexCount : i32, reportPrograssCallback : NewtonReportProgress, reportPrgressUserData : rawptr) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshApproximateConvexDecomposition")
-    NewtonMeshApproximateConvexDecomposition :: proc(mesh : ^NewtonMesh, maxConcavity : dFloat, backFaceDistanceFactor : dFloat, maxCount : i32, maxVertexPerHull : i32, reportProgressCallback : NewtonReportProgress, reportProgressUserData : rawptr) -> ^NewtonMesh ---
-
-    @(link_name="NewtonRemoveUnusedVertices")
-    NewtonRemoveUnusedVertices :: proc(mesh : ^NewtonMesh, vertexRemapTable : ^i32) ---
-
-    @(link_name="NewtonMeshBeginBuild")
-    NewtonMeshBeginBuild :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshBeginFace")
-    NewtonMeshBeginFace :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshAddPoint")
-    NewtonMeshAddPoint :: proc(mesh : ^NewtonMesh, x : f64, y : f64, z : f64) ---
-
-    @(link_name="NewtonMeshAddLayer")
-    NewtonMeshAddLayer :: proc(mesh : ^NewtonMesh, layerIndex : i32) ---
-
-    @(link_name="NewtonMeshAddMaterial")
-    NewtonMeshAddMaterial :: proc(mesh : ^NewtonMesh, materialIndex : i32) ---
-
-    @(link_name="NewtonMeshAddNormal")
-    NewtonMeshAddNormal :: proc(mesh : ^NewtonMesh, x : dFloat, y : dFloat, z : dFloat) ---
-
-    @(link_name="NewtonMeshAddBinormal")
-    NewtonMeshAddBinormal :: proc(mesh : ^NewtonMesh, x : dFloat, y : dFloat, z : dFloat) ---
-
-    @(link_name="NewtonMeshAddUV0")
-    NewtonMeshAddUV0 :: proc(mesh : ^NewtonMesh, u : dFloat, v : dFloat) ---
-
-    @(link_name="NewtonMeshAddUV1")
-    NewtonMeshAddUV1 :: proc(mesh : ^NewtonMesh, u : dFloat, v : dFloat) ---
-
-    @(link_name="NewtonMeshAddVertexColor")
-    NewtonMeshAddVertexColor :: proc(mesh : ^NewtonMesh, r : f32, g : f32, b : f32, a : f32) ---
-
-    @(link_name="NewtonMeshEndFace")
-    NewtonMeshEndFace :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshEndBuild")
-    NewtonMeshEndBuild :: proc(mesh : ^NewtonMesh) ---
-
-    @(link_name="NewtonMeshClearVertexFormat")
-    NewtonMeshClearVertexFormat :: proc(format : ^NewtonMeshVertexFormat) ---
-
-    @(link_name="NewtonMeshBuildFromVertexListIndexList")
-    NewtonMeshBuildFromVertexListIndexList :: proc(mesh : ^NewtonMesh, format : ^NewtonMeshVertexFormat) ---
-
-    @(link_name="NewtonMeshGetPointCount")
-    NewtonMeshGetPointCount :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshGetIndexToVertexMap")
-    NewtonMeshGetIndexToVertexMap :: proc(mesh : ^NewtonMesh) -> ^i32 ---
-
-    @(link_name="NewtonMeshGetVertexDoubleChannel")
-    NewtonMeshGetVertexDoubleChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^f64) ---
-
-    @(link_name="NewtonMeshGetVertexChannel")
-    NewtonMeshGetVertexChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
-
-    @(link_name="NewtonMeshGetNormalChannel")
-    NewtonMeshGetNormalChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
-
-    @(link_name="NewtonMeshGetBinormalChannel")
-    NewtonMeshGetBinormalChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
-
-    @(link_name="NewtonMeshGetUV0Channel")
-    NewtonMeshGetUV0Channel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
-
-    @(link_name="NewtonMeshGetUV1Channel")
-    NewtonMeshGetUV1Channel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
-
-    @(link_name="NewtonMeshGetVertexColorChannel")
-    NewtonMeshGetVertexColorChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
-
-    @(link_name="NewtonMeshHasNormalChannel")
-    NewtonMeshHasNormalChannel :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshHasBinormalChannel")
-    NewtonMeshHasBinormalChannel :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshHasUV0Channel")
-    NewtonMeshHasUV0Channel :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshHasUV1Channel")
-    NewtonMeshHasUV1Channel :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshHasVertexColorChannel")
-    NewtonMeshHasVertexColorChannel :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshBeginHandle")
-    NewtonMeshBeginHandle :: proc(mesh : ^NewtonMesh) -> rawptr ---
-
-    @(link_name="NewtonMeshEndHandle")
-    NewtonMeshEndHandle :: proc(mesh : ^NewtonMesh, handle : rawptr) ---
-
-    @(link_name="NewtonMeshFirstMaterial")
-    NewtonMeshFirstMaterial :: proc(mesh : ^NewtonMesh, handle : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshNextMaterial")
-    NewtonMeshNextMaterial :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32) -> i32 ---
-
-    @(link_name="NewtonMeshMaterialGetMaterial")
-    NewtonMeshMaterialGetMaterial :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32) -> i32 ---
-
-    @(link_name="NewtonMeshMaterialGetIndexCount")
-    NewtonMeshMaterialGetIndexCount :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32) -> i32 ---
-
-    @(link_name="NewtonMeshMaterialGetIndexStream")
-    NewtonMeshMaterialGetIndexStream :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32, index : ^i32) ---
-
-    @(link_name="NewtonMeshMaterialGetIndexStreamShort")
-    NewtonMeshMaterialGetIndexStreamShort :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32, index : ^i16) ---
-
-    @(link_name="NewtonMeshCreateFirstSingleSegment")
-    NewtonMeshCreateFirstSingleSegment :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateNextSingleSegment")
-    NewtonMeshCreateNextSingleSegment :: proc(mesh : ^NewtonMesh, segment : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateFirstLayer")
-    NewtonMeshCreateFirstLayer :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshCreateNextLayer")
-    NewtonMeshCreateNextLayer :: proc(mesh : ^NewtonMesh, segment : ^NewtonMesh) -> ^NewtonMesh ---
-
-    @(link_name="NewtonMeshGetTotalFaceCount")
-    NewtonMeshGetTotalFaceCount :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshGetTotalIndexCount")
-    NewtonMeshGetTotalIndexCount :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshGetFaces")
-    NewtonMeshGetFaces :: proc(mesh : ^NewtonMesh, faceIndexCount : ^i32, faceMaterial : ^i32, faceIndices : ^rawptr) ---
-
-    @(link_name="NewtonMeshGetVertexCount")
-    NewtonMeshGetVertexCount :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshGetVertexStrideInByte")
-    NewtonMeshGetVertexStrideInByte :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshGetVertexArray")
-    NewtonMeshGetVertexArray :: proc(mesh : ^NewtonMesh) -> ^f64 ---
-
-    @(link_name="NewtonMeshGetVertexBaseCount")
-    NewtonMeshGetVertexBaseCount :: proc(mesh : ^NewtonMesh) -> i32 ---
-
-    @(link_name="NewtonMeshSetVertexBaseCount")
-    NewtonMeshSetVertexBaseCount :: proc(mesh : ^NewtonMesh, baseCount : i32) ---
-
-    @(link_name="NewtonMeshGetFirstVertex")
-    NewtonMeshGetFirstVertex :: proc(mesh : ^NewtonMesh) -> rawptr ---
-
-    @(link_name="NewtonMeshGetNextVertex")
-    NewtonMeshGetNextVertex :: proc(mesh : ^NewtonMesh, vertex : rawptr) -> rawptr ---
-
-    @(link_name="NewtonMeshGetVertexIndex")
-    NewtonMeshGetVertexIndex :: proc(mesh : ^NewtonMesh, vertex : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshGetFirstPoint")
-    NewtonMeshGetFirstPoint :: proc(mesh : ^NewtonMesh) -> rawptr ---
-
-    @(link_name="NewtonMeshGetNextPoint")
-    NewtonMeshGetNextPoint :: proc(mesh : ^NewtonMesh, point : rawptr) -> rawptr ---
-
-    @(link_name="NewtonMeshGetPointIndex")
-    NewtonMeshGetPointIndex :: proc(mesh : ^NewtonMesh, point : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshGetVertexIndexFromPoint")
-    NewtonMeshGetVertexIndexFromPoint :: proc(mesh : ^NewtonMesh, point : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshGetFirstEdge")
-    NewtonMeshGetFirstEdge :: proc(mesh : ^NewtonMesh) -> rawptr ---
-
-    @(link_name="NewtonMeshGetNextEdge")
-    NewtonMeshGetNextEdge :: proc(mesh : ^NewtonMesh, edge : rawptr) -> rawptr ---
-
-    @(link_name="NewtonMeshGetEdgeIndices")
-    NewtonMeshGetEdgeIndices :: proc(mesh : ^NewtonMesh, edge : rawptr, v0 : ^i32, v1 : ^i32) ---
-
-    @(link_name="NewtonMeshGetFirstFace")
-    NewtonMeshGetFirstFace :: proc(mesh : ^NewtonMesh) -> rawptr ---
-
-    @(link_name="NewtonMeshGetNextFace")
-    NewtonMeshGetNextFace :: proc(mesh : ^NewtonMesh, face : rawptr) -> rawptr ---
-
-    @(link_name="NewtonMeshIsFaceOpen")
-    NewtonMeshIsFaceOpen :: proc(mesh : ^NewtonMesh, face : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshGetFaceMaterial")
-    NewtonMeshGetFaceMaterial :: proc(mesh : ^NewtonMesh, face : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshGetFaceIndexCount")
-    NewtonMeshGetFaceIndexCount :: proc(mesh : ^NewtonMesh, face : rawptr) -> i32 ---
-
-    @(link_name="NewtonMeshGetFaceIndices")
-    NewtonMeshGetFaceIndices :: proc(mesh : ^NewtonMesh, face : rawptr, indices : ^i32) ---
-
-    @(link_name="NewtonMeshGetFacePointIndices")
-    NewtonMeshGetFacePointIndices :: proc(mesh : ^NewtonMesh, face : rawptr, indices : ^i32) ---
-
-    @(link_name="NewtonMeshCalculateFaceNormal")
-    NewtonMeshCalculateFaceNormal :: proc(mesh : ^NewtonMesh, face : rawptr, normal : ^f64) ---
-
-    @(link_name="NewtonMeshSetFaceMaterial")
-    NewtonMeshSetFaceMaterial :: proc(mesh : ^NewtonMesh, face : rawptr, matId : i32) ---
-
+    GetFloatSize :: proc() -> i32 ---
+    GetMemoryUsed :: proc() -> i32 ---
+    SetMemorySystem :: proc(malloc : NewtonAllocMemory, free : NewtonFreeMemory) ---
+    Create :: proc() -> ^NewtonWorld ---
+    Destroy :: proc(newtonWorld : ^NewtonWorld) ---
+    DestroyAllBodies :: proc(newtonWorld : ^NewtonWorld) ---
+    GetPostUpdateCallback :: proc(newtonWorld : ^NewtonWorld) -> NewtonPostUpdateCallback ---
+    SetPostUpdateCallback :: proc(newtonWorld : ^NewtonWorld, callback : NewtonPostUpdateCallback) ---
+    Alloc :: proc(sizeInBytes : i32) -> rawptr ---
+    Free :: proc(ptr : rawptr) ---
+    LoadPlugins :: proc(newtonWorld : ^NewtonWorld, plugInPath : cstring) ---
+    UnloadPlugins :: proc(newtonWorld : ^NewtonWorld) ---
+    CurrentPlugin :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
+    GetFirstPlugin :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
+    GetPreferedPlugin :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
+    GetNextPlugin :: proc(newtonWorld : ^NewtonWorld, plugin : rawptr) -> rawptr ---
+    GetPluginString :: proc(newtonWorld : ^NewtonWorld, plugin : rawptr) -> cstring ---
+    SelectPlugin :: proc(newtonWorld : ^NewtonWorld, plugin : rawptr) ---
+    GetContactMergeTolerance :: proc(newtonWorld : ^NewtonWorld) -> dFloat ---
+    SetContactMergeTolerance :: proc(newtonWorld : ^NewtonWorld, tolerance : dFloat) ---
+    InvalidateCache :: proc(newtonWorld : ^NewtonWorld) ---
+    SetSolverIterations :: proc(newtonWorld : ^NewtonWorld, model : i32) ---
+    GetSolverIterations :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    SetParallelSolverOnLargeIsland :: proc(newtonWorld : ^NewtonWorld, mode : i32) ---
+    GetParallelSolverOnLargeIsland :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    GetBroadphaseAlgorithm :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    SelectBroadphaseAlgorithm :: proc(newtonWorld : ^NewtonWorld, algorithmType : i32) ---
+    ResetBroadphase :: proc(newtonWorld : ^NewtonWorld) ---
+    Update :: proc(newtonWorld : ^NewtonWorld, timestep : dFloat) ---
+    UpdateAsync :: proc(newtonWorld : ^NewtonWorld, timestep : dFloat) ---
+    WaitForUpdateToFinish :: proc(newtonWorld : ^NewtonWorld) ---
+    GetNumberOfSubsteps :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    SetNumberOfSubsteps :: proc(newtonWorld : ^NewtonWorld, subSteps : i32) ---
+    GetLastUpdateTime :: proc(newtonWorld : ^NewtonWorld) -> dFloat ---
+    SerializeToFile :: proc(newtonWorld : ^NewtonWorld, filename : cstring, bodyCallback : NewtonOnBodySerializationCallback, bodyUserData : rawptr) ---
+    DeserializeFromFile :: proc(newtonWorld : ^NewtonWorld, filename : cstring, bodyCallback : NewtonOnBodyDeserializationCallback, bodyUserData : rawptr) ---
+    SerializeScene :: proc(newtonWorld : ^NewtonWorld, bodyCallback : NewtonOnBodySerializationCallback, bodyUserData : rawptr, serializeCallback : NewtonSerializeCallback, serializeHandle : rawptr) ---
+    DeserializeScene :: proc(newtonWorld : ^NewtonWorld, bodyCallback : NewtonOnBodyDeserializationCallback, bodyUserData : rawptr, serializeCallback : NewtonDeserializeCallback, serializeHandle : rawptr) ---
+    FindSerializedBody :: proc(newtonWorld : ^NewtonWorld, bodySerializedID : i32) -> ^NewtonBody ---
+    SetJointSerializationCallbacks :: proc(newtonWorld : ^NewtonWorld, serializeJoint : NewtonOnJointSerializationCallback, deserializeJoint : NewtonOnJointDeserializationCallback) ---
+    GetJointSerializationCallbacks :: proc(newtonWorld : ^NewtonWorld, serializeJoint : ^NewtonOnJointSerializationCallback, deserializeJoint : ^NewtonOnJointDeserializationCallback) ---
+    WorldCriticalSectionLock :: proc(newtonWorld : ^NewtonWorld, threadIndex : i32) ---
+    WorldCriticalSectionUnlock :: proc(newtonWorld : ^NewtonWorld) ---
+    SetThreadsCount :: proc(newtonWorld : ^NewtonWorld, threads : i32) ---
+    GetThreadsCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    GetMaxThreadsCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    DispachThreadJob :: proc(newtonWorld : ^NewtonWorld, task : NewtonJobTask, usedData : rawptr, functionName : cstring) ---
+    SyncThreadJobs :: proc(newtonWorld : ^NewtonWorld) ---
+    AtomicAdd :: proc(ptr : ^i32, value : i32) -> i32 ---
+    AtomicSwap :: proc(ptr : ^i32, value : i32) -> i32 ---
+    Yield :: proc() ---
+    SetIslandUpdateEvent :: proc(newtonWorld : ^NewtonWorld, islandUpdate : NewtonIslandUpdate) ---
+    WorldForEachJointDo :: proc(newtonWorld : ^NewtonWorld, callback : NewtonJointIterator, userData : rawptr) ---
+    WorldForEachBodyInAABBDo :: proc(newtonWorld : ^NewtonWorld, p0 : ^dFloat, p1 : ^dFloat, callback : NewtonBodyIterator, userData : rawptr) ---
+    WorldSetUserData :: proc(newtonWorld : ^NewtonWorld, userData : rawptr) ---
+    WorldGetUserData :: proc(newtonWorld : ^NewtonWorld) -> rawptr ---
+    WorldAddListener :: proc(newtonWorld : ^NewtonWorld, nameId : cstring, listenerUserData : rawptr) -> rawptr ---
+    WorldGetListener :: proc(newtonWorld : ^NewtonWorld, nameId : cstring) -> rawptr ---
+    WorldListenerSetDebugCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldListenerDebugCallback) ---
+    WorldListenerSetPostStepCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldUpdateListenerCallback) ---
+    WorldListenerSetPreUpdateCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldUpdateListenerCallback) ---
+    WorldListenerSetPostUpdateCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldUpdateListenerCallback) ---
+    WorldListenerSetDestructorCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldDestroyListenerCallback) ---
+    WorldListenerSetBodyDestroyCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr, callback : NewtonWorldListenerBodyDestroyCallback) ---
+    WorldListenerDebug :: proc(newtonWorld : ^NewtonWorld, _context : rawptr) ---
+    WorldGetListenerUserData :: proc(newtonWorld : ^NewtonWorld, listener : rawptr) -> rawptr ---
+    WorldListenerGetBodyDestroyCallback :: proc(newtonWorld : ^NewtonWorld, listener : rawptr) -> NewtonWorldListenerBodyDestroyCallback ---
+    WorldSetDestructorCallback :: proc(newtonWorld : ^NewtonWorld, destructor : NewtonWorldDestructorCallback) ---
+    WorldGetDestructorCallback :: proc(newtonWorld : ^NewtonWorld) -> NewtonWorldDestructorCallback ---
+    WorldSetCollisionConstructorDestructorCallback :: proc(newtonWorld : ^NewtonWorld, constructor : NewtonCollisionCopyConstructionCallback, destructor : NewtonCollisionDestructorCallback) ---
+    WorldSetCreateDestroyContactCallback :: proc(newtonWorld : ^NewtonWorld, createContact : NewtonCreateContactCallback, destroyContact : NewtonDestroyContactCallback) ---
+    WorldRayCast :: proc(newtonWorld : ^NewtonWorld, p0 : ^dFloat, p1 : ^dFloat, filter : NewtonWorldRayFilterCallback, userData : rawptr, prefilter : NewtonWorldRayPrefilterCallback, threadIndex : i32) ---
+    WorldConvexCast :: proc(newtonWorld : ^NewtonWorld, matrix4x4 : ^dFloat, target : ^dFloat, shape : ^NewtonCollision, param : ^dFloat, userData : rawptr, prefilter : NewtonWorldRayPrefilterCallback, info : ^NewtonWorldConvexCastReturnInfo, maxContactsCount : i32, threadIndex : i32) -> i32 ---
+    WorldCollide :: proc(newtonWorld : ^NewtonWorld, matrix4x4 : ^dFloat, shape : ^NewtonCollision, userData : rawptr, prefilter : NewtonWorldRayPrefilterCallback, info : ^NewtonWorldConvexCastReturnInfo, maxContactsCount : i32, threadIndex : i32) -> i32 ---
+    WorldGetBodyCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    WorldGetConstraintCount :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    WorldFindJoint :: proc(body0 : ^NewtonBody, body1 : ^NewtonBody) -> ^NewtonJoint ---
+    IslandGetBody :: proc(island : rawptr, bodyIndex : i32) -> ^NewtonBody ---
+    IslandGetBodyAABB :: proc(island : rawptr, bodyIndex : i32, p0 : ^dFloat, p1 : ^dFloat) ---
+    MaterialCreateGroupID :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    MaterialGetDefaultGroupID :: proc(newtonWorld : ^NewtonWorld) -> i32 ---
+    MaterialDestroyAllGroupID :: proc(newtonWorld : ^NewtonWorld) ---
+    MaterialGetUserData :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32) -> rawptr ---
+    MaterialSetSurfaceThickness :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, thickness : dFloat) ---
+    MaterialSetCallbackUserData :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, userData : rawptr) ---
+    MaterialSetContactGenerationCallback :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, contactGeneration : NewtonOnContactGeneration) ---
+    MaterialSetCompoundCollisionCallback :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, compoundAabbOverlap : NewtonOnCompoundSubCollisionAABBOverlap) ---
+    MaterialSetCollisionCallback :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, aabbOverlap : NewtonOnAABBOverlap, process : NewtonContactsProcess) ---
+    MaterialSetDefaultSoftness :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, value : dFloat) ---
+    MaterialSetDefaultElasticity :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, elasticCoef : dFloat) ---
+    MaterialSetDefaultCollidable :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, state : i32) ---
+    MaterialSetDefaultFriction :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32, staticFriction : dFloat, kineticFriction : dFloat) ---
+    MaterialJointResetIntraJointCollision :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32) ---
+    MaterialJointResetSelftJointCollision :: proc(newtonWorld : ^NewtonWorld, id0 : i32, id1 : i32) ---
+    WorldGetFirstMaterial :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonMaterial ---
+    WorldGetNextMaterial :: proc(newtonWorld : ^NewtonWorld, material : ^NewtonMaterial) -> ^NewtonMaterial ---
+    WorldGetFirstBody :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonBody ---
+    WorldGetNextBody :: proc(newtonWorld : ^NewtonWorld, curBody : ^NewtonBody) -> ^NewtonBody ---
+    MaterialGetMaterialPairUserData :: proc(material : ^NewtonMaterial) -> rawptr ---
+    MaterialGetContactFaceAttribute :: proc(material : ^NewtonMaterial) -> u32 ---
+    MaterialGetBodyCollidingShape :: proc(material : ^NewtonMaterial, body : ^NewtonBody) -> ^NewtonCollision ---
+    MaterialGetContactNormalSpeed :: proc(material : ^NewtonMaterial) -> dFloat ---
+    MaterialGetContactForce :: proc(material : ^NewtonMaterial, body : ^NewtonBody, force : ^dFloat) ---
+    MaterialGetContactPositionAndNormal :: proc(material : ^NewtonMaterial, body : ^NewtonBody, posit : ^dFloat, normal : ^dFloat) ---
+    MaterialGetContactTangentDirections :: proc(material : ^NewtonMaterial, body : ^NewtonBody, dir0 : ^dFloat, dir1 : ^dFloat) ---
+    MaterialGetContactTangentSpeed :: proc(material : ^NewtonMaterial, index : i32) -> dFloat ---
+    MaterialGetContactMaxNormalImpact :: proc(material : ^NewtonMaterial) -> dFloat ---
+    MaterialGetContactMaxTangentImpact :: proc(material : ^NewtonMaterial, index : i32) -> dFloat ---
+    MaterialGetContactPenetration :: proc(material : ^NewtonMaterial) -> dFloat ---
+    MaterialSetAsSoftContact :: proc(material : ^NewtonMaterial, relaxation : dFloat) ---
+    MaterialSetContactSoftness :: proc(material : ^NewtonMaterial, softness : dFloat) ---
+    MaterialSetContactThickness :: proc(material : ^NewtonMaterial, thickness : dFloat) ---
+    MaterialSetContactElasticity :: proc(material : ^NewtonMaterial, restitution : dFloat) ---
+    MaterialSetContactFrictionState :: proc(material : ^NewtonMaterial, state : i32, index : i32) ---
+    MaterialSetContactFrictionCoef :: proc(material : ^NewtonMaterial, staticFrictionCoef : dFloat, kineticFrictionCoef : dFloat, index : i32) ---
+    MaterialSetContactNormalAcceleration :: proc(material : ^NewtonMaterial, accel : dFloat) ---
+    MaterialSetContactNormalDirection :: proc(material : ^NewtonMaterial, directionVector : ^dFloat) ---
+    MaterialSetContactPosition :: proc(material : ^NewtonMaterial, position : ^dFloat) ---
+    MaterialSetContactTangentFriction :: proc(material : ^NewtonMaterial, friction : dFloat, index : i32) ---
+    MaterialSetContactTangentAcceleration :: proc(material : ^NewtonMaterial, accel : dFloat, index : i32) ---
+    MaterialContactRotateTangentDirections :: proc(material : ^NewtonMaterial, directionVector : ^dFloat) ---
+    MaterialGetContactPruningTolerance :: proc(contactJoint : ^NewtonJoint) -> dFloat ---
+    MaterialSetContactPruningTolerance :: proc(contactJoint : ^NewtonJoint, tolerance : dFloat) ---
+    CreateNull :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonCollision ---
+    CreateSphere :: proc(newtonWorld : ^NewtonWorld, radius : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateBox :: proc(newtonWorld : ^NewtonWorld, dx : dFloat, dy : dFloat, dz : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateCone :: proc(newtonWorld : ^NewtonWorld, radius : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateCapsule :: proc(newtonWorld : ^NewtonWorld, radius0 : dFloat, radius1 : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateCylinder :: proc(newtonWorld : ^NewtonWorld, radio0 : dFloat, radio1 : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateChamferCylinder :: proc(newtonWorld : ^NewtonWorld, radius : dFloat, height : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateConvexHull :: proc(newtonWorld : ^NewtonWorld, count : i32, vertexCloud : ^dFloat, strideInBytes : i32, tolerance : dFloat, shapeID : i32, offsetMatrix : ^dFloat) -> ^NewtonCollision ---
+    CreateConvexHullFromMesh :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, tolerance : dFloat, shapeID : i32) -> ^NewtonCollision ---
+    CollisionGetMode :: proc(convexCollision : ^NewtonCollision) -> i32 ---
+    CollisionSetMode :: proc(convexCollision : ^NewtonCollision, mode : i32) ---
+    ConvexHullGetFaceIndices :: proc(convexHullCollision : ^NewtonCollision, face : i32, faceIndices : ^i32) -> i32 ---
+    ConvexHullGetVertexData :: proc(convexHullCollision : ^NewtonCollision, vertexData : ^^dFloat, strideInBytes : ^i32) -> i32 ---
+    ConvexCollisionCalculateVolume :: proc(convexCollision : ^NewtonCollision) -> dFloat ---
+    ConvexCollisionCalculateInertialMatrix :: proc(convexCollision : ^NewtonCollision, inertia : ^dFloat, origin : ^dFloat) ---
+    ConvexCollisionCalculateBuoyancyVolume :: proc(convexCollision : ^NewtonCollision, matrix4x4 : ^dFloat, fluidPlane : ^dFloat, centerOfBuoyancy : ^dFloat) -> dFloat ---
+    CollisionDataPointer :: proc(convexCollision : ^NewtonCollision) -> rawptr ---
+    CreateCompoundCollision :: proc(newtonWorld : ^NewtonWorld, shapeID : i32) -> ^NewtonCollision ---
+    CreateCompoundCollisionFromMesh :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, hullTolerance : dFloat, shapeID : i32, subShapeID : i32) -> ^NewtonCollision ---
+    CompoundCollisionBeginAddRemove :: proc(compoundCollision : ^NewtonCollision) ---
+    CompoundCollisionAddSubCollision :: proc(compoundCollision : ^NewtonCollision, convexCollision : ^NewtonCollision) -> rawptr ---
+    CompoundCollisionRemoveSubCollision :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) ---
+    CompoundCollisionRemoveSubCollisionByIndex :: proc(compoundCollision : ^NewtonCollision, nodeIndex : i32) ---
+    CompoundCollisionSetSubCollisionMatrix :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr, matrix4x4 : ^dFloat) ---
+    CompoundCollisionEndAddRemove :: proc(compoundCollision : ^NewtonCollision) ---
+    CompoundCollisionGetFirstNode :: proc(compoundCollision : ^NewtonCollision) -> rawptr ---
+    CompoundCollisionGetNextNode :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) -> rawptr ---
+    CompoundCollisionGetNodeByIndex :: proc(compoundCollision : ^NewtonCollision, index : i32) -> rawptr ---
+    CompoundCollisionGetNodeIndex :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) -> i32 ---
+    CompoundCollisionGetCollisionFromNode :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) -> ^NewtonCollision ---
+    CreateFracturedCompoundCollision :: proc(newtonWorld : ^NewtonWorld, solidMesh : ^NewtonMesh, shapeID : i32, fracturePhysicsMaterialID : i32, pointcloudCount : i32, vertexCloud : ^dFloat, strideInBytes : i32, materialID : i32, textureMatrix : ^dFloat, regenerateMainMeshCallback : NewtonFractureCompoundCollisionReconstructMainMeshCallBack, emitFracturedCompound : NewtonFractureCompoundCollisionOnEmitCompoundFractured, emitFracfuredChunk : NewtonFractureCompoundCollisionOnEmitChunk) -> ^NewtonCollision ---
+    FracturedCompoundPlaneClip :: proc(fracturedCompound : ^NewtonCollision, plane : ^dFloat) -> ^NewtonCollision ---
+    FracturedCompoundSetCallbacks :: proc(fracturedCompound : ^NewtonCollision, regenerateMainMeshCallback : NewtonFractureCompoundCollisionReconstructMainMeshCallBack, emitFracturedCompound : NewtonFractureCompoundCollisionOnEmitCompoundFractured, emitFracfuredChunk : NewtonFractureCompoundCollisionOnEmitChunk) ---
+    FracturedCompoundIsNodeFreeToDetach :: proc(fracturedCompound : ^NewtonCollision, collisionNode : rawptr) -> i32 ---
+    FracturedCompoundNeighborNodeList :: proc(fracturedCompound : ^NewtonCollision, collisionNode : rawptr, list : ^rawptr, maxCount : i32) -> i32 ---
+    FracturedCompoundGetMainMesh :: proc(fracturedCompound : ^NewtonCollision) -> ^NewtonFracturedCompoundMeshPart ---
+    FracturedCompoundGetFirstSubMesh :: proc(fracturedCompound : ^NewtonCollision) -> ^NewtonFracturedCompoundMeshPart ---
+    FracturedCompoundGetNextSubMesh :: proc(fracturedCompound : ^NewtonCollision, subMesh : ^NewtonFracturedCompoundMeshPart) -> ^NewtonFracturedCompoundMeshPart ---
+    FracturedCompoundCollisionGetVertexCount :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> i32 ---
+    FracturedCompoundCollisionGetVertexPositions :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> ^dFloat ---
+    FracturedCompoundCollisionGetVertexNormals :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> ^dFloat ---
+    FracturedCompoundCollisionGetVertexUVs :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart) -> ^dFloat ---
+    FracturedCompoundMeshPartGetIndexStream :: proc(fracturedCompound : ^NewtonCollision, meshOwner : ^NewtonFracturedCompoundMeshPart, segment : rawptr, index : ^i32) -> i32 ---
+    FracturedCompoundMeshPartGetFirstSegment :: proc(fractureCompoundMeshPart : ^NewtonFracturedCompoundMeshPart) -> rawptr ---
+    FracturedCompoundMeshPartGetNextSegment :: proc(fractureCompoundMeshSegment : rawptr) -> rawptr ---
+    FracturedCompoundMeshPartGetMaterial :: proc(fractureCompoundMeshSegment : rawptr) -> i32 ---
+    FracturedCompoundMeshPartGetIndexCount :: proc(fractureCompoundMeshSegment : rawptr) -> i32 ---
+    CreateSceneCollision :: proc(newtonWorld : ^NewtonWorld, shapeID : i32) -> ^NewtonCollision ---
+    SceneCollisionBeginAddRemove :: proc(sceneCollision : ^NewtonCollision) ---
+    SceneCollisionAddSubCollision :: proc(sceneCollision : ^NewtonCollision, collision : ^NewtonCollision) -> rawptr ---
+    SceneCollisionRemoveSubCollision :: proc(compoundCollision : ^NewtonCollision, collisionNode : rawptr) ---
+    SceneCollisionRemoveSubCollisionByIndex :: proc(sceneCollision : ^NewtonCollision, nodeIndex : i32) ---
+    SceneCollisionSetSubCollisionMatrix :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr, matrix4x4 : ^dFloat) ---
+    SceneCollisionEndAddRemove :: proc(sceneCollision : ^NewtonCollision) ---
+    SceneCollisionGetFirstNode :: proc(sceneCollision : ^NewtonCollision) -> rawptr ---
+    SceneCollisionGetNextNode :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr) -> rawptr ---
+    SceneCollisionGetNodeByIndex :: proc(sceneCollision : ^NewtonCollision, index : i32) -> rawptr ---
+    SceneCollisionGetNodeIndex :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr) -> i32 ---
+    SceneCollisionGetCollisionFromNode :: proc(sceneCollision : ^NewtonCollision, collisionNode : rawptr) -> ^NewtonCollision ---
+    CreateUserMeshCollision :: proc(newtonWorld : ^NewtonWorld, minBox : ^dFloat, maxBox : ^dFloat, userData : rawptr, collideCallback : NewtonUserMeshCollisionCollideCallback, rayHitCallback : NewtonUserMeshCollisionRayHitCallback, destroyCallback : NewtonUserMeshCollisionDestroyCallback, getInfoCallback : NewtonUserMeshCollisionGetCollisionInfo, getLocalAABBCallback : NewtonUserMeshCollisionAABBTest, facesInAABBCallback : NewtonUserMeshCollisionGetFacesInAABB, serializeCallback : NewtonOnUserCollisionSerializationCallback, shapeID : i32) -> ^NewtonCollision ---
+    UserMeshCollisionContinuousOverlapTest :: proc(collideDescData : ^NewtonUserMeshCollisionCollideDesc, continueCollisionHandle : rawptr, minAabb : ^dFloat, maxAabb : ^dFloat) -> i32 ---
+    CreateCollisionFromSerialization :: proc(newtonWorld : ^NewtonWorld, deserializeFunction : NewtonDeserializeCallback, serializeHandle : rawptr) -> ^NewtonCollision ---
+    CollisionSerialize :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, serializeFunction : NewtonSerializeCallback, serializeHandle : rawptr) ---
+    CollisionGetInfo :: proc(collision : ^NewtonCollision, collisionInfo : ^NewtonCollisionInfoRecord) ---
+    CreateHeightFieldCollision :: proc(newtonWorld : ^NewtonWorld, width : i32, height : i32, gridsDiagonals : i32, elevationdatType : i32, elevationMap : rawptr, attributeMap : cstring, verticalScale : dFloat, horizontalScale_x : dFloat, horizontalScale_z : dFloat, shapeID : i32) -> ^NewtonCollision ---
+    HeightFieldSetUserRayCastCallback :: proc(heightfieldCollision : ^NewtonCollision, rayHitCallback : NewtonHeightFieldRayCastCallback) ---
+    CreateTreeCollision :: proc(newtonWorld : ^NewtonWorld, shapeID : i32) -> ^NewtonCollision ---
+    CreateTreeCollisionFromMesh :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, shapeID : i32) -> ^NewtonCollision ---
+    TreeCollisionSetUserRayCastCallback :: proc(treeCollision : ^NewtonCollision, rayHitCallback : NewtonCollisionTreeRayCastCallback) ---
+    TreeCollisionBeginBuild :: proc(treeCollision : ^NewtonCollision) ---
+    TreeCollisionAddFace :: proc(treeCollision : ^NewtonCollision, vertexCount : i32, vertexPtr : ^dFloat, strideInBytes : i32, faceAttribute : i32) ---
+    TreeCollisionEndBuild :: proc(treeCollision : ^NewtonCollision, optimize : i32) ---
+    TreeCollisionGetFaceAttribute :: proc(treeCollision : ^NewtonCollision, faceIndexArray : ^i32, indexCount : i32) -> i32 ---
+    TreeCollisionSetFaceAttribute :: proc(treeCollision : ^NewtonCollision, faceIndexArray : ^i32, indexCount : i32, attribute : i32) ---
+    TreeCollisionForEachFace :: proc(treeCollision : ^NewtonCollision, forEachFaceCallback : NewtonTreeCollisionFaceCallback, _context : rawptr) ---
+    TreeCollisionGetVertexListTriangleListInAABB :: proc(treeCollision : ^NewtonCollision, p0 : ^dFloat, p1 : ^dFloat, vertexArray : ^^dFloat, vertexCount : ^i32, vertexStrideInBytes : ^i32, indexList : ^i32, maxIndexCount : i32, faceAttribute : ^i32) -> i32 ---
+    StaticCollisionSetDebugCallback :: proc(staticCollision : ^NewtonCollision, userCallback : NewtonTreeCollisionCallback) ---
+    CollisionCreateInstance :: proc(collision : ^NewtonCollision) -> ^NewtonCollision ---
+    CollisionGetType :: proc(collision : ^NewtonCollision) -> i32 ---
+    CollisionIsConvexShape :: proc(collision : ^NewtonCollision) -> i32 ---
+    CollisionIsStaticShape :: proc(collision : ^NewtonCollision) -> i32 ---
+    CollisionSetUserData :: proc(collision : ^NewtonCollision, userData : rawptr) ---
+    CollisionGetUserData :: proc(collision : ^NewtonCollision) -> rawptr ---
+    CollisionSetUserID :: proc(collision : ^NewtonCollision, id : i64) ---
+    CollisionGetUserID :: proc(collision : ^NewtonCollision) -> i64 ---
+    CollisionGetMaterial :: proc(collision : ^NewtonCollision, userData : ^NewtonCollisionMaterial) ---
+    CollisionSetMaterial :: proc(collision : ^NewtonCollision, userData : ^NewtonCollisionMaterial) ---
+    CollisionGetSubCollisionHandle :: proc(collision : ^NewtonCollision) -> rawptr ---
+    CollisionGetParentInstance :: proc(collision : ^NewtonCollision) -> ^NewtonCollision ---
+    CollisionSetMatrix :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat) ---
+    CollisionGetMatrix :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat) ---
+    CollisionSetScale :: proc(collision : ^NewtonCollision, scaleX : dFloat, scaleY : dFloat, scaleZ : dFloat) ---
+    CollisionGetScale :: proc(collision : ^NewtonCollision, scaleX : ^dFloat, scaleY : ^dFloat, scaleZ : ^dFloat) ---
+    DestroyCollision :: proc(collision : ^NewtonCollision) ---
+    CollisionGetSkinThickness :: proc(collision : ^NewtonCollision) -> dFloat ---
+    CollisionSetSkinThickness :: proc(collision : ^NewtonCollision, thickness : dFloat) ---
+    CollisionIntersectionTest :: proc(newtonWorld : ^NewtonWorld, collisionA : ^NewtonCollision, matrixA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, threadIndex : i32) -> i32 ---
+    CollisionPointDistance :: proc(newtonWorld : ^NewtonWorld, point : ^dFloat, collision : ^NewtonCollision, matrix4x4 : ^dFloat, contact : ^dFloat, normal : ^dFloat, threadIndex : i32) -> i32 ---
+    CollisionClosestPoint :: proc(newtonWorld : ^NewtonWorld, collisionA : ^NewtonCollision, matrixA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, contactA : ^dFloat, contactB : ^dFloat, normalAB : ^dFloat, threadIndex : i32) -> i32 ---
+    CollisionCollide :: proc(newtonWorld : ^NewtonWorld, maxSize : i32, collisionA : ^NewtonCollision, matrixA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, contacts : ^dFloat, normals : ^dFloat, penetration : ^dFloat, attributeA : ^i64, attributeB : ^i64, threadIndex : i32) -> i32 ---
+    CollisionCollideContinue :: proc(newtonWorld : ^NewtonWorld, maxSize : i32, timestep : dFloat, collisionA : ^NewtonCollision, matrixA : ^dFloat, velocA : ^dFloat, omegaA : ^dFloat, collisionB : ^NewtonCollision, matrixB : ^dFloat, velocB : ^dFloat, omegaB : ^dFloat, timeOfImpact : ^dFloat, contacts : ^dFloat, normals : ^dFloat, penetration : ^dFloat, attributeA : ^i64, attributeB : ^i64, threadIndex : i32) -> i32 ---
+    CollisionSupportVertex :: proc(collision : ^NewtonCollision, dir : ^dFloat, vertex : ^dFloat) ---
+    CollisionRayCast :: proc(collision : ^NewtonCollision, p0 : ^dFloat, p1 : ^dFloat, normal : ^dFloat, attribute : ^i64) -> dFloat ---
+    CollisionCalculateAABB :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat, p0 : ^dFloat, p1 : ^dFloat) ---
+    CollisionForEachPolygonDo :: proc(collision : ^NewtonCollision, matrix4x4 : ^dFloat, callback : NewtonCollisionIterator, userData : rawptr) ---
+    CollisionAggregateCreate :: proc(world : ^NewtonWorld) -> rawptr ---
+    CollisionAggregateDestroy :: proc(aggregate : rawptr) ---
+    CollisionAggregateAddBody :: proc(aggregate : rawptr, body : ^NewtonBody) ---
+    CollisionAggregateRemoveBody :: proc(aggregate : rawptr, body : ^NewtonBody) ---
+    CollisionAggregateGetSelfCollision :: proc(aggregate : rawptr) -> i32 ---
+    CollisionAggregateSetSelfCollision :: proc(aggregate : rawptr, state : i32) ---
+    SetEulerAngle :: proc(eulersAngles : ^dFloat, matrix4x4 : ^dFloat) ---
+    GetEulerAngle :: proc(matrix4x4 : ^dFloat, eulersAngles0 : ^dFloat, eulersAngles1 : ^dFloat) ---
+    CalculateSpringDamperAcceleration :: proc(dt : dFloat, ks : dFloat, x : dFloat, kd : dFloat, s : dFloat) -> dFloat ---
+    CreateDynamicBody :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, matrix4x4 : ^dFloat) -> ^NewtonBody ---
+    CreateKinematicBody :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, matrix4x4 : ^dFloat) -> ^NewtonBody ---
+    CreateAsymetricDynamicBody :: proc(newtonWorld : ^NewtonWorld, collision : ^NewtonCollision, matrix4x4 : ^dFloat) -> ^NewtonBody ---
+    DestroyBody :: proc(body : ^NewtonBody) ---
+    BodyGetSimulationState :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetSimulationState :: proc(bodyPtr : ^NewtonBody, state : i32) ---
+    BodyGetType :: proc(body : ^NewtonBody) -> i32 ---
+    BodyGetCollidable :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetCollidable :: proc(body : ^NewtonBody, collidableState : i32) ---
+    BodyAddForce :: proc(body : ^NewtonBody, force : ^dFloat) ---
+    BodyAddTorque :: proc(body : ^NewtonBody, torque : ^dFloat) ---
+    BodySetCentreOfMass :: proc(body : ^NewtonBody, com : ^dFloat) ---
+    BodySetMassMatrix :: proc(body : ^NewtonBody, mass : dFloat, Ixx : dFloat, Iyy : dFloat, Izz : dFloat) ---
+    BodySetFullMassMatrix :: proc(body : ^NewtonBody, mass : dFloat, inertiaMatrix : ^dFloat) ---
+    BodySetMassProperties :: proc(body : ^NewtonBody, mass : dFloat, collision : ^NewtonCollision) ---
+    BodySetMatrix :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
+    BodySetMatrixNoSleep :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
+    BodySetMatrixRecursive :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
+    BodySetMaterialGroupID :: proc(body : ^NewtonBody, id : i32) ---
+    BodySetContinuousCollisionMode :: proc(body : ^NewtonBody, state : u32) ---
+    BodySetJointRecursiveCollision :: proc(body : ^NewtonBody, state : u32) ---
+    BodySetOmega :: proc(body : ^NewtonBody, omega : ^dFloat) ---
+    BodySetOmegaNoSleep :: proc(body : ^NewtonBody, omega : ^dFloat) ---
+    BodySetVelocity :: proc(body : ^NewtonBody, velocity : ^dFloat) ---
+    BodySetVelocityNoSleep :: proc(body : ^NewtonBody, velocity : ^dFloat) ---
+    BodySetForce :: proc(body : ^NewtonBody, force : ^dFloat) ---
+    BodySetTorque :: proc(body : ^NewtonBody, torque : ^dFloat) ---
+    BodySetLinearDamping :: proc(body : ^NewtonBody, linearDamp : dFloat) ---
+    BodySetAngularDamping :: proc(body : ^NewtonBody, angularDamp : ^dFloat) ---
+    BodySetCollision :: proc(body : ^NewtonBody, collision : ^NewtonCollision) ---
+    BodySetCollisionScale :: proc(body : ^NewtonBody, scaleX : dFloat, scaleY : dFloat, scaleZ : dFloat) ---
+    BodyGetSleepState :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetSleepState :: proc(body : ^NewtonBody, state : i32) ---
+    BodyGetAutoSleep :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetAutoSleep :: proc(body : ^NewtonBody, state : i32) ---
+    BodyGetFreezeState :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetFreezeState :: proc(body : ^NewtonBody, state : i32) ---
+    BodyGetGyroscopicTorque :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetGyroscopicTorque :: proc(body : ^NewtonBody, state : i32) ---
+    BodySetDestructorCallback :: proc(body : ^NewtonBody, callback : NewtonBodyDestructor) ---
+    BodyGetDestructorCallback :: proc(body : ^NewtonBody) -> NewtonBodyDestructor ---
+    BodySetTransformCallback :: proc(body : ^NewtonBody, callback : NewtonSetTransform) ---
+    BodyGetTransformCallback :: proc(body : ^NewtonBody) -> NewtonSetTransform ---
+    BodySetForceAndTorqueCallback :: proc(body : ^NewtonBody, callback : NewtonApplyForceAndTorque) ---
+    BodyGetForceAndTorqueCallback :: proc(body : ^NewtonBody) -> NewtonApplyForceAndTorque ---
+    BodyGetID :: proc(body : ^NewtonBody) -> i32 ---
+    BodySetUserData :: proc(body : ^NewtonBody, userData : rawptr) ---
+    BodyGetUserData :: proc(body : ^NewtonBody) -> rawptr ---
+    BodyGetWorld :: proc(body : ^NewtonBody) -> ^NewtonWorld ---
+    BodyGetCollision :: proc(body : ^NewtonBody) -> ^NewtonCollision ---
+    BodyGetMaterialGroupID :: proc(body : ^NewtonBody) -> i32 ---
+    BodyGetSerializedID :: proc(body : ^NewtonBody) -> i32 ---
+    BodyGetContinuousCollisionMode :: proc(body : ^NewtonBody) -> i32 ---
+    BodyGetJointRecursiveCollision :: proc(body : ^NewtonBody) -> i32 ---
+    BodyGetPosition :: proc(body : ^NewtonBody, pos : ^dFloat) ---
+    BodyGetMatrix :: proc(body : ^NewtonBody, matrix4x4 : ^dFloat) ---
+    BodyGetRotation :: proc(body : ^NewtonBody, rotation : ^dFloat) ---
+    BodyGetMass :: proc(body : ^NewtonBody, mass : ^dFloat, Ixx : ^dFloat, Iyy : ^dFloat, Izz : ^dFloat) ---
+    BodyGetInvMass :: proc(body : ^NewtonBody, invMass : ^dFloat, invIxx : ^dFloat, invIyy : ^dFloat, invIzz : ^dFloat) ---
+    BodyGetInertiaMatrix :: proc(body : ^NewtonBody, inertiaMatrix : ^dFloat) ---
+    BodyGetInvInertiaMatrix :: proc(body : ^NewtonBody, invInertiaMatrix : ^dFloat) ---
+    BodyGetOmega :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetVelocity :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetAlpha :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetAcceleration :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetForce :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetTorque :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetCentreOfMass :: proc(body : ^NewtonBody, com : ^dFloat) ---
+    BodyGetPointVelocity :: proc(body : ^NewtonBody, point : ^dFloat, velocOut : ^dFloat) ---
+    BodyApplyImpulsePair :: proc(body : ^NewtonBody, linearImpulse : ^dFloat, angularImpulse : ^dFloat, timestep : dFloat) ---
+    BodyAddImpulse :: proc(body : ^NewtonBody, pointDeltaVeloc : ^dFloat, pointPosit : ^dFloat, timestep : dFloat) ---
+    BodyApplyImpulseArray :: proc(body : ^NewtonBody, impuleCount : i32, strideInByte : i32, impulseArray : ^dFloat, pointArray : ^dFloat, timestep : dFloat) ---
+    BodyIntegrateVelocity :: proc(body : ^NewtonBody, timestep : dFloat) ---
+    BodyGetLinearDamping :: proc(body : ^NewtonBody) -> dFloat ---
+    BodyGetAngularDamping :: proc(body : ^NewtonBody, vector : ^dFloat) ---
+    BodyGetAABB :: proc(body : ^NewtonBody, p0 : ^dFloat, p1 : ^dFloat) ---
+    BodyGetFirstJoint :: proc(body : ^NewtonBody) -> ^NewtonJoint ---
+    BodyGetNextJoint :: proc(body : ^NewtonBody, joint : ^NewtonJoint) -> ^NewtonJoint ---
+    BodyGetFirstContactJoint :: proc(body : ^NewtonBody) -> ^NewtonJoint ---
+    BodyGetNextContactJoint :: proc(body : ^NewtonBody, contactJoint : ^NewtonJoint) -> ^NewtonJoint ---
+    BodyFindContact :: proc(body0 : ^NewtonBody, body1 : ^NewtonBody) -> ^NewtonJoint ---
+    ContactJointGetFirstContact :: proc(contactJoint : ^NewtonJoint) -> rawptr ---
+    ContactJointGetNextContact :: proc(contactJoint : ^NewtonJoint, contact : rawptr) -> rawptr ---
+    ContactJointGetContactCount :: proc(contactJoint : ^NewtonJoint) -> i32 ---
+    ContactJointRemoveContact :: proc(contactJoint : ^NewtonJoint, contact : rawptr) ---
+    ContactJointGetClosestDistance :: proc(contactJoint : ^NewtonJoint) -> dFloat ---
+    ContactJointResetSelftJointCollision :: proc(contactJoint : ^NewtonJoint) ---
+    ContactJointResetIntraJointCollision :: proc(contactJoint : ^NewtonJoint) ---
+    ContactGetMaterial :: proc(contact : rawptr) -> ^NewtonMaterial ---
+    ContactGetCollision0 :: proc(contact : rawptr) -> ^NewtonCollision ---
+    ContactGetCollision1 :: proc(contact : rawptr) -> ^NewtonCollision ---
+    ContactGetCollisionID0 :: proc(contact : rawptr) -> rawptr ---
+    ContactGetCollisionID1 :: proc(contact : rawptr) -> rawptr ---
+    JointGetUserData :: proc(joint : ^NewtonJoint) -> rawptr ---
+    JointSetUserData :: proc(joint : ^NewtonJoint, userData : rawptr) ---
+    JointGetBody0 :: proc(joint : ^NewtonJoint) -> ^NewtonBody ---
+    JointGetBody1 :: proc(joint : ^NewtonJoint) -> ^NewtonBody ---
+    JointGetInfo :: proc(joint : ^NewtonJoint, info : ^NewtonJointRecord) ---
+    JointGetCollisionState :: proc(joint : ^NewtonJoint) -> i32 ---
+    JointSetCollisionState :: proc(joint : ^NewtonJoint, state : i32) ---
+    JointGetStiffness :: proc(joint : ^NewtonJoint) -> dFloat ---
+    JointSetStiffness :: proc(joint : ^NewtonJoint, state : dFloat) ---
+    DestroyJoint :: proc(newtonWorld : ^NewtonWorld, joint : ^NewtonJoint) ---
+    JointSetDestructor :: proc(joint : ^NewtonJoint, destructor : NewtonConstraintDestructor) ---
+    JointIsActive :: proc(joint : ^NewtonJoint) -> i32 ---
+    CreateMassSpringDamperSystem :: proc(newtonWorld : ^NewtonWorld, shapeID : i32, points : ^dFloat, pointCount : i32, strideInBytes : i32, pointMass : ^dFloat, links : ^i32, linksCount : i32, linksSpring : ^dFloat, linksDamper : ^dFloat) -> ^NewtonCollision ---
+    CreateDeformableSolid :: proc(newtonWorld : ^NewtonWorld, mesh : ^NewtonMesh, shapeID : i32) -> ^NewtonCollision ---
+    DeformableMeshGetParticleCount :: proc(deformableMesh : ^NewtonCollision) -> i32 ---
+    DeformableMeshGetParticleStrideInBytes :: proc(deformableMesh : ^NewtonCollision) -> i32 ---
+    DeformableMeshGetParticleArray :: proc(deformableMesh : ^NewtonCollision) -> ^dFloat ---
+    ConstraintCreateBall :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
+    BallSetUserCallback :: proc(ball : ^NewtonJoint, callback : NewtonBallCallback) ---
+    BallGetJointAngle :: proc(ball : ^NewtonJoint, angle : ^dFloat) ---
+    BallGetJointOmega :: proc(ball : ^NewtonJoint, omega : ^dFloat) ---
+    BallGetJointForce :: proc(ball : ^NewtonJoint, force : ^dFloat) ---
+    BallSetConeLimits :: proc(ball : ^NewtonJoint, pin : ^dFloat, maxConeAngle : dFloat, maxTwistAngle : dFloat) ---
+    ConstraintCreateHinge :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
+    HingeSetUserCallback :: proc(hinge : ^NewtonJoint, callback : NewtonHingeCallback) ---
+    HingeGetJointAngle :: proc(hinge : ^NewtonJoint) -> dFloat ---
+    HingeGetJointOmega :: proc(hinge : ^NewtonJoint) -> dFloat ---
+    HingeGetJointForce :: proc(hinge : ^NewtonJoint, force : ^dFloat) ---
+    HingeCalculateStopAlpha :: proc(hinge : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
+    ConstraintCreateSlider :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
+    SliderSetUserCallback :: proc(slider : ^NewtonJoint, callback : NewtonSliderCallback) ---
+    SliderGetJointPosit :: proc(slider : ^NewtonJoint) -> dFloat ---
+    SliderGetJointVeloc :: proc(slider : ^NewtonJoint) -> dFloat ---
+    SliderGetJointForce :: proc(slider : ^NewtonJoint, force : ^dFloat) ---
+    SliderCalculateStopAccel :: proc(slider : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, position : dFloat) -> dFloat ---
+    ConstraintCreateCorkscrew :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
+    CorkscrewSetUserCallback :: proc(corkscrew : ^NewtonJoint, callback : NewtonCorkscrewCallback) ---
+    CorkscrewGetJointPosit :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
+    CorkscrewGetJointAngle :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
+    CorkscrewGetJointVeloc :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
+    CorkscrewGetJointOmega :: proc(corkscrew : ^NewtonJoint) -> dFloat ---
+    CorkscrewGetJointForce :: proc(corkscrew : ^NewtonJoint, force : ^dFloat) ---
+    CorkscrewCalculateStopAlpha :: proc(corkscrew : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
+    CorkscrewCalculateStopAccel :: proc(corkscrew : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, position : dFloat) -> dFloat ---
+    ConstraintCreateUniversal :: proc(newtonWorld : ^NewtonWorld, pivotPoint : ^dFloat, pinDir0 : ^dFloat, pinDir1 : ^dFloat, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
+    UniversalSetUserCallback :: proc(universal : ^NewtonJoint, callback : NewtonUniversalCallback) ---
+    UniversalGetJointAngle0 :: proc(universal : ^NewtonJoint) -> dFloat ---
+    UniversalGetJointAngle1 :: proc(universal : ^NewtonJoint) -> dFloat ---
+    UniversalGetJointOmega0 :: proc(universal : ^NewtonJoint) -> dFloat ---
+    UniversalGetJointOmega1 :: proc(universal : ^NewtonJoint) -> dFloat ---
+    UniversalGetJointForce :: proc(universal : ^NewtonJoint, force : ^dFloat) ---
+    UniversalCalculateStopAlpha0 :: proc(universal : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
+    UniversalCalculateStopAlpha1 :: proc(universal : ^NewtonJoint, desc : ^NewtonHingeSliderUpdateDesc, angle : dFloat) -> dFloat ---
+    ConstraintCreateUpVector :: proc(newtonWorld : ^NewtonWorld, pinDir : ^dFloat, body : ^NewtonBody) -> ^NewtonJoint ---
+    UpVectorGetPin :: proc(upVector : ^NewtonJoint, pin : ^dFloat) ---
+    UpVectorSetPin :: proc(upVector : ^NewtonJoint, pin : ^dFloat) ---
+    ConstraintCreateUserJoint :: proc(newtonWorld : ^NewtonWorld, maxDOF : i32, callback : NewtonUserBilateralCallback, childBody : ^NewtonBody, parentBody : ^NewtonBody) -> ^NewtonJoint ---
+    UserJointGetSolverModel :: proc(joint : ^NewtonJoint) -> i32 ---
+    UserJointSetSolverModel :: proc(joint : ^NewtonJoint, model : i32) ---
+    UserJointMassScale :: proc(joint : ^NewtonJoint, scaleBody0 : dFloat, scaleBody1 : dFloat) ---
+    UserJointSetFeedbackCollectorCallback :: proc(joint : ^NewtonJoint, getFeedback : NewtonUserBilateralCallback) ---
+    UserJointAddLinearRow :: proc(joint : ^NewtonJoint, pivot0 : ^dFloat, pivot1 : ^dFloat, dir : ^dFloat) ---
+    UserJointAddAngularRow :: proc(joint : ^NewtonJoint, relativeAngle : dFloat, dir : ^dFloat) ---
+    UserJointAddGeneralRow :: proc(joint : ^NewtonJoint, jacobian0 : ^dFloat, jacobian1 : ^dFloat) ---
+    UserJointSetRowMinimumFriction :: proc(joint : ^NewtonJoint, friction : dFloat) ---
+    UserJointSetRowMaximumFriction :: proc(joint : ^NewtonJoint, friction : dFloat) ---
+    UserJointCalculateRowZeroAcceleration :: proc(joint : ^NewtonJoint) -> dFloat ---
+    UserJointGetRowAcceleration :: proc(joint : ^NewtonJoint) -> dFloat ---
+    UserJointGetRowJacobian :: proc(joint : ^NewtonJoint, linear0 : ^dFloat, angula0 : ^dFloat, linear1 : ^dFloat, angula1 : ^dFloat) ---
+    UserJointSetRowAcceleration :: proc(joint : ^NewtonJoint, acceleration : dFloat) ---
+    UserJointSetRowMassDependentSpringDamperAcceleration :: proc(joint : ^NewtonJoint, spring : dFloat, damper : dFloat) ---
+    UserJointSetRowMassIndependentSpringDamperAcceleration :: proc(joint : ^NewtonJoint, rowStiffness : dFloat, spring : dFloat, damper : dFloat) ---
+    UserJointSetRowStiffness :: proc(joint : ^NewtonJoint, stiffness : dFloat) ---
+    UserJoinRowsCount :: proc(joint : ^NewtonJoint) -> i32 ---
+    UserJointGetGeneralRow :: proc(joint : ^NewtonJoint, index : i32, jacobian0 : ^dFloat, jacobian1 : ^dFloat) ---
+    UserJointGetRowForce :: proc(joint : ^NewtonJoint, row : i32) -> dFloat ---
+    MeshCreate :: proc(newtonWorld : ^NewtonWorld) -> ^NewtonMesh ---
+    MeshCreateFromMesh :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshCreateFromCollision :: proc(collision : ^NewtonCollision) -> ^NewtonMesh ---
+    MeshCreateTetrahedraIsoSurface :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshCreateConvexHull :: proc(newtonWorld : ^NewtonWorld, pointCount : i32, vertexCloud : ^dFloat, strideInBytes : i32, tolerance : dFloat) -> ^NewtonMesh ---
+    MeshCreateVoronoiConvexDecomposition :: proc(newtonWorld : ^NewtonWorld, pointCount : i32, vertexCloud : ^dFloat, strideInBytes : i32, materialID : i32, textureMatrix : ^dFloat) -> ^NewtonMesh ---
+    MeshCreateFromSerialization :: proc(newtonWorld : ^NewtonWorld, deserializeFunction : NewtonDeserializeCallback, serializeHandle : rawptr) -> ^NewtonMesh ---
+    MeshDestroy :: proc(mesh : ^NewtonMesh) ---
+    MeshSerialize :: proc(mesh : ^NewtonMesh, serializeFunction : NewtonSerializeCallback, serializeHandle : rawptr) ---
+    MeshSaveOFF :: proc(mesh : ^NewtonMesh, filename : cstring) ---
+    MeshLoadOFF :: proc(newtonWorld : ^NewtonWorld, filename : cstring) -> ^NewtonMesh ---
+    MeshLoadTetrahedraMesh :: proc(newtonWorld : ^NewtonWorld, filename : cstring) -> ^NewtonMesh ---
+    MeshFlipWinding :: proc(mesh : ^NewtonMesh) ---
+    MeshApplyTransform :: proc(mesh : ^NewtonMesh, matrix4x4 : ^dFloat) ---
+    MeshCalculateOOBB :: proc(mesh : ^NewtonMesh, matrix4x4 : ^dFloat, x : ^dFloat, y : ^dFloat, z : ^dFloat) ---
+    MeshCalculateVertexNormals :: proc(mesh : ^NewtonMesh, angleInRadians : dFloat) ---
+    MeshApplySphericalMapping :: proc(mesh : ^NewtonMesh, material : i32, aligmentMatrix : ^dFloat) ---
+    MeshApplyCylindricalMapping :: proc(mesh : ^NewtonMesh, cylinderMaterial : i32, capMaterial : i32, aligmentMatrix : ^dFloat) ---
+    MeshApplyBoxMapping :: proc(mesh : ^NewtonMesh, frontMaterial : i32, sideMaterial : i32, topMaterial : i32, aligmentMatrix : ^dFloat) ---
+    MeshApplyAngleBasedMapping :: proc(mesh : ^NewtonMesh, material : i32, reportPrograssCallback : NewtonReportProgress, reportPrgressUserData : rawptr, aligmentMatrix : ^dFloat) ---
+    CreateTetrahedraLinearBlendSkinWeightsChannel :: proc(tetrahedraMesh : ^NewtonMesh, skinMesh : ^NewtonMesh) ---
+    MeshOptimize :: proc(mesh : ^NewtonMesh) ---
+    MeshOptimizePoints :: proc(mesh : ^NewtonMesh) ---
+    MeshOptimizeVertex :: proc(mesh : ^NewtonMesh) ---
+    MeshIsOpenMesh :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshFixTJoints :: proc(mesh : ^NewtonMesh) ---
+    MeshPolygonize :: proc(mesh : ^NewtonMesh) ---
+    MeshTriangulate :: proc(mesh : ^NewtonMesh) ---
+    MeshUnion :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat) -> ^NewtonMesh ---
+    MeshDifference :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat) -> ^NewtonMesh ---
+    MeshIntersection :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat) -> ^NewtonMesh ---
+    MeshClip :: proc(mesh : ^NewtonMesh, clipper : ^NewtonMesh, clipperMatrix : ^dFloat, topMesh : ^^NewtonMesh, bottomMesh : ^^NewtonMesh) ---
+    MeshConvexMeshIntersection :: proc(mesh : ^NewtonMesh, convexMesh : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshSimplify :: proc(mesh : ^NewtonMesh, maxVertexCount : i32, reportPrograssCallback : NewtonReportProgress, reportPrgressUserData : rawptr) -> ^NewtonMesh ---
+    MeshApproximateConvexDecomposition :: proc(mesh : ^NewtonMesh, maxConcavity : dFloat, backFaceDistanceFactor : dFloat, maxCount : i32, maxVertexPerHull : i32, reportProgressCallback : NewtonReportProgress, reportProgressUserData : rawptr) -> ^NewtonMesh ---
+    RemoveUnusedVertices :: proc(mesh : ^NewtonMesh, vertexRemapTable : ^i32) ---
+    MeshBeginBuild :: proc(mesh : ^NewtonMesh) ---
+    MeshBeginFace :: proc(mesh : ^NewtonMesh) ---
+    MeshAddPoint :: proc(mesh : ^NewtonMesh, x : f64, y : f64, z : f64) ---
+    MeshAddLayer :: proc(mesh : ^NewtonMesh, layerIndex : i32) ---
+    MeshAddMaterial :: proc(mesh : ^NewtonMesh, materialIndex : i32) ---
+    MeshAddNormal :: proc(mesh : ^NewtonMesh, x : dFloat, y : dFloat, z : dFloat) ---
+    MeshAddBinormal :: proc(mesh : ^NewtonMesh, x : dFloat, y : dFloat, z : dFloat) ---
+    MeshAddUV0 :: proc(mesh : ^NewtonMesh, u : dFloat, v : dFloat) ---
+    MeshAddUV1 :: proc(mesh : ^NewtonMesh, u : dFloat, v : dFloat) ---
+    MeshAddVertexColor :: proc(mesh : ^NewtonMesh, r : f32, g : f32, b : f32, a : f32) ---
+    MeshEndFace :: proc(mesh : ^NewtonMesh) ---
+    MeshEndBuild :: proc(mesh : ^NewtonMesh) ---
+    MeshClearVertexFormat :: proc(format : ^NewtonMeshVertexFormat) ---
+    MeshBuildFromVertexListIndexList :: proc(mesh : ^NewtonMesh, format : ^NewtonMeshVertexFormat) ---
+    MeshGetPointCount :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshGetIndexToVertexMap :: proc(mesh : ^NewtonMesh) -> ^i32 ---
+    MeshGetVertexDoubleChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^f64) ---
+    MeshGetVertexChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
+    MeshGetNormalChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
+    MeshGetBinormalChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
+    MeshGetUV0Channel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
+    MeshGetUV1Channel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
+    MeshGetVertexColorChannel :: proc(mesh : ^NewtonMesh, vertexStrideInByte : i32, outBuffer : ^dFloat) ---
+    MeshHasNormalChannel :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshHasBinormalChannel :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshHasUV0Channel :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshHasUV1Channel :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshHasVertexColorChannel :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshBeginHandle :: proc(mesh : ^NewtonMesh) -> rawptr ---
+    MeshEndHandle :: proc(mesh : ^NewtonMesh, handle : rawptr) ---
+    MeshFirstMaterial :: proc(mesh : ^NewtonMesh, handle : rawptr) -> i32 ---
+    MeshNextMaterial :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32) -> i32 ---
+    MeshMaterialGetMaterial :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32) -> i32 ---
+    MeshMaterialGetIndexCount :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32) -> i32 ---
+    MeshMaterialGetIndexStream :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32, index : ^i32) ---
+    MeshMaterialGetIndexStreamShort :: proc(mesh : ^NewtonMesh, handle : rawptr, materialId : i32, index : ^i16) ---
+    MeshCreateFirstSingleSegment :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshCreateNextSingleSegment :: proc(mesh : ^NewtonMesh, segment : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshCreateFirstLayer :: proc(mesh : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshCreateNextLayer :: proc(mesh : ^NewtonMesh, segment : ^NewtonMesh) -> ^NewtonMesh ---
+    MeshGetTotalFaceCount :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshGetTotalIndexCount :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshGetFaces :: proc(mesh : ^NewtonMesh, faceIndexCount : ^i32, faceMaterial : ^i32, faceIndices : ^rawptr) ---
+    MeshGetVertexCount :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshGetVertexStrideInByte :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshGetVertexArray :: proc(mesh : ^NewtonMesh) -> ^f64 ---
+    MeshGetVertexBaseCount :: proc(mesh : ^NewtonMesh) -> i32 ---
+    MeshSetVertexBaseCount :: proc(mesh : ^NewtonMesh, baseCount : i32) ---
+    MeshGetFirstVertex :: proc(mesh : ^NewtonMesh) -> rawptr ---
+    MeshGetNextVertex :: proc(mesh : ^NewtonMesh, vertex : rawptr) -> rawptr ---
+    MeshGetVertexIndex :: proc(mesh : ^NewtonMesh, vertex : rawptr) -> i32 ---
+    MeshGetFirstPoint :: proc(mesh : ^NewtonMesh) -> rawptr ---
+    MeshGetNextPoint :: proc(mesh : ^NewtonMesh, point : rawptr) -> rawptr ---
+    MeshGetPointIndex :: proc(mesh : ^NewtonMesh, point : rawptr) -> i32 ---
+    MeshGetVertexIndexFromPoint :: proc(mesh : ^NewtonMesh, point : rawptr) -> i32 ---
+    MeshGetFirstEdge :: proc(mesh : ^NewtonMesh) -> rawptr ---
+    MeshGetNextEdge :: proc(mesh : ^NewtonMesh, edge : rawptr) -> rawptr ---
+    MeshGetEdgeIndices :: proc(mesh : ^NewtonMesh, edge : rawptr, v0 : ^i32, v1 : ^i32) ---
+    MeshGetFirstFace :: proc(mesh : ^NewtonMesh) -> rawptr ---
+    MeshGetNextFace :: proc(mesh : ^NewtonMesh, face : rawptr) -> rawptr ---
+    MeshIsFaceOpen :: proc(mesh : ^NewtonMesh, face : rawptr) -> i32 ---
+    MeshGetFaceMaterial :: proc(mesh : ^NewtonMesh, face : rawptr) -> i32 ---
+    MeshGetFaceIndexCount :: proc(mesh : ^NewtonMesh, face : rawptr) -> i32 ---
+    MeshGetFaceIndices :: proc(mesh : ^NewtonMesh, face : rawptr, indices : ^i32) ---
+    MeshGetFacePointIndices :: proc(mesh : ^NewtonMesh, face : rawptr, indices : ^i32) ---
+    MeshCalculateFaceNormal :: proc(mesh : ^NewtonMesh, face : rawptr, normal : ^f64) ---
+    MeshSetFaceMaterial :: proc(mesh : ^NewtonMesh, face : rawptr, matId : i32) ---
 }

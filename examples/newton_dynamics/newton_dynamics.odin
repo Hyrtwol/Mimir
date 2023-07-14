@@ -5,15 +5,18 @@ import newton "../../shared/newton_dynamics"
 
 main :: proc() {
 	fmt.print("Newton Dynamics\n")
-	fmt.printf("Version    : %v\n", newton.NewtonWorldGetVersion())
-	fmt.printf("FloatSize  : %v\n", newton.NewtonWorldFloatSize())
-	fmt.printf("MemoryUsed : %v\n", newton.NewtonGetMemoryUsed())
+	fmt.printf("Version    : %v\n", newton.GetVersion())
+	fmt.printf("FloatSize  : %v\n", newton.GetFloatSize())
+	fmt.printf("MemoryUsed : %v\n", newton.GetMemoryUsed())
 
-	world := newton.NewtonCreate()
-	defer newton.NewtonDestroy(world)
+	world := newton.Create()
+	defer newton.Destroy(world)
 
-	fmt.printf("ThreadsCount        : %v\n", newton.NewtonGetThreadsCount(world))
-	fmt.printf("BroadphaseAlgorithm : %v\n", newton.NewtonGetBroadphaseAlgorithm(world))
+	fmt.printf("ThreadsCount        : %v\n", newton.GetThreadsCount(world))
+	fmt.printf("BroadphaseAlgorithm : %v\n", newton.GetBroadphaseAlgorithm(world))
 
-	newton.NewtonDestroyAllBodies(world)
+	newton.DestroyAllBodies(world)
+
+	f3 : newton.float3
+	i3 : newton.int3
 }
