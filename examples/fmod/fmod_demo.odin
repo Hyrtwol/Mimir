@@ -103,8 +103,6 @@ main :: proc() {
 	caps: fmod.FMOD_CAPS_ENUM
 	controlpaneloutputrate: _c.int
 	controlpanelspeakermode: fmod.FMOD_SPEAKERMODE
-	//speakerMode : fmod.FMOD_SPEAKERMODE = 0
-	//speakerMode : fmod.FMOD_SPEAKERMODE = 0
 	res = fmod.FMOD_System_GetDriverCaps(
 		system,
 		driver_index,
