@@ -5,30 +5,6 @@ foreign import "newton.lib"
 NEWTON_MAJOR_VERSION :: 3
 NEWTON_MINOR_VERSION :: 14
 
-// NEWTON_BROADPHASE_DEFAULT :: 0
-// NEWTON_BROADPHASE_PERSINTENT :: 1
-
-// NEWTON_DYNAMIC_BODY :: 0
-// NEWTON_KINEMATIC_BODY :: 1
-// NEWTON_DYNAMIC_ASYMETRIC_BODY :: 2
-
-// SERIALIZE_ID_SPHERE :: 0
-// SERIALIZE_ID_CAPSULE :: 1
-// SERIALIZE_ID_CYLINDER :: 2
-// SERIALIZE_ID_CHAMFERCYLINDER :: 3
-// SERIALIZE_ID_BOX :: 4
-// SERIALIZE_ID_CONE :: 5
-// SERIALIZE_ID_CONVEXHULL :: 6
-// SERIALIZE_ID_NULL :: 7
-// SERIALIZE_ID_COMPOUND :: 8
-// SERIALIZE_ID_TREE :: 9
-// SERIALIZE_ID_HEIGHTFIELD :: 10
-// SERIALIZE_ID_CLOTH_PATCH :: 11
-// SERIALIZE_ID_DEFORMABLE_SOLID :: 12
-// SERIALIZE_ID_USERMESH :: 13
-// SERIALIZE_ID_SCENE :: 14
-// SERIALIZE_ID_FRACTURED_COMPOUND :: 15
-
 BroadPhaseType :: enum i32 {
 	Generic    = 0,
 	Persistent = 1,
@@ -72,138 +48,36 @@ NewtonWorldDestroyListenerCallback :: #type proc(world: ^NewtonWorld, listenerUs
 NewtonGetTimeInMicrosencondsCallback :: #type proc() -> i64
 NewtonSerializeCallback :: #type proc(serializeHandle: rawptr, buffer: rawptr, size: i32)
 NewtonDeserializeCallback :: #type proc(serializeHandle: rawptr, buffer: rawptr, size: i32)
-NewtonOnBodySerializationCallback :: #type proc(
-	body: ^NewtonBody,
-	userData: rawptr,
-	function: NewtonSerializeCallback,
-	serializeHandle: rawptr,
-)
-NewtonOnBodyDeserializationCallback :: #type proc(
-	body: ^NewtonBody,
-	userData: rawptr,
-	function: NewtonDeserializeCallback,
-	serializeHandle: rawptr,
-)
-NewtonOnJointSerializationCallback :: #type proc(
-	joint: ^NewtonJoint,
-	function: NewtonSerializeCallback,
-	serializeHandle: rawptr,
-)
-NewtonOnJointDeserializationCallback :: #type proc(
-	body0: ^NewtonBody,
-	body1: ^NewtonBody,
-	function: NewtonDeserializeCallback,
-	serializeHandle: rawptr,
-)
-NewtonOnUserCollisionSerializationCallback :: #type proc(
-	userData: rawptr,
-	function: NewtonSerializeCallback,
-	serializeHandle: rawptr,
-)
+NewtonOnBodySerializationCallback :: #type proc(body: ^NewtonBody, userData: rawptr, function: NewtonSerializeCallback, serializeHandle: rawptr)
+NewtonOnBodyDeserializationCallback :: #type proc(body: ^NewtonBody, userData: rawptr, function: NewtonDeserializeCallback, serializeHandle: rawptr)
+NewtonOnJointSerializationCallback :: #type proc(joint: ^NewtonJoint, function: NewtonSerializeCallback, serializeHandle: rawptr)
+NewtonOnJointDeserializationCallback :: #type proc(body0: ^NewtonBody, body1: ^NewtonBody, function: NewtonDeserializeCallback, serializeHandle: rawptr)
+NewtonOnUserCollisionSerializationCallback :: #type proc(userData: rawptr, function: NewtonSerializeCallback, serializeHandle: rawptr)
 NewtonUserMeshCollisionDestroyCallback :: #type proc(userData: rawptr)
 NewtonUserMeshCollisionRayHitCallback :: #type proc(lineDescData: ^NewtonUserMeshCollisionRayHitDesc) -> dFloat
 NewtonUserMeshCollisionGetCollisionInfo :: #type proc(userData: rawptr, infoRecord: ^NewtonCollisionInfoRecord)
 NewtonUserMeshCollisionAABBTest :: #type proc(userData: rawptr, boxP0: ^dFloat, boxP1: ^dFloat) -> i32
-NewtonUserMeshCollisionGetFacesInAABB :: #type proc(
-	userData: rawptr,
-	p0: ^dFloat,
-	p1: ^dFloat,
-	vertexArray: ^^dFloat,
-	vertexCount: ^i32,
-	vertexStrideInBytes: ^i32,
-	indexList: ^i32,
-	maxIndexCount: i32,
-	userDataList: ^i32,
-) -> i32
-NewtonUserMeshCollisionCollideCallback :: #type proc(
-	collideDescData: ^NewtonUserMeshCollisionCollideDesc,
-	continueCollisionHandle: rawptr,
-)
-NewtonTreeCollisionFaceCallback :: #type proc(
-	_context: rawptr,
-	polygon: ^dFloat,
-	strideInBytes: i32,
-	indexArray: ^i32,
-	indexCount: i32,
-) -> i32
-NewtonCollisionTreeRayCastCallback :: #type proc(
-	body: ^NewtonBody,
-	treeCollision: ^NewtonCollision,
-	intersection: dFloat,
-	normal: ^dFloat,
-	faceId: i32,
-	usedData: rawptr,
-) -> dFloat
-NewtonHeightFieldRayCastCallback :: #type proc(
-	body: ^NewtonBody,
-	heightFieldCollision: ^NewtonCollision,
-	intersection: dFloat,
-	row: i32,
-	col: i32,
-	normal: ^dFloat,
-	faceId: i32,
-	usedData: rawptr,
-) -> dFloat
-NewtonCollisionCopyConstructionCallback :: #type proc(
-	newtonWorld: ^NewtonWorld,
-	collision: ^NewtonCollision,
-	sourceCollision: ^NewtonCollision,
-)
+NewtonUserMeshCollisionGetFacesInAABB :: #type proc(userData: rawptr, p0: ^dFloat, p1: ^dFloat, vertexArray: ^^dFloat, vertexCount: ^i32, vertexStrideInBytes: ^i32, indexList: ^i32, maxIndexCount: i32, userDataList: ^i32) -> i32
+NewtonUserMeshCollisionCollideCallback :: #type proc(collideDescData: ^NewtonUserMeshCollisionCollideDesc, continueCollisionHandle: rawptr)
+NewtonTreeCollisionFaceCallback :: #type proc(_context: rawptr, polygon: ^dFloat, strideInBytes: i32, indexArray: ^i32, indexCount: i32) -> i32
+NewtonCollisionTreeRayCastCallback :: #type proc(body: ^NewtonBody, treeCollision: ^NewtonCollision, intersection: dFloat, normal: ^dFloat, faceId: i32, usedData: rawptr) -> dFloat
+NewtonHeightFieldRayCastCallback :: #type proc(body: ^NewtonBody, heightFieldCollision: ^NewtonCollision, intersection: dFloat, row: i32, col: i32, normal: ^dFloat, faceId: i32, usedData: rawptr) -> dFloat
+NewtonCollisionCopyConstructionCallback :: #type proc(newtonWorld: ^NewtonWorld, collision: ^NewtonCollision, sourceCollision: ^NewtonCollision)
 NewtonCollisionDestructorCallback :: #type proc(newtonWorld: ^NewtonWorld, collision: ^NewtonCollision)
-NewtonTreeCollisionCallback :: #type proc(
-	bodyWithTreeCollision: ^NewtonBody,
-	body: ^NewtonBody,
-	faceID: i32,
-	vertexCount: i32,
-	vertex: ^dFloat,
-	vertexStrideInBytes: i32,
-)
+NewtonTreeCollisionCallback :: #type proc(bodyWithTreeCollision: ^NewtonBody, body: ^NewtonBody, faceID: i32, vertexCount: i32, vertex: ^dFloat, vertexStrideInBytes: i32)
 NewtonBodyDestructor :: #type proc(body: ^NewtonBody)
 NewtonApplyForceAndTorque :: #type proc(body: ^NewtonBody, timestep: dFloat, threadIndex: i32)
 NewtonSetTransform :: #type proc(body: ^NewtonBody, matrix4x4: ^dFloat, threadIndex: i32)
 NewtonIslandUpdate :: #type proc(newtonWorld: ^NewtonWorld, islandHandle: rawptr, bodyCount: i32) -> i32
 NewtonFractureCompoundCollisionOnEmitCompoundFractured :: #type proc(fracturedBody: ^NewtonBody)
-NewtonFractureCompoundCollisionOnEmitChunk :: #type proc(
-	chunkBody: ^NewtonBody,
-	fracturexChunkMesh: ^NewtonFracturedCompoundMeshPart,
-	fracturedCompountCollision: ^NewtonCollision,
-)
-NewtonFractureCompoundCollisionReconstructMainMeshCallBack :: #type proc(
-	body: ^NewtonBody,
-	mainMesh: ^NewtonFracturedCompoundMeshPart,
-	fracturedCompountCollision: ^NewtonCollision,
-)
+NewtonFractureCompoundCollisionOnEmitChunk :: #type proc(chunkBody: ^NewtonBody, fracturexChunkMesh: ^NewtonFracturedCompoundMeshPart, fracturedCompountCollision: ^NewtonCollision)
+NewtonFractureCompoundCollisionReconstructMainMeshCallBack :: #type proc(body: ^NewtonBody, mainMesh: ^NewtonFracturedCompoundMeshPart, fracturedCompountCollision: ^NewtonCollision)
 NewtonWorldRayPrefilterCallback :: #type proc(body: ^NewtonBody, collision: ^NewtonCollision, userData: rawptr) -> u32
-NewtonWorldRayFilterCallback :: #type proc(
-	body: ^NewtonBody,
-	shapeHit: ^NewtonCollision,
-	hitContact: ^dFloat,
-	hitNormal: ^dFloat,
-	collisionID: i64,
-	userData: rawptr,
-	intersectParam: dFloat,
-) -> dFloat
+NewtonWorldRayFilterCallback :: #type proc(body: ^NewtonBody, shapeHit: ^NewtonCollision, hitContact: ^dFloat, hitNormal: ^dFloat, collisionID: i64, userData: rawptr, intersectParam: dFloat) -> dFloat
 NewtonOnAABBOverlap :: #type proc(contact: ^NewtonJoint, timestep: dFloat, threadIndex: i32) -> i32
 NewtonContactsProcess :: #type proc(contact: ^NewtonJoint, timestep: dFloat, threadIndex: i32)
-NewtonOnCompoundSubCollisionAABBOverlap :: #type proc(
-	contact: ^NewtonJoint,
-	timestep: dFloat,
-	body0: ^NewtonBody,
-	collisionNode0: rawptr,
-	body1: ^NewtonBody,
-	collisionNode1: rawptr,
-	threadIndex: i32,
-) -> i32
-NewtonOnContactGeneration :: #type proc(
-	material: ^NewtonMaterial,
-	body0: ^NewtonBody,
-	collision0: ^NewtonCollision,
-	body1: ^NewtonBody,
-	collision1: ^NewtonCollision,
-	contactBuffer: ^NewtonUserContactPoint,
-	maxCount: i32,
-	threadIndex: i32,
-) -> i32
+NewtonOnCompoundSubCollisionAABBOverlap :: #type proc(contact: ^NewtonJoint, timestep: dFloat, body0: ^NewtonBody, collisionNode0: rawptr, body1: ^NewtonBody, collisionNode1: rawptr, threadIndex: i32) -> i32
+NewtonOnContactGeneration :: #type proc(material: ^NewtonMaterial, body0: ^NewtonBody, collision0: ^NewtonCollision, body1: ^NewtonBody, collision1: ^NewtonCollision, contactBuffer: ^NewtonUserContactPoint, maxCount: i32, threadIndex: i32) -> i32
 NewtonBodyIterator :: #type proc(body: ^NewtonBody, userData: rawptr) -> i32
 NewtonJointIterator :: #type proc(joint: ^NewtonJoint, userData: rawptr)
 NewtonCollisionIterator :: #type proc(userData: rawptr, vertexCount: i32, faceArray: ^dFloat, faceId: i32)
@@ -407,7 +281,7 @@ NewtonImmediateModeConstraint :: struct {
 }
 
 JacobianPair :: struct {
-    m_linear:  float3,
+	m_linear:  float3,
 	m_angular: float3,
 }
 

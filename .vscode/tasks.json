@@ -21,7 +21,7 @@
         },
         {
             "label": "odin build",
-            "type": "shell",
+            "type": "process",
             "command": "odin",
             "args": [
                 "build",
@@ -57,7 +57,7 @@
         },
         {
             "label": "odin debug build",
-            "type": "shell",
+            "type": "process",
             "command": "odin",
             "args": [
                 "build",
@@ -76,7 +76,7 @@
         },
         {
             "label": "odin check",
-            "type": "shell",
+            "type": "process",
             "command": "odin",
             "args": [
                 "check",
@@ -109,7 +109,7 @@
         },
         {
             "label": "odin doc",
-            "type": "shell",
+            "type": "process",
             "command": "odin",
             "args": [
                 "doc",

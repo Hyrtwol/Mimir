@@ -7,7 +7,7 @@ main :: proc() {
 	fmt.print("Newton Dynamics\n")
 
 	fmt.print("Globals:\n")
-	fmt.printf("  Version             : %v\n", newton.GetVersion())
+	fmt.printf("  Version             : %.2f\n", f32(newton.GetVersion()) / 100)
 	fmt.printf("  FloatSize           : %v\n", newton.GetFloatSize())
 	fmt.printf("  MemoryUsed          : %v\n", newton.GetMemoryUsed())
 
