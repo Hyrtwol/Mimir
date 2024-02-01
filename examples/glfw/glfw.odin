@@ -26,7 +26,7 @@ main :: proc() {
 	// GLFW_TRUE = 1
 	// GLFW_FALSE = 0
 	// https://www.glfw.org/docs/latest/group__init.html#ga317aac130a235ab08c6db0834907d85e
-	if (glfw.Init() != 1) {
+	if (!glfw.Init()) {
 		// Print Line
 		fmt.println("Failed to initialize GLFW")
 		// Return early
