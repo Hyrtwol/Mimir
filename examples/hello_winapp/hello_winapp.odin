@@ -57,7 +57,6 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\r':		fmt.print("return\n")
 	case 'm':		win32app.PlaySoundW(L("62a.wav"), nil, win32app.SND_FILENAME);
 	case 'p':		win32app.show_error_and_panic("Test Panic")
-	case:
 	}
 	return 0
 }
@@ -70,29 +69,20 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	hdc := win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
-
-	rect: win32.RECT
-	win32.GetClientRect(hwnd, &rect)
+	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	defer win32.EndPaint(hwnd, &ps)
 
 	if hbrGray != nil {
-		win32.FillRect(hdc, &rect, hbrGray)
+		win32.FillRect(ps.hdc, &ps.rcPaint, hbrGray)
 	}
 
-	dtf ::
-		win32app.DrawTextFormat.DT_SINGLELINE | win32app.DrawTextFormat.DT_CENTER | win32app.DrawTextFormat.DT_VCENTER
-	win32app.DrawTextW(hdc, L("Hello, Windows 98!"), -1, &rect, dtf)
+	dtf : win32app.DrawTextFormat : .DT_SINGLELINE | .DT_CENTER | .DT_VCENTER
+	win32app.DrawTextW(ps.hdc, L("Hello, Windows 98!"), -1, &ps.rcPaint, dtf)
 
-	win32.EndPaint(hwnd, &ps)
 	return 0
 }
 
-wndproc :: proc "stdcall" (
-	hwnd: win32.HWND,
-	msg: win32.UINT,
-	wparam: win32.WPARAM,
-	lparam: win32.LPARAM,
-) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND,	msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)

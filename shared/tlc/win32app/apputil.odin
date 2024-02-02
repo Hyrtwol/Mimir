@@ -12,7 +12,7 @@ IDT_TIMER3: UINT_PTR : 10003
 IDT_TIMER4: UINT_PTR : 10004
 
 decode_lparam :: #force_inline proc "contextless" (lparam: LPARAM) -> int2 {
-	return int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+	return int2({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})
 }
 
 show_error_and_panic :: proc(msg: string) {
@@ -21,7 +21,7 @@ show_error_and_panic :: proc(msg: string) {
 	panic(msg)
 }
 
-get_rect_size :: proc(rect: ^RECT) -> int2 {
+get_rect_size :: #force_inline proc(rect: ^RECT) -> int2 {
 	return {(rect.right - rect.left), (rect.bottom - rect.top)}
 }
 
@@ -98,20 +98,19 @@ register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> wi
 	return atom
 }
 
+default_dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
+default_dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
+
 window_settings :: struct {
 	title:       string,
 	window_size: int2,
 	center:      bool,
+	//dwStyle: u32,
+	//dwExStyle: u32,
+	//wndproc: win32.WNDPROC,
 }
 
-create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^window_settings) -> win32.HWND {
-
-	//dwStyle :: win32.WS_OVERLAPPEDWINDOW
-	dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
-	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
-
-	//dwStyle :: win32.WS_POPUP | win32.WS_BORDER
-	//dwExStyle :: 0
+create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwExStyle: u32, settings: ^window_settings) -> win32.HWND {
 
 	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
 	position := get_window_position(size, settings.center)
@@ -130,6 +129,13 @@ create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^wi
 		instance,
 		nil,
 	)
+
+	return hwnd
+}
+
+create_and_show_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^window_settings) -> win32.HWND {
+
+	hwnd: win32.HWND = create_window(instance, atom, default_dwStyle, default_dwExStyle, settings)
 	if hwnd == nil {
 		show_error_and_panic("CreateWindowEx failed")
 	}
@@ -138,6 +144,22 @@ create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^wi
 	win32.UpdateWindow(hwnd)
 
 	return hwnd
+}
+
+pull_messages :: proc () -> bool {
+	msg: win32.MSG
+	for result := win32.PeekMessageW(&msg, nil, 0, 0, win32.PM_REMOVE);
+		result == win32.TRUE;
+		result = win32.PeekMessageW(&msg, nil, 0, 0, win32.PM_REMOVE) {
+
+		win32.TranslateMessage(&msg)
+		win32.DispatchMessageW(&msg)
+
+		if(msg.message == win32.WM_QUIT) {
+			return false
+		}
+	}
+	return true
 }
 
 main_loop :: proc(hwnd: win32.HWND) {
@@ -153,6 +175,6 @@ main_loop :: proc(hwnd: win32.HWND) {
 run :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) {
 	inst := get_instance()
 	atom := register_window_class(inst, wndproc)
-	hwnd := create_window(inst, atom, settings)
+	hwnd := create_and_show_window(inst, atom, settings)
 	main_loop(hwnd)
 }

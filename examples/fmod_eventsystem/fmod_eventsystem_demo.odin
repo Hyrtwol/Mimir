@@ -207,21 +207,20 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	hdc_target := win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
-	assert(hdc_target == ps.hdc)
-	client_size := win32app.get_client_size(hwnd)
-	assert(client_size == win32app.get_rect_size(&ps.rcPaint))
+	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32app.CreateCompatibleDC(hdc_target)
+	hdc_source := win32app.CreateCompatibleDC(ps.hdc)
+	defer win32app.DeleteDC(hdc_source)
+
+    client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.SelectObject(hdc_source, bitmap_handle)
 	win32.StretchBlt(
-		hdc_target, 0, 0, client_size.x, client_size.y,
+		ps.hdc, 0, 0, client_size.x, client_size.y,
 		hdc_source, 0, 0, bitmap_size.x, bitmap_size.y,
 		win32.SRCCOPY,
 	)
-	win32app.DeleteDC(hdc_source)
 
-	win32.EndPaint(hwnd, &ps)
 	return 0
 }
 
@@ -273,7 +272,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
-wndproc :: proc "stdcall" ( hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)

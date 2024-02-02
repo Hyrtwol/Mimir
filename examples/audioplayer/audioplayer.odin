@@ -57,7 +57,7 @@ colidx          := 1
 cols            := canvas.C64_COLORS
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+	size := win32app.decode_lparam(lparam)
 	scrpos := size / ZOOM
 	return scrpos
 }
@@ -77,7 +77,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	hdc := win32.GetDC(hwnd)
 	// todo defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = canvas.dib_create(hdc, client_size / ZOOM)
+	dib = canvas.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {50, 100, 150, 255})
 	}
@@ -109,13 +109,12 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '2':		if colidx < 15 {colidx += 1}
 	case '3':		cols = canvas.C64_COLORS
 	case '4':		cols = canvas.W95_COLORS
-	case:
 	}
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+	size := win32app.decode_lparam(lparam)
 	newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, dib.size)
 	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	return 0
@@ -123,20 +122,20 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	hdc_target := win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	defer win32.EndPaint(hwnd, &ps)
 
-	client_size := win32app.get_client_size(hwnd)
+	hdc_source := win32app.CreateCompatibleDC(ps.hdc)
+	defer win32app.DeleteDC(hdc_source)
 
-	hdc_source := win32app.CreateCompatibleDC(hdc_target)
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
+    client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.StretchBlt(
-		hdc_target, 0, 0, client_size.x, client_size.y,
+		ps.hdc, 0, 0, client_size.x, client_size.y,
 		hdc_source, 0, 0, dib.size.x, dib.size.y,
 		win32.SRCCOPY,
 	)
-	win32app.DeleteDC(hdc_source)
 
-	win32.EndPaint(hwnd, &ps)
 	return 0
 }
 
@@ -173,12 +172,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
-wndproc :: proc "stdcall" (
-	hwnd: win32.HWND,
-	msg: win32.UINT,
-	wparam: win32.WPARAM,
-	lparam: win32.LPARAM,
-) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)

@@ -5,7 +5,7 @@ package win32app
 /*
 foreign import gdi32 "system:Gdi32.lib"
 
-@(default_calling_convention="stdcall")
+@(default_calling_convention="system")
 foreign gdi32 {
 }
 */

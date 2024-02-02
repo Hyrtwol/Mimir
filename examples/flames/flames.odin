@@ -1,59 +1,71 @@
 package main
 
-import          "core:fmt"
-import          "core:intrinsics"
-import          "core:math"
-import          "core:math/linalg"
-import hlm      "core:math/linalg/hlsl"
-import          "core:math/noise"
-import          "core:math/rand"
-import          "core:mem"
-import          "core:runtime"
-import          "core:simd"
-import          "core:strings"
-import win32    "core:sys/windows"
-import          "core:time"
+import canvas "../../shared/tlc/canvas"
 import win32app "../../shared/tlc/win32app"
-import canvas   "../../shared/tlc/canvas"
+import "core:fmt"
+import "core:intrinsics"
+import "core:math"
+import "core:math/linalg"
+import hlm "core:math/linalg/hlsl"
+import "core:math/noise"
+import "core:math/rand"
+import "core:mem"
+import "core:runtime"
+import "core:simd"
+import "core:strings"
+import win32 "core:sys/windows"
+import "core:time"
 
-L       :: intrinsics.constant_utf16_cstring
-byte4   :: canvas.byte4
-int2    :: canvas.int2
-float2  :: hlm.float2
+L :: intrinsics.constant_utf16_cstring
+byte4 :: canvas.byte4
+int2 :: canvas.int2
+float2 :: hlm.float2
 double2 :: hlm.double2
 double3 :: hlm.double3
-DIB     :: canvas.DIB
+DIB :: canvas.DIB
 
-WIDTH  	: i32 : 160
-HEIGHT 	: i32 : WIDTH * 3 / 4
-PXLCNT  : i32 : WIDTH * HEIGHT
-ZOOM  	: i32 : 4
-FPS     : u32 : 20
+WIDTH: i32 : 160
+HEIGHT: i32 : WIDTH * 3 / 4
+PXLCNT: i32 : WIDTH * HEIGHT
+ZOOM: i32 : 4
+FPS: u32 : 20
 
-settings : win32app.window_settings = {
-	title = "Noise",
-	window_size = {WIDTH*ZOOM, (HEIGHT-2)*ZOOM},
-	center = true,
+settings: win32app.window_settings = {
+	title       = "Noise",
+	window_size = {WIDTH * ZOOM, (HEIGHT - 2) * ZOOM},
+	center      = true,
 }
 
 my_rand := rand.create(1)
-flamebuffer : [PXLCNT]u8
-palette 	: [256]byte4
+flamebuffer: [PXLCNT]u8
+palette: [256]byte4
 
-timer_id : win32.UINT_PTR
-dib      : DIB
-npos1    : double3 = {0, 0, 0}
-ndir1    : double3 = {0.007, 0.009, 0.011}
-npos2    : double2 = {0, 0}
-ndir2    : double2 = {0.007, 0.003}
-nseed    : i64 = 12345
+timer_id: win32.UINT_PTR
+dib: DIB
+npos1: double3 = {0, 0, 0}
+ndir1: double3 = {0.007, 0.009, 0.011}
+npos2: double2 = {0, 0}
+ndir2: double2 = {0.007, 0.003}
+nseed: i64 = 12345
 
-noise_func : proc(dib: ^DIB) = dib_noise1
+noise_func: proc(dib: ^DIB) = dib_noise1
 
 setdot :: proc(x, y: i32, col: u8) {
 	i := y * WIDTH + x
 	if i >= 0 && i < PXLCNT {
 		flamebuffer[i] = col
+	}
+}
+
+setbigdot :: proc(x, y: i32, col: u8, r: i32) {
+	rr := r*r
+	for iy in -r ..= r {
+		for ix in -r ..= r {
+			d := ix*ix + iy*iy
+			if d<=rr {
+				setdot(x+ix, y+iy, col)
+			}
+		}
 	}
 }
 
@@ -76,11 +88,11 @@ dib_noise1 :: proc(dib: ^DIB) {
 	for y in 0 ..< HEIGHT {
 		for x in 0 ..< WIDTH {
 			// add the values of the surrounding pixels
-			c : i32 = getdot(x, y+1) + getdot(x-1, y+1) + getdot(x+1, y+1) + getdot(x, y)
-		    // divide by the number of pixels added up
+			c: i32 = getdot(x, y + 1) + getdot(x - 1, y + 1) + getdot(x + 1, y + 1) + getdot(x, y)
+			// divide by the number of pixels added up
 			c /= 4
 			// decrement by the decay value
-		    if c > 0 {
+			if c > 0 {
 				c -= 1
 			}
 			setdot(x, y, u8(c))
@@ -88,7 +100,7 @@ dib_noise1 :: proc(dib: ^DIB) {
 	}
 
 	// set a new bottom line
-	i = w * (HEIGHT-1)
+	i = w * (HEIGHT - 1)
 	for x in 0 ..< WIDTH {
 		c := u8(rand.int31_max(256, &my_rand))
 		flamebuffer[i] = c
@@ -96,7 +108,7 @@ dib_noise1 :: proc(dib: ^DIB) {
 	}
 
 	i = 0
-	for y in 0 ..< HEIGHT-2 {
+	for y in 0 ..< HEIGHT - 1 {
 		for x in 0 ..< WIDTH {
 			c := flamebuffer[i]
 			p[i] = palette[c]
@@ -110,7 +122,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 
 	hdc := win32.GetDC(hwnd)
 
-	dib = canvas.dib_create(hdc, {WIDTH, HEIGHT})
+	dib = canvas.dib_create_v5(hdc, {WIDTH, HEIGHT})
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {0, 0, 0, 255})
 	} else {
@@ -145,14 +157,13 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
-	case '1':	    noise_func = dib_noise1
-	case:
+	case '1':		noise_func = dib_noise1
 	}
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+	size := win32app.decode_lparam(lparam)
 	newtitle := fmt.tprintf("%s %v %v FPS: %d\n", settings.title, size, dib.size, FPS)
 	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	return 0
@@ -160,28 +171,28 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	hdc_target := win32.BeginPaint(hwnd, &ps)
+	win32.BeginPaint(hwnd, &ps)
+	defer win32.EndPaint(hwnd, &ps)
 
-	client_size := win32app.get_client_size(hwnd)
+	hdc_source := win32app.CreateCompatibleDC(ps.hdc)
+	defer win32app.DeleteDC(hdc_source)
 
-	hdc_source := win32app.CreateCompatibleDC(hdc_target)
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
+    client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.StretchBlt(
-		hdc_target, 0, 0, client_size.x, client_size.y,
+		ps.hdc, 0, 0, client_size.x, client_size.y,
 		hdc_source, 0, 0, dib.size.x, dib.size.y,
-		win32.SRCCOPY)
-	win32app.DeleteDC(hdc_source)
+		win32.SRCCOPY,
+	)
 
-	win32.EndPaint(hwnd, &ps)
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	noise_func(&dib)
-	win32app.RedrawWindow(hwnd, nil, nil, win32app.RDW_INVALIDATE | win32app.RDW_UPDATENOW)
+	win32app.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	return 0
 }
-
 
 WM_MOUSEMOVE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	return handle_input(hwnd, wparam, lparam)
@@ -196,7 +207,7 @@ WM_RBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
- 	return win32app.decode_lparam(lparam) / ZOOM
+	return win32app.decode_lparam(lparam) / ZOOM
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -204,12 +215,19 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	case 1:
 		pos := decode_scrpos(lparam)
 		setdot(pos.x, pos.y, 255)
-	case:
+	case 2:
+		pos := decode_scrpos(lparam)
+		setbigdot(pos.x, pos.y, 255, 5)
 	}
 	return 0
 }
 
-wndproc :: proc "stdcall" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+wndproc :: proc "system" (
+	hwnd: win32.HWND,
+	msg: win32.UINT,
+	wparam: win32.WPARAM,
+	lparam: win32.LPARAM,
+) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
@@ -232,8 +250,8 @@ tocol :: proc(n: f64) -> u8 {
 
 main :: proc() {
 	for i in 0 ..< 256 {
-		f : f64 = f64(i) / 255
-		palette[i] = {tocol(math.pow(f, 0.5)),tocol(math.pow(f, 1.25)), tocol(math.pow(f, 3.0)), 255}
+		f: f64 = f64(i) / 255
+		palette[i] = {tocol(math.pow(f, 0.5)), tocol(math.pow(f, 1.25)), tocol(math.pow(f, 3.0)), 255}
 	}
 	win32app.run(&settings, wndproc)
 }

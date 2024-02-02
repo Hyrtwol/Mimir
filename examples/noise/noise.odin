@@ -101,7 +101,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 
 	hdc := win32.GetDC(hwnd)
 
-	dib = canvas.dib_create(hdc, client_size / ZOOM)
+	dib = canvas.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {50, 150, 100, 255})
 	} else {
@@ -138,13 +138,12 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\x1b':	win32.DestroyWindow(hwnd)
 	case '1':	    noise_func = dib_noise1
 	case '2':	    noise_func = dib_noise2
-	case:
 	}
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+	size := win32app.decode_lparam(lparam)
 	newtitle := fmt.tprintf("%s %v %v\n", settings.title, size, dib.size)
 	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	return 0
@@ -153,28 +152,29 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc_target := win32.BeginPaint(hwnd, &ps)
-
-	client_size := win32app.get_client_size(hwnd)
+	defer win32.EndPaint(hwnd, &ps)
 
 	hdc_source := win32app.CreateCompatibleDC(hdc_target)
+	defer win32app.DeleteDC(hdc_source)
+
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
+
+    client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.StretchBlt(
 		hdc_target, 0, 0, client_size.x, client_size.y,
 		hdc_source, 0, 0, dib.size.x, dib.size.y,
 		win32.SRCCOPY)
-	win32app.DeleteDC(hdc_source)
 
-	win32.EndPaint(hwnd, &ps)
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	noise_func(&dib)
-	win32app.RedrawWindow(hwnd, nil, nil, win32app.RDW_INVALIDATE | win32app.RDW_UPDATENOW)
+	win32app.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	return 0
 }
 
-wndproc :: proc "stdcall" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)

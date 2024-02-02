@@ -3,7 +3,7 @@ package win32app
 
 foreign import shell32 "system:Shell32.lib"
 
-@(default_calling_convention="stdcall")
+@(default_calling_convention="system")
 foreign shell32 {
 	SHChangeNotify :: proc(wEventId: LONG, uFlags: UINT, dwItem1: LPCVOID, dwItem2: LPCVOID) ---
 }

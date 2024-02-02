@@ -7,7 +7,7 @@ foreign import winmm "system:Winmm.lib"
 
 MMRESULT :: win32.MMRESULT
 
-@(default_calling_convention="stdcall")
+@(default_calling_convention="system")
 foreign winmm {
 
 	waveOutGetNumDevs :: proc() -> UINT ---
