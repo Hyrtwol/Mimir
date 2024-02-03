@@ -1,16 +1,19 @@
 {
-    "editor.wordWrapColumn": 120,
+    "editor.wordWrapColumn": 200,
     "editor.rulers": [
-        120
+        200
     ],
     "cSpell.words": [
+        "codepage",
+        "fmodex",
+        "hlsl",
+        "libfmodex",
+        "localizable",
         "metaprogramming",
         "microarch",
         "reloc",
         "sandybridge",
-        "struct",
-        "fmodex",
-        "libfmodex"
+        "struct"
     ],
     "markdownlint.config": {
         "no-hard-tabs": false,
