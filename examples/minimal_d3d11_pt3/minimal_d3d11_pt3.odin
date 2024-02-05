@@ -123,7 +123,7 @@ main :: proc() {
 	hr = dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swap_chain_desc, nil, nil, &swap_chain)
 	assert(hr == 0)
 	assert(swap_chain != nil)
-	defer swap_chain->Release()
+	//defer swap_chain->Release()
 
 	//-- Frame Buffer --//
 
