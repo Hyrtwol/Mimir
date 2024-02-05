@@ -3,8 +3,6 @@ package win32app
 
 import win32 "core:sys/windows"
 
-c_int :: win32.c_int
-
 DWORD :: win32.DWORD
 BYTE :: win32.BYTE
 BOOL :: win32.BOOL

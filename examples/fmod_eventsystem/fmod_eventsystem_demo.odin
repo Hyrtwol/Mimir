@@ -305,7 +305,6 @@ main :: proc() {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetVersion, res)
 		return
 	}
-	//fmod_version := transmute(fmod.FMOD_VERSION)version
 
 	res = fmod.FMOD_EventSystem_GetSystemObject(eventsys, &system)
 	if res != fmod.FMOD_RESULT.FMOD_OK {

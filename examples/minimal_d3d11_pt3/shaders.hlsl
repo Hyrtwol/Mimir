@@ -114,6 +114,5 @@ debug_vs_out debug_vs(uint vI : SV_VERTEXID)
 float4 debug_ps(debug_vs_out input) : SV_TARGET
 {
 	//return float4(input.texcoord.x,input.texcoord.y,0,1);
-	//return shadowmap[input.texcoord].xxxx;
 	return shadowmap.Sample(mysampler, input.texcoord).xxxx;
 }

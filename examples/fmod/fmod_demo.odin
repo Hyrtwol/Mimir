@@ -4,7 +4,7 @@ import "core:runtime"
 import "core:fmt"
 import "core:strings"
 import "core:os"
-import _c "core:c"
+//import _c "core:c"
 import "shared:fmod"
 import "shared:tlc/wolf"
 
@@ -51,20 +51,19 @@ main :: proc() {
 	}
 	defer fmod.FMOD_EventSystem_Release(eventsys)
 
-	version: u32 = 0
-	res = fmod.FMOD_EventSystem_GetVersion(eventsys, &version)
+	fmod_version: fmod.FMOD_VERSION
+	res = fmod.FMOD_EventSystem_GetVersion(eventsys, &fmod_version)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetVersion, res)
 		return
 	}
 
-	fmod_version := transmute(fmod.FMOD_VERSION)version
 	fmt.printf(
 		"Version : %d.%d.%d (0x%x)\n",
 		fmod_version.Major,
 		fmod_version.Minor,
 		fmod_version.Development,
-		version,
+		transmute(u32)fmod_version,
 	)
 
 	res = fmod.FMOD_EventSystem_GetSystemObject(eventsys, &system)
@@ -87,7 +86,7 @@ main :: proc() {
 		defer fmt.print("defer info\n")
 
 		name: [256]u8
-		name_cstr := cstring(&name[0])
+		name_cstr := cstring(&name[0]) // todo there must be a better way to do this
 		guid: fmod.FMOD_GUID
 		res = fmod.FMOD_System_GetDriverInfo(system, driver_index, name_cstr, 256, &guid)
 		if res != fmod.FMOD_RESULT.FMOD_OK {
@@ -100,29 +99,29 @@ main :: proc() {
 		fmt.printf("Driver guid : %v\n", guid)
 	}
 
-	caps: fmod.FMOD_CAPS_ENUM
-	controlpaneloutputrate: _c.int
-	controlpanelspeakermode: fmod.FMOD_SPEAKERMODE
+	driver_caps: fmod.FMOD_CAPS_ENUM
+	controlpanel_outputrate: i32
+	controlpanel_speakermode: fmod.FMOD_SPEAKERMODE
 	res = fmod.FMOD_System_GetDriverCaps(
 		system,
 		driver_index,
-		&caps,
-		&controlpaneloutputrate,
-		&controlpanelspeakermode,
+		&driver_caps,
+		&controlpanel_outputrate,
+		&controlpanel_speakermode,
 	)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("FMOD_System_GetDriverCaps %v\n", res)
 		return
 	}
 
-	fmt.printf("caps                    : %x\n", i32(caps))
-	fmt.printf("controlpaneloutputrate  : %v\n", controlpaneloutputrate)
-	fmt.printf("controlpanelspeakermode : %v\n", controlpanelspeakermode)
+	fmt.printf("caps                     : 0x%X\n", i32(driver_caps))
+	fmt.printf("controlpanel outputrate  : %v\n", controlpanel_outputrate)
+	fmt.printf("controlpanel speakermode : %v\n", controlpanel_speakermode)
 
-	// _system.SetSpeakerMode(fmod.speakerMode).ThrowIfNotOk(); /* Set the user selected speaker mode. */
-	res = fmod.FMOD_System_SetSpeakerMode(system, controlpanelspeakermode)
+	/* Set the user selected speaker mode. */
+	res = fmod.FMOD_System_SetSpeakerMode(system, controlpanel_speakermode)
 
-	if ((caps & .HARDWARE_EMULATED) == .HARDWARE_EMULATED) {
+	if ((driver_caps & .HARDWARE_EMULATED) == .HARDWARE_EMULATED) {
 		/* The user has the 'Acceleration' slider set to off!  This is really bad for latency!. */
 		/* You might want to warn the user about this. */
 		fmt.print("HARDWARE_EMULATED\n")
@@ -134,19 +133,17 @@ main :: proc() {
 		}
 	}
 
-	initflags: u32 = fmod.FMOD_INIT_3D_RIGHTHANDED
-	//if (CoordinateSystem.IsRight) initflags |= INITFLAGS._3D_RIGHTHANDED;
-	//if (CoordinateSystem.IsRight) initflags |= fmod.FMOD_INIT_3D_RIGHTHANDED;
+	init_flags: u32 = fmod.FMOD_INIT_3D_RIGHTHANDED
 
 	//var initResult = _eventSystem.Init(32, initflags, (IntPtr)null);
-	res = fmod.FMOD_EventSystem_Init(eventsys, 32, initflags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
+	res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
 		fmt.print("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...\n")
 		//fmod.speakerMode = SPEAKERMODE.STEREO;
 		res = fmod.FMOD_System_SetSpeakerMode(system, fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO)
 		/* Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo... */
-		//initResult = _eventSystem.Init(32, initflags, (IntPtr)null);
-		res = fmod.FMOD_EventSystem_Init(eventsys, 32, initflags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
+		//initResult = _eventSystem.Init(32, init_flags, (IntPtr)null);
+		res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 		/* Replace with whatever channel count and flags you use! */
 	}
 	//initResult.ThrowIfNotOk();

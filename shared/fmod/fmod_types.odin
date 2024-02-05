@@ -5,9 +5,11 @@ USE_LINALG :: #config(RAYLIB_USE_LINALG, true)
 import "core:math/linalg"
 import _c "core:c"
 
-int :: _c.int
-uint :: _c.uint
-float :: _c.float
+int :: _c.int // i32
+uint :: _c.uint // u32
+ushort :: _c.ushort // u16
+uchar :: _c.uchar // u8
+float :: _c.float // f32
 
 FMOD_BOOL :: _c.int
 FMOD_MODE :: _c.uint
@@ -24,7 +26,7 @@ FMOD_MUSIC_ID :: _c.uint
 FMOD_MUSIC_CUE_ID :: _c.uint
 FMOD_MUSIC_PARAM_ID :: _c.uint
 
-//FMOD_VECTOR :: distinct [3]_c.float
+//FMOD_VECTOR :: distinct [3]f32
 FMOD_VECTOR :: linalg.Vector3f32
 FMOD_VECTOR_ZERO :: FMOD_VECTOR{0, 0, 0}
 
@@ -69,6 +71,7 @@ FMOD_CAPS_ENUM :: enum _c.uint {
 	// Device supports some form of limited hardware reverb, maybe parameterless and only selectable by environment.
 	REVERB_LIMITED         = 0x00002000,
 }
+//FMOD_CAPS :: distinct bit_set[FMOD_CAPS_ENUM; u32]
 
 //FMOD_RESULT_FLAGS :: bit_set[FMOD_RESULT; u32]
 //FMOD_RESULT_FLAGS :: bit_set[FMOD_SPEAKERMODE; u32]

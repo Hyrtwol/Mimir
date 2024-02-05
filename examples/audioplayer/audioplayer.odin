@@ -76,14 +76,13 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	client_size := win32app.get_client_size(hwnd)
 
 	hdc := win32.GetDC(hwnd)
-	// todo defer win32.ReleaseDC(hwnd, hdc)
+	defer win32.ReleaseDC(hwnd, hdc)
 
 	dib = canvas.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {50, 100, 150, 255})
 	}
 
-	win32.ReleaseDC(hwnd, hdc)
 	return 0
 }
 

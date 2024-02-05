@@ -1,16 +1,16 @@
 package canvas
 
-import          "core:fmt"
-import          "core:intrinsics"
-import          "core:math/linalg"
-import hlm      "core:math/linalg/hlsl"
-import          "core:runtime"
-import          "core:strings"
-import win32    "core:sys/windows"
-import win32ex  "shared:sys/windows"
+import "core:fmt"
+import "core:intrinsics"
+import "core:math/linalg"
+import hlm "core:math/linalg/hlsl"
+import "core:runtime"
+import "core:strings"
+import win32 "core:sys/windows"
+import win32ex "shared:sys/windows"
 
 ColorSizeInBytes :: 4
-BitCount         :: ColorSizeInBytes * 8
+BitCount :: ColorSizeInBytes * 8
 
 DIB :: struct {
 	hbitmap:     win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
@@ -79,4 +79,15 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	}
 	dib_create_section(&dib, hdc, cast(^win32.BITMAPINFO)&bmiV5Header)
 	return dib
+}
+
+dib_clear :: proc(dib: ^DIB, col: byte4) {
+	fill_screen(dib.pvBits, dib.pixel_count, col)
+}
+
+dib_setdot :: proc(dib: ^DIB, pos: int2, col: byte4) {
+	i := pos.y * dib.size.x + pos.x
+	if i >= 0 && i < dib.pixel_count {
+		dib.pvBits[i] = col
+	}
 }

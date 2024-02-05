@@ -887,7 +887,7 @@ FMOD_TAG :: struct {
     name : cstring,
     data : rawptr,
     datalen : _c.uint,
-    updated : _c.int,
+    updated : FMOD_BOOL,
 }
 
 FMOD_CDTOC :: struct {
@@ -1260,7 +1260,7 @@ foreign fmodex_vc {
     FMOD_Memory_Initialize :: proc(poolmem : rawptr, poollen : _c.int, useralloc : FMOD_MEMORY_ALLOCCALLBACK, userrealloc : FMOD_MEMORY_REALLOCCALLBACK, userfree : FMOD_MEMORY_FREECALLBACK, memtypeflags : _c.uint) -> FMOD_RESULT ---
 
     @(link_name="FMOD_Memory_GetStats")
-    FMOD_Memory_GetStats :: proc(currentalloced : ^_c.int, maxalloced : ^_c.int, blocking : _c.int) -> FMOD_RESULT ---
+    FMOD_Memory_GetStats :: proc(currentalloced : ^_c.int, maxalloced : ^_c.int, blocking : FMOD_BOOL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_Debug_SetLevel")
     FMOD_Debug_SetLevel :: proc(level : _c.uint) -> FMOD_RESULT ---
@@ -1410,10 +1410,10 @@ foreign fmodex_vc {
     FMOD_System_Set3DRolloffCallback :: proc(system : ^FMOD_SYSTEM, callback : FMOD_3D_ROLLOFFCALLBACK) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_Set3DSpeakerPosition")
-    FMOD_System_Set3DSpeakerPosition :: proc(system : ^FMOD_SYSTEM, speaker : FMOD_SPEAKER, x : _c.float, y : _c.float, active : _c.int) -> FMOD_RESULT ---
+    FMOD_System_Set3DSpeakerPosition :: proc(system : ^FMOD_SYSTEM, speaker : FMOD_SPEAKER, x : _c.float, y : _c.float, active : FMOD_BOOL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_Get3DSpeakerPosition")
-    FMOD_System_Get3DSpeakerPosition :: proc(system : ^FMOD_SYSTEM, speaker : FMOD_SPEAKER, x : ^_c.float, y : ^_c.float, active : ^_c.int) -> FMOD_RESULT ---
+    FMOD_System_Get3DSpeakerPosition :: proc(system : ^FMOD_SYSTEM, speaker : FMOD_SPEAKER, x : ^_c.float, y : ^_c.float, active : ^FMOD_BOOL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_SetStreamBufferSize")
     FMOD_System_SetStreamBufferSize :: proc(system : ^FMOD_SYSTEM, filebuffersize : _c.uint, filebuffersizetype : _c.uint) -> FMOD_RESULT ---
@@ -1473,10 +1473,10 @@ foreign fmodex_vc {
     FMOD_System_CreateReverb :: proc(system : ^FMOD_SYSTEM, reverb : ^^FMOD_REVERB) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_PlaySound")
-    FMOD_System_PlaySound :: proc(system : ^FMOD_SYSTEM, channelid : FMOD_CHANNELINDEX, sound : ^FMOD_SOUND, paused : _c.int, channel : ^^FMOD_CHANNEL) -> FMOD_RESULT ---
+    FMOD_System_PlaySound :: proc(system : ^FMOD_SYSTEM, channelid : FMOD_CHANNELINDEX, sound : ^FMOD_SOUND, paused : FMOD_BOOL, channel : ^^FMOD_CHANNEL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_PlayDSP")
-    FMOD_System_PlayDSP :: proc(system : ^FMOD_SYSTEM, channelid : FMOD_CHANNELINDEX, dsp : ^FMOD_DSP, paused : _c.int, channel : ^^FMOD_CHANNEL) -> FMOD_RESULT ---
+    FMOD_System_PlayDSP :: proc(system : ^FMOD_SYSTEM, channelid : FMOD_CHANNELINDEX, dsp : ^FMOD_DSP, paused : FMOD_BOOL, channel : ^^FMOD_CHANNEL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_GetChannel")
     FMOD_System_GetChannel :: proc(system : ^FMOD_SYSTEM, channelid : _c.int, channel : ^^FMOD_CHANNEL) -> FMOD_RESULT ---
@@ -1530,13 +1530,13 @@ foreign fmodex_vc {
     FMOD_System_GetRecordPosition :: proc(system : ^FMOD_SYSTEM, id : _c.int, position : ^_c.uint) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_RecordStart")
-    FMOD_System_RecordStart :: proc(system : ^FMOD_SYSTEM, id : _c.int, sound : ^FMOD_SOUND, loop : _c.int) -> FMOD_RESULT ---
+    FMOD_System_RecordStart :: proc(system : ^FMOD_SYSTEM, id : _c.int, sound : ^FMOD_SOUND, loop : FMOD_BOOL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_RecordStop")
     FMOD_System_RecordStop :: proc(system : ^FMOD_SYSTEM, id : _c.int) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_IsRecording")
-    FMOD_System_IsRecording :: proc(system : ^FMOD_SYSTEM, id : _c.int, recording : ^_c.int) -> FMOD_RESULT ---
+    FMOD_System_IsRecording :: proc(system : ^FMOD_SYSTEM, id : _c.int, recording : ^FMOD_BOOL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_CreateGeometry")
     FMOD_System_CreateGeometry :: proc(system : ^FMOD_SYSTEM, maxpolygons : _c.int, maxvertices : _c.int, geometry : ^^FMOD_GEOMETRY) -> FMOD_RESULT ---
@@ -1644,7 +1644,7 @@ foreign fmodex_vc {
     FMOD_Sound_GetTag :: proc(sound : ^FMOD_SOUND, name : cstring, index : _c.int, tag : ^FMOD_TAG) -> FMOD_RESULT ---
 
     @(link_name="FMOD_Sound_GetOpenState")
-    FMOD_Sound_GetOpenState :: proc(sound : ^FMOD_SOUND, openstate : ^FMOD_OPENSTATE, percentbuffered : ^_c.uint, starving : ^_c.int, diskbusy : ^_c.int) -> FMOD_RESULT ---
+    FMOD_Sound_GetOpenState :: proc(sound : ^FMOD_SOUND, openstate : ^FMOD_OPENSTATE, percentbuffered : ^_c.uint, starving : ^FMOD_BOOL, diskbusy : ^FMOD_BOOL) -> FMOD_RESULT ---
 
     @(link_name="FMOD_Sound_ReadData")
     FMOD_Sound_ReadData :: proc(sound : ^FMOD_SOUND, buffer : rawptr, lenbytes : _c.uint, read : ^_c.uint) -> FMOD_RESULT ---

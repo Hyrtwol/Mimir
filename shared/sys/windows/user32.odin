@@ -2,19 +2,13 @@
 package sys_windows_ex
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/
-
+// https://github.com/tpn/winsdk-7/blob/master/v7.1A/Include/WinUser.h
 foreign import user32 "system:User32.lib"
 
 @(default_calling_convention="system")
 foreign user32 {
 	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-drawtext
-	DrawTextW :: proc(hdc: HDC, lpchText: LPCWSTR, cchText: c_int, lprc: LPRECT, format: DrawTextFormat) -> c_int ---
-
-	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-createcompatibledc
-	CreateCompatibleDC :: proc(hdc: HDC) -> HDC ---
-	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-deletedc
-	DeleteDC :: proc(hdc: HDC) -> BOOL ---
-
+	DrawTextW :: proc(hdc: HDC, lpchText: LPCWSTR, cchText: INT, lprc: LPRECT, format: DrawTextFormat) -> INT ---
 	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-redrawwindow
 	RedrawWindow :: proc(hwnd: HWND, lprcUpdate: LPRECT, hrgnUpdate: HRGN, flags: RedrawWindowFlags) -> BOOL ---
 }
