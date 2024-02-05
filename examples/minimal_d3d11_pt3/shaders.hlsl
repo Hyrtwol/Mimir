@@ -1,13 +1,11 @@
-
 cbuffer constants : register(b0)
 {
-    row_major float4x4 cameraprojection;
-    row_major float4x4 lightprojection;
-              float3   lightrotation;
-              float3   modelrotation;
-              float4   modeltranslation;
-
-              float2   shadowmapsize;
+    float4x4 cameraprojection;
+	float4x4 lightprojection;
+	float3   lightrotation;
+	float3   modelrotation;
+	float4   modeltranslation;
+	float2   shadowmapsize;
 }
 
 ////////
@@ -30,6 +28,8 @@ struct output
 
 StructuredBuffer<input> vertexbuffer : register(t0);
 Texture2D<float>        shadowmap    : register(t1);
+
+SamplerState mysampler : register(s0);
 
 ////////
 
@@ -78,7 +78,8 @@ float4 framebuffer_ps(output myinput) : SV_TARGET
     float3 color = myinput.color.rgb * ((uint(myinput.texcoord.x * 2) ^ uint(myinput.texcoord.y * 2)) & 1 ? 0.25f : 1.0f); // procedural checkerboard pattern
     float  light = myinput.color.a;
 
-    if (light > 0.0f && shadowmap[myinput.lightpos.xy] < myinput.lightpos.z) light *= 0.2;
+    if (light > 0.0f && shadowmap[myinput.lightpos.xy] < myinput.lightpos.z)
+		light *= 0.2;
 
     return float4(color * (light * 0.8f + 0.2f), 1);
 }
@@ -89,6 +90,30 @@ float4 shadowmap_vs(uint vertexid : SV_VERTEXID, uint instanceid : SV_INSTANCEID
 {
     float4x4 modeltransform = mul(get_rotation_matrix(get_rotation(instanceid)), get_rotation_matrix(modelrotation));
     float4x4 lighttransform = mul(modeltransform, get_rotation_matrix(lightrotation));
-
     return mul(mul(float4(vertexbuffer[vertexid].position, 1.0f), lighttransform) + modeltranslation, lightprojection);
+}
+
+////////
+
+struct debug_vs_out {
+	float4 position : SV_POSITION;
+	float2 texcoord : TEX;
+};
+
+debug_vs_out debug_vs(uint vI : SV_VERTEXID)
+{
+    float2 texcoord = float2(vI&1,vI>>1); //you can use these for texture coordinates later
+    //return float4((texcoord.x-0.5f)*2,-(texcoord.y-0.5f)*2,0,1);
+	debug_vs_out output;
+	//output.position = float4(texcoord.x, -texcoord.y, 0, 1);
+	output.position = float4(texcoord.x * 0.5 + 0.5, texcoord.y * -0.5 - 0.5, 0, 1);
+	output.texcoord = texcoord;
+	return output;
+}
+
+float4 debug_ps(debug_vs_out input) : SV_TARGET
+{
+	//return float4(input.texcoord.x,input.texcoord.y,0,1);
+	//return shadowmap[input.texcoord].xxxx;
+	return shadowmap.Sample(mysampler, input.texcoord).xxxx;
 }

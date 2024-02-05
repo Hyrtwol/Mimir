@@ -1422,7 +1422,7 @@ foreign fmodex_vc {
     FMOD_System_GetStreamBufferSize :: proc(system : ^FMOD_SYSTEM, filebuffersize : ^_c.uint, filebuffersizetype : ^_c.uint) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_GetVersion")
-    FMOD_System_GetVersion :: proc(system : ^FMOD_SYSTEM, version : ^_c.uint) -> FMOD_RESULT ---
+    FMOD_System_GetVersion :: proc(system : ^FMOD_SYSTEM, version : ^FMOD_VERSION) -> FMOD_RESULT ---
 
     @(link_name="FMOD_System_GetOutputHandle")
     FMOD_System_GetOutputHandle :: proc(system : ^FMOD_SYSTEM, handle : ^rawptr) -> FMOD_RESULT ---
@@ -2301,7 +2301,7 @@ foreign fmodex_vc {
     FMOD_EventSystem_SetPluginPath :: proc(eventsystem : ^FMOD_EVENTSYSTEM, path : cstring) -> FMOD_RESULT ---
 
     @(link_name="FMOD_EventSystem_GetVersion")
-    FMOD_EventSystem_GetVersion :: proc(eventsystem : ^FMOD_EVENTSYSTEM, version : ^_c.uint) -> FMOD_RESULT ---
+    FMOD_EventSystem_GetVersion :: proc(eventsystem : ^FMOD_EVENTSYSTEM, version : ^FMOD_VERSION) -> FMOD_RESULT ---
 
     @(link_name="FMOD_EventSystem_GetInfo")
     FMOD_EventSystem_GetInfo :: proc(eventsystem : ^FMOD_EVENTSYSTEM, info : ^FMOD_EVENT_SYSTEMINFO) -> FMOD_RESULT ---

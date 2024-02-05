@@ -12,6 +12,10 @@
 		{
 			"name": "vendor",
 			"path": "..\\Odin\\vendor"
+		},
+		{
+			"name": "shared",
+			"path": "shared"
 		}
     ],
     "enable_document_symbols": true,

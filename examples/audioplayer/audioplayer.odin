@@ -12,9 +12,10 @@ import          "core:runtime"
 import          "core:simd"
 import          "core:strings"
 import win32    "core:sys/windows"
+import win32ex  "shared:sys/windows"
 import          "core:time"
-import win32app "../../shared/tlc/win32app"
-import canvas   "../../shared/tlc/canvas"
+import win32app "shared:tlc/win32app"
+import canvas   "shared:tlc/canvas"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -125,8 +126,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32app.CreateCompatibleDC(ps.hdc)
-	defer win32app.DeleteDC(hdc_source)
+	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
+	defer win32ex.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
     client_size := win32app.get_rect_size(&ps.rcPaint)

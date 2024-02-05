@@ -4,7 +4,7 @@ import "core:runtime"
 import "core:fmt"
 import D3D11 "vendor:directx/d3d11"
 import DXGI "vendor:directx/dxgi"
-import D3D "vendor:directx/d3d_compiler"
+import d3dc "vendor:directx/d3d_compiler"
 import glm "core:math/linalg/glsl"
 import win32 "core:sys/windows"
 import win32app "../../shared/tlc/win32app"
@@ -17,33 +17,32 @@ HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 
 WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_CREATE\n")
+	fmt.printf("WM_CREATE %v\n", hwnd)
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_DESTROY\n")
+	fmt.printf("WM_DESTROY %v\n", hwnd)
 	win32.PostQuitMessage(0)
 	return 0
 }
 
 WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_ERASEBKGND\n")
+	fmt.printf("WM_ERASEBKGND %v\n", hwnd)
 	return 1
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
 	newtitle := fmt.tprintf("%s %v\n", TITLE, size)
+	fmt.printf("WM_SIZE %v\n", size)
 	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
 	return 0
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b': { // ESC
-		win32.DestroyWindow(hwnd)
-	}
+	case '\x1b': win32.DestroyWindow(hwnd) // ESC
 	}
 	return 0
 }
@@ -83,22 +82,22 @@ main :: proc() {
 	base_device: ^D3D11.IDevice
 	base_device_context: ^D3D11.IDeviceContext
 
-	D3D11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), D3D11.SDK_VERSION, &base_device, nil, &base_device_context)
+	hr := D3D11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), D3D11.SDK_VERSION, &base_device, nil, &base_device_context)
 
 	device: ^D3D11.IDevice
-	base_device->QueryInterface(D3D11.IDevice_UUID, (^rawptr)(&device))
+	hr = base_device->QueryInterface(D3D11.IDevice_UUID, (^rawptr)(&device))
 
 	device_context: ^D3D11.IDeviceContext
-	base_device_context->QueryInterface(D3D11.IDeviceContext_UUID, (^rawptr)(&device_context))
+	hr = base_device_context->QueryInterface(D3D11.IDeviceContext_UUID, (^rawptr)(&device_context))
 
 	dxgi_device: ^DXGI.IDevice
-	device->QueryInterface(DXGI.IDevice_UUID, (^rawptr)(&dxgi_device))
+	hr = device->QueryInterface(DXGI.IDevice_UUID, (^rawptr)(&dxgi_device))
 
 	dxgi_adapter: ^DXGI.IAdapter
-	dxgi_device->GetAdapter(&dxgi_adapter)
+	hr = dxgi_device->GetAdapter(&dxgi_adapter)
 
 	dxgi_factory: ^DXGI.IFactory2
-	dxgi_adapter->GetParent(DXGI.IFactory2_UUID, (^rawptr)(&dxgi_factory))
+	hr = dxgi_adapter->GetParent(DXGI.IFactory2_UUID, (^rawptr)(&dxgi_factory))
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +119,7 @@ main :: proc() {
 	}
 
 	swapchain: ^DXGI.ISwapChain1
-	hr := dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swapchain_desc, nil, nil, &swapchain)
+	hr = dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swapchain_desc, nil, nil, &swapchain)
 
 	framebuffer: ^D3D11.ITexture2D
 	swapchain->GetBuffer(0, D3D11.ITexture2D_UUID, (^rawptr)(&framebuffer))
@@ -142,7 +141,7 @@ main :: proc() {
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	vs_blob: ^D3D11.IBlob
-	D3D.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "vs_main", "vs_5_0", 0, 0, &vs_blob, nil)
+	d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "vs_main", "vs_5_0", 0, 0, &vs_blob, nil)
 	assert(vs_blob != nil)
 
 	vertex_shader: ^D3D11.IVertexShader
@@ -159,10 +158,34 @@ main :: proc() {
 	device->CreateInputLayout(&input_element_desc[0], len(input_element_desc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout)
 
 	ps_blob: ^D3D11.IBlob
-	D3D.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "ps_main", "ps_5_0", 0, 0, &ps_blob, nil)
+	d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "ps_main", "ps_5_0", 0, 0, &ps_blob, nil)
 
 	pixel_shader: ^D3D11.IPixelShader
 	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nil, &pixel_shader)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	debug_vs_blob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "debug_vs", "vs_5_0", 0, 0, &debug_vs_blob, nil)
+	assert(debug_vs_blob != nil)
+	assert(hr == 0)
+
+	debug_vs: ^D3D11.IVertexShader
+	hr = device->CreateVertexShader(debug_vs_blob->GetBufferPointer(), debug_vs_blob->GetBufferSize(), nil, &debug_vs)
+	assert(hr == 0)
+	assert(debug_vs != nil)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	debug_ps_blob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "debug_ps", "ps_5_0", 0, 0, &debug_ps_blob, nil)
+	assert(hr == 0)
+	assert(debug_ps_blob != nil)
+
+	debug_ps: ^D3D11.IPixelShader
+	hr = device->CreatePixelShader(debug_ps_blob->GetBufferPointer(), debug_ps_blob->GetBufferSize(), nil, &debug_ps)
+	assert(hr == 0)
+	assert(debug_ps != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -326,43 +349,24 @@ main :: proc() {
 
 		device_context->DrawIndexed(len(index_data), 0, 0)
 
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
+		//device_context->OMSetDepthStencilState(nil, 0)
+		device_context->IASetPrimitiveTopology(.TRIANGLESTRIP)
+        device_context->PSSetShaderResources(0, 1, &texture_view)
+        device_context->VSSetShader(debug_vs, nil, 0)
+        device_context->PSSetShader(debug_ps, nil, 0)
+		device_context->Draw(4, 0)
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
 		swapchain->Present(1, {})
 	}
 
 	fmt.print("DONE\n")
 }
 
-shaders_hlsl := `
-cbuffer constants : register(b0) {
-	float4x4 transform;
-	float4x4 projection;
-	float3 light_vector;
-}
-struct vs_in {
-	float3 position : POS;
-	float3 normal   : NOR;
-	float2 texcoord : TEX;
-	float3 color    : COL;
-};
-struct vs_out {
-	float4 position : SV_POSITION;
-	float2 texcoord : TEX;
-	float4 color    : COL;
-};
-Texture2D    mytexture : register(t0);
-SamplerState mysampler : register(s0);
-vs_out vs_main(vs_in input) {
-	float light = clamp(dot(normalize(mul(transform, float4(input.normal, 0.0f)).xyz), normalize(-light_vector)), 0.0f, 1.0f) * 0.8f + 0.2f;
-	vs_out output;
-	output.position = mul(projection, mul(transform, float4(input.position, 1.0f)));
-	output.texcoord = input.texcoord;
-	output.color    = float4(input.color * light, 1.0f);
-	return output;
-}
-float4 ps_main(vs_out input) : SV_TARGET {
-	return mytexture.Sample(mysampler, input.texcoord) * input.color;
-}
-`
+shaders_hlsl := #load("shaders.hlsl")
 
 TEXTURE_WIDTH  :: 2
 TEXTURE_HEIGHT :: 2

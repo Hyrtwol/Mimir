@@ -13,10 +13,11 @@ import          "core:simd"
 import          "core:strings"
 import win32    "core:sys/windows"
 import          "core:time"
-import win32app "../../shared/tlc/win32app"
-import canvas   "../../shared/tlc/canvas"
-import "../../shared/fmod"
-import "../../shared/tlc/wolf"
+import win32ex  "shared:sys/windows"
+import win32app "shared:tlc/win32app"
+import canvas   "shared:tlc/canvas"
+import "shared:fmod"
+import "shared:tlc/wolf"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -30,12 +31,12 @@ FMOD_MAXCHANNELS :: 32
 FMOD_INIT_FLAGS :: fmod.FMOD_INIT_3D_RIGHTHANDED
 DistanceFactor :: 1.0
 
-screenbuffer  :: canvas.screenbuffer
+screen_buffer  :: canvas.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2
 bitmap_count  : i32
-pvBits        : screenbuffer
+pvBits        : screen_buffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
 dib           : canvas.DIB
@@ -210,8 +211,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32app.CreateCompatibleDC(ps.hdc)
-	defer win32app.DeleteDC(hdc_source)
+	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
+	defer win32ex.DeleteDC(hdc_source)
 
     client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.SelectObject(hdc_source, bitmap_handle)
@@ -298,13 +299,13 @@ main :: proc() {
 	}
 	defer fmod.FMOD_EventSystem_Release(eventsys)
 
-	version: u32 = 0
-	res = fmod.FMOD_EventSystem_GetVersion(eventsys, &version)
+	fmod_version: fmod.FMOD_VERSION
+	res = fmod.FMOD_EventSystem_GetVersion(eventsys, &fmod_version)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetVersion, res)
 		return
 	}
-	fmod_version := transmute(fmod.FMOD_VERSION)version
+	//fmod_version := transmute(fmod.FMOD_VERSION)version
 
 	res = fmod.FMOD_EventSystem_GetSystemObject(eventsys, &system)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
@@ -328,7 +329,7 @@ main :: proc() {
 		&speakermode,
 	)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
-		fmt.printf("FMOD_System_GetDriverCaps %v\n", res)
+		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriverCaps, res)
 		return
 	}
 	res = fmod.FMOD_System_SetSpeakerMode(system, speakermode)
@@ -339,7 +340,7 @@ main :: proc() {
 		res = fmod.FMOD_System_SetDSPBufferSize(system, 1024, 10)
 		/* At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms. */
 		if res != fmod.FMOD_RESULT.FMOD_OK {
-			fmt.printf("FMOD_System_SetDSPBufferSize %v\n", res)
+			fmt.printf("%v %v\n", fmod.FMOD_System_SetDSPBufferSize, res)
 			return
 		}
 	}
@@ -354,29 +355,28 @@ main :: proc() {
 		res = fmod.FMOD_EventSystem_Init(eventsys, FMOD_MAXCHANNELS, FMOD_INIT_FLAGS, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	}
 	if res != fmod.FMOD_RESULT.FMOD_OK {
-		fmt.printf("FMOD_EventSystem_Init %v\n", res)
+		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Init, res)
 		return
 	}
 	res = fmod.FMOD_System_Set3DSettings(system, 1.0, DistanceFactor, 1.0)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
-		fmt.printf("FMOD_System_Set3DSettings %v\n", res)
+		fmt.printf("%v %v\n", fmod.FMOD_System_Set3DSettings, res)
 		return
 	}
 
-	{
-		name := "WolfensteinSFX.fev"
-		c_str := strings.clone_to_cstring(name, context.temp_allocator)
-		res = fmod.FMOD_EventSystem_Load(eventsys, c_str, nil, nil)
-		if res != fmod.FMOD_RESULT.FMOD_OK {
-			fmt.printf("FMOD_EventSystem_Load %v\n", res)
-			return
-		}
+	//name := "WolfensteinSFX.fev"
+	//c_str := strings.clone_to_cstring(name, context.temp_allocator)
+	//res = fmod.FMOD_EventSystem_Load(eventsys, c_str, nil, nil)
+	res = fmod.FMOD_EventSystem_Load(eventsys, "WolfensteinSFX.fev", nil, nil)
+	if res != fmod.FMOD_RESULT.FMOD_OK {
+		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
+		return
 	}
 
 	num_events: i32 = 0
 	res = fmod.FMOD_EventSystem_GetNumEvents(eventsys, &num_events)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
-		fmt.printf("FMOD_EventSystem_GetNumEvents %v\n", res)
+		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetNumEvents, res)
 		return
 	}
 	fmt.printf("Events : %v\n", num_events)
@@ -392,12 +392,10 @@ main :: proc() {
 	//event : ^fmod.FMOD_EVENT = nil
 
 	//for i:u32; i in 0..<wolf.EVENTCOUNT_WOLFENSTEINSFX {
-	for i : u32 = 0; i < wolf.EVENTCOUNT_WOLFENSTEINSFX; i += 1 {
-		res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys,
-			i,
-			fmod.FMOD_EVENT_DEFAULT, &events[i])
+	for i :u32= 0; i < wolf.EVENTCOUNT_WOLFENSTEINSFX; i += 1 {
+		res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys, i, fmod.FMOD_EVENT_DEFAULT, &events[i])
 		if res != fmod.FMOD_RESULT.FMOD_OK {
-			fmt.printf("FMOD_EventSystem_GetEventBySystemID %v event id %d\n", res, i)
+			fmt.printf("%v %v event id %d\n", fmod.FMOD_EventSystem_GetEventBySystemID, res, i)
 			return
 		}
 	}
@@ -409,7 +407,7 @@ main :: proc() {
 		fmod_version.Major,
 		fmod_version.Minor,
 		fmod_version.Development,
-		version,
+		transmute(u32)fmod_version,
 	)
 
 	settings : win32app.window_settings = {

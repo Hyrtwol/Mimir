@@ -1,19 +1,22 @@
 // +build windows
-package win32app
+package sys_windows_ex
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/
 
 foreign import user32 "system:User32.lib"
-@(default_calling_convention = "system")
-foreign user32 {
-	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-drawtext format: UINT
-	DrawTextW :: proc "system" (hdc: HDC, lpchText: LPCWSTR, cchText: c_int, lprc: LPRECT, format: DrawTextFormat) -> c_int ---
 
-	CreateCompatibleDC :: proc "system" (hdc: HDC) -> HDC ---
-	DeleteDC :: proc "system" (hdc: HDC) -> BOOL ---
+@(default_calling_convention="system")
+foreign user32 {
+	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-drawtext
+	DrawTextW :: proc(hdc: HDC, lpchText: LPCWSTR, cchText: c_int, lprc: LPRECT, format: DrawTextFormat) -> c_int ---
+
+	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-createcompatibledc
+	CreateCompatibleDC :: proc(hdc: HDC) -> HDC ---
+	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-deletedc
+	DeleteDC :: proc(hdc: HDC) -> BOOL ---
 
 	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-redrawwindow
-	RedrawWindow :: proc "system" (hwnd: HWND, lprcUpdate: LPRECT, hrgnUpdate: HRGN, flags: RedrawWindowFlags) -> BOOL ---
+	RedrawWindow :: proc(hwnd: HWND, lprcUpdate: LPRECT, hrgnUpdate: HRGN, flags: RedrawWindowFlags) -> BOOL ---
 }
 
 DrawTextFormat :: enum u32 {

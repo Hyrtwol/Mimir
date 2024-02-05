@@ -8,7 +8,8 @@
             "args": [
                 "run",
                 "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc"
+                "-resource:..\\doc\\odin.rc",
+                "-collection:shared=..\\shared"
             ],
             "problemMatcher": [],
             "group": {
@@ -26,7 +27,8 @@
             "args": [
                 "build",
                 "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc"
+                "-resource:..\\doc\\odin.rc",
+                "-collection:shared=..\\shared"
             ],
             "problemMatcher": [],
             "group": {
@@ -44,7 +46,8 @@
             "args": [
                 "test",
                 "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc"
+                "-resource:..\\doc\\odin.rc",
+                "-collection:shared=..\\shared"
             ],
             "problemMatcher": [],
             "group": {
@@ -63,6 +66,7 @@
                 "build",
                 "..\\${relativeFileDirname}",
                 "-resource:..\\doc\\odin.rc",
+                "-collection:shared=..\\shared",
                 "-debug"
             ],
             "problemMatcher": [],
@@ -81,6 +85,7 @@
             "args": [
                 "check",
                 "${relativeFileDirname}",
+                "-collection:shared=..\\shared",
                 "-no-entry-point"
             ],
             "problemMatcher": [],

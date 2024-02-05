@@ -2,12 +2,14 @@ package minimal_d3d11_pt3
 
 import "core:runtime"
 import "core:fmt"
+import "base:intrinsics"
 import D3D11 "vendor:directx/d3d11"
 import DXGI "vendor:directx/dxgi"
 import d3dc "vendor:directx/d3d_compiler"
 import glm "core:math/linalg/glsl"
 import win32 "core:sys/windows"
-import win32app "../../shared/tlc/win32app"
+import win32ex "shared:sys/windows"
+import win32app "shared:tlc/win32app"
 
 // Based off Minimal D3D11 pt3 https://gist.github.com/d7samurai/abab8a580d0298cb2f34a44eec41d39d
 
@@ -42,9 +44,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b': { // ESC
-		win32.DestroyWindow(hwnd)
-	}
+	case '\x1b': win32.DestroyWindow(hwnd) // ESC
 	}
 	return 0
 }
@@ -70,12 +70,12 @@ main :: proc() {
 	}
 
 	inst := win32app.get_instance()
+	assert(inst != nil)
 	atom := win32app.register_window_class(inst, wndproc)
+	assert(atom != 0)
 	hwnd := win32app.create_window(inst, atom, win32app.default_dwStyle, win32app.default_dwExStyle, &settings)
-
-	if hwnd == nil {
-		win32app.show_error_and_panic("CreateWindowEx failed")
-	}
+	assert(hwnd != nil)
+	//if hwnd == nil { win32app.show_error_and_panic("CreateWindowEx failed") }
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -85,28 +85,45 @@ main :: proc() {
 	base_device_context: ^D3D11.IDeviceContext
 
 	hr := D3D11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), D3D11.SDK_VERSION, &base_device, nil, &base_device_context)
+	assert(hr == 0)
+	assert(base_device != nil)
+	assert(base_device_context != nil)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	device: ^D3D11.IDevice
 	hr = base_device->QueryInterface(D3D11.IDevice_UUID, (^rawptr)(&device))
+	assert(hr == 0)
+	assert(device != nil)
 
 	device_context: ^D3D11.IDeviceContext
 	hr = base_device_context->QueryInterface(D3D11.IDeviceContext_UUID, (^rawptr)(&device_context))
+	assert(hr == 0)
+	assert(device_context != nil)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	dxgi_device: ^DXGI.IDevice
 	hr = device->QueryInterface(DXGI.IDevice_UUID, (^rawptr)(&dxgi_device))
+	assert(hr == 0)
+	assert(dxgi_device != nil)
 
 	dxgi_adapter: ^DXGI.IAdapter
 	hr = dxgi_device->GetAdapter(&dxgi_adapter)
+	assert(hr == 0)
+	assert(dxgi_adapter != nil)
 
 	dxgi_factory: ^DXGI.IFactory2
 	hr = dxgi_adapter->GetParent(DXGI.IFactory2_UUID, (^rawptr)(&dxgi_factory))
+	assert(hr == 0)
+	assert(dxgi_factory != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	swapchain_desc := DXGI.SWAP_CHAIN_DESC1{
 		Width  = 0, // use window width
 		Height = 0, // use window height
-		Format = .B8G8R8A8_UNORM_SRGB,
+		Format = .B8G8R8A8_UNORM, // can't specify _SRGB here when using DXGI_SWAP_EFFECT_FLIP_* ...
 		Stereo = false,
 		SampleDesc = {
 			Count   = 1,
@@ -115,217 +132,345 @@ main :: proc() {
 		BufferUsage = {.RENDER_TARGET_OUTPUT},
 		BufferCount = 2,
 		Scaling     = .STRETCH,
-		SwapEffect  = .DISCARD,
+		SwapEffect  = .FLIP_DISCARD,
 		AlphaMode   = .UNSPECIFIED,
 		Flags       = {},
 	}
 
 	swapchain: ^DXGI.ISwapChain1
 	hr = dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swapchain_desc, nil, nil, &swapchain)
-
-	framebuffer: ^D3D11.ITexture2D
-	swapchain->GetBuffer(0, D3D11.ITexture2D_UUID, (^rawptr)(&framebuffer))
-
-	framebuffer_view: ^D3D11.IRenderTargetView
-	device->CreateRenderTargetView(framebuffer, nil, &framebuffer_view)
-
-	depth_buffer_desc: D3D11.TEXTURE2D_DESC
-	framebuffer->GetDesc(&depth_buffer_desc)
-	depth_buffer_desc.Format = .D24_UNORM_S8_UINT
-	depth_buffer_desc.BindFlags = {.DEPTH_STENCIL}
-
-	depth_buffer: ^D3D11.ITexture2D
-	device->CreateTexture2D(&depth_buffer_desc, nil, &depth_buffer)
-
-	depth_buffer_view: ^D3D11.IDepthStencilView
-	device->CreateDepthStencilView(depth_buffer, nil, &depth_buffer_view)
+	assert(hr == 0)
+	assert(swapchain != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	vs_blob: ^D3D11.IBlob
-	d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "vs_main", "vs_5_0", 0, 0, &vs_blob, nil)
-	assert(vs_blob != nil)
+	framebufferTexture: ^D3D11.ITexture2D
+	hr = swapchain->GetBuffer(0, D3D11.ITexture2D_UUID, (^rawptr)(&framebufferTexture))
+	assert(hr == 0)
+	assert(framebufferTexture != nil)
 
-	vertex_shader: ^D3D11.IVertexShader
-	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nil, &vertex_shader)
-
-	input_element_desc := [?]D3D11.INPUT_ELEMENT_DESC{
-		{ "POS", 0, .R32G32B32_FLOAT, 0,                            0, .VERTEX_DATA, 0 },
-		{ "NOR", 0, .R32G32B32_FLOAT, 0, D3D11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA, 0 },
-		{ "TEX", 0, .R32G32_FLOAT,    0, D3D11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA, 0 },
-		{ "COL", 0, .R32G32B32_FLOAT, 0, D3D11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA, 0 },
+    framebufferDesc: D3D11.RENDER_TARGET_VIEW_DESC = {
+    	Format        = .B8G8R8A8_UNORM_SRGB, // ... so do this to get _SRGB swapchain (rendertarget view)
+    	ViewDimension = .TEXTURE2D,
 	}
 
-	input_layout: ^D3D11.IInputLayout
-	device->CreateInputLayout(&input_element_desc[0], len(input_element_desc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout)
+	framebufferRTV: ^D3D11.IRenderTargetView
+	hr = device->CreateRenderTargetView(framebufferTexture, &framebufferDesc, &framebufferRTV)
+	assert(hr == 0)
+	assert(framebufferRTV != nil)
 
-	ps_blob: ^D3D11.IBlob
-	d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "ps_main", "ps_5_0", 0, 0, &ps_blob, nil)
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
-	pixel_shader: ^D3D11.IPixelShader
-	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nil, &pixel_shader)
+	framebufferDepthDesc: D3D11.TEXTURE2D_DESC
+	framebufferTexture->GetDesc(&framebufferDepthDesc) // copy from framebuffer properties
+	framebufferDepthDesc.Format = .D24_UNORM_S8_UINT
+	framebufferDepthDesc.BindFlags = {.DEPTH_STENCIL}
+
+	//fmt.printf("%s %v\n", "framebufferDepthDesc", framebufferDepthDesc)
+
+	framebufferDepthTexture: ^D3D11.ITexture2D
+	hr = device->CreateTexture2D(&framebufferDepthDesc, nil, &framebufferDepthTexture)
+	assert(hr == 0)
+	assert(framebufferDepthTexture != nil)
+
+	framebufferDSV: ^D3D11.IDepthStencilView
+	hr = device->CreateDepthStencilView(framebufferDepthTexture, nil, &framebufferDSV)
+	assert(hr == 0)
+	assert(framebufferDSV != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	rasterizer_desc := D3D11.RASTERIZER_DESC{
-		FillMode = .SOLID,
-		CullMode = .BACK,
+	shadowmapDepthDesc: D3D11.TEXTURE2D_DESC = {
+		Width            = 2048,
+		Height           = 2048,
+		MipLevels        = 1,
+		ArraySize        = 1,
+		Format           = .R32_TYPELESS,
+		SampleDesc		 = DXGI.SAMPLE_DESC { Count = 1 },
+		Usage            = .DEFAULT,
+		BindFlags        = { .DEPTH_STENCIL, .SHADER_RESOURCE },
 	}
-	rasterizer_state: ^D3D11.IRasterizerState
-	device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state)
 
-	sampler_desc := D3D11.SAMPLER_DESC{
-		Filter         = .MIN_MAG_MIP_POINT,
-		AddressU       = .WRAP,
-		AddressV       = .WRAP,
-		AddressW       = .WRAP,
-		ComparisonFunc = .NEVER,
+	//fmt.printf("%s %v\n", "shadowmapDepthDesc", shadowmapDepthDesc)
+
+    shadowmapDepthTexture: ^D3D11.ITexture2D
+
+    hr = device->CreateTexture2D(&shadowmapDepthDesc, nil, &shadowmapDepthTexture)
+	assert(hr == 0)
+	assert(shadowmapDepthTexture!=nil)
+
+	shadowmapDSVdesc: D3D11.DEPTH_STENCIL_VIEW_DESC = {
+		Format        = .D32_FLOAT,
+		ViewDimension = .TEXTURE2D,
 	}
-	sampler_state: ^D3D11.ISamplerState
-	device->CreateSamplerState(&sampler_desc, &sampler_state)
+	//fmt.printf("%s %v\n", "shadowmapDSVdesc", shadowmapDSVdesc)
+    shadowmapDSV: ^D3D11.IDepthStencilView
+    hr = device->CreateDepthStencilView(shadowmapDepthTexture, &shadowmapDSVdesc, &shadowmapDSV)
+	assert(hr == 0, fmt.tprintf("%s %x\n", "CreateDepthStencilView", u32(hr)))
+	assert(shadowmapDSV!=nil)
 
-
-	depth_stencil_desc := D3D11.DEPTH_STENCIL_DESC{
-		DepthEnable    = true,
-		DepthWriteMask = .ALL,
-		DepthFunc      = .LESS,
+    shadowmapSRVdesc: D3D11.SHADER_RESOURCE_VIEW_DESC = {
+    	Format              = .R32_FLOAT,
+    	ViewDimension       = .TEXTURE2D,
+    	Texture2D           = D3D11.TEX2D_SRV { MipLevels = 1 },
 	}
-	depth_stencil_state: ^D3D11.IDepthStencilState
-	device->CreateDepthStencilState(&depth_stencil_desc, &depth_stencil_state)
+
+    shadowmapSRV: ^D3D11.IShaderResourceView
+    hr = device->CreateShaderResourceView(shadowmapDepthTexture, &shadowmapSRVdesc, &shadowmapSRV)
+	assert(hr == 0)
+	assert(shadowmapSRV!=nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	Constants :: struct #align(16) {
-		transform:    glm.mat4,
-		projection:   glm.mat4,
-		light_vector: glm.vec3,
+		CameraProjection:	glm.mat4,
+		LightProjection:	glm.mat4,
+		LightRotation:		glm.vec4,
+		ModelRotation:		glm.vec4,
+		ModelTranslation:	glm.vec4,
+		ShadowmapSize:		glm.vec4,
 	}
 
-	constant_buffer_desc := D3D11.BUFFER_DESC{
+	constantBufferDesc := D3D11.BUFFER_DESC {
 		ByteWidth      = size_of(Constants),
 		Usage          = .DYNAMIC,
 		BindFlags      = {.CONSTANT_BUFFER},
 		CPUAccessFlags = {.WRITE},
 	}
-	constant_buffer: ^D3D11.IBuffer
-	device->CreateBuffer(&constant_buffer_desc, nil, &constant_buffer)
 
-	vertex_buffer_desc := D3D11.BUFFER_DESC{
-		ByteWidth = size_of(vertex_data),
-		Usage     = .IMMUTABLE,
-		BindFlags = {.VERTEX_BUFFER},
-	}
-	vertex_buffer: ^D3D11.IBuffer
-	device->CreateBuffer(&vertex_buffer_desc, &D3D11.SUBRESOURCE_DATA{pSysMem = &vertex_data[0], SysMemPitch = size_of(vertex_data)}, &vertex_buffer)
-
-	index_buffer_desc := D3D11.BUFFER_DESC{
-		ByteWidth = size_of(index_data),
-		Usage     = .IMMUTABLE,
-		BindFlags = {.INDEX_BUFFER},
-	}
-	index_buffer: ^D3D11.IBuffer
-	device->CreateBuffer(&index_buffer_desc, &D3D11.SUBRESOURCE_DATA{pSysMem = &index_data[0], SysMemPitch = size_of(index_data)}, &index_buffer)
+	constantBuffer: ^D3D11.IBuffer
+	hr = device->CreateBuffer(&constantBufferDesc, nil, &constantBuffer)
+	assert(hr == 0)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	texture_desc := D3D11.TEXTURE2D_DESC{
-		Width      = TEXTURE_WIDTH,
-		Height     = TEXTURE_HEIGHT,
-		MipLevels  = 1,
-		ArraySize  = 1,
-		Format     = .R8G8B8A8_UNORM_SRGB,
-		SampleDesc = {Count = 1},
-		Usage      = .IMMUTABLE,
-		BindFlags  = {.SHADER_RESOURCE},
+	vertexBufferDesc := D3D11.BUFFER_DESC {
+		ByteWidth = size_of(vertexData),
+		Usage     = .IMMUTABLE,
+		BindFlags = {.SHADER_RESOURCE}, // using regular shader resource as vertex buffer for manual vertex fetch
+		MiscFlags = {.BUFFER_STRUCTURED},
+		StructureByteStride = 5 * size_of(f32), // 5 floats per vertex (float3 position, float2 texcoord)
 	}
 
-	texture_data := D3D11.SUBRESOURCE_DATA{
-		pSysMem     = &texture_data[0],
-		SysMemPitch = TEXTURE_WIDTH * 4,
+	vertexBufferData := D3D11.SUBRESOURCE_DATA{ pSysMem = &vertexData[0], SysMemPitch = vertexBufferDesc.ByteWidth }
+
+	vertexBuffer: ^D3D11.IBuffer
+	hr = device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &vertexBuffer)
+	assert(hr == 0)
+
+    vertexBufferSRVdesc: D3D11.SHADER_RESOURCE_VIEW_DESC = {
+		Format        = .UNKNOWN,
+		ViewDimension = .BUFFER,
+		Buffer        = D3D11.BUFFER_SRV { NumElements = vertexBufferDesc.ByteWidth / vertexBufferDesc.StructureByteStride },
 	}
 
-	texture: ^D3D11.ITexture2D
-	device->CreateTexture2D(&texture_desc, &texture_data, &texture)
-
-	texture_view: ^D3D11.IShaderResourceView
-	device->CreateShaderResourceView(texture, nil, &texture_view)
+    vertexBufferSRV: ^D3D11.IShaderResourceView
+    hr = device->CreateShaderResourceView(vertexBuffer, &vertexBufferSRVdesc, &vertexBufferSRV)
+	assert(hr == 0)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	vertex_buffer_stride := u32(11 * 4)
-	vertex_buffer_offset := u32(0)
+    depthStencilDesc : D3D11.DEPTH_STENCIL_DESC = {
+    	DepthEnable    = true,
+    	DepthWriteMask = .ALL,
+    	DepthFunc      = .LESS,
+	}
 
-	model_rotation    := glm.vec3{0.0, 0.0, 0.0}
-	model_translation := glm.vec3{0.0, 0.0, 4.0}
+    depthStencilState: ^D3D11.IDepthStencilState
+    hr = device->CreateDepthStencilState(&depthStencilDesc, &depthStencilState)
+	assert(hr == 0)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	rasterizerDesc := D3D11.RASTERIZER_DESC{
+		FillMode = .SOLID,
+		CullMode = .BACK,
+	}
+	cullBackRS: ^D3D11.IRasterizerState
+	hr = device->CreateRasterizerState(&rasterizerDesc, &cullBackRS)
+	assert(hr == 0)
+
+    rasterizerDesc.CullMode = .FRONT
+
+	cullFrontRS: ^D3D11.IRasterizerState
+	hr = device->CreateRasterizerState(&rasterizerDesc, &cullFrontRS)
+	assert(hr == 0)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	framebufferVSBlob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "framebuffer_vs", "vs_5_0", 0, 0, &framebufferVSBlob, nil)
+	assert(framebufferVSBlob != nil)
+	assert(hr == 0)
+
+	framebufferVS: ^D3D11.IVertexShader
+	hr = device->CreateVertexShader(framebufferVSBlob->GetBufferPointer(), framebufferVSBlob->GetBufferSize(), nil, &framebufferVS)
+	assert(hr == 0)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	framebufferPSBlob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "framebuffer_ps", "ps_5_0", 0, 0, &framebufferPSBlob, nil)
+	assert(hr == 0)
+	assert(framebufferPSBlob != nil)
+
+	framebufferPS: ^D3D11.IPixelShader
+	hr = device->CreatePixelShader(framebufferPSBlob->GetBufferPointer(), framebufferPSBlob->GetBufferSize(), nil, &framebufferPS)
+	assert(hr == 0)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	shadowmapVSBlob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "shadowmap_vs", "vs_5_0", 0, 0, &shadowmapVSBlob, nil)
+	assert(hr == 0)
+	assert(shadowmapVSBlob != nil)
+
+	shadowmapVS: ^D3D11.IVertexShader
+	hr = device->CreateVertexShader(shadowmapVSBlob->GetBufferPointer(), shadowmapVSBlob->GetBufferSize(), nil, &shadowmapVS)
+	assert(hr == 0)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	debug_vs_blob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "debug_vs", "vs_5_0", 0, 0, &debug_vs_blob, nil)
+	assert(debug_vs_blob != nil)
+	assert(hr == 0)
+
+	debug_vs: ^D3D11.IVertexShader
+	hr = device->CreateVertexShader(debug_vs_blob->GetBufferPointer(), debug_vs_blob->GetBufferSize(), nil, &debug_vs)
+	assert(hr == 0)
+	assert(debug_vs != nil)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	debug_ps_blob: ^D3D11.IBlob
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), "shaders.hlsl", nil, nil, "debug_ps", "ps_5_0", 0, 0, &debug_ps_blob, nil)
+	assert(hr == 0)
+	assert(debug_ps_blob != nil)
+
+	debug_ps: ^D3D11.IPixelShader
+	hr = device->CreatePixelShader(debug_ps_blob->GetBufferPointer(), debug_ps_blob->GetBufferSize(), nil, &debug_ps)
+	assert(hr == 0)
+	assert(debug_ps != nil)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	//framebufferClear : glm.vec4 = { 0.025, 0.025, 0.025, 1.0 }
+	framebufferClear : [4]f32 = { 0.025, 0.025, 0.025, 1.0 }
+
+	framebufferVP : D3D11.VIEWPORT = {0, 0, f32(framebufferDepthDesc.Width), f32(framebufferDepthDesc.Height), 0, 1}
+	shadowmapVP   : D3D11.VIEWPORT = {0, 0, f32(shadowmapDepthDesc.Width)  , f32(shadowmapDepthDesc.Height)  , 0, 1}
+
+    nullSRV : ^D3D11.IShaderResourceView = nil // null srv used for unbinding resources
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	constants : Constants = {
+		// camera projection matrix (perspective)
+		CameraProjection = glm.mat4 {
+			2.0 / (framebufferVP.Width / framebufferVP.Height), 0, 0, 0,
+			0, 2,  0,     0,
+			0, 0,  1.125, 1,
+			0, 0, -1.125, 0 },
+		// light projection matrix (orthographic)
+		LightProjection = glm.mat4 {
+			0.5, 0  ,  0,     0,
+			0  , 0.5,  0,     0,
+			0  , 0  ,  0.125, 0,
+			0  , 0  , -0.125, 1 },
+		//LightProjection  = glm.mat4Ortho3d(-1,1,-1,1,-1,1),
+		LightRotation    = { 0.8, 0.6, 0.0, 0 },
+		ModelRotation    = { 0.0, 0.0, 0.0, 0 },
+		ModelTranslation = { 0.0, 0.0, 4.0, 0 },
+		ShadowmapSize    = { shadowmapVP.Width, shadowmapVP.Height, 0, 0 },
+	}
+
+	fmt.printf("%s %v\n", "constants", constants)
+	fmt.printf("%s %v\n", "mat4Ortho3d", glm.mat4Ortho3d(-1,1,-1,1,-1,1))
+
+	ModelRotationStep : glm.vec4 = { 0.001, 0.005, 0.003, 0 }
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)
 
 	for ;win32app.pull_messages(); {
 
-		viewport := D3D11.VIEWPORT{
-			0, 0,
-			f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height),
-			0, 1,
-		}
+        ///////////////////////////////////////////////////////////////////////////////////////////
 
-		w := viewport.Width / viewport.Height
-		h := f32(1)
-		n := f32(1)
-		f := f32(9)
+        constants.ModelRotation += ModelRotationStep
 
-		rotate_x := glm.mat4Rotate({1, 0, 0}, model_rotation.x)
-		rotate_y := glm.mat4Rotate({0, 1, 0}, model_rotation.y)
-		rotate_z := glm.mat4Rotate({0, 0, 1}, model_rotation.z)
-		translate := glm.mat4Translate(model_translation)
+        ///////////////////////////////////////////////////////////////////////////////////////////
 
-		model_rotation.x += 0.005
-		model_rotation.y += 0.009
-		model_rotation.z += 0.001
-
-		mapped_subresource: D3D11.MAPPED_SUBRESOURCE
-		device_context->Map(constant_buffer, 0, .WRITE_DISCARD, {}, &mapped_subresource)
-		{
-			constants := (^Constants)(mapped_subresource.pData)
-			constants.transform = translate * rotate_z * rotate_y * rotate_x
-			constants.light_vector = {+1, -1, +1}
-
-			constants.projection = {
-				2 * n / w, 0,         0,           0,
-				0,         2 * n / h, 0,           0,
-				0,         0,         f / (f - n), n * f / (n - f),
-				0,         0,         1,           0,
-			}
-		}
-		device_context->Unmap(constant_buffer, 0)
+		mappedSubresource: D3D11.MAPPED_SUBRESOURCE
+		hr = device_context->Map(constantBuffer, 0, .WRITE_DISCARD, {}, &mappedSubresource)
+		assert(hr == 0)
+		(^Constants)(mappedSubresource.pData)^ = constants
+		// {
+		// 	c := (^Constants)(mappedSubresource.pData)
+		// 	c.CameraProjection = glm.transpose(constants.CameraProjection)
+		// 	c.LightProjection = glm.transpose(constants.LightProjection)
+		// 	c.LightRotation = constants.LightRotation
+		// 	c.ModelRotation = constants.ModelRotation
+		// 	c.ModelTranslation = constants.ModelTranslation
+		// 	c.ShadowmapSize = constants.ShadowmapSize
+		// }
+		device_context->Unmap(constantBuffer, 0)
 
 		///////////////////////////////////////////////////////////////////////////////////////////////
 
-		device_context->ClearRenderTargetView(framebuffer_view, &[4]f32{0.25, 0.5, 1.0, 1.0})
-		device_context->ClearDepthStencilView(depth_buffer_view, {.DEPTH}, 1, 0)
+		device_context->ClearDepthStencilView(shadowmapDSV, {.DEPTH}, 1, 0)
 
-		device_context->IASetPrimitiveTopology(.TRIANGLELIST)
-		device_context->IASetInputLayout(input_layout)
-		device_context->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_buffer_stride, &vertex_buffer_offset)
-		device_context->IASetIndexBuffer(index_buffer, .R32_UINT, 0)
+		device_context->OMSetRenderTargets(0, nil, shadowmapDSV) // null rendertarget for depth only
+		device_context->OMSetDepthStencilState(depthStencilState, 0)
 
-		device_context->VSSetShader(vertex_shader, nil, 0)
-		device_context->VSSetConstantBuffers(0, 1, &constant_buffer)
+		device_context->IASetPrimitiveTopology(.TRIANGLESTRIP) // using triangle strip this time
 
-		device_context->RSSetViewports(1, &viewport)
-		device_context->RSSetState(rasterizer_state)
+		device_context->VSSetConstantBuffers(0, 1, &constantBuffer)
+		device_context->VSSetShaderResources(0, 1, &vertexBufferSRV)
+		device_context->VSSetShader(shadowmapVS, nil, 0)
 
-		device_context->PSSetShader(pixel_shader, nil, 0)
-		device_context->PSSetShaderResources(0, 1, &texture_view)
-		device_context->PSSetSamplers(0, 1, &sampler_state)
+		device_context->RSSetViewports(1, &shadowmapVP)
+		device_context->RSSetState(cullFrontRS)
 
-		device_context->OMSetRenderTargets(1, &framebuffer_view, depth_buffer_view)
-		device_context->OMSetDepthStencilState(depth_stencil_state, 0)
-		device_context->OMSetBlendState(nil, nil, transmute(u32)D3D11.COLOR_WRITE_ENABLE_ALL) // use default blend mode (i.e. disable)
+		device_context->PSSetShader(nil, nil, 0) // null pixelshader for depth only
 
 		///////////////////////////////////////////////////////////////////////////////////////////////
 
-		device_context->DrawIndexed(len(index_data), 0, 0)
+        device_context->DrawInstanced(8, 24, 0, 0) // render shadowmap (light pov)
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
+        device_context->ClearRenderTargetView(framebufferRTV, &framebufferClear)
+        device_context->ClearDepthStencilView(framebufferDSV, {.DEPTH}, 1, 0)
+
+        device_context->OMSetRenderTargets(1, &framebufferRTV, framebufferDSV)
+
+        device_context->VSSetShader(framebufferVS, nil, 0)
+
+        device_context->RSSetViewports(1, &framebufferVP)
+        device_context->RSSetState(cullBackRS)
+
+        device_context->PSSetShaderResources(1, 1, &shadowmapSRV)
+        device_context->PSSetShader(framebufferPS, nil, 0)
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
+        device_context->DrawInstanced(8, 24, 0, 0) // render framebuffer (camera pov)
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
+        device_context->PSSetShaderResources(1, 1, &shadowmapSRV)
+        device_context->VSSetShader(debug_vs, nil, 0)
+        device_context->PSSetShader(debug_ps, nil, 0)
+		device_context->Draw(4, 0)
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+
+        device_context->PSSetShaderResources(1, 1, &nullSRV) // release shadowmap as srv to avoid srv/dsv conflict
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
 
 		swapchain->Present(1, {})
 	}
@@ -333,229 +478,16 @@ main :: proc() {
 	fmt.print("DONE\n")
 }
 
-shaders_hlsl := `
-cbuffer constants : register(b0) {
-	float4x4 transform;
-	float4x4 projection;
-	float3 light_vector;
-}
-struct vs_in {
-	float3 position : POS;
-	float3 normal   : NOR;
-	float2 texcoord : TEX;
-	float3 color    : COL;
-};
-struct vs_out {
-	float4 position : SV_POSITION;
-	float2 texcoord : TEX;
-	float4 color    : COL;
-};
-Texture2D    mytexture : register(t0);
-SamplerState mysampler : register(s0);
-vs_out vs_main(vs_in input) {
-	float light = clamp(dot(normalize(mul(transform, float4(input.normal, 0.0f)).xyz), normalize(-light_vector)), 0.0f, 1.0f) * 0.8f + 0.2f;
-	vs_out output;
-	output.position = mul(projection, mul(transform, float4(input.position, 1.0f)));
-	output.texcoord = input.texcoord;
-	output.color    = float4(input.color * light, 1.0f);
-	return output;
-}
-float4 ps_main(vs_out input) : SV_TARGET {
-	return mytexture.Sample(mysampler, input.texcoord) * input.color;
-}
-`
+shaders_hlsl := #load("shaders.hlsl")
 
-TEXTURE_WIDTH  :: 2
-TEXTURE_HEIGHT :: 2
-
-texture_data := [TEXTURE_WIDTH*TEXTURE_HEIGHT]u32{
-	0xffffffff, 0xff7f7f7f,
-	0xff7f7f7f, 0xffffffff,
-}
-
-// position: float3, normal: float3, texcoord: float2, color: float3
-vertex_data := [?]f32{
-	-1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6,  1.0, -1.0,  0.0,  0.0, -1.0,  2.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6,  1.0, -1.0,  0.0,  0.0, -1.0,  8.0,  0.0,  0.973,  0.480,  0.002,
-	 1.0,  1.0, -1.0,  0.0,  0.0, -1.0, 10.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6,  0.6, -1.0,  0.0,  0.0, -1.0,  2.0,  2.0,  0.973,  0.480,  0.002,
-	 0.6,  0.6, -1.0,  0.0,  0.0, -1.0,  8.0,  2.0,  0.973,  0.480,  0.002,
-	-0.6, -0.6, -1.0,  0.0,  0.0, -1.0,  2.0,  8.0,  0.973,  0.480,  0.002,
-	 0.6, -0.6, -1.0,  0.0,  0.0, -1.0,  8.0,  8.0,  0.973,  0.480,  0.002,
-	-1.0, -1.0, -1.0,  0.0,  0.0, -1.0,  0.0, 10.0,  0.973,  0.480,  0.002,
-	-0.6, -1.0, -1.0,  0.0,  0.0, -1.0,  2.0, 10.0,  0.973,  0.480,  0.002,
-	 0.6, -1.0, -1.0,  0.0,  0.0, -1.0,  8.0, 10.0,  0.973,  0.480,  0.002,
-	 1.0, -1.0, -1.0,  0.0,  0.0, -1.0, 10.0, 10.0,  0.973,  0.480,  0.002,
-	 1.0,  1.0, -1.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  1.0, -0.6,  1.0,  0.0,  0.0,  2.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  1.0,  0.6,  1.0,  0.0,  0.0,  8.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  1.0,  1.0,  1.0,  0.0,  0.0, 10.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  0.6, -0.6,  1.0,  0.0,  0.0,  2.0,  2.0,  0.897,  0.163,  0.011,
-	 1.0,  0.6,  0.6,  1.0,  0.0,  0.0,  8.0,  2.0,  0.897,  0.163,  0.011,
-	 1.0, -0.6, -0.6,  1.0,  0.0,  0.0,  2.0,  8.0,  0.897,  0.163,  0.011,
-	 1.0, -0.6,  0.6,  1.0,  0.0,  0.0,  8.0,  8.0,  0.897,  0.163,  0.011,
-	 1.0, -1.0, -1.0,  1.0,  0.0,  0.0,  0.0, 10.0,  0.897,  0.163,  0.011,
-	 1.0, -1.0, -0.6,  1.0,  0.0,  0.0,  2.0, 10.0,  0.897,  0.163,  0.011,
-	 1.0, -1.0,  0.6,  1.0,  0.0,  0.0,  8.0, 10.0,  0.897,  0.163,  0.011,
-	 1.0, -1.0,  1.0,  1.0,  0.0,  0.0, 10.0, 10.0,  0.897,  0.163,  0.011,
-	 1.0,  1.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6,  1.0,  1.0,  0.0,  0.0,  1.0,  2.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6,  1.0,  1.0,  0.0,  0.0,  1.0,  8.0,  0.0,  0.612,  0.000,  0.069,
-	-1.0,  1.0,  1.0,  0.0,  0.0,  1.0, 10.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6,  0.6,  1.0,  0.0,  0.0,  1.0,  2.0,  2.0,  0.612,  0.000,  0.069,
-	-0.6,  0.6,  1.0,  0.0,  0.0,  1.0,  8.0,  2.0,  0.612,  0.000,  0.069,
-	 0.6, -0.6,  1.0,  0.0,  0.0,  1.0,  2.0,  8.0,  0.612,  0.000,  0.069,
-	-0.6, -0.6,  1.0,  0.0,  0.0,  1.0,  8.0,  8.0,  0.612,  0.000,  0.069,
-	 1.0, -1.0,  1.0,  0.0,  0.0,  1.0,  0.0, 10.0,  0.612,  0.000,  0.069,
-	 0.6, -1.0,  1.0,  0.0,  0.0,  1.0,  2.0, 10.0,  0.612,  0.000,  0.069,
-	-0.6, -1.0,  1.0,  0.0,  0.0,  1.0,  8.0, 10.0,  0.612,  0.000,  0.069,
-	-1.0, -1.0,  1.0,  0.0,  0.0,  1.0, 10.0, 10.0,  0.612,  0.000,  0.069,
-	-1.0,  1.0,  1.0, -1.0,  0.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  1.0,  0.6, -1.0,  0.0,  0.0,  2.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  1.0, -0.6, -1.0,  0.0,  0.0,  8.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  1.0, -1.0, -1.0,  0.0,  0.0, 10.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  0.6,  0.6, -1.0,  0.0,  0.0,  2.0,  2.0,  0.127,  0.116,  0.408,
-	-1.0,  0.6, -0.6, -1.0,  0.0,  0.0,  8.0,  2.0,  0.127,  0.116,  0.408,
-	-1.0, -0.6,  0.6, -1.0,  0.0,  0.0,  2.0,  8.0,  0.127,  0.116,  0.408,
-	-1.0, -0.6, -0.6, -1.0,  0.0,  0.0,  8.0,  8.0,  0.127,  0.116,  0.408,
-	-1.0, -1.0,  1.0, -1.0,  0.0,  0.0,  0.0, 10.0,  0.127,  0.116,  0.408,
-	-1.0, -1.0,  0.6, -1.0,  0.0,  0.0,  2.0, 10.0,  0.127,  0.116,  0.408,
-	-1.0, -1.0, -0.6, -1.0,  0.0,  0.0,  8.0, 10.0,  0.127,  0.116,  0.408,
-	-1.0, -1.0, -1.0, -1.0,  0.0,  0.0, 10.0, 10.0,  0.127,  0.116,  0.408,
-	-1.0,  1.0,  1.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0,  1.0,  0.0,  1.0,  0.0,  2.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0,  1.0,  0.0,  1.0,  0.0,  8.0,  0.0,  0.000,  0.254,  0.637,
-	 1.0,  1.0,  1.0,  0.0,  1.0,  0.0, 10.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0,  0.6,  0.0,  1.0,  0.0,  2.0,  2.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0,  0.6,  0.0,  1.0,  0.0,  8.0,  2.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0, -0.6,  0.0,  1.0,  0.0,  2.0,  8.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0, -0.6,  0.0,  1.0,  0.0,  8.0,  8.0,  0.000,  0.254,  0.637,
-	-1.0,  1.0, -1.0,  0.0,  1.0,  0.0,  0.0, 10.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0, -1.0,  0.0,  1.0,  0.0,  2.0, 10.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0, -1.0,  0.0,  1.0,  0.0,  8.0, 10.0,  0.000,  0.254,  0.637,
-	 1.0,  1.0, -1.0,  0.0,  1.0,  0.0, 10.0, 10.0,  0.000,  0.254,  0.637,
-	-1.0, -1.0, -1.0,  0.0, -1.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0, -1.0,  0.0, -1.0,  0.0,  2.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0, -1.0,  0.0, -1.0,  0.0,  8.0,  0.0,  0.001,  0.447,  0.067,
-	 1.0, -1.0, -1.0,  0.0, -1.0,  0.0, 10.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0, -0.6,  0.0, -1.0,  0.0,  2.0,  2.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0, -0.6,  0.0, -1.0,  0.0,  8.0,  2.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0,  0.6,  0.0, -1.0,  0.0,  2.0,  8.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0,  0.6,  0.0, -1.0,  0.0,  8.0,  8.0,  0.001,  0.447,  0.067,
-	-1.0, -1.0,  1.0,  0.0, -1.0,  0.0,  0.0, 10.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0,  1.0,  0.0, -1.0,  0.0,  2.0, 10.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0,  1.0,  0.0, -1.0,  0.0,  8.0, 10.0,  0.001,  0.447,  0.067,
-	 1.0, -1.0,  1.0,  0.0, -1.0,  0.0, 10.0, 10.0,  0.001,  0.447,  0.067,
-	-0.6,  0.6, -1.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6,  0.6, -0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6, -0.6, -0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6, -0.6, -1.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6,  0.6, -0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6,  0.6, -1.0, -1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6, -0.6, -1.0, -1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6, -0.6, -0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6, -0.6, -1.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6, -0.6, -0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6, -0.6, -0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6, -0.6, -1.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6,  0.6, -0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	-0.6,  0.6, -1.0,  0.0, -1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6,  0.6, -1.0,  0.0, -1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 0.6,  0.6, -0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.973,  0.480,  0.002,
-	 1.0,  0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6,  0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6, -0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0, -0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6,  0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0, -0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6, -0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  0.6,  0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6,  0.6,  0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6,  0.6, -0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0,  0.6, -0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6, -0.6,  0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0, -0.6,  0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 1.0, -0.6, -0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6, -0.6, -0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.897,  0.163,  0.011,
-	 0.6,  0.6,  1.0, -1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6,  0.6,  0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6, -0.6,  0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6, -0.6,  1.0, -1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6,  0.6,  0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6,  0.6,  1.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6, -0.6,  1.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6, -0.6,  0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6, -0.6,  1.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6, -0.6,  0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6, -0.6,  0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6, -0.6,  1.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6,  0.6,  0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	 0.6,  0.6,  1.0,  0.0, -1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6,  0.6,  1.0,  0.0, -1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-0.6,  0.6,  0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.612,  0.000,  0.069,
-	-1.0,  0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6,  0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6, -0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0, -0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6,  0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0, -0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6, -0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0, -0.6,  0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6, -0.6,  0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6, -0.6, -0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0, -0.6, -0.6,  0.0,  1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6,  0.6,  0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  0.6,  0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-1.0,  0.6, -0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6,  0.6, -0.6,  0.0, -1.0,  0.0,  0.0,  0.0,  0.127,  0.116,  0.408,
-	-0.6,  1.0,  0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  0.6,  0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  0.6, -0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0, -0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  0.6,  0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0,  0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0, -0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  0.6, -0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6,  1.0,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  1.0,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	 0.6,  0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.000,  0.254,  0.637,
-	-0.6, -0.6,  0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0,  0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0, -0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -0.6, -0.6,  1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0,  0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -0.6,  0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -0.6, -0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0, -0.6, -1.0,  0.0,  0.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -0.6, -0.6,  0.0,  0.0,  1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -1.0,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	-0.6, -0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -0.6,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-	 0.6, -1.0,  0.6,  0.0,  0.0, -1.0,  0.0,  0.0,  0.001,  0.447,  0.067,
-}
-
-index_data := [?]u32{
-	  0,   1,   9,   9,   8,   0,   1,   2,   5,   5,   4,   1,   6,   7,  10,  10,   9,   6,   2,   3,  11,  11,  10,   2,
-	 12,  13,  21,  21,  20,  12,  13,  14,  17,  17,  16,  13,  18,  19,  22,  22,  21,  18,  14,  15,  23,  23,  22,  14,
-	 24,  25,  33,  33,  32,  24,  25,  26,  29,  29,  28,  25,  30,  31,  34,  34,  33,  30,  26,  27,  35,  35,  34,  26,
-	 36,  37,  45,  45,  44,  36,  37,  38,  41,  41,  40,  37,  42,  43,  46,  46,  45,  42,  38,  39,  47,  47,  46,  38,
-	 48,  49,  57,  57,  56,  48,  49,  50,  53,  53,  52,  49,  54,  55,  58,  58,  57,  54,  50,  51,  59,  59,  58,  50,
-	 60,  61,  69,  69,  68,  60,  61,  62,  65,  65,  64,  61,  66,  67,  70,  70,  69,  66,  62,  63,  71,  71,  70,  62,
-	 72,  73,  74,  74,  75,  72,  76,  77,  78,  78,  79,  76,  80,  81,  82,  82,  83,  80,  84,  85,  86,  86,  87,  84,
-	 88,  89,  90,  90,  91,  88,  92,  93,  94,  94,  95,  92,  96,  97,  98,  98,  99,  96, 100, 101, 102, 102, 103, 100,
-	104, 105, 106, 106, 107, 104, 108, 109, 110, 110, 111, 108, 112, 113, 114, 114, 115, 112, 116, 117, 118, 118, 119, 116,
-	120, 121, 122, 122, 123, 120, 124, 125, 126, 126, 127, 124, 128, 129, 130, 130, 131, 128, 132, 133, 134, 134, 135, 132,
-	136, 137, 138, 138, 139, 136, 140, 141, 142, 142, 143, 140, 144, 145, 146, 146, 147, 144, 148, 149, 150, 150, 151, 148,
-	152, 153, 154, 154, 155, 152, 156, 157, 158, 158, 159, 156, 160, 161, 162, 162, 163, 160, 164, 165, 166, 166, 167, 164,
+// pos.x, pos.y, pos.z, tex.u, tex.v, ...
+vertexData := [?]f32 {
+	-1    ,  1    , -1    , 0   , 0 ,
+	 1    ,  1    , -1    , 9.5 , 0 ,
+	-0.58 ,  0.58 , -1    , 2   , 2 ,
+	 0.58 ,  0.58 , -1    , 7.5 , 2 ,
+	-0.58 ,  0.58 , -1    , 0   , 0 ,
+     0.58 ,  0.58 , -1    , 0   , 0 ,
+	-0.58 ,  0.58 , -0.58 , 0   , 0 ,
+     0.58 ,  0.58 , -0.58 , 0   , 0 ,
 }

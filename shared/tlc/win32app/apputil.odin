@@ -1,18 +1,22 @@
 package win32app
 
 import "core:fmt"
-import win32 "core:sys/windows"
+import "core:intrinsics"
 import hlm "core:math/linalg/hlsl"
+import win32 "core:sys/windows"
+import win32ex "shared:sys/windows"
+
+L :: intrinsics.constant_utf16_cstring
 
 int2 :: hlm.int2
 
-IDT_TIMER1: UINT_PTR : 10001
-IDT_TIMER2: UINT_PTR : 10002
-IDT_TIMER3: UINT_PTR : 10003
-IDT_TIMER4: UINT_PTR : 10004
+IDT_TIMER1: win32ex.UINT_PTR : 10001
+IDT_TIMER2: win32ex.UINT_PTR : 10002
+IDT_TIMER3: win32ex.UINT_PTR : 10003
+IDT_TIMER4: win32ex.UINT_PTR : 10004
 
-decode_lparam :: #force_inline proc "contextless" (lparam: LPARAM) -> int2 {
-	return int2({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})
+decode_lparam :: #force_inline proc "contextless" (lparam: win32ex.LPARAM) -> int2 {
+	return int2({win32ex.GET_X_LPARAM(lparam), win32ex.GET_Y_LPARAM(lparam)})
 }
 
 show_error_and_panic :: proc(msg: string) {

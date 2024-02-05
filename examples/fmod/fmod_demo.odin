@@ -5,8 +5,8 @@ import "core:fmt"
 import "core:strings"
 import "core:os"
 import _c "core:c"
-import "../../shared/fmod"
-import "../../shared/tlc/wolf"
+import "shared:fmod"
+import "shared:tlc/wolf"
 
 system: ^fmod.FMOD_SYSTEM = nil
 eventsys: ^fmod.FMOD_EVENTSYSTEM = nil

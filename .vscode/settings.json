@@ -5,15 +5,26 @@
     ],
     "cSpell.words": [
         "codepage",
+        "dxgi",
         "fmodex",
+        "hbitmap",
         "hlsl",
         "libfmodex",
         "localizable",
         "metaprogramming",
         "microarch",
+        "pixelshader",
+        "rasterizer",
+        "rawptr",
         "reloc",
-        "sandybridge",
-        "struct"
+        "rendertarget",
+        "shadowmap",
+        "srgb",
+        "struct",
+        "subresource",
+        "tprintf",
+        "typeless",
+        "unorm"
     ],
     "markdownlint.config": {
         "no-hard-tabs": false,
@@ -37,6 +48,10 @@
     },
     "workbench.editorAssociations": {
         "*.fsb": "hexEditor.hexedit",
-        "*.fev": "hexEditor.hexedit"
+        "*.fev": "hexEditor.hexedit",
+        "*.res": "hexEditor.hexedit"
     },
+    "cSpell.enableFiletypes": [
+        "odin"
+    ],
 }

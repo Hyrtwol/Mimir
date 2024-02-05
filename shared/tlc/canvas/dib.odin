@@ -7,14 +7,14 @@ import hlm      "core:math/linalg/hlsl"
 import          "core:runtime"
 import          "core:strings"
 import win32    "core:sys/windows"
-import win32app "../win32app"
+import win32ex  "shared:sys/windows"
 
 ColorSizeInBytes :: 4
 BitCount         :: ColorSizeInBytes * 8
 
 DIB :: struct {
 	hbitmap:     win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
-	pvBits:      screenbuffer,
+	pvBits:      screen_buffer,
 	size:        int2,
 	pixel_count: i32,
 }
@@ -61,8 +61,8 @@ dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 }
 
 dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
-	bmiV5Header := win32app.BITMAPV5HEADER {
-		bV5Size        = size_of(win32app.BITMAPV5HEADER),
+	bmiV5Header := win32ex.BITMAPV5HEADER {
+		bV5Size        = size_of(win32ex.BITMAPV5HEADER),
 		bV5Width       = size.x,
 		bV5Height      = -size.y, // minus for top-down
 		bV5Planes      = 1,

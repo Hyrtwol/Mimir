@@ -1,5 +1,5 @@
 // +build windows
-package win32app
+package sys_windows_ex
 
 foreign import shell32 "system:Shell32.lib"
 

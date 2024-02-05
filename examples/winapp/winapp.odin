@@ -13,8 +13,9 @@ import          "core:simd"
 import          "core:strings"
 import win32    "core:sys/windows"
 import          "core:time"
-import win32app "../../shared/tlc/win32app"
-import canvas   "../../shared/tlc/canvas"
+import win32ex  "shared:sys/windows"
+import win32app "shared:tlc/win32app"
+import canvas   "shared:tlc/canvas"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -24,12 +25,12 @@ HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 ZOOM  	:: 8
 
-screenbuffer  :: canvas.screenbuffer
+screen_buffer  :: canvas.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2
 bitmap_count  : i32
-pvBits        : screenbuffer
+pvBits        : screen_buffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
 dib           : canvas.DIB
@@ -155,8 +156,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	client_size := win32app.get_client_size(hwnd)
 	assert(client_size == win32app.get_rect_size(&ps.rcPaint))
 
-	hdc_source := win32app.CreateCompatibleDC(hdc_target)
-	defer win32app.DeleteDC(hdc_source)
+	hdc_source := win32ex.CreateCompatibleDC(hdc_target)
+	defer win32ex.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, bitmap_handle)
 	win32.StretchBlt(
