@@ -24,15 +24,12 @@ double2 :: hlm.double2
 double3 :: hlm.double3
 DIB     :: canvas.DIB
 
+TITLE 	:: "Noise"
 WIDTH  	:: 640
 HEIGHT 	:: WIDTH * 9 / 16
 ZOOM  	:: 4
 
-settings : win32app.window_settings = {
-	title = "Noise",
-	window_size = {WIDTH, HEIGHT},
-	center = true,
-}
+settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
 
 timer_id : win32.UINT_PTR
 dib      : DIB
@@ -144,8 +141,8 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	newtitle := fmt.tprintf("%s %v %v\n", settings.title, size, dib.size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+	title := fmt.tprintf("%s %v %v\n", settings.title, size, dib.size)
+	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(title))
 	return 0
 }
 
@@ -189,5 +186,5 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 }
 
 main :: proc() {
-	win32app.run(&settings, wndproc)
+	win32app.run(&settings)
 }

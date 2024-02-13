@@ -231,10 +231,6 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 }
 
 main :: proc() {
-	settings : win32app.window_settings = {
-		title = TITLE,
-		window_size = {WIDTH, HEIGHT},
-		center = CENTER,
-	}
-	win32app.run(&settings, wndproc)
+	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+	win32app.run(&settings)
 }

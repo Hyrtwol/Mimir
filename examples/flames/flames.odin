@@ -25,17 +25,14 @@ double2 :: hlm.double2
 double3 :: hlm.double3
 DIB :: canvas.DIB
 
+TITLE 	:: "Flames"
 WIDTH: i32 : 160
 HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
 ZOOM: i32 : 4
 FPS: u32 : 20
 
-settings: win32app.window_settings = {
-	title       = "Noise",
-	window_size = {WIDTH * ZOOM, HEIGHT * ZOOM},
-	center      = true,
-}
+settings := win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
 
 my_rand := rand.create(1)
 flamebuffer: [PXLCNT]u8
@@ -254,5 +251,5 @@ main :: proc() {
 		f: f64 = f64(i) / 255
 		palette[i] = {tocol(math.pow(f, 0.5)), tocol(math.pow(f, 1.25)), tocol(math.pow(f, 3.0)), 255}
 	}
-	win32app.run(&settings, wndproc)
+	win32app.run(&settings)
 }

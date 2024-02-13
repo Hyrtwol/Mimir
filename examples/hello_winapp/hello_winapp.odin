@@ -143,7 +143,7 @@ main :: proc() {
 		hIconSm       = icon,
 	}
 
-	atom:= win32.RegisterClassExW(&wcx)
+	atom := win32.RegisterClassExW(&wcx)
 	if atom == 0 {
 		win32app.show_error_and_panic("Failed to register window class")
 	}
@@ -170,7 +170,7 @@ main :: proc() {
 	}
 	fmt.printf("position %d, %d\n", position.x, position.y)
 
-	hwnd:= win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
+	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
 	if hwnd == nil {
 		win32app.show_error_and_panic("CreateWindowEx failed")
 	}
@@ -181,7 +181,7 @@ main :: proc() {
 
 	fmt.print("MainLoop\n")
 	msg: win32.MSG
-	for result := win32.GetMessageW(&msg, nil, 0, 0); result == win32.TRUE; result = win32.GetMessageW(&msg, nil, 0, 0) {
+	for win32.GetMessageW(&msg, nil, 0, 0) {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}

@@ -180,7 +180,7 @@ create_and_show_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, sett
 
 pull_messages :: proc() -> bool {
 	msg: win32.MSG
-	for result := win32.PeekMessageW(&msg, nil, 0, 0, win32.PM_REMOVE); result == win32.TRUE; result = win32.PeekMessageW(&msg, nil, 0, 0, win32.PM_REMOVE) {
+	for win32.PeekMessageW(&msg, nil, 0, 0, win32.PM_REMOVE) {
 
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
@@ -192,17 +192,29 @@ pull_messages :: proc() -> bool {
 	return true
 }
 
-main_loop :: proc(hwnd: win32.HWND) {
+loop_messages :: proc() {
 	msg: win32.MSG
-	for result := win32.GetMessageW(&msg, hwnd, 0, 0); result == win32.TRUE; result = win32.GetMessageW(&msg, hwnd, 0, 0) {
+	for win32.GetMessageW(&msg, nil, 0, 0) {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}
 }
 
-run :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) {
+run_wndproc :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) {
 	inst := get_instance()
 	atom := register_window_class(inst, wndproc)
 	hwnd := create_and_show_window(inst, atom, settings)
-	main_loop(hwnd)
+	loop_messages()
+}
+
+run_settings :: proc(settings: ^window_settings) {
+	inst := get_instance()
+	atom := register_window_class(inst, settings.wndproc)
+	hwnd := create_and_show_window(inst, atom, settings)
+	loop_messages()
+}
+
+run :: proc {
+	run_settings,
+	run_wndproc,
 }
