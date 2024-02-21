@@ -1,6 +1,6 @@
 package fmod
 
-USE_LINALG :: #config(RAYLIB_USE_LINALG, true)
+USE_LINALG :: #config(FMOD_USE_LINALG, true)
 
 import "core:math/linalg"
 import _c "core:c"

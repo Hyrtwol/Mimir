@@ -10,7 +10,6 @@ when ODIN_ARCH == .amd64 {
 
 import _c "core:c"
 
-//FMOD_VERSION :: 279600;
 FMOD_CAPS_NONE :: 0
 FMOD_CAPS_HARDWARE :: 1
 FMOD_CAPS_HARDWARE_EMULATED :: 2
@@ -129,7 +128,6 @@ FMOD_REVERB_CHANNELFLAGS_INSTANCE1 :: 32
 FMOD_REVERB_CHANNELFLAGS_INSTANCE2 :: 64
 FMOD_REVERB_CHANNELFLAGS_INSTANCE3 :: 128
 FMOD_REVERB_CHANNELFLAGS_DEFAULT :: 16
-//FMOD_EVENT_VERSION :: 279600;
 
 FMOD_EVENT_INIT_NORMAL :: 0
 FMOD_EVENT_INIT_USER_ASSETMANAGER :: 1
@@ -162,16 +160,7 @@ FMOD_EVENT_STATE_INFOONLY :: 32
 FMOD_EVENT_STATE_STARVING :: 64
 FMOD_EVENT_STATE_NEEDSTOLOAD :: 128
 
-//FMOD_EVENT_NET_VERSION :: 279600;
 FMOD_EVENT_NET_PORT :: 17997
-
-// FMOD_BOOL :: _c.int;
-// FMOD_MODE :: _c.uint;
-// FMOD_TIMEUNIT :: _c.uint;
-// FMOD_INITFLAGS :: _c.uint;
-// FMOD_CAPS :: _c.uint;
-// FMOD_DEBUGLEVEL :: _c.uint;
-// FMOD_MEMORY_TYPE :: _c.uint;
 
 FMOD_SYSTEM_CALLBACK :: #type proc(system : ^FMOD_SYSTEM, type : FMOD_SYSTEM_CALLBACKTYPE, commanddata1 : rawptr, commanddata2 : rawptr) -> FMOD_RESULT
 FMOD_CHANNEL_CALLBACK :: #type proc(channel : ^FMOD_CHANNEL, type : FMOD_CHANNEL_CALLBACKTYPE, commanddata1 : rawptr, commanddata2 : rawptr) -> FMOD_RESULT
@@ -205,13 +194,6 @@ FMOD_DSP_SETPOSITIONCALLBACK :: #type proc(dsp_state : ^FMOD_DSP_STATE, pos : _c
 FMOD_DSP_SETPARAMCALLBACK :: #type proc(dsp_state : ^FMOD_DSP_STATE, index : _c.int, value : _c.float) -> FMOD_RESULT
 FMOD_DSP_GETPARAMCALLBACK :: #type proc(dsp_state : ^FMOD_DSP_STATE, index : _c.int, value : ^_c.float, valuestr : cstring) -> FMOD_RESULT
 FMOD_DSP_DIALOGCALLBACK :: #type proc(dsp_state : ^FMOD_DSP_STATE, hwnd : rawptr, show : _c.int) -> FMOD_RESULT
-
-// FMOD_EVENT_INITFLAGS :: _c.uint;
-// FMOD_EVENT_MODE :: _c.uint;
-// FMOD_EVENT_STATE :: _c.uint;
-// FMOD_MUSIC_ID :: _c.uint;
-// FMOD_MUSIC_CUE_ID :: _c.uint;
-// FMOD_MUSIC_PARAM_ID :: _c.uint;
 
 FMOD_EVENT_CALLBACK :: #type proc(event : ^FMOD_EVENT, type : FMOD_EVENT_CALLBACKTYPE, param1 : rawptr, param2 : rawptr, userdata : rawptr) -> FMOD_RESULT
 FMOD_EVENTQUEUE_CALLBACK :: #type proc(type : FMOD_EVENTQUEUE_CALLBACKTYPE, queue : ^FMOD_EVENTQUEUE, entry : ^FMOD_EVENTQUEUEENTRY, callbackuserdata : rawptr) -> FMOD_RESULT
