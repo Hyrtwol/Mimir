@@ -13,7 +13,7 @@ foreign user32 {
 	RedrawWindow :: proc(hwnd: HWND, lprcUpdate: LPRECT, hrgnUpdate: HRGN, flags: RedrawWindowFlags) -> BOOL ---
 }
 
-DrawTextFormat :: enum u32 {
+DrawTextFormat :: enum UINT {
 	DT_TOP                  = 0x00000000,
 	DT_LEFT                 = 0x00000000,
 	DT_CENTER               = 0x00000001,

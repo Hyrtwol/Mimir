@@ -22,8 +22,8 @@ import "shared:tlc/wolf"
 L :: intrinsics.constant_utf16_cstring
 
 TITLE 	:: "FMOD Event System"
-WIDTH  	:: 640
-HEIGHT 	:: WIDTH * 9 / 16
+WIDTH  	:: 64*8
+HEIGHT 	:: WIDTH * 9 / 16 // 360
 CENTER  :: true
 ZOOM  	:: 8
 
@@ -41,7 +41,7 @@ pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
 dib           : canvas.DIB
 timer1_id     : win32.UINT_PTR
-// timer2_id     : win32.UINT_PTR
+timer2_id     : win32.UINT_PTR
 
 system: ^fmod.FMOD_SYSTEM = nil
 eventsys: ^fmod.FMOD_EVENTSYSTEM = nil
@@ -52,6 +52,8 @@ song : ^fmod.FMOD_SOUND = nil
 title: string
 dsp, stream, geometry, update, total : f32
 channels_playing: i32
+
+clear_color : canvas.byte4 : {150, 100, 50, 255}
 
 play_event :: proc(event_id: i32)
 {
@@ -119,6 +121,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 
 	client_size := win32app.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
+	fmt.printf("bitmap_size=%v\n", bitmap_size)
 
 	hdc := win32.GetDC(hwnd)
 	// todo defer win32.ReleaseDC(hwnd, hdc)
@@ -145,7 +148,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		canvas.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
+		canvas.fill_screen(pvBits, bitmap_count, clear_color)
 	} else {
 		bitmap_size = canvas.ZERO2
 		bitmap_count = 0
@@ -158,6 +161,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 		win32app.show_error_and_panic("No timer 1")
 	}
 
+	timer2_id = win32.SetTimer(hwnd, win32app.IDT_TIMER2, 50, nil)
+	if timer2_id == 0 {
+		win32app.show_error_and_panic("No timer 2")
+	}
+
 	return 0
 }
 
@@ -167,6 +175,11 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 	if timer1_id != 0 {
 		if !win32.KillTimer(hwnd, timer1_id) {
 			win32.MessageBoxW(nil, L("Unable to kill timer1"), L("Error"), win32.MB_OK)
+		}
+	}
+	if timer2_id != 0 {
+		if !win32.KillTimer(hwnd, timer2_id) {
+			win32.MessageBoxW(nil, L("Unable to kill timer2"), L("Error"), win32.MB_OK)
 		}
 	}
 	if bitmap_handle != nil {
@@ -225,16 +238,49 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
+spect_size :: 64
+spec_left: [spect_size]f32
+spec_right: [spect_size]f32
+spectrum: [spect_size]f32
+//fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_TRIANGLE
+fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_BLACKMAN
+
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch (wparam)
 	{
 	case win32app.IDT_TIMER1:
-	{
-	    fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
-	    fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
-		newtitle := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
-		win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
-	}
+		{
+			fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
+			fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
+			newtitle := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
+			win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+		}
+	case win32app.IDT_TIMER2:
+		{
+			//system->FMOD_System_GetSpectrum()
+			fmod.FMOD_System_GetSpectrum(system, &spec_left[0], spect_size, 0, fft_window)
+			fmod.FMOD_System_GetSpectrum(system, &spec_right[0], spect_size, 1, fft_window)
+
+			scale := f32(bitmap_size.y)
+			for i in 0..<spect_size {
+				spectrum[i] = (spec_left[i] + spec_right[i]) * scale
+			}
+
+			col: canvas.byte4
+			for y in 0..<spect_size {
+				i := i32(y) * bitmap_size.x
+				for x in 0..<spect_size {
+					if f32(y) > spectrum[x] {col = clear_color} else {col = canvas.COLOR_GREEN}
+					//pvBits[i] = col
+					if i >= 0 && i < bitmap_count {pvBits[i] = col}
+					i += 1
+				}
+			}
+
+
+			win32.InvalidateRect(hwnd, nil, false)
+			//win32ex.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+		}
 	}
 	return 0
 }
@@ -399,7 +445,6 @@ main :: proc() {
 		}
 	}
 
-	//title := fmt.tprintf(
 	title = fmt.aprintf(
 		"%s Version : %d.%d.%d (0x%x)\n",
 		TITLE,
@@ -408,6 +453,7 @@ main :: proc() {
 		fmod_version.Development,
 		transmute(u32)fmod_version,
 	)
+	defer delete(title)
 
 	settings : win32app.window_settings = {
 		title = title,

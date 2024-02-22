@@ -51,8 +51,8 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_CREATE\n")
 
-	sc := win32.ShowCursor(false)
-	fmt.printf("ShowCursor %v\n", sc)
+	//sc := win32.ShowCursor(false)
+	//fmt.printf("ShowCursor %v\n", sc)
 
 	client_size := win32app.get_client_size(hwnd)
 
@@ -72,7 +72,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 
 	canvas.dib_free_section(&dib)
 
-	win32.ShowCursor(true)
+	//win32.ShowCursor(true)
 
 	win32.PostQuitMessage(0)
 	return 0
@@ -106,9 +106,12 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
+is_active: bool = false
+
 WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	active := wparam != 0
 	fmt.printf("WM_ACTIVATEAPP %v\n", active)
+	if is_active == active {return 0}
 	if active {
 
 	} else {
@@ -117,37 +120,30 @@ WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 	return 0
 }
 
+rawinput: win32.RAWINPUT = {}
+
 WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	dwSize: win32.UINT
 	win32.GetRawInputData(win32.HRAWINPUT(lparam), win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
 	if dwSize == 0 {return 0}
+	//assert(dwSize > size_of(win32.RAWINPUT), "dwSize too big")
+	if dwSize > size_of(win32.RAWINPUT) {win32app.show_error_and_panic("dwSize too big");return 0}
 
-	// LPBYTE lpb = new BYTE[dwSize]; // c++
-	bytes := make([]byte, dwSize)
-	defer delete(bytes)
+	raw := &rawinput
 
-	lpb := &bytes[0] // is there a better way to get the address of an array ?
-
-	if win32.GetRawInputData(win32.HRAWINPUT(lparam), win32.RID_INPUT, lpb, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
+	if win32.GetRawInputData(win32.HRAWINPUT(lparam), win32.RID_INPUT, raw, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
 		win32app.show_error_and_panic("GetRawInputData Failed")
 		return 0
 	}
-
-	// RAWINPUT* raw = (RAWINPUT*)lpb; // c++
-	raw := cast(^win32.RAWINPUT)lpb
 
 	switch raw.header.dwType {
 	case win32.RIM_TYPEMOUSE:
 		{
 			mouse_delta: win32app.int2 = {raw.data.mouse.lLastX, raw.data.mouse.lLastY}
 			mouse_pos += mouse_delta
-
-			if mouse_pos.x < 0 { mouse_pos.x = 0 }
-			if mouse_pos.y < 0 { mouse_pos.y = 0 }
-
-			if mouse_pos.x > WIDTH-1 { mouse_pos.x = WIDTH-1 }
-			if mouse_pos.y > HEIGHT-1 { mouse_pos.y = HEIGHT-1 }
+			mouse_pos.x = clamp(mouse_pos.x, 0, WIDTH - 1)
+			mouse_pos.y = clamp(mouse_pos.y, 0, HEIGHT - 1)
 
 			/*fmt.printf(
 				"mouse %v %v %v %v %v\n",
@@ -189,8 +185,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return WM_PAINT(hwnd, wparam, lparam)
 	case win32.WM_ACTIVATEAPP:
 		return WM_ACTIVATEAPP(hwnd, wparam, lparam)
-	case win32.WM_INPUT:
-		return WM_INPUT(hwnd, wparam, lparam)
+	//case win32.WM_ACTIVATE: return WM_ACTIVATE(hwnd, wparam, lparam)
+	case win32.WM_INPUT: return WM_INPUT(hwnd, wparam, lparam)
 	case:
 		return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
@@ -198,7 +194,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 main :: proc() {
 
-	icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION));
+	icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
 	fmt.printf("icon %v\n", icon)
 
 	rid := [2]win32.RAWINPUTDEVICE {
