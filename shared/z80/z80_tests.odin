@@ -52,7 +52,7 @@ verify_options :: proc(t: ^testing.T) {
 
 @(test)
 verify_consts :: proc(t: ^testing.T) {
-	act, exp: u32
+	act, exp: zuint32
 
 	act = Z80_MAXIMUM_CYCLES
 	exp = 4294967265

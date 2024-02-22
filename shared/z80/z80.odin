@@ -2,7 +2,7 @@ package z80
 
 foreign import "Z80.lib"
 
-zusize :: u32
+zusize :: u64
 zuint8 :: u8
 zuint16 :: u16
 zuint32 :: u32
@@ -10,7 +10,7 @@ zint16 :: i16
 zint32 :: i32
 zboolean :: bool
 
-Z80_MAXIMUM_CYCLES :: max(zusize) - 30
+Z80_MAXIMUM_CYCLES :: max(zuint32) - 30
 Z80_MAXIMUM_CYCLES_PER_STEP :: 23
 
 Z80_HOOK :: 0x64
@@ -53,10 +53,11 @@ Z80_HALT_CANCEL :: 3
 
 PZ80 :: ^TZ80
 
-// when ODIN_ENDIAN == .Little {
-// 	TZ80RegisterPair :: struct {
-// 	}
-// }
+// Z80Read :: #type proc "c" (zcontext: rawptr, address: zuint16) -> zuint8
+// Z80Write :: #type proc "c" (zcontext: rawptr, address: zuint16, value: zuint8)
+// Z80Halt :: #type proc "c" (zcontext: rawptr, signal: zuint8)
+// Z80Notify :: #type proc "c" (zcontext: rawptr)
+// Z80Illegal :: #type proc "c" (zcpu: PZ80, opcode: zuint8) -> zuint8
 
 Z80Read :: #type proc(zcontext: rawptr, address: zuint16) -> zuint8
 Z80Write :: #type proc(zcontext: rawptr, address: zuint16, value: zuint8)

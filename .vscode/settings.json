@@ -62,7 +62,8 @@
     "workbench.editorAssociations": {
         "*.fsb": "hexEditor.hexedit",
         "*.fev": "hexEditor.hexedit",
-        "*.res": "hexEditor.hexedit"
+        "*.res": "hexEditor.hexedit",
+        "*.rom": "hexEditor.hexedit"
     },
     "cSpell.enableFiletypes": [
         "odin"
