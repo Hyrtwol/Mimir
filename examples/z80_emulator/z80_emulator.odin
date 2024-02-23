@@ -9,56 +9,9 @@ mem_size :: 0x10000
 cpu: z80.TZ80
 memory: [mem_size]u8
 
-/*
-z_read :: proc "c" (zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
-	context = runtime.default_context()
-	value := memory[address]
-	fmt.printf("read[%d]=0x%2X\n", address, value)
-	return value
-}
-
-z_write :: proc "c" (zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
-	context = runtime.default_context()
-	fmt.printf("write[%d]=0x%2X\n", address, value)
-	memory[address] = value
-}
-
-z_in :: proc "c" (zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
-	context = runtime.default_context()
-	value: z80.zuint8 = 0
-	fmt.printf("in[%d]=%d\n", address, value)
-	return value
-}
-
-z_out :: proc "c" (zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
-	context = runtime.default_context()
-	if value < 32 {
-		fmt.printf("out[%d]=0x%2X\n", address, value)
-	} else {
-		fmt.printf("out[%d]=0x%2X '%v'\n", address, value, rune(value))
-	}
-}
-
-z_halt :: proc "c" (zcontext: rawptr, signal: z80.zuint8) {
-	context = runtime.default_context()
-	fmt.printf("halt %d\n", signal)
-}
-
-z_notify :: proc "c" (zcontext: rawptr) {
-	context = runtime.default_context()
-	fmt.print("notify\n")
-}
-
-z_illegal :: proc "c" (zcpu: z80.PZ80, opcode: z80.zuint8) -> z80.zuint8 {
-	context = runtime.default_context()
-	fmt.printf("illegal %d\n", opcode)
-	return 10
-}
-*/
-
 z_read :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	value := memory[address]
-	fmt.printf("read[%d]=0x%2X\n", address, value)
+	//fmt.printf("read[%d]=0x%2X\n", address, value)
 	return value
 }
 
@@ -85,8 +38,12 @@ z_halt :: proc(zcontext: rawptr, signal: z80.zuint8) {
 	fmt.printf("halt %d\n", signal)
 }
 
-z_notify :: proc(zcontext: rawptr) {
-	fmt.print("notify\n")
+z_reti :: proc(zcontext: rawptr) {
+	fmt.print("reti\n")
+}
+
+z_retn :: proc(zcontext: rawptr) {
+	fmt.print("retn\n")
 }
 
 z_illegal :: proc(zcpu: z80.PZ80, opcode: z80.zuint8) -> z80.zuint8 {
@@ -142,17 +99,24 @@ main :: proc() {
 	cpu.int_fetch = nil
 	cpu.ld_i_a = nil
 	cpu.ld_r_a = nil
-	cpu.reti = nil
-	cpu.retn = nil
+	cpu.reti = z_reti // nil
+	cpu.retn = z_retn // nil
 	cpu.hook = nil
 	cpu.illegal = z_illegal
 
-	//z80.z80_power(&cpu, true)
-	//z80.z80_instant_reset(&cpu)
+	cpu.options = 0
 
-	cycles :: 1000
+	z80.z80_power(&cpu, true)
+	z80.z80_instant_reset(&cpu)
+
+	//fmt.printf("CPU %v\n", cpu)
+
+	cycles :: 10000
 	res := z80.z80_run(&cpu, cycles)
 	fmt.printf("Run %v\n", res)
+
+	fmt.printf("CPU %v\n", cpu)
+	//fmt.printf("pc 0x%4X\n", cpu.pc)
 
 	fmt.print("Done.\n")
 }

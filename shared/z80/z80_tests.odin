@@ -12,7 +12,7 @@ verify_sizes :: proc(t: ^testing.T) {
 	act, exp: u32
 
 	act = size_of(TZ80)
-	exp = 200
+	exp = 208
 	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
 }
 

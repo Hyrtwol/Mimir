@@ -53,12 +53,6 @@ Z80_HALT_CANCEL :: 3
 
 PZ80 :: ^TZ80
 
-// Z80Read :: #type proc "c" (zcontext: rawptr, address: zuint16) -> zuint8
-// Z80Write :: #type proc "c" (zcontext: rawptr, address: zuint16, value: zuint8)
-// Z80Halt :: #type proc "c" (zcontext: rawptr, signal: zuint8)
-// Z80Notify :: #type proc "c" (zcontext: rawptr)
-// Z80Illegal :: #type proc "c" (zcpu: PZ80, opcode: zuint8) -> zuint8
-
 Z80Read :: #type proc(zcontext: rawptr, address: zuint16) -> zuint8
 Z80Write :: #type proc(zcontext: rawptr, address: zuint16, value: zuint8)
 Z80Halt :: #type proc(zcontext: rawptr, signal: zuint8)
@@ -284,6 +278,7 @@ TZ80 :: struct {
 	  * is copied into this member; the instruction logic is then executed
 	  * and finally this member is copied back into the index register. */
 	xy:           zint16,
+
 	memptr:       zint16, /**< @brief Register MEMPTR, also known as WZ.        */
 	af:           zint16, /**< @brief Register pair AF (accumulator and flags). */
 	bc:           zint16, /**< @brief Register pair BC.                         */
@@ -347,7 +342,7 @@ TZ80 :: struct {
 }
 
 //@(default_calling_convention = "c", link_prefix = "Newton")
-@(default_calling_convention = "c")
+//@(default_calling_convention = "c")
 foreign Z80 {
 
 	/** @brief Sets the power state of a <tt>@ref Z80</tt>.
