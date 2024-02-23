@@ -32,40 +32,20 @@ main :: proc() {
 		// Return early
 		return
 	}
-	// the defer keyword makes the procedure run when the calling procedure exits scope
-	// Deferes are executed in reverse order. So the window will get destoryed first
-	// They can also just be called manually later instead without defer. This way of doing it ensures are terminated.
-	// https://odin-lang.org/docs/overview/#defer-statement
-	// https://www.glfw.org/docs/3.1/group__init.html#gaaae48c0a18607ea4a4ba951d939f0901
 	defer glfw.Terminate()
 
-	// Create the window
-	// Return WindowHandle rawPtr
-	// https://www.glfw.org/docs/3.3/group__window.html#ga3555a418df92ad53f917597fe2f64aeb
 	window := glfw.CreateWindow(512, 512, PROGRAMNAME, nil, nil)
-	// https://www.glfw.org/docs/latest/group__window.html#gacdf43e51376051d2c091662e9fe3d7b2
 	defer glfw.DestroyWindow(window)
 
-	// If the window pointer is invalid
 	if window == nil {
 		fmt.println("Unable to create window")
 		return
 	}
 
-	//
-	// https://www.glfw.org/docs/3.3/group__context.html#ga1c04dc242268f827290fe40aa1c91157
 	glfw.MakeContextCurrent(window)
-
-	// Enable vsync
-	// https://www.glfw.org/docs/3.3/group__context.html#ga6d4e0cdf151b5e579bd67f13202994ed
 	glfw.SwapInterval(1)
 
-	// This function sets the key callback of the specified window, which is called when a key is pressed, repeated or released.
-	// https://www.glfw.org/docs/3.3/group__input.html#ga1caf18159767e761185e49a3be019f8d
 	glfw.SetKeyCallback(window, key_callback)
-
-	// This function sets the framebuffer resize callback of the specified window, which is called when the framebuffer of the specified window is resized.
-	// https://www.glfw.org/docs/3.3/group__window.html#gab3fb7c3366577daef18c0023e2a8591f
 	glfw.SetFramebufferSizeCallback(window, size_callback)
 
 	// Set OpenGL Context bindings using the helper function

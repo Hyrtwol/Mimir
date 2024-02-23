@@ -4,8 +4,6 @@ import "core:bytes"
 import "core:fmt"
 import "core:runtime"
 import "core:testing"
-//import win32 "core:sys/windows"
-//import win32app "../../shared/tlc/win32app"
 
 @(test)
 verify_sizes :: proc(t: ^testing.T) {

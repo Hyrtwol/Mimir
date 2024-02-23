@@ -8,7 +8,7 @@ import glm "core:math/linalg/glsl"
 
 WINDOW_TITLE 	:: "Mimir"
 WINDOW_WIDTH  	:: 640
-WINDOW_HEIGHT 	:: 480
+WINDOW_HEIGHT 	:: WINDOW_WIDTH * 3 / 4
 
 // @note You might need to lower this to 3.3 depending on how old your graphics card is.
 GL_MAJOR_VERSION :: 4

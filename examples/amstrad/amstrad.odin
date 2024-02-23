@@ -1,4 +1,4 @@
-package main
+package z80_emulator
 
 import "core:fmt"
 import "core:os"
@@ -78,7 +78,7 @@ load_rom :: proc(filename: string) {
 main :: proc() {
 	fmt.print("Z80 Emulator\n")
 
-	load_rom("../examples/z80_emulator/hello.rom")
+	load_rom("../examples/amstrad/hello.rom")
 
 	cpu._context = nil
 
