@@ -4,43 +4,19 @@ import "core:runtime"
 import "core:fmt"
 import "core:strings"
 import "core:os"
-//import _c "core:c"
 import "shared:fmod"
 import "shared:tlc/wolf"
 
 system: ^fmod.FMOD_SYSTEM = nil
 eventsys: ^fmod.FMOD_EVENTSYSTEM = nil
 
-DistanceFactor :: 1.0
+distance_factor :: 1.0
 
-GetVersion :: proc() -> (res: int, err: bool) {
-	return 666, false
-}
+// GetVersion :: proc() -> (res: int, err: bool) {
+// 	return 666, false
+// }
 
 main :: proc() {
-
-	//GetVersion() or_return
-
-
-	fmt.print("FMOD\n")
-
-	/*
-	fmt.print("FMOD_System_Create: ")
-
-	res := fmod.FMOD_System_Create(&system)
-	fmt.printf("%v\n", res)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
-		return
-	}
-
-	defer fmod.FMOD_System_Release(system)
-
-	version: u32
-	res = fmod.FMOD_System_GetVersion(system, &version)
-	fmt.printf("%v %x\n", res, version)
-	*/
-
-	// fmod_eventsystem
 
 	fmt.print("FMOD Event System\n")
 
@@ -71,7 +47,6 @@ main :: proc() {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetSystemObject, res)
 		return
 	}
-	//fmt.printf("%v\n", system)
 
 	driver_index: i32 = 0
 	res = fmod.FMOD_System_GetDriver(system, &driver_index)
@@ -81,7 +56,6 @@ main :: proc() {
 	}
 	fmt.printf("Driver      : %x\n", driver_index)
 
-	//FMOD_VERSION
 	{
 		defer fmt.print("defer info\n")
 
@@ -114,19 +88,18 @@ main :: proc() {
 		return
 	}
 
-	fmt.printf("caps                     : 0x%X\n", i32(driver_caps))
+	fmt.printf("caps                     : 0x%X\n", u32(driver_caps))
 	fmt.printf("controlpanel outputrate  : %v\n", controlpanel_outputrate)
 	fmt.printf("controlpanel speakermode : %v\n", controlpanel_speakermode)
 
-	/* Set the user selected speaker mode. */
 	res = fmod.FMOD_System_SetSpeakerMode(system, controlpanel_speakermode)
 
 	if ((driver_caps & .HARDWARE_EMULATED) == .HARDWARE_EMULATED) {
-		/* The user has the 'Acceleration' slider set to off!  This is really bad for latency!. */
-		/* You might want to warn the user about this. */
+		// The user has the 'Acceleration' slider set to off!  This is really bad for latency!
+		// You might want to warn the user about this.
 		fmt.print("HARDWARE_EMULATED\n")
 		res = fmod.FMOD_System_SetDSPBufferSize(system, 1024, 10)
-		/* At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms. */
+		// At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms.
 		if res != fmod.FMOD_RESULT.FMOD_OK {
 			fmt.printf("FMOD_System_SetDSPBufferSize %v\n", res)
 			return
@@ -135,31 +108,27 @@ main :: proc() {
 
 	init_flags: u32 = fmod.FMOD_INIT_3D_RIGHTHANDED
 
-	//var initResult = _eventSystem.Init(32, initflags, (IntPtr)null);
 	res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
 		fmt.print("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...\n")
-		//fmod.speakerMode = SPEAKERMODE.STEREO;
 		res = fmod.FMOD_System_SetSpeakerMode(system, fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO)
-		/* Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo... */
-		//initResult = _eventSystem.Init(32, init_flags, (IntPtr)null);
+		// Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo...
 		res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
-		/* Replace with whatever channel count and flags you use! */
+		// Replace with whatever channel count and flags you use!
 	}
-	//initResult.ThrowIfNotOk();
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("FMOD_EventSystem_Init %v\n", res)
 		return
 	}
 
 	// Set the distance units. (meters/feet etc).
-	//_system.Set3DSettings(1.0f, DistanceFactor, 1.0f).ThrowIfNotOk();
-	res = fmod.FMOD_System_Set3DSettings(system, 1.0, DistanceFactor, 1.0)
+	res = fmod.FMOD_System_Set3DSettings(system, 1.0, distance_factor, 1.0)
+	if res != fmod.FMOD_RESULT.FMOD_OK {
+		fmt.printf("FMOD_System_Set3DSettings %v\n", res)
+		return
+	}
 
-
-	name := "WolfensteinSFX.fev"
-	c_str := strings.clone_to_cstring(name, context.temp_allocator)
-	res = fmod.FMOD_EventSystem_Load(eventsys, c_str, nil, nil)
+	res = fmod.FMOD_EventSystem_Load(eventsys, "WolfensteinSFX.fev", nil, nil)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("FMOD_EventSystem_Load %v\n", res)
 		return
@@ -173,28 +142,12 @@ main :: proc() {
 	}
 	fmt.printf("Events : %v\n", num_events)
 
-	/*
-	_events = new Event[WolfensteinSFX.EVENTCATEGORYCOUNT_WOLFENSTEINSFX_MASTER];
-	for (int i = 0; i < WolfensteinSFX.EVENTCATEGORYCOUNT_WOLFENSTEINSFX_MASTER; i++)
-	{
-		_events[i] = _audioSystem.GetEventById(i);
-	}
-	*/
-
 	event : ^fmod.FMOD_EVENT = nil
-	res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys,
-		wolf.EVENTID_WOLFENSTEINSFX_PLAYER_UNDERWATER,
-		fmod.FMOD_EVENT_DEFAULT, &event)
-
-	/*
-	var e = _events[i];
-	e.Stop().ThrowIfNotOk();
-	Float3 position = Float3.Zero;
-	Float3 velocity = Float3.Zero;
-	e.Set3DAttributes(ref position, ref velocity).ThrowIfNotOk();
-	e.Start().ThrowIfNotOk();
-	*/
-	// return FMOD_Event_Set3DAttributes(_eventraw, ref position, ref velocity, (IntPtr)null);
+	res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys, wolf.EVENTID_WOLFENSTEINSFX_PLAYER_UNDERWATER, fmod.FMOD_EVENT_DEFAULT, &event)
+	if res != fmod.FMOD_RESULT.FMOD_OK {
+		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetEventBySystemID, res)
+		return
+	}
 
 	position := fmod.FMOD_VECTOR{0, 0, 0}
 	velocity := fmod.FMOD_VECTOR{0, 0, 0}

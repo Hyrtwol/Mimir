@@ -17,7 +17,7 @@ import          "core:time"
 import win32app "shared:tlc/win32app"
 import canvas   "shared:tlc/canvas"
 
-L :: intrinsics.constant_utf16_cstring
+//L :: intrinsics.constant_utf16_cstring
 
 TITLE 	:: "Audio Player"
 WIDTH  	:: 640

@@ -22,8 +22,8 @@ import "shared:tlc/wolf"
 L :: intrinsics.constant_utf16_cstring
 
 TITLE 	:: "FMOD Event System"
-WIDTH  	:: 64*8
-HEIGHT 	:: WIDTH * 9 / 16 // 360
+WIDTH  	:: 64 * 8
+HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 ZOOM  	:: 8
 

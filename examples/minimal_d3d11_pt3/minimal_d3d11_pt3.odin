@@ -73,36 +73,29 @@ main :: proc() {
 	base_device: ^d3d11.IDevice
 	base_device_context: ^d3d11.IDeviceContext
 	hr := d3d11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), d3d11.SDK_VERSION, &base_device, nil, &base_device_context)
-	assert(hr == 0)
-	assert(base_device != nil)
-	assert(base_device_context != nil)
+	assert(hr == 0);assert(base_device != nil);assert(base_device_context != nil)
 
 	device: ^d3d11.IDevice
 	hr = base_device->QueryInterface(d3d11.IDevice_UUID, (^rawptr)(&device))
-	assert(hr == 0)
-	assert(device != nil)
+	assert(hr == 0);assert(device != nil)
 
 	device_context: ^d3d11.IDeviceContext
 	hr = base_device_context->QueryInterface(d3d11.IDeviceContext_UUID, (^rawptr)(&device_context))
-	assert(hr == 0)
-	assert(device_context != nil)
+	assert(hr == 0);assert(device_context != nil)
 
 	//-- Adapter Factory --//
 
 	dxgi_device: ^dxgi.IDevice
 	hr = device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device))
-	assert(hr == 0)
-	assert(dxgi_device != nil)
+	assert(hr == 0);assert(dxgi_device != nil)
 
 	dxgi_adapter: ^dxgi.IAdapter
 	hr = dxgi_device->GetAdapter(&dxgi_adapter)
-	assert(hr == 0)
-	assert(dxgi_adapter != nil)
+	assert(hr == 0);assert(dxgi_adapter != nil)
 
 	dxgi_factory: ^dxgi.IFactory2
 	hr = dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory))
-	assert(hr == 0)
-	assert(dxgi_factory != nil)
+	assert(hr == 0);assert(dxgi_factory != nil)
 
 	//-- Swap Chain --//
 
@@ -121,43 +114,38 @@ main :: proc() {
 	}
 	swap_chain: ^dxgi.ISwapChain1
 	hr = dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swap_chain_desc, nil, nil, &swap_chain)
-	assert(hr == 0)
-	assert(swap_chain != nil)
+	assert(hr == 0);assert(swap_chain != nil)
 	//defer swap_chain->Release()
 
 	//-- Frame Buffer --//
 
-	framebufferTexture: ^d3d11.ITexture2D
-	hr = swap_chain->GetBuffer(0, d3d11.ITexture2D_UUID, (^rawptr)(&framebufferTexture))
-	assert(hr == 0)
-	assert(framebufferTexture != nil)
+	frame_buffer_tex: ^d3d11.ITexture2D
+	hr = swap_chain->GetBuffer(0, d3d11.ITexture2D_UUID, (^rawptr)(&frame_buffer_tex))
+	assert(hr == 0);assert(frame_buffer_tex != nil)
 
-	framebufferDesc: d3d11.RENDER_TARGET_VIEW_DESC = {
+	frame_buffer_desc: d3d11.RENDER_TARGET_VIEW_DESC = {
 		Format        = .B8G8R8A8_UNORM_SRGB, // ... so do this to get _SRGB swap chain (rendertarget view)
 		ViewDimension = .TEXTURE2D,
 	}
 
-	framebufferRTV: ^d3d11.IRenderTargetView
-	hr = device->CreateRenderTargetView(framebufferTexture, &framebufferDesc, &framebufferRTV)
-	assert(hr == 0)
-	assert(framebufferRTV != nil)
+	frame_buffer_rtv: ^d3d11.IRenderTargetView
+	hr = device->CreateRenderTargetView(frame_buffer_tex, &frame_buffer_desc, &frame_buffer_rtv)
+	assert(hr == 0);assert(frame_buffer_rtv != nil)
 
 	//-- Frame Depth Buffer --//
 
-	framebufferDepthDesc: d3d11.TEXTURE2D_DESC
-	framebufferTexture->GetDesc(&framebufferDepthDesc) // copy from framebuffer properties
-	framebufferDepthDesc.Format = .D24_UNORM_S8_UINT
-	framebufferDepthDesc.BindFlags = {.DEPTH_STENCIL}
+	depth_buffer_desc: d3d11.TEXTURE2D_DESC
+	frame_buffer_tex->GetDesc(&depth_buffer_desc) // copy from frame buffer properties
+	depth_buffer_desc.Format = .D24_UNORM_S8_UINT
+	depth_buffer_desc.BindFlags = {.DEPTH_STENCIL}
 
-	framebufferDepthTexture: ^d3d11.ITexture2D
-	hr = device->CreateTexture2D(&framebufferDepthDesc, nil, &framebufferDepthTexture)
-	assert(hr == 0)
-	assert(framebufferDepthTexture != nil)
+	depth_buffer_tex: ^d3d11.ITexture2D
+	hr = device->CreateTexture2D(&depth_buffer_desc, nil, &depth_buffer_tex)
+	assert(hr == 0);assert(depth_buffer_tex != nil)
 
-	framebufferDSV: ^d3d11.IDepthStencilView
-	hr = device->CreateDepthStencilView(framebufferDepthTexture, nil, &framebufferDSV)
-	assert(hr == 0)
-	assert(framebufferDSV != nil)
+	depth_buffer_dsv: ^d3d11.IDepthStencilView
+	hr = device->CreateDepthStencilView(depth_buffer_tex, nil, &depth_buffer_dsv)
+	assert(hr == 0);assert(depth_buffer_dsv != nil)
 
 	//-- Shadowmap Depth Buffer --//
 
@@ -174,8 +162,7 @@ main :: proc() {
 	//fmt.printf("%s %v\n", "shadowmapDepthDesc", shadowmapDepthDesc)
 	shadowmapDepthTexture: ^d3d11.ITexture2D
 	hr = device->CreateTexture2D(&shadowmapDepthDesc, nil, &shadowmapDepthTexture)
-	assert(hr == 0)
-	assert(shadowmapDepthTexture != nil)
+	assert(hr == 0);assert(shadowmapDepthTexture != nil)
 
 	shadowmapDSVdesc: d3d11.DEPTH_STENCIL_VIEW_DESC = {
 		Format        = .D32_FLOAT,
@@ -184,8 +171,7 @@ main :: proc() {
 	//fmt.printf("%s %v\n", "shadowmapDSVdesc", shadowmapDSVdesc)
 	shadowmapDSV: ^d3d11.IDepthStencilView
 	hr = device->CreateDepthStencilView(shadowmapDepthTexture, &shadowmapDSVdesc, &shadowmapDSV)
-	assert(hr == 0, fmt.tprintf("%s %x\n", "CreateDepthStencilView", u32(hr)))
-	assert(shadowmapDSV != nil)
+	assert(hr == 0);assert(shadowmapDSV != nil)
 
 	shadowmapSRVdesc: d3d11.SHADER_RESOURCE_VIEW_DESC = {
 		Format = .R32_FLOAT,
@@ -195,8 +181,7 @@ main :: proc() {
 
 	shadowmapSRV: ^d3d11.IShaderResourceView
 	hr = device->CreateShaderResourceView(shadowmapDepthTexture, &shadowmapSRVdesc, &shadowmapSRV)
-	assert(hr == 0)
-	assert(shadowmapSRV != nil)
+	assert(hr == 0);assert(shadowmapSRV != nil)
 
 	//-- Constant Buffer --//
 
@@ -209,7 +194,7 @@ main :: proc() {
 
 	constantBuffer: ^d3d11.IBuffer
 	hr = device->CreateBuffer(&constantBufferDesc, nil, &constantBuffer)
-	assert(hr == 0)
+	assert(hr == 0);assert(constantBuffer != nil)
 
 	//-- Vertex Buffer --//
 
@@ -228,7 +213,7 @@ main :: proc() {
 
 	vertexBuffer: ^d3d11.IBuffer
 	hr = device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &vertexBuffer)
-	assert(hr == 0)
+	assert(hr == 0);assert(vertexBuffer != nil)
 
 	vertexBufferSRVdesc: d3d11.SHADER_RESOURCE_VIEW_DESC = {
 		Format = .UNKNOWN,
@@ -238,7 +223,7 @@ main :: proc() {
 
 	vertexBufferSRV: ^d3d11.IShaderResourceView
 	hr = device->CreateShaderResourceView(vertexBuffer, &vertexBufferSRVdesc, &vertexBufferSRV)
-	assert(hr == 0)
+	assert(hr == 0);assert(vertexBufferSRV != nil)
 
 	//-- Depth Stencil --//
 
@@ -249,7 +234,7 @@ main :: proc() {
 	}
 	depthStencilState: ^d3d11.IDepthStencilState
 	hr = device->CreateDepthStencilState(&depthStencilDesc, &depthStencilState)
-	assert(hr == 0)
+	assert(hr == 0);assert(depthStencilState != nil)
 
 	//-- Rasterizer States --//
 
@@ -259,77 +244,66 @@ main :: proc() {
 	}
 	cullBackRS: ^d3d11.IRasterizerState
 	hr = device->CreateRasterizerState(&rasterizerDesc, &cullBackRS)
-	assert(hr == 0)
-	assert(cullBackRS != nil)
+	assert(hr == 0);assert(cullBackRS != nil)
 
 	rasterizerDesc.CullMode = .FRONT
 	cullFrontRS: ^d3d11.IRasterizerState
 	hr = device->CreateRasterizerState(&rasterizerDesc, &cullFrontRS)
-	assert(hr == 0)
-	assert(cullFrontRS != nil)
+	assert(hr == 0);assert(cullFrontRS != nil)
 
 	//-- framebuffer_vs --//
 
 	framebufferVSBlob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "framebuffer_vs", "vs_5_0", 0, 0, &framebufferVSBlob, nil)
-	assert(hr == 0)
-	assert(framebufferVSBlob != nil)
+	assert(hr == 0);assert(framebufferVSBlob != nil)
 
 	framebufferVS: ^d3d11.IVertexShader
 	hr = device->CreateVertexShader(framebufferVSBlob->GetBufferPointer(), framebufferVSBlob->GetBufferSize(), nil, &framebufferVS)
-	assert(hr == 0)
-	assert(framebufferVS != nil)
+	assert(hr == 0);assert(framebufferVS != nil)
 
 	//-- framebuffer_ps --//
 
 	framebufferPSBlob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "framebuffer_ps", "ps_5_0", 0, 0, &framebufferPSBlob, nil)
-	assert(hr == 0)
-	assert(framebufferPSBlob != nil)
+	assert(hr == 0);assert(framebufferPSBlob != nil)
 
 	framebufferPS: ^d3d11.IPixelShader
 	hr = device->CreatePixelShader(framebufferPSBlob->GetBufferPointer(), framebufferPSBlob->GetBufferSize(), nil, &framebufferPS)
-	assert(hr == 0)
-	assert(framebufferPS != nil)
+	assert(hr == 0);assert(framebufferPS != nil)
 
 	//-- shadowmap_vs --//
 
 	shadowmapVSBlob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "shadowmap_vs", "vs_5_0", 0, 0, &shadowmapVSBlob, nil)
-	assert(hr == 0)
-	assert(shadowmapVSBlob != nil)
+	assert(hr == 0);assert(shadowmapVSBlob != nil)
 
 	shadowmapVS: ^d3d11.IVertexShader
 	hr = device->CreateVertexShader(shadowmapVSBlob->GetBufferPointer(), shadowmapVSBlob->GetBufferSize(), nil, &shadowmapVS)
-	assert(hr == 0)
+	assert(hr == 0);assert(shadowmapVS != nil)
 
 	//-- debug_vs --//
 
 	debug_vs_blob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_vs", "vs_5_0", 0, 0, &debug_vs_blob, nil)
-	assert(debug_vs_blob != nil)
-	assert(hr == 0)
+	assert(hr == 0);assert(debug_vs_blob != nil)
 
 	debug_vs: ^d3d11.IVertexShader
 	hr = device->CreateVertexShader(debug_vs_blob->GetBufferPointer(), debug_vs_blob->GetBufferSize(), nil, &debug_vs)
-	assert(hr == 0)
-	assert(debug_vs != nil)
+	assert(hr == 0);assert(debug_vs != nil)
 
 	//-- debug_ps --//
 
 	debug_ps_blob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_ps", "ps_5_0", 0, 0, &debug_ps_blob, nil)
-	assert(hr == 0)
-	assert(debug_ps_blob != nil)
+	assert(hr == 0);assert(debug_ps_blob != nil)
 
 	debug_ps: ^d3d11.IPixelShader
 	hr = device->CreatePixelShader(debug_ps_blob->GetBufferPointer(), debug_ps_blob->GetBufferSize(), nil, &debug_ps)
-	assert(hr == 0)
-	assert(debug_ps != nil)
+	assert(hr == 0);assert(debug_ps != nil)
 
 	//-- Viewport --//
 
-	framebufferVP: d3d11.VIEWPORT = {0, 0, f32(framebufferDepthDesc.Width), f32(framebufferDepthDesc.Height), 0, 1}
+	framebufferVP: d3d11.VIEWPORT = {0, 0, f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height), 0, 1}
 	shadowmapVP: d3d11.VIEWPORT = {0, 0, f32(shadowmapDepthDesc.Width), f32(shadowmapDepthDesc.Height), 0, 1}
 
 	//-- Constant Buffer --//
@@ -357,12 +331,13 @@ main :: proc() {
 		constants.ModelRotation += ModelRotationStep
 
 		//-- Update Constants --//
-
-		mappedSubresource: d3d11.MAPPED_SUBRESOURCE
-		hr = device_context->Map(constantBuffer, 0, .WRITE_DISCARD, {}, &mappedSubresource)
-		assert(hr == 0)
-		(^Constants)(mappedSubresource.pData)^ = constants
-		device_context->Unmap(constantBuffer, 0)
+		{
+			mappedSubresource: d3d11.MAPPED_SUBRESOURCE
+			hr = device_context->Map(constantBuffer, 0, .WRITE_DISCARD, {}, &mappedSubresource)
+			assert(hr == 0)
+			(^Constants)(mappedSubresource.pData)^ = constants
+			device_context->Unmap(constantBuffer, 0)
+		}
 
 		//-- Render Shadowmap --//
 
@@ -386,10 +361,10 @@ main :: proc() {
 
 		//-- Render Frame --//
 
-		device_context->ClearRenderTargetView(framebufferRTV, transmute(^[4]f32)&frame_buffer_clear_color) // [4]f32
-		device_context->ClearDepthStencilView(framebufferDSV, {.DEPTH}, 1, 0)
+		device_context->ClearRenderTargetView(frame_buffer_rtv, transmute(^[4]f32)&frame_buffer_clear_color) // [4]f32
+		device_context->ClearDepthStencilView(depth_buffer_dsv, {.DEPTH}, 1, 0)
 
-		device_context->OMSetRenderTargets(1, &framebufferRTV, framebufferDSV)
+		device_context->OMSetRenderTargets(1, &frame_buffer_rtv, depth_buffer_dsv)
 
 		device_context->VSSetShader(framebufferVS, nil, 0)
 
@@ -423,5 +398,19 @@ main :: proc() {
 
 shaders_hlsl := #load(SHADER_FILE)
 
+
+
+// odinfmt: disable
+
 // pos.x, pos.y, pos.z, tex.u, tex.v, ...
-vertexData := [?]f32{-1, 1, -1, 0, 0, 1, 1, -1, 9.5, 0, -0.58, 0.58, -1, 2, 2, 0.58, 0.58, -1, 7.5, 2, -0.58, 0.58, -1, 0, 0, 0.58, 0.58, -1, 0, 0, -0.58, 0.58, -0.58, 0, 0, 0.58, 0.58, -0.58, 0, 0}
+vertexData := [?]f32{
+	-1   , 1   , -1   , 0  , 0,
+	 1   , 1   , -1   , 9.5, 0,
+	-0.58, 0.58, -1   , 2  , 2,
+	 0.58, 0.58, -1   , 7.5, 2,
+	-0.58, 0.58, -1   , 0  , 0,
+	 0.58, 0.58, -1   , 0  , 0,
+	-0.58, 0.58, -0.58, 0  , 0,
+	 0.58, 0.58, -0.58, 0  , 0,
+}
+// odinfmt: enable

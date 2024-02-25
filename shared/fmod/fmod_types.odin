@@ -2,8 +2,10 @@ package fmod
 
 USE_LINALG :: #config(FMOD_USE_LINALG, true)
 
-import "core:math/linalg"
 import _c "core:c"
+when USE_LINALG {
+	import "core:math/linalg"
+}
 
 int :: _c.int // i32
 uint :: _c.uint // u32
@@ -26,8 +28,12 @@ FMOD_MUSIC_ID :: _c.uint
 FMOD_MUSIC_CUE_ID :: _c.uint
 FMOD_MUSIC_PARAM_ID :: _c.uint
 
-//FMOD_VECTOR :: distinct [3]f32
-FMOD_VECTOR :: linalg.Vector3f32
+when USE_LINALG {
+	FMOD_VECTOR :: linalg.Vector3f32
+} else {
+	FMOD_VECTOR :: [3]f32
+}
+
 FMOD_VECTOR_ZERO :: FMOD_VECTOR{0, 0, 0}
 
 /*

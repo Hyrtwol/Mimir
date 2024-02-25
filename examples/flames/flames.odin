@@ -12,10 +12,10 @@ import "core:runtime"
 import "core:simd"
 import "core:strings"
 import win32 "core:sys/windows"
-import win32ex "shared:sys/windows"
 import "core:time"
-import win32app "shared:tlc/win32app"
+import win32ex "shared:sys/windows"
 import canvas "shared:tlc/canvas"
+import win32app "shared:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: canvas.byte4
@@ -25,7 +25,7 @@ double2 :: hlm.double2
 double3 :: hlm.double3
 DIB :: canvas.DIB
 
-TITLE 	:: "Flames"
+TITLE :: "Flames"
 WIDTH: i32 : 160
 HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
@@ -34,7 +34,7 @@ FPS: u32 : 20
 
 settings := win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
 
-my_rand := rand.create(1)
+rng := rand.create(1)
 flamebuffer: [PXLCNT]u8
 palette: [256]byte4
 
@@ -46,7 +46,7 @@ npos2: double2 = {0, 0}
 ndir2: double2 = {0.007, 0.003}
 nseed: i64 = 12345
 
-noise_func: proc(dib: ^DIB) = dib_noise1
+dib_update_func: proc(dib: ^DIB) = dib_flames
 
 setdot :: proc(x, y: i32, col: u8) {
 	i := y * WIDTH + x
@@ -56,12 +56,12 @@ setdot :: proc(x, y: i32, col: u8) {
 }
 
 setbigdot :: proc(x, y: i32, col: u8, r: i32) {
-	rr := r*r
+	rr := r * r
 	for iy in -r ..= r {
 		for ix in -r ..= r {
-			d := ix*ix + iy*iy
-			if d<=rr {
-				setdot(x+ix, y+iy, col)
+			d := ix * ix + iy * iy
+			if d <= rr {
+				setdot(x + ix, y + iy, col)
 			}
 		}
 	}
@@ -75,10 +75,10 @@ getdot :: proc(x, y: i32) -> i32 {
 	return 0
 }
 
-dib_noise1 :: proc(dib: ^DIB) {
+dib_flames :: proc(dib: ^DIB) {
 	p := dib.pvBits
 	w := dib.size.x
-	h := dib.size.y
+	//h := dib.size.y
 
 	i: i32
 
@@ -100,7 +100,7 @@ dib_noise1 :: proc(dib: ^DIB) {
 	// set a new bottom line
 	i = w * (HEIGHT - 1)
 	for x in 0 ..< WIDTH {
-		c := u8(rand.int31_max(256, &my_rand))
+		c := u8(rand.int31_max(256, &rng))
 		flamebuffer[i] = c
 		i += 1
 	}
@@ -130,9 +130,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	win32.ReleaseDC(hwnd, hdc)
 
 	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000 / FPS, nil)
-	if timer_id == 0 {
-		win32app.show_error_and_panic("No timer")
-	}
+	if timer_id == 0 {win32app.show_error_and_panic("No timer")}
 
 	return 0
 }
@@ -154,8 +152,8 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b':	win32.DestroyWindow(hwnd)
-	case '1':		noise_func = dib_noise1
+	case '\x1b': win32.DestroyWindow(hwnd)
+	case '1':    dib_update_func = dib_flames
 	}
 	return 0
 }
@@ -176,32 +174,16 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	defer win32ex.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
-    client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.StretchBlt(
-		ps.hdc, 0, 0, client_size.x, client_size.y,
-		hdc_source, 0, 0, dib.size.x, dib.size.y,
-		win32.SRCCOPY,
-	)
+	client_size := win32app.get_rect_size(&ps.rcPaint)
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
 
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	noise_func(&dib)
+	dib_update_func(&dib)
 	win32ex.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	return 0
-}
-
-WM_MOUSEMOVE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hwnd, wparam, lparam)
-}
-
-WM_LBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hwnd, wparam, lparam)
-}
-
-WM_RBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hwnd, wparam, lparam)
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
@@ -220,36 +202,28 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
-wndproc :: proc "system" (
-	hwnd: win32.HWND,
-	msg: win32.UINT,
-	wparam: win32.WPARAM,
-	lparam: win32.LPARAM,
-) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
-	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
+	case win32.WM_CREATE: 		return WM_CREATE(hwnd, wparam, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
 	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
-	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:	return WM_RBUTTONDOWN(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 }
 
-tocol :: proc(n: f64) -> u8 {
-	return u8(n * 255.999)
-}
-
 main :: proc() {
+	calcol :: proc(n: f64) -> u8 {return u8(n * 255.999)}
 	for i in 0 ..< 256 {
-		f: f64 = f64(i) / 255
-		palette[i] = {tocol(math.pow(f, 0.5)), tocol(math.pow(f, 1.25)), tocol(math.pow(f, 3.0)), 255}
+		f := f64(i) / 255
+		palette[i] = {calcol(math.pow(f, 0.5)), calcol(math.pow(f, 1.25)), calcol(math.pow(f, 3.0)), 255}
 	}
 	win32app.run(&settings)
 }

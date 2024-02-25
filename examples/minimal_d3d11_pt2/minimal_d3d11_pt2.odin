@@ -1,31 +1,35 @@
-package minimal_d3d11_pt1
+package minimal_d3d11_pt2
 
 import "core:fmt"
-import glm "core:math/linalg/glsl"
+import hlm "core:math/linalg/hlsl"
 import "core:runtime"
-//import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
+import win32ex "shared:sys/windows"
 import win32app "shared:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
 
-// Based off Minimal D3D11 https://gist.github.com/d7samurai/261c69490cce0620d0bfc93003cd1052
+// Based off Minimal D3D11 pt2 https://gist.github.com/d7samurai/aee35fd5d132c51e8b0a78699cbaa1e4
 
-TITLE :: "Minimal D3D11 pt1"
+TITLE :: "Minimal D3D11 pt2"
 WIDTH :: 1920 / 2
 HEIGHT :: WIDTH * 9 / 16
 SHADER_FILE :: "shaders.hlsl"
 
-// float2 :: glm.vec2
-// float3 :: glm.vec3
-// float4 :: glm.vec4
-// float4x4 :: glm.mat4
+float2 :: hlm.float2
+float3 :: hlm.float3
+float4 :: hlm.float4
+float4x4 :: hlm.float4x4
+
+frame_buffer_clear_color := float4{0.025, 0.025, 0.025, 1.0}
 
 Constants :: struct #align (16) {
-	transform:    glm.mat4,
-	projection:   glm.mat4,
-	light_vector: glm.vec3,
+	projection:   float4x4,
+	light_vector: float4,
+	rotate:       float4,
+	scale:        float4,
+	translate:    float4,
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -90,13 +94,13 @@ main :: proc() {
 	swap_chain_desc := dxgi.SWAP_CHAIN_DESC1 {
 		Width = 0, // use window width
 		Height = 0, // use window height
-		Format = .B8G8R8A8_UNORM_SRGB,
+		Format = .B8G8R8A8_UNORM, // can't specify _SRGB here when using DXGI_SWAP_EFFECT_FLIP_* ...
 		Stereo = false,
 		SampleDesc = {Count = 1, Quality = 0},
 		BufferUsage = {.RENDER_TARGET_OUTPUT},
 		BufferCount = 2,
 		Scaling = .STRETCH,
-		SwapEffect = .DISCARD, // prefer DXGI_SWAP_EFFECT_FLIP_DISCARD, see Minimal D3D11 pt2
+		SwapEffect = .FLIP_DISCARD,
 		AlphaMode = .UNSPECIFIED,
 		Flags = {},
 	}
@@ -111,8 +115,13 @@ main :: proc() {
 	hr = swap_chain->GetBuffer(0, d3d11.ITexture2D_UUID, (^rawptr)(&frame_buffer_tex))
 	assert(hr == 0);assert(frame_buffer_tex != nil)
 
+	frame_buffer_desc: d3d11.RENDER_TARGET_VIEW_DESC = {
+		Format        = .B8G8R8A8_UNORM_SRGB, // ... so do this to get _SRGB swap chain (rendertarget view)
+		ViewDimension = .TEXTURE2D,
+	}
+
 	frame_buffer_rtv: ^d3d11.IRenderTargetView
-	hr = device->CreateRenderTargetView(frame_buffer_tex, nil, &frame_buffer_rtv)
+	hr = device->CreateRenderTargetView(frame_buffer_tex, &frame_buffer_desc, &frame_buffer_rtv)
 	assert(hr == 0);assert(frame_buffer_rtv != nil)
 
 	//-- Frame Depth Buffer --//
@@ -130,25 +139,28 @@ main :: proc() {
 	hr = device->CreateDepthStencilView(depth_buffer_tex, nil, &depth_buffer_dsv)
 	assert(hr == 0);assert(depth_buffer_dsv != nil)
 
-	//-- framebuffer_vs --//
+	///////////////////////////////////////////////////////////////////////////////////////////////
 
 	vs_blob: ^d3d11.IBlob
-	d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "vs_main", "vs_5_0", 0, 0, &vs_blob, nil)
-	assert(vs_blob != nil);assert(vs_blob != nil)
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "vs_main", "vs_5_0", 0, 0, &vs_blob, nil)
+	assert(hr == 0);assert(vs_blob != nil)
 
 	vertex_shader: ^d3d11.IVertexShader
-	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nil, &vertex_shader)
+	hr = device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nil, &vertex_shader)
+	assert(hr == 0);assert(vertex_shader != nil)
 
 	// odinfmt: disable
 	input_element_desc := [?]d3d11.INPUT_ELEMENT_DESC {
-		{"POS", 0, .R32G32B32_FLOAT, 0,                            0, .VERTEX_DATA, 0},
-		{"NOR", 0, .R32G32B32_FLOAT, 0, d3d11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA, 0},
-		{"TEX", 0, .R32G32_FLOAT,    0, d3d11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA, 0},
-		{"COL", 0, .R32G32B32_FLOAT, 0, d3d11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA, 0},
+		{"POS", 0, .R32G32B32_FLOAT, 0,                            0, .VERTEX_DATA,   0},
+		{"NOR", 0, .R32G32B32_FLOAT, 0, d3d11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA,   0},
+		{"TEX", 0, .R32G32_FLOAT,    0, d3d11.APPEND_ALIGNED_ELEMENT, .VERTEX_DATA,   0},
+		{"ROT", 0, .R32G32B32_UINT,  1, d3d11.APPEND_ALIGNED_ELEMENT, .INSTANCE_DATA, 1}, // change every instance
+		{"COL", 0, .R32G32B32_FLOAT, 2, d3d11.APPEND_ALIGNED_ELEMENT, .INSTANCE_DATA, 4}, // change every 4th instance, i.e. every face
 	}
 	// odinfmt: enable
 	input_layout: ^d3d11.IInputLayout
-	device->CreateInputLayout(&input_element_desc[0], len(input_element_desc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout)
+	hr = device->CreateInputLayout(&input_element_desc[0], len(input_element_desc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout)
+	assert(hr == 0);assert(input_layout != nil)
 
 	//-- framebuffer_ps --//
 
@@ -157,27 +169,8 @@ main :: proc() {
 	assert(hr == 0);assert(ps_blob != nil)
 
 	pixel_shader: ^d3d11.IPixelShader
-	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nil, &pixel_shader)
-
-	//-- debug_vs --//
-
-	debug_vs_blob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_vs", "vs_5_0", 0, 0, &debug_vs_blob, nil)
-	assert(hr == 0);assert(debug_vs_blob != nil)
-
-	debug_vs: ^d3d11.IVertexShader
-	hr = device->CreateVertexShader(debug_vs_blob->GetBufferPointer(), debug_vs_blob->GetBufferSize(), nil, &debug_vs)
-	assert(hr == 0);assert(debug_vs != nil)
-
-	//-- debug_ps --//
-
-	debug_ps_blob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_ps", "ps_5_0", 0, 0, &debug_ps_blob, nil)
-	assert(hr == 0);assert(debug_ps_blob != nil)
-
-	debug_ps: ^d3d11.IPixelShader
-	hr = device->CreatePixelShader(debug_ps_blob->GetBufferPointer(), debug_ps_blob->GetBufferSize(), nil, &debug_ps)
-	assert(hr == 0);assert(debug_ps != nil)
+	hr = device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nil, &pixel_shader)
+	assert(hr == 0);assert(pixel_shader != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -186,7 +179,8 @@ main :: proc() {
 		CullMode = .BACK,
 	}
 	rasterizer_state: ^d3d11.IRasterizerState
-	device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state)
+	hr = device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state)
+	assert(hr == 0);assert(rasterizer_state != nil)
 
 	sampler_desc := d3d11.SAMPLER_DESC {
 		Filter         = .MIN_MAG_MIP_POINT,
@@ -196,7 +190,10 @@ main :: proc() {
 		ComparisonFunc = .NEVER,
 	}
 	sampler_state: ^d3d11.ISamplerState
-	device->CreateSamplerState(&sampler_desc, &sampler_state)
+	hr = device->CreateSamplerState(&sampler_desc, &sampler_state)
+	assert(hr == 0);assert(sampler_state != nil)
+
+	//-- Depth Stencil --//
 
 	depth_stencil_desc := d3d11.DEPTH_STENCIL_DESC {
 		DepthEnable    = true,
@@ -204,7 +201,8 @@ main :: proc() {
 		DepthFunc      = .LESS,
 	}
 	depth_stencil_state: ^d3d11.IDepthStencilState
-	device->CreateDepthStencilState(&depth_stencil_desc, &depth_stencil_state)
+	hr = device->CreateDepthStencilState(&depth_stencil_desc, &depth_stencil_state)
+	assert(hr == 0);assert(depth_stencil_state != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -214,24 +212,66 @@ main :: proc() {
 		BindFlags      = {.CONSTANT_BUFFER},
 		CPUAccessFlags = {.WRITE},
 	}
+	assert(constant_buffer_desc.ByteWidth == 128, fmt.tprintf("constant_buffer_desc=%v\n", constant_buffer_desc))
+	fmt.printf("constant_buffer_desc=%v\n", constant_buffer_desc)
 	constant_buffer: ^d3d11.IBuffer
-	device->CreateBuffer(&constant_buffer_desc, nil, &constant_buffer)
+	hr = device->CreateBuffer(&constant_buffer_desc, nil, &constant_buffer)
+	assert(hr == 0);assert(constant_buffer != nil)
 
 	vertex_buffer_desc := d3d11.BUFFER_DESC {
 		ByteWidth = size_of(vertex_data),
 		Usage     = .IMMUTABLE,
 		BindFlags = {.VERTEX_BUFFER},
 	}
+
+	vertex_buffer_data := d3d11.SUBRESOURCE_DATA {
+		pSysMem     = &vertex_data[0],
+		SysMemPitch = vertex_buffer_desc.ByteWidth,
+	}
+
 	vertex_buffer: ^d3d11.IBuffer
-	device->CreateBuffer(&vertex_buffer_desc, &d3d11.SUBRESOURCE_DATA{pSysMem = &vertex_data[0], SysMemPitch = size_of(vertex_data)}, &vertex_buffer)
+	hr = device->CreateBuffer(&vertex_buffer_desc, &vertex_buffer_data, &vertex_buffer)
+	assert(hr == 0);assert(vertex_buffer != nil)
 
 	index_buffer_desc := d3d11.BUFFER_DESC {
 		ByteWidth = size_of(index_data),
 		Usage     = .IMMUTABLE,
 		BindFlags = {.INDEX_BUFFER},
 	}
+
+	index_buffer_data := d3d11.SUBRESOURCE_DATA {
+		pSysMem     = &index_data[0],
+		SysMemPitch = index_buffer_desc.ByteWidth,
+	}
+
 	index_buffer: ^d3d11.IBuffer
-	device->CreateBuffer(&index_buffer_desc, &d3d11.SUBRESOURCE_DATA{pSysMem = &index_data[0], SysMemPitch = size_of(index_data)}, &index_buffer)
+	hr = device->CreateBuffer(&index_buffer_desc, &index_buffer_data, &index_buffer)
+	assert(hr == 0);assert(index_buffer != nil)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	instanceBufferDesc: d3d11.BUFFER_DESC = {
+		Usage     = .IMMUTABLE,
+		BindFlags = {.VERTEX_BUFFER},
+	}
+
+	instanceData: d3d11.SUBRESOURCE_DATA = {}
+
+	instanceRotationBuffer: ^d3d11.IBuffer
+
+	instanceBufferDesc.ByteWidth = size_of(instance_rotation_data)
+	instanceData.pSysMem = &instance_rotation_data[0]
+
+	hr = device->CreateBuffer(&instanceBufferDesc, &instanceData, &instanceRotationBuffer)
+	assert(hr == 0);assert(instanceRotationBuffer != nil)
+
+	instanceColorBuffer: ^d3d11.IBuffer
+
+	instanceBufferDesc.ByteWidth = size_of(instance_color_data)
+	instanceData.pSysMem = &instance_color_data[0]
+
+	hr = device->CreateBuffer(&instanceBufferDesc, &instanceData, &instanceColorBuffer)
+	assert(hr == 0);assert(instanceColorBuffer != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -248,7 +288,7 @@ main :: proc() {
 
 	texture_data := d3d11.SUBRESOURCE_DATA {
 		pSysMem     = &texture_data[0],
-		SysMemPitch = TEXTURE_WIDTH * 4,
+		SysMemPitch = TEXTURE_WIDTH * size_of(u32),
 	}
 
 	texture: ^d3d11.ITexture2D
@@ -261,55 +301,52 @@ main :: proc() {
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	vertex_buffer_stride: u32 = 11 * size_of(u32)
-	vertex_buffer_offset: u32 = 0
+	buffers: [3]^d3d11.IBuffer = {vertex_buffer, instanceRotationBuffer, instanceColorBuffer}
+	// vertex (float3 position, float3 normal, float2 texcoord), instance rotation (uint3 rotation), instance color (float3 color)
+	vertex_buffer_stride: [3]u32 = {8 * size_of(f32), 3 * size_of(u32), 3 * size_of(f32)}
+	vertex_buffer_offset: [3]u32 = {0, 0, 0}
 
-	model_rotation := glm.vec3{0.0, 0.0, 0.0}
-	model_translation := glm.vec3{0.0, 0.0, 4.0}
+	viewport := d3d11.VIEWPORT{0, 0, f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height), 0, 1}
+
+	w := viewport.Width / viewport.Height
+	h := f32(1)
+	n := f32(1)
+	f := f32(9)
+
+	constants: Constants
+
+	constants.projection = {2 * n / w, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), 1, 0, 0, n * f / (n - f), 0} // projection matrix
+	constants.light_vector = {1.0, -1.0, 1.0, 0.0}
+	constants.rotate = {0.0, 0.0, 0.0, 0.0}
+	constants.scale = {1.0, 1.0, 1.0, 0.0}
+	constants.translate = {0.0, 0.0, 4.0, 0.0}
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)
 
 	for win32app.pull_messages() {
 
-		viewport := d3d11.VIEWPORT{0, 0, f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height), 0, 1}
-
-		w := viewport.Width / viewport.Height
-		h := f32(1)
-		n := f32(1)
-		f := f32(9)
-
-		rotate_x := glm.mat4Rotate({1, 0, 0}, model_rotation.x)
-		rotate_y := glm.mat4Rotate({0, 1, 0}, model_rotation.y)
-		rotate_z := glm.mat4Rotate({0, 0, 1}, model_rotation.z)
-		translate := glm.mat4Translate(model_translation)
-
-		model_rotation.x += 0.005
-		model_rotation.y += 0.009
-		model_rotation.z += 0.001
+		constants.rotate.x += 0.005
+		constants.rotate.y += 0.009
+		constants.rotate.z += 0.001
 
 		//-- Update Constants --//
 		{
-			mapped_subresource: d3d11.MAPPED_SUBRESOURCE
-			device_context->Map(constant_buffer, 0, .WRITE_DISCARD, {}, &mapped_subresource)
-			constants := (^Constants)(mapped_subresource.pData)
-			constants.transform = translate * rotate_z * rotate_y * rotate_x
-			constants.light_vector = {+1, -1, +1}
-
-			constants.projection = {2 * n / w, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), n * f / (n - f), 0, 0, 1, 0}
-			//fmt.printf("%s %v\n", "projection ", constants.projection)
-			//fmt.printf("%s %v\n", "Perspective", glm.mat4Perspective(glm.PI*0.25, viewport.Height / viewport.Width, n, f))
+			mappedSubresource: d3d11.MAPPED_SUBRESOURCE
+			hr = device_context->Map(constant_buffer, 0, .WRITE_DISCARD, {}, &mappedSubresource)
+			assert(hr == 0)
+			(^Constants)(mappedSubresource.pData)^ = constants
 			device_context->Unmap(constant_buffer, 0)
 		}
 
 		//-- Render Frame --//
 
-		device_context->ClearRenderTargetView(frame_buffer_rtv, &[4]f32{0.25, 0.5, 1.0, 1.0})
+		device_context->ClearRenderTargetView(frame_buffer_rtv, transmute(^[4]f32)&frame_buffer_clear_color)
 		device_context->ClearDepthStencilView(depth_buffer_dsv, {.DEPTH}, 1, 0)
 
 		device_context->IASetPrimitiveTopology(.TRIANGLELIST)
 		device_context->IASetInputLayout(input_layout)
-		device_context->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_buffer_stride, &vertex_buffer_offset)
+		device_context->IASetVertexBuffers(0, 3, &buffers[0], &vertex_buffer_stride[0], &vertex_buffer_offset[0])
 		device_context->IASetIndexBuffer(index_buffer, .R32_UINT, 0)
 
 		device_context->VSSetShader(vertex_shader, nil, 0)
@@ -328,16 +365,7 @@ main :: proc() {
 
 		///////////////////////////////////////////////////////////////////////////////////////////////
 
-		device_context->DrawIndexed(len(index_data), 0, 0)
-
-		///////////////////////////////////////////////////////////////////////////////////////////
-
-		//device_context->OMSetDepthStencilState(nil, 0)
-		device_context->IASetPrimitiveTopology(.TRIANGLESTRIP)
-		device_context->PSSetShaderResources(0, 1, &texture_view)
-		device_context->VSSetShader(debug_vs, nil, 0)
-		device_context->PSSetShader(debug_ps, nil, 0)
-		device_context->Draw(4, 0)
+		device_context->DrawIndexedInstanced(len(index_data), 24, 0, 0, 0)
 
 		///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -345,6 +373,55 @@ main :: proc() {
 	}
 
 	fmt.print("DONE\n")
+	//os.exit(int(msg.wParam))
 }
 
 shaders_hlsl := #load(SHADER_FILE)
+
+
+
+// odinfmt: disable
+
+TEXTURE_WIDTH  :: 2
+TEXTURE_HEIGHT :: 2
+
+texture_data := [TEXTURE_WIDTH*TEXTURE_HEIGHT]u32{
+	0xfffffff, 0xff7f7f7f,
+	0xff7f7f7, 0xffffffff,
+}
+
+vertex_data := [?]f32{
+	// pos.x, pos.y, pos.z, nor.x, nor.y, nor.z, tex.u, tex.v, ...
+    -1.00,  1.00, -1.00,  0.0,  0.0, -1.0,  0.0,  0.0,
+	 1.00,  1.00, -1.00,  0.0,  0.0, -1.0,  9.5,  0.0,
+     0.58,  0.58, -1.00,  0.0,  0.0, -1.0,  7.5,  2.0,
+	-0.58,  0.58, -1.00,  0.0,  0.0, -1.0,  2.0,  2.0,
+    -0.58,  0.58, -1.00,  0.0, -1.0,  0.0,  0.0,  0.0,
+	 0.58,  0.58, -1.00,  0.0, -1.0,  0.0,  0.0,  0.0,
+     0.58,  0.58, -0.58,  0.0, -1.0,  0.0,  0.0,  0.0,
+	-0.58,  0.58, -0.58,  0.0, -1.0,  0.0,  0.0,  0.0,
+}
+
+index_data := [?]u32{ 0, 1, 3, 1, 2, 3, 4, 5, 7, 5, 6, 7 }
+
+instance_rotation_data := [?]u32{
+	// rot.x, rot.y, rot.z, ... in multiples of 90 degrees
+	0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 3,
+	1, 0, 0, 1, 1, 0, 1, 2, 0, 1, 3, 0,
+	2, 0, 0, 2, 0, 1, 2, 0, 2, 2, 0, 3,
+	3, 0, 0, 3, 1, 0, 3, 2, 0, 3, 3, 0,
+	1, 0, 1, 1, 1, 1, 1, 2, 1, 1, 3, 1,
+	1, 0, 3, 1, 1, 3, 1, 2, 3, 1, 3, 3,
+ }
+
+instance_color_data := [?]f32{
+	// col.r, col.g, col.b, ...
+	0.973, 0.480, 0.002,
+	0.897, 0.163, 0.011,
+	0.612, 0.000, 0.069,
+	0.127, 0.116, 0.408,
+	0.000, 0.254, 0.637,
+	0.001, 0.447, 0.067,
+}
+
+// odinfmt: enable
