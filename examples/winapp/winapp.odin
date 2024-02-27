@@ -149,19 +149,16 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	hdc_target := win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
-	assert(hdc_target == ps.hdc)
+	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
 
-	client_size := win32app.get_client_size(hwnd)
-	assert(client_size == win32app.get_rect_size(&ps.rcPaint))
-
-	hdc_source := win32ex.CreateCompatibleDC(hdc_target)
+	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
 	defer win32ex.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, bitmap_handle)
+	client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.StretchBlt(
-		hdc_target, 0, 0, client_size.x, client_size.y,
+		ps.hdc, 0, 0, client_size.x, client_size.y,
 		hdc_source, 0, 0, bitmap_size.x, bitmap_size.y,
 		win32.SRCCOPY,
 	)
@@ -169,7 +166,6 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
-// https://learn.microsoft.com/en-us/windows/win32/winmsg/using-timers
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch (wparam)
 	{
@@ -177,18 +173,6 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	case win32app.IDT_TIMER2: fmt.print("TOK\n")
 	}
 	return 0
-}
-
-WM_MOUSEMOVE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hwnd, wparam, lparam)
-}
-
-WM_LBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hwnd, wparam, lparam)
-}
-
-WM_RBUTTONDOWN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return handle_input(hwnd, wparam, lparam)
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -222,9 +206,9 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
-	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:	return WM_RBUTTONDOWN(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
