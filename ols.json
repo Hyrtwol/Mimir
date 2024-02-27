@@ -1,18 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/DanielGavin/ols/master/misc/ols.schema.json",
     "collections": [
-        {
-			"name": "base",
-			"path": "..\\Odin\\base"
-		},
-        {
-            "name": "core",
-            "path": "..\\Odin\\core"
-        },
-		{
-			"name": "vendor",
-			"path": "..\\Odin\\vendor"
-		},
 		{
 			"name": "shared",
 			"path": "shared"

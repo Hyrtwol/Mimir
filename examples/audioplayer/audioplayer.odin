@@ -1,61 +1,63 @@
-package main
+package audioplayer
 
-import          "core:fmt"
-import          "core:intrinsics"
-import          "core:math"
-import          "core:math/linalg"
-import hlm      "core:math/linalg/hlsl"
-import          "core:math/noise"
-import          "core:math/rand"
-import          "core:mem"
-import          "core:runtime"
-import          "core:simd"
-import          "core:strings"
-import win32    "core:sys/windows"
-import win32ex  "shared:sys/windows"
-import          "core:time"
+import "core:fmt"
+import "core:intrinsics"
+import "core:math"
+import "core:math/linalg"
+import hlm "core:math/linalg/hlsl"
+import "core:math/noise"
+import "core:math/rand"
+import "core:mem"
+import "core:runtime"
+import "core:simd"
+import "core:strings"
+import win32 "core:sys/windows"
+import "core:time"
+import win32ex "shared:sys/windows"
+import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
-import canvas   "shared:tlc/canvas"
 
 //L :: intrinsics.constant_utf16_cstring
 
-TITLE 	:: "Audio Player"
-WIDTH  	:: 640
-HEIGHT 	:: WIDTH * 9 / 16
-CENTER  :: true
-ZOOM  	:: 8
+// https://learn.microsoft.com/en-us/windows/win32/multimedia/example-of-writing-waveform-data
 
-settings : win32app.window_settings = {
-	title = TITLE,
+TITLE :: "Audio Player"
+WIDTH :: 640
+HEIGHT :: WIDTH * 9 / 16
+CENTER :: true
+ZOOM :: 8
+
+settings: win32app.window_settings = {
+	title       = TITLE,
 	window_size = {WIDTH, HEIGHT},
-	center = CENTER,
+	center      = CENTER,
 }
 
 // audio
 
-NUM_BUFFERS             :: 8
-WM_STOP_PLAY            :: win32.WM_USER
-WM_PREPARE_NEXT_BUFFER  :: win32.WM_USER + 1
-WAVE_DISPLAY_WIDTH      :: 512
-WAVE_DISPLAY_HEIGHT     :: 128
-WAVE_DISPLAY_COUNT      :: WAVE_DISPLAY_WIDTH * WAVE_DISPLAY_HEIGHT
-NOISE_DISPLAY_WIDTH     :: 512
-NOISE_DISPLAY_HEIGHT    :: 512
-NOISE_DISPLAY_COUNT     :: NOISE_DISPLAY_WIDTH * NOISE_DISPLAY_HEIGHT
+NUM_BUFFERS :: 8
+WM_STOP_PLAY :: win32.WM_USER
+WM_PREPARE_NEXT_BUFFER :: win32.WM_USER + 1
+WAVE_DISPLAY_WIDTH :: 512
+WAVE_DISPLAY_HEIGHT :: 128
+WAVE_DISPLAY_COUNT :: WAVE_DISPLAY_WIDTH * WAVE_DISPLAY_HEIGHT
+NOISE_DISPLAY_WIDTH :: 512
+NOISE_DISPLAY_HEIGHT :: 512
+NOISE_DISPLAY_COUNT :: NOISE_DISPLAY_WIDTH * NOISE_DISPLAY_HEIGHT
 
-NumSamples      :: WAVE_DISPLAY_WIDTH * 4
-MaxIndex        :: NumSamples - 1
-MaxPeak         :: 255
+NumSamples :: WAVE_DISPLAY_WIDTH * 4
+MaxIndex :: NumSamples - 1
+MaxPeak :: 255
 
-TWaveDisplay    :: [WAVE_DISPLAY_COUNT]i32
-PWaveDisplay    :: ^TWaveDisplay
+TWaveDisplay :: [WAVE_DISPLAY_COUNT]i32
+PWaveDisplay :: ^TWaveDisplay
 
-TNoiseDisplay   :: [NOISE_DISPLAY_COUNT]i32
-PNoiseDisplay   :: ^TNoiseDisplay
+TNoiseDisplay :: [NOISE_DISPLAY_COUNT]i32
+PNoiseDisplay :: ^TNoiseDisplay
 
-dib             : canvas.DIB
-colidx          := 1
-cols            := canvas.C64_COLORS
+dib: canvas.DIB
+colidx := 1
+cols := canvas.C64_COLORS
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	size := win32app.decode_lparam(lparam)
@@ -102,13 +104,20 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPAR
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	switch wparam {
-	case '\x1b':	win32.DestroyWindow(hwnd)
-	case '\t':		fmt.print("tab\n")
-	case '\r':		fmt.print("return\n")
-	case '1':		if colidx > 0 {colidx -= 1}
-	case '2':		if colidx < 15 {colidx += 1}
-	case '3':		cols = canvas.C64_COLORS
-	case '4':		cols = canvas.W95_COLORS
+	case '\x1b':
+		win32.DestroyWindow(hwnd)
+	case '\t':
+		fmt.print("tab\n")
+	case '\r':
+		fmt.print("return\n")
+	case '1':
+		if colidx > 0 {colidx -= 1}
+	case '2':
+		if colidx < 15 {colidx += 1}
+	case '3':
+		cols = canvas.C64_COLORS
+	case '4':
+		cols = canvas.W95_COLORS
 	}
 	return 0
 }
@@ -129,12 +138,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	defer win32ex.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
-    client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.StretchBlt(
-		ps.hdc, 0, 0, client_size.x, client_size.y,
-		hdc_source, 0, 0, dib.size.x, dib.size.y,
-		win32.SRCCOPY,
-	)
+	client_size := win32app.get_rect_size(&ps.rcPaint)
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
 
 	return 0
 }
@@ -172,9 +177,25 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
+MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.print("MM_WOM_OPEN\n")
+	return 0
+}
+
+MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.print("MM_WOM_CLOSE\n")
+	return 0
+}
+
+MM_WOM_DONE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.print("MM_WOM_DONE\n")
+	return 0
+}
+
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
+	// odinfmt: disable
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
 	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
@@ -184,10 +205,24 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
 	case win32.WM_RBUTTONDOWN:	return WM_RBUTTONDOWN(hwnd, wparam, lparam)
+	case win32.MM_WOM_OPEN:	    return MM_WOM_OPEN(hwnd, wparam, lparam)
+	case win32.MM_WOM_CLOSE:	return MM_WOM_CLOSE(hwnd, wparam, lparam)
+	case win32.MM_WOM_DONE:	    return MM_WOM_DONE(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	// odinfmt: enable
 	}
 }
 
 main :: proc() {
-	win32app.run(&settings, wndproc)
+	{
+		num_devs := win32ex.waveOutGetNumDevs()
+		fmt.printf("Audio Devices (%d)\n", num_devs)
+		woc: win32ex.WAVEOUTCAPSW
+		for i in 0 ..< num_devs {
+			if win32ex.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32ex.WAVEOUTCAPSW)) == 0 {
+				fmt.printf("Device ID #%d: '%s'\n", i, woc.szPname)
+			}
+		}
+	}
+	//win32app.run(&settings, wndproc)
 }

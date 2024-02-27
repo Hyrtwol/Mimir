@@ -1,4 +1,4 @@
-package z80_emulator
+package amstrad
 
 amstrad_font := [256 * 8]u8 {
 	// Char   0  // +--------+

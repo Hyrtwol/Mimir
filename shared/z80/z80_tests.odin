@@ -12,6 +12,10 @@ verify_sizes :: proc(t: ^testing.T) {
 	act = size_of(TZ80)
 	exp = 208
 	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
+
+	// act = size_of(register_pair)
+	// exp = 2
+	// testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
 }
 
 @(test)
@@ -49,14 +53,15 @@ verify_options :: proc(t: ^testing.T) {
 }
 
 @(test)
-verify_consts :: proc(t: ^testing.T) {
-	act, exp: zuint32
-
-	act = Z80_MAXIMUM_CYCLES
-	exp = 4294967265
+verify_consts_max_cycles :: proc(t: ^testing.T) {
+	act: zusize = Z80_MAXIMUM_CYCLES
+	exp: zusize = 18446744073709551585
 	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
+}
 
-	act = Z80_MAXIMUM_CYCLES_PER_STEP
-	exp = 23
+@(test)
+verify_consts_max_cycles_per_step :: proc(t: ^testing.T) {
+	act: zuint32 = Z80_MAXIMUM_CYCLES_PER_STEP
+	exp: zuint32 = 23
 	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
 }

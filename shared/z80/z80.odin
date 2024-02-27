@@ -10,7 +10,7 @@ zint16 :: i16
 zint32 :: i32
 zboolean :: bool
 
-Z80_MAXIMUM_CYCLES :: max(zuint32) - 30
+Z80_MAXIMUM_CYCLES :: max(zusize) - 30
 Z80_MAXIMUM_CYCLES_PER_STEP :: 23
 
 Z80_HOOK :: 0x64
@@ -278,7 +278,6 @@ TZ80 :: struct {
 	  * is copied into this member; the instruction logic is then executed
 	  * and finally this member is copied back into the index register. */
 	xy:           zint16,
-
 	memptr:       zint16, /**< @brief Register MEMPTR, also known as WZ.        */
 	af:           zint16, /**< @brief Register pair AF (accumulator and flags). */
 	bc:           zint16, /**< @brief Register pair BC.                         */
