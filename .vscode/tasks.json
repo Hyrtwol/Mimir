@@ -101,6 +101,7 @@
             "args": [
                 "strip-semicolon",
                 "..\\${relativeFileDirname}",
+                "-collection:shared=..\\shared",
                 "-no-entry-point"
             ],
             "problemMatcher": [],
@@ -149,6 +150,20 @@
             "problemMatcher": [],
             "options": {
                 "cwd": "bin"
+            }
+        },
+        {
+            "label": "build docs",
+            "type": "shell",
+            "command": "build",
+            "args": [],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/doc"
             }
         },
         {

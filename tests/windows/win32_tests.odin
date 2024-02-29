@@ -1,4 +1,4 @@
-package test_mimir
+package tests_windows
 
 import "core:bytes"
 import "core:fmt"

@@ -155,13 +155,9 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
 	defer win32ex.DeleteDC(hdc_source)
 
-	win32.SelectObject(hdc_source, bitmap_handle)
 	client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.StretchBlt(
-		ps.hdc, 0, 0, client_size.x, client_size.y,
-		hdc_source, 0, 0, bitmap_size.x, bitmap_size.y,
-		win32.SRCCOPY,
-	)
+	win32.SelectObject(hdc_source, bitmap_handle)
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
 
 	return 0
 }
@@ -175,24 +171,18 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
+decode_setdot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: canvas.byte4) {
+	pos := decode_scrpos(lparam)
+	setdot(pos, col)
+	win32.InvalidateRect(hwnd, nil, false)
+}
+
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case 1:
-		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.COLOR_RED)
-		win32.InvalidateRect(hwnd, nil, false)
-	case 2:
-		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.COLOR_BLUE)
-		win32.InvalidateRect(hwnd, nil, false)
-	case 3:
-		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.COLOR_GREEN)
-		win32.InvalidateRect(hwnd, nil, false)
-	case 4:
-		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
-	case:
-		//fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
+	case 1: decode_setdot(hwnd, lparam, canvas.COLOR_RED)
+	case 2: decode_setdot(hwnd, lparam, canvas.COLOR_BLUE)
+	case 3: decode_setdot(hwnd, lparam, canvas.COLOR_GREEN)
+	case:   //fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	}
 	return 0
 }
@@ -206,10 +196,10 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
+	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
-	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 }

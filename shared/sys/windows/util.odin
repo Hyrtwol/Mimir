@@ -1,8 +1,9 @@
 // +build windows
 package sys_windows_ex
 
-import "base:runtime"
 import "base:intrinsics"
+import "base:runtime"
+import "core:fmt"
 import win32 "core:sys/windows"
 
 L :: intrinsics.constant_utf16_cstring
@@ -15,7 +16,7 @@ MAKE_WORD :: win32.MAKE_WORD
 
 // #define MAKELONG(a, b)    ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
 MAKELONG :: #force_inline proc "contextless" (a, b: INT) -> LONG {
-	return LONG( (a & 0xffff) | (( b & 0xffff ) << 16 ) )
+	return LONG((a & 0xffff) | ((b & 0xffff) << 16))
 }
 
 // #define LOBYTE(w)         ((BYTE)(((DWORD_PTR)(w)) & 0xff))
@@ -47,7 +48,7 @@ MAKELRESULT_FROM_BOOL :: #force_inline proc "contextless" (result: BOOL) -> LRES
 	return cast(LRESULT)transmute(i32)result
 }
 
-MAKELRESULT :: proc{
+MAKELRESULT :: proc {
 	MAKELRESULT_FROM_LOHI,
 	MAKELRESULT_FROM_BOOL,
 }

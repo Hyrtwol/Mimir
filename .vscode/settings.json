@@ -6,6 +6,7 @@
     "cSpell.words": [
         "amstrad",
         "codepage",
+        "cstring",
         "directx",
         "dxgi",
         "fmodex",
@@ -26,6 +27,7 @@
         "rawptr",
         "reloc",
         "rendertarget",
+        "sandybridge",
         "shadowmap",
         "simd",
         "srgb",

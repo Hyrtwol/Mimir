@@ -1,41 +1,42 @@
 # Odin
 
-First go at Odin.
+odin version dev-2024-02:c5d80fb1a
 
-## Odin command line tool
-
-odin is a tool for managing Odin source code
-
-### Commands
+## Commands
 
 ```txt
+odin is a tool for managing Odin source code.
 Usage:
 	odin command [arguments]
 Commands:
-	build             compile directory of .odin files, as an executable.
-	                  one must contain the program's entry point, all must be in the same package.
-	run               same as 'build', but also then runs the newly compiled executable.
-	check             parse, and type check a directory of .odin files
-	strip-semicolon   parse, type check, and remove unneeded semicolons from the entire program
-	test              build and runs procedures with the attribute @(test) in the initial package
-	doc               generate documentation on a directory of .odin files
-	version           print version
-	report            print information useful to reporting a bug
+	build             Compiles directory of .odin files, as an executable.
+	                  One must contain the program's entry point, all must be in the same package.
+	run               Same as 'build', but also then runs the newly compiled executable.
+	check             Parses, and type checks a directory of .odin files.
+	strip-semicolon   Parses, type checks, and removes unneeded semicolons from the entire program.
+	test              Builds and runs procedures with the attribute @(test) in the initial package.
+	doc               Generates documentation on a directory of .odin files.
+	version           Prints version.
+	report            Prints information useful to reporting a bug.
+
+For further details on a command, invoke command help:
+	e.g. `odin build -help` or `odin help build`
 ```
 
-### Build
+## Build
 
 ```txt
+odin is a tool for managing Odin source code.
 Usage:
 	odin build [arguments]
 
-	build   Compile directory of .odin files as an executable.
+	build   Compiles directory of .odin files as an executable.
 		One must contain the program's entry point, all must be in the same package.
 		Use `-file` to build a single file instead.
 		Examples:
-			odin build .                    # Build package in current directory
-			odin build <dir>                # Build package in <dir>
-			odin build filename.odin -file  # Build single-file package, must contain entry point.
+			odin build .                     Builds package in current directory.
+			odin build <dir>                 Builds package in <dir>.
+			odin build filename.odin -file   Builds single-file package, must contain entry point.
 
 	Flags
 
@@ -44,191 +45,232 @@ Usage:
 		This means that `<dir>/a.odin` won't have access to `<dir>/b.odin`'s contents.
 
 	-out:<filepath>
-		Set the file name of the outputted executable
+		Sets the file name of the outputted executable.
 		Example: -out:foo.exe
 
 	-o:<string>
-		Set the optimization mode for compilation
-		Accepted values: minimal, size, speed, none
-		Example: -o:speed
+		Sets the optimization mode for compilation.
+		Available options:
+			-o:none
+			-o:minimal
+			-o:size
+			-o:speed
+			-o:aggressive
+		The default is -o:minimal.
 
 	-show-timings
-		Shows basic overview of the timings of different stages within the compiler in milliseconds
+		Shows basic overview of the timings of different stages within the compiler in milliseconds.
 
 	-show-more-timings
-		Shows an advanced overview of the timings of different stages within the compiler in milliseconds
+		Shows an advanced overview of the timings of different stages within the compiler in milliseconds.
+
+	-show-system-calls
+		Prints the whole command and arguments for calls to external tools like linker and assembler.
 
 	-export-timings:<format>
-		Export timings to one of a few formats. Requires `-show-timings` or `-show-more-timings`
+		Exports timings to one of a few formats. Requires `-show-timings` or `-show-more-timings`.
 		Available options:
-			-export-timings:json        Export compile time stats to JSON
-			-export-timings:csv         Export compile time stats to CSV
+			-export-timings:json   Exports compile time stats to JSON.
+			-export-timings:csv    Exports compile time stats to CSV.
 
 	-export-timings-file:<filename>
-		Specify the filename for `-export-timings`
+		Specifies the filename for `-export-timings`.
 		Example: -export-timings-file:timings.json
 
 	-thread-count:<integer>
-		Override the number of threads the compiler will use to compile with
+		Overrides the number of threads the compiler will use to compile with.
 		Example: -thread-count:2
 
 	-keep-temp-files
-		Keeps the temporary files generated during compilation
+		Keeps the temporary files generated during compilation.
 
 	-collection:<name>=<filepath>
-		Defines a library collection used for imports
+		Defines a library collection used for imports.
 		Example: -collection:shared=dir/to/shared
 		Usage in Code:
 			import "shared:foo"
 
 	-define:<name>=<value>
-		Defines a scalar boolean, integer or string as global constant
+		Defines a scalar boolean, integer or string as global constant.
 		Example: -define:SPAM=123
-		To use:  #config(SPAM, default_value)
+		Usage in code:
+			#config(SPAM, default_value)
 
 	-build-mode:<mode>
-		Sets the build mode
+		Sets the build mode.
 		Available options:
-			-build-mode:exe       Build as an executable
-			-build-mode:dll       Build as a dynamically linked library
-			-build-mode:shared    Build as a dynamically linked library
-			-build-mode:obj       Build as an object file
-			-build-mode:object    Build as an object file
-			-build-mode:assembly  Build as an assembly file
-			-build-mode:assembler Build as an assembly file
-			-build-mode:asm       Build as an assembly file
-			-build-mode:llvm-ir   Build as an LLVM IR file
-			-build-mode:llvm      Build as an LLVM IR file
+			-build-mode:exe         Builds as an executable.
+			-build-mode:dll         Builds as a dynamically linked library.
+			-build-mode:shared      Builds as a dynamically linked library.
+			-build-mode:obj         Builds as an object file.
+			-build-mode:object      Builds as an object file.
+			-build-mode:assembly    Builds as an assembly file.
+			-build-mode:assembler   Builds as an assembly file.
+			-build-mode:asm         Builds as an assembly file.
+			-build-mode:llvm-ir     Builds as an LLVM IR file.
+			-build-mode:llvm        Builds as an LLVM IR file.
 
 	-target:<string>
-		Sets the target for the executable to be built in
+		Sets the target for the executable to be built in.
 
 	-debug
-		Enabled debug information, and defines the global constant ODIN_DEBUG to be 'true'
+		Enables debug information, and defines the global constant ODIN_DEBUG to be 'true'.
 
 	-disable-assert
-		Disable the code generation of the built-in run-time 'assert' procedure, and defines the global constant ODIN_DISABLE_ASSERT to be 'true'
+		Disables the code generation of the built-in run-time 'assert' procedure, and defines the global constant ODIN_DISABLE_ASSERT to be 'true'.
 
 	-no-bounds-check
-		Disables bounds checking program wide
+		Disables bounds checking program wide.
 
 	-no-crt
-		Disables automatic linking with the C Run Time
+		Disables automatic linking with the C Run Time.
 
 	-no-thread-local
-		Ignore @thread_local attribute, effectively treating the program as if it is single-threaded
+		Ignores @thread_local attribute, effectively treating the program as if it is single-threaded.
 
 	-lld
-		Use the LLD linker rather than the default
+		Uses the LLD linker rather than the default.
 
 	-use-separate-modules
 	[EXPERIMENTAL]
-		The backend generates multiple build units which are then linked together
-		Normally, a single build unit is generated for a standard project
+		The backend generates multiple build units which are then linked together.
+		Normally, a single build unit is generated for a standard project.
 
 	-no-threaded-checker
-		Disabled multithreading in the semantic checker stage
+		Disables multithreading in the semantic checker stage.
 
 	-vet
-		Do extra checks on the code
+		Does extra checks on the code.
 		Extra checks include:
-			Variable shadowing within procedures
-			Unused declarations
+			-vet-unused
+			-vet-shadowing
+			-vet-using-stmt
 
-	-vet-extra
-		Do even more checks than standard vet on the code
-		To treat the extra warnings as errors, use -warnings-as-errors
+	-vet-unused
+		Checks for unused declarations.
+
+	-vet-shadowing
+		Checks for variable shadowing within procedures.
+
+	-vet-using-stmt
+		Checks for the use of 'using' as a statement.
+		'using' is considered bad practice outside of immediate refactoring.
+
+	-vet-using-param
+		Checks for the use of 'using' on procedure parameters.
+		'using' is considered bad practice outside of immediate refactoring.
+
+	-vet-style
+		Errs on missing trailing commas followed by a newline.
+		Errs on deprecated syntax.
+		Does not err on unneeded tokens (unlike -strict-style).
+
+	-vet-semicolon
+		Errs on unneeded semicolons.
 
 	-ignore-unknown-attributes
-		Ignores unknown attributes
-		This can be used with metaprogramming tools
+		Ignores unknown attributes.
+		This can be used with metaprogramming tools.
 
 	-no-entry-point
-		Removes default requirement of an entry point (e.g. main procedure)
+		Removes default requirement of an entry point (e.g. main procedure).
 
 	-minimum-os-version:<string>
-		Sets the minimum OS version targeted by the application
-		e.g. -minimum-os-version:12.0.0
-		(Only used when target is Darwin)
+		Sets the minimum OS version targeted by the application.
+		Example: -minimum-os-version:12.0.0
+		(Only used when target is Darwin.)
 
 	-extra-linker-flags:<string>
-		Adds extra linker specific flags in a string
+		Adds extra linker specific flags in a string.
 
 	-extra-assembler-flags:<string>
-		Adds extra assembler specific flags in a string
+		Adds extra assembler specific flags in a string.
 
 	-microarch:<string>
-		Specifies the specific micro-architecture for the build in a string
+		Specifies the specific micro-architecture for the build in a string.
 		Examples:
 			-microarch:sandybridge
 			-microarch:native
+			-microarch:? for a list
 
 	-reloc-mode:<string>
-		Specifies the reloc mode
-		Options:
-			default
-			static
-			pic
-			dynamic-no-pic
+		Specifies the reloc mode.
+		Available options:
+			-reloc-mode:default
+			-reloc-mode:static
+			-reloc-mode:pic
+			-reloc-mode:dynamic-no-pic
 
 	-disable-red-zone
-		Disable red zone on a supported freestanding target
+		Disables red zone on a supported freestanding target.
 
 	-dynamic-map-calls
-		Use dynamic map calls to minimize code generation at the cost of runtime execution
+		Uses dynamic map calls to minimize code generation at the cost of runtime execution.
 
 	-disallow-do
-		Disallows the 'do' keyword in the project
+		Disallows the 'do' keyword in the project.
 
 	-default-to-nil-allocator
-		Sets the default allocator to be the nil_allocator, an allocator which does nothing
+		Sets the default allocator to be the nil_allocator, an allocator which does nothing.
 
 	-strict-style
-		Errs on unneeded tokens, such as unneeded semicolons
-
-	-strict-style-init-only
-		Errs on unneeded tokens, such as unneeded semicolons, only on the initial project
+		Errs on unneeded tokens, such as unneeded semicolons.
+		Errs on missing trailing commas followed by a newline.
+		Errs on deprecated syntax.
 
 	-ignore-warnings
-		Ignores warning messages
+		Ignores warning messages.
 
 	-warnings-as-errors
-		Treats warning messages as error messages
+		Treats warning messages as error messages.
 
 	-terse-errors
-		Prints a terse error message without showing the code on that line and the location in that line
+		Prints a terse error message without showing the code on that line and the location in that line.
 
 	-error-pos-style:<string>
-		Options are 'unix', 'odin' and 'default' (odin)
-		'odin'    file/path(45:3)
-		'unix'    file/path:45:3:
+		Available options:
+			-error-pos-style:unix      file/path:45:3:
+			-error-pos-style:odin      file/path(45:3)
+			-error-pos-style:default   (Defaults to 'odin'.)
 
 	-max-error-count:<integer>
-		Set the maximum number of errors that can be displayed before the compiler terminates
-		Must be an integer >0
-		If not set, the default max error count is 36
+		Sets the maximum number of errors that can be displayed before the compiler terminates.
+		Must be an integer >0.
+		If not set, the default max error count is 36.
 
 	-foreign-error-procedures
-		States that the error procedures used in the runtime are defined in a separate translation unit
+		States that the error procedures used in the runtime are defined in a separate translation unit.
+
+	-obfuscate-source-code-locations
+		Obfuscate the file and procedure strings, and line and column numbers, stored with a 'runtime.Source_Code_Location' value.
+
+	-sanitize:<string>
+		Enables sanitization analysis.
+		Available options:
+			-sanitize:address
+			-sanitize:memory
+			-sanitize:thread
+		NOTE: This flag can be used multiple times.
 
 	-ignore-vs-search
 		[Windows only]
-		Ignores the Visual Studio search for library paths
+		Ignores the Visual Studio search for library paths.
 
 	-resource:<filepath>
 		[Windows only]
-		Defines the resource file for the executable
+		Defines the resource file for the executable.
 		Example: -resource:path/to/file.rc
 
 	-pdb-name:<filepath>
 		[Windows only]
-		Defines the generated PDB name when -debug is enabled
+		Defines the generated PDB name when -debug is enabled.
 		Example: -pdb-name:different.pdb
 
 	-subsystem:<option>
 		[Windows only]
-		Defines the subsystem for the application
+		Defines the subsystem for the application.
 		Available options:
-			console
-			windows
+			-subsystem:console
+			-subsystem:windows
+
 ```
