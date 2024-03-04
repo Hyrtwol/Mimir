@@ -13,7 +13,6 @@ import          "core:simd"
 import          "core:strings"
 import win32    "core:sys/windows"
 import          "core:time"
-import win32ex  "shared:sys/windows"
 import win32app "shared:tlc/win32app"
 import canvas   "shared:tlc/canvas"
 import "shared:fmod"
@@ -46,17 +45,16 @@ timer2_id     : win32.UINT_PTR
 system: ^fmod.FMOD_SYSTEM = nil
 eventsys: ^fmod.FMOD_EVENTSYSTEM = nil
 
-events : [wolf.EVENTCOUNT_WOLFENSTEINSFX]^fmod.FMOD_EVENT
-song : ^fmod.FMOD_SOUND = nil
+events: [wolf.EVENTCOUNT_WOLFENSTEINSFX]^fmod.FMOD_EVENT
+song: ^fmod.FMOD_SOUND = nil
 
 title: string
-dsp, stream, geometry, update, total : f32
+dsp, stream, geometry, update, total: f32
 channels_playing: i32
 
-clear_color : canvas.byte4 : {150, 100, 50, 255}
+clear_color: canvas.byte4 : {150, 100, 50, 255}
 
-play_event :: proc(event_id: i32)
-{
+play_event :: proc(event_id: i32) {
 	event: ^fmod.FMOD_EVENT = events[event_id]
 	if event == nil {
 		fmt.printf("event_id %d is nil\n", event_id)
@@ -82,8 +80,7 @@ play_event :: proc(event_id: i32)
 	}
 }
 
-play_song :: proc()
-{
+play_song :: proc() {
 	res: fmod.FMOD_RESULT
 	if song == nil {
 		res = fmod.FMOD_System_CreateSound(system, "Ktulu.xm", fmod.FMOD_HARDWARE | fmod.FMOD_2D, nil, &song)
@@ -224,16 +221,12 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
-	defer win32ex.DeleteDC(hdc_source)
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
 
-    client_size := win32app.get_rect_size(&ps.rcPaint)
+	client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.SelectObject(hdc_source, bitmap_handle)
-	win32.StretchBlt(
-		ps.hdc, 0, 0, client_size.x, client_size.y,
-		hdc_source, 0, 0, bitmap_size.x, bitmap_size.y,
-		win32.SRCCOPY,
-	)
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
 
 	return 0
 }
@@ -242,8 +235,11 @@ spect_size :: 64
 spec_left: [spect_size]f32
 spec_right: [spect_size]f32
 spectrum: [spect_size]f32
-//fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_TRIANGLE
-fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_BLACKMAN
+fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_TRIANGLE
+//fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_BLACKMAN
+
+// https://www.wolframalpha.com/input?i=y%3D+log10%28x%29*20+range+0..1
+lin2dB :: proc(linear: f32) -> f32 {return math.clamp(math.log10(linear) * 20.0, -80.0, 0.0)}
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch (wparam)
@@ -257,19 +253,18 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		}
 	case win32app.IDT_TIMER2:
 		{
-			//system->FMOD_System_GetSpectrum()
 			fmod.FMOD_System_GetSpectrum(system, &spec_left[0], spect_size, 0, fft_window)
 			fmod.FMOD_System_GetSpectrum(system, &spec_right[0], spect_size, 1, fft_window)
 
-			scale := f32(bitmap_size.y)
-			for i in 0..<spect_size {
-				spectrum[i] = (spec_left[i] + spec_right[i]) * scale
+			scale : f32 = 0.25 //f32(bitmap_size.y)
+			for i in 0 ..< spect_size {
+				spectrum[i] = (80 + lin2dB((spec_left[i] + spec_right[i])*0.5)) * scale
 			}
 
 			col: canvas.byte4
-			for y in 0..<spect_size {
+			for y in 0 ..< spect_size {
 				i := i32(y) * bitmap_size.x
-				for x in 0..<spect_size {
+				for x in 0 ..< spect_size {
 					if f32(y) > spectrum[x] {col = clear_color} else {col = canvas.COLOR_GREEN}
 					//pvBits[i] = col
 					if i >= 0 && i < bitmap_count {pvBits[i] = col}
@@ -279,7 +274,8 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 
 			win32.InvalidateRect(hwnd, nil, false)
-			//win32ex.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+			//win32.InvalidateRect(hwnd)
+			//win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 		}
 	}
 	return 0
@@ -314,7 +310,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	case 4:
 		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	case:
-		//fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
+	//fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	}
 	return 0
 }
@@ -366,13 +362,7 @@ main :: proc() {
 	caps: fmod.FMOD_CAPS_ENUM
 	outputrate: i32
 	speakermode: fmod.FMOD_SPEAKERMODE
-	res = fmod.FMOD_System_GetDriverCaps(
-		system,
-		driver_index,
-		&caps,
-		&outputrate,
-		&speakermode,
-	)
+	res = fmod.FMOD_System_GetDriverCaps(system, driver_index, &caps, &outputrate, &speakermode)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriverCaps, res)
 		return
@@ -395,7 +385,7 @@ main :: proc() {
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
 		fmt.print("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...\n")
 		/* Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo... */
-		speakermode = fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO;
+		speakermode = fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO
 		res = fmod.FMOD_System_SetSpeakerMode(system, speakermode)
 		res = fmod.FMOD_EventSystem_Init(eventsys, FMOD_MAXCHANNELS, FMOD_INIT_FLAGS, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	}
@@ -437,7 +427,7 @@ main :: proc() {
 	//event : ^fmod.FMOD_EVENT = nil
 
 	//for i:u32; i in 0..<wolf.EVENTCOUNT_WOLFENSTEINSFX {
-	for i :u32= 0; i < wolf.EVENTCOUNT_WOLFENSTEINSFX; i += 1 {
+	for i: u32 = 0; i < wolf.EVENTCOUNT_WOLFENSTEINSFX; i += 1 {
 		res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys, i, fmod.FMOD_EVENT_DEFAULT, &events[i])
 		if res != fmod.FMOD_RESULT.FMOD_OK {
 			fmt.printf("%v %v event id %d\n", fmod.FMOD_EventSystem_GetEventBySystemID, res, i)
@@ -445,20 +435,13 @@ main :: proc() {
 		}
 	}
 
-	title = fmt.aprintf(
-		"%s Version : %d.%d.%d (0x%x)\n",
-		TITLE,
-		fmod_version.Major,
-		fmod_version.Minor,
-		fmod_version.Development,
-		transmute(u32)fmod_version,
-	)
+	title = fmt.aprintf("%s Version : %d.%d.%d (0x%x)\n", TITLE, fmod_version.Major, fmod_version.Minor, fmod_version.Development, transmute(u32)fmod_version)
 	defer delete(title)
 
-	settings : win32app.window_settings = {
-		title = title,
+	settings: win32app.window_settings = {
+		title       = title,
 		window_size = {WIDTH, HEIGHT},
-		center = CENTER,
+		center      = CENTER,
 	}
 	win32app.run(&settings, wndproc)
 }

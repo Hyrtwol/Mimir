@@ -8,9 +8,9 @@ foreign import user32 "system:User32.lib"
 @(default_calling_convention="system")
 foreign user32 {
 	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-drawtext
-	DrawTextW :: proc(hdc: HDC, lpchText: LPCWSTR, cchText: INT, lprc: LPRECT, format: DrawTextFormat) -> INT ---
-	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-redrawwindow
 	RedrawWindow :: proc(hwnd: HWND, lprcUpdate: LPRECT, hrgnUpdate: HRGN, flags: RedrawWindowFlags) -> BOOL ---
+	DrawTextW :: proc(hdc: HDC, lpchText: LPCWSTR, cchText: INT, lprc: LPRECT, format: DrawTextFormat) -> INT ---
+	DrawTextExW :: proc(hdc: HDC, lpchText: LPCWSTR, cchText: INT, lprc: LPRECT, format: DrawTextFormat, lpdtp: PDRAWTEXTPARAMS) -> INT ---
 }
 
 DrawTextFormat :: enum UINT {

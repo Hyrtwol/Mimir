@@ -13,7 +13,6 @@ import "core:simd"
 import "core:strings"
 import win32 "core:sys/windows"
 import "core:time"
-import win32ex "shared:sys/windows"
 import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
 
@@ -29,8 +28,8 @@ TITLE :: "Flames"
 WIDTH: i32 : 160
 HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
-ZOOM: i32 : 4
-FPS: u32 : 20
+ZOOM :: 4
+FPS :: 20
 
 settings := win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
 
@@ -76,15 +75,11 @@ getdot :: proc(x, y: i32) -> i32 {
 }
 
 dib_flames :: proc(dib: ^DIB) {
-	p := dib.pvBits
 	w := dib.size.x
-	//h := dib.size.y
+	h := dib.size.y
 
-	i: i32
-
-	i = 0
-	for y in 0 ..< HEIGHT {
-		for x in 0 ..< WIDTH {
+	for y in 0 ..< h {
+		for x in 0 ..< w {
 			// add the values of the surrounding pixels
 			c: i32 = getdot(x, y + 1) + getdot(x - 1, y + 1) + getdot(x + 1, y + 1) + getdot(x, y)
 			// divide by the number of pixels added up
@@ -98,16 +93,16 @@ dib_flames :: proc(dib: ^DIB) {
 	}
 
 	// set a new bottom line
-	i = w * (HEIGHT - 1)
-	for x in 0 ..< WIDTH {
+	i := w * (h - 1)
+	for x in 0 ..< w {
 		c := u8(rand.int31_max(256, &rng))
 		flamebuffer[i] = c
 		i += 1
 	}
 
-	i = 0
-	for y in 0 ..< HEIGHT {
-		for x in 0 ..< WIDTH {
+	i = 0;p := dib.pvBits
+	for y in 0 ..< h {
+		for x in 0 ..< w {
 			c := flamebuffer[i]
 			p[i] = palette[c]
 			i += 1
@@ -115,7 +110,7 @@ dib_flames :: proc(dib: ^DIB) {
 	}
 }
 
-WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	client_size := win32app.get_client_size(hwnd)
 
 	hdc := win32.GetDC(hwnd)
@@ -135,7 +130,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	return 0
 }
 
-WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if timer_id != 0 {
 		if !win32.KillTimer(hwnd, timer_id) {
 			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
@@ -146,7 +141,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	return 1
 }
 
@@ -165,24 +160,24 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+/*WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
-	defer win32ex.DeleteDC(hdc_source)
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 	client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
 
 	return 0
-}
+}*/
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	dib_update_func(&dib)
-	win32ex.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	return 0
 }
 
@@ -205,11 +200,11 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
-	case win32.WM_CREATE: 		return WM_CREATE(hwnd, wparam, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
+	case win32.WM_CREATE: 		return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
+	case win32.WM_PAINT:		return canvas.dib_paint(&dib, hwnd) // &dib->dib_paint(hwnd) maybe?
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam)

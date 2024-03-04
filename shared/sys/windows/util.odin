@@ -20,13 +20,13 @@ MAKELONG :: #force_inline proc "contextless" (a, b: INT) -> LONG {
 }
 
 // #define LOBYTE(w)         ((BYTE)(((DWORD_PTR)(w)) & 0xff))
-LOBYTE :: #force_inline proc "contextless" (x: WORD) -> BYTE {
-	return BYTE(x & 0xff)
+LOBYTE :: #force_inline proc "contextless" (w: WORD) -> BYTE {
+	return BYTE(w & 0xff)
 }
 
 // #define HIBYTE(w)         ((BYTE)((((DWORD_PTR)(w)) >> 8) & 0xff))
-HIBYTE :: #force_inline proc "contextless" (x: WORD) -> BYTE {
-	return BYTE(x >> 8)
+HIBYTE :: #force_inline proc "contextless" (w: WORD) -> BYTE {
+	return BYTE(w >> 8)
 }
 
 // #define POINTTOPOINTS(pt) (MAKELONG((short)((pt).x), (short)((pt).y)))

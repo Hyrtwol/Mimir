@@ -4,42 +4,20 @@ import "core:bytes"
 import "core:fmt"
 import "core:runtime"
 import "core:testing"
+import "shared:ounit"
 
 @(test)
 verify_sizes :: proc(t: ^testing.T) {
-	act, exp: u32
-
-	act = size_of(xatlasChart)
-	exp = 24
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasVertex)
-	exp = 20
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasMesh)
-	exp = 40
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasAtlas)
-	exp = 48
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasMeshDecl)
-	exp = 96
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasUvMeshDecl)
-	exp = 48
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasChartOptions)
-	exp = 48
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
-
-	act = size_of(xatlasPackOptions)
-	exp = 24
-	testing.expect(t, act == exp, fmt.tprintf("%v (should be: %v)", act, exp))
+	using ounit
+	expect_size(t, xatlasChart, 24)
+	expect_size(t, xatlasChart, 24)
+	expect_size(t, xatlasVertex,20)
+	expect_size(t, xatlasMesh,40)
+	expect_size(t, xatlasAtlas,48)
+	expect_size(t, xatlasMeshDecl, 96)
+	expect_size(t, xatlasUvMeshDecl,48)
+	expect_size(t, xatlasChartOptions, 48)
+	expect_size(t, xatlasPackOptions, 24)
 }
 
 @(test)

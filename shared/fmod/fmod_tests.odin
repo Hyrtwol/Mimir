@@ -3,7 +3,7 @@ package fmod
 import "core:bytes"
 import "core:fmt"
 import "core:runtime"
-import "core:testing"
+import "shared:ounit"
 //import win32 "core:sys/windows"
 //import win32app "../../shared/tlc/win32app"
 

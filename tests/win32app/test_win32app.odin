@@ -1,4 +1,4 @@
-package tests_win32app
+package test_win32app
 
 import "core:bytes"
 import "core:fmt"

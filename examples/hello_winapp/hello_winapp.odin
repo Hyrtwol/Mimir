@@ -5,7 +5,7 @@ import "core:intrinsics"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
-import win32ex "shared:sys/windows"
+//import win32ex "shared:sys/windows"
 import win32app "shared:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
@@ -60,7 +60,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\r':
 		fmt.print("return\n")
 	case 'm':
-		win32ex.PlaySoundW(L("62a.wav"), nil, win32ex.SND_FILENAME)
+		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
 	case 'p':
 		win32app.show_error_and_panic("Test Panic")
 	}
@@ -74,7 +74,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
@@ -83,7 +83,7 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		win32.FillRect(ps.hdc, &ps.rcPaint, hbrGray)
 	}
 
-	win32ex.DrawTextW(ps.hdc, L("Hello, Windows 98!"), -1, &ps.rcPaint, .DT_SINGLELINE | .DT_CENTER | .DT_VCENTER)
+	win32.DrawTextW(ps.hdc, L("Hello, Windows 98!"), -1, &ps.rcPaint, .DT_SINGLELINE | .DT_CENTER | .DT_VCENTER)
 
 	return 0
 }
@@ -100,7 +100,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_SIZE:
 		return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:
-		return WM_PAINT(hwnd, wparam, lparam)
+		return WM_PAINT(hwnd)
 	case win32.WM_CHAR:
 		return WM_CHAR(hwnd, wparam, lparam)
 	case:

@@ -1,4 +1,4 @@
-package tests_windows
+package test_core_sys_windows
 
 import "core:bytes"
 import "core:fmt"
@@ -11,14 +11,14 @@ import win32ex "shared:sys/windows"
 make_lresult_from_false :: proc(t: ^testing.T) {
 	exp := 0
 	result := win32ex.MAKELRESULT(false)
-	testing.expect(t, exp == result, fmt.tprintf("MAKELRESULT: %v -> %v (should be: %v)", false, result, exp))
+	testing.expectf(t, exp == result, "MAKELRESULT: %v -> %v (should be: %v)", false, result, exp)
 }
 
 @(test)
 make_lresult_from_true :: proc(t: ^testing.T) {
 	exp := 1
 	result := win32ex.MAKELRESULT(true)
-	testing.expect(t, exp == result, fmt.tprintf("MAKELRESULT: %v -> %v (should be: %v)", false, result, exp))
+	testing.expectf(t, exp == result, "MAKELRESULT: %v -> %v (should be: %v)", false, result, exp)
 }
 
 @(test)
@@ -26,6 +26,6 @@ wstring_convert :: proc(t: ^testing.T) {
 	exp := "ABC"
 	wstr := win32.utf8_to_wstring(exp)
 	result, err := win32.wstring_to_utf8(wstr, 256, context.allocator)
-	testing.expect(t, exp == result, fmt.tprintf("wstring_convert: %v (should be: %v)", result, exp))
-	testing.expect(t, err == .None, fmt.tprintf("wstring_convert: error %v", err))
+	testing.expectf(t, exp == result, "wstring_convert: %v (should be: %v)", result, exp)
+	testing.expectf(t, err == .None, "wstring_convert: error %v", err)
 }
