@@ -145,7 +145,8 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':
-		win32.DestroyWindow(hwnd)
+		//win32.DestroyWindow(hwnd)
+		win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
 	case '1':
 		dib_update_func = dib_flames
 	}

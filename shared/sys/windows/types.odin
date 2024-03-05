@@ -2,6 +2,9 @@
 package sys_windows_ex
 
 import win32 "core:sys/windows"
+import "base:intrinsics"
+
+L :: intrinsics.constant_utf16_cstring
 
 DWORD :: win32.DWORD
 BYTE :: win32.BYTE

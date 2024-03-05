@@ -15,8 +15,6 @@ import win32 "core:sys/windows"
 import "core:time"
 import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
-//import win32ex "shared:sys/windows"
-win32ex :: win32
 
 // https://learn.microsoft.com/en-us/windows/win32/multimedia/example-of-writing-waveform-data
 // https://github.com/cornyum/Windows-programming-5th/blob/master/Chap22/SineWave/SineWave.c
@@ -108,9 +106,9 @@ OpenFile :: proc(hwnd: win32.HWND) {
 		wBitsPerSample = BITS_PER_SAMPLE,
 		cbSize         = 0,
 	}
-
 	WaveFormatEx.nBlockAlign = WaveFormatEx.nChannels * WaveFormatEx.wBitsPerSample / 8
 	WaveFormatEx.nAvgBytesPerSec = WaveFormatEx.nSamplesPerSec * win32.DWORD(WaveFormatEx.nBlockAlign)
+	fmt.printf("WaveFormatEx=%v\n", WaveFormatEx)
 
 	BufferLength = WAVE_DISPLAY_WIDTH << 4
 	CurrentBuffer = 0
@@ -153,13 +151,13 @@ CloseFile :: proc() {
 
 	Closing = true
 
-	hr := win32ex.waveOutReset(waveout)
+	hr := win32.waveOutReset(waveout)
 	assert(hr == 0)
 
 	for i in 0 ..< NUM_BUFFERS {
 		header := &Headers[i]
 		data := rawptr(header.lpData)
-		hr = win32ex.waveOutUnprepareHeader(waveout, header, size_of(win32ex.WAVEHDR))
+		hr = win32.waveOutUnprepareHeader(waveout, header, size_of(win32.WAVEHDR))
 		header.lpData = nil
 		//delete(p^)
 		data = win32.GlobalFree(data)
@@ -168,7 +166,7 @@ CloseFile :: proc() {
 	}
 
 	fmt.printf("waveOutClose waveout=%v\n", waveout)
-	hr = win32ex.waveOutClose(waveout)
+	hr = win32.waveOutClose(waveout)
 	assert(hr == 0)
 	waveout = nil
 }
@@ -179,7 +177,7 @@ WriteBuffer :: proc() {
 	header := &Headers[CurrentBuffer]
 	DoBuffer(header.lpData)
 
-	hr := win32ex.waveOutWrite(waveout, header, size_of(win32ex.WAVEHDR))
+	hr := win32.waveOutWrite(waveout, header, size_of(win32.WAVEHDR))
 	assert(hr == 0)
 	CurrentBuffer = (CurrentBuffer + 1) % NUM_BUFFERS
 	// win32.PostMessage(Handle, WM_PREPARE_NEXT_BUFFER, CurrentBuffer, 0);
@@ -199,8 +197,8 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 	}
 }
 
-WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_CREATE\n")
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.printf("WM_CREATE %v %v\n", hwnd, (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam))))
 
 	client_size := win32app.get_client_size(hwnd)
 
@@ -217,8 +215,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	return 0
 }
 
-WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_DESTROY\n")
+WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	fmt.printf("WM_DESTROY %v\n", hwnd)
 
 	canvas.dib_free_section(&dib)
 
@@ -235,7 +233,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 	return 0
 }*/
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
 	return 1
 }
 
@@ -268,8 +266,8 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
-	defer win32ex.DeleteDC(hdc_source)
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 	client_size := win32app.get_rect_size(&ps.rcPaint)
@@ -312,13 +310,13 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 }
 
 MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	wo: win32ex.HWAVEOUT = win32ex.HWAVEOUT(uintptr(wparam))
+	wo:= win32.HWAVEOUT(uintptr(wparam))
 	fmt.printf("MM_WOM_OPEN waveout=%v\n", wo)
 	return 0
 }
 
 MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	wo: win32ex.HWAVEOUT = win32ex.HWAVEOUT(uintptr(wparam))
+	wo: = win32.HWAVEOUT(uintptr(wparam))
 	fmt.printf("MM_WOM_CLOSE waveout=%v\n", wo)
 	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
 	return 0
@@ -327,7 +325,7 @@ MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 n_done := 0
 
 MM_WOM_DONE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	wo: win32ex.HWAVEOUT = win32ex.HWAVEOUT(uintptr(wparam))
+	wo:= win32.HWAVEOUT(uintptr(wparam))
 	//fmt.printf("MM_WOM_DONE waveout=%v\n", wo)
 	WriteBuffer()
 	n_done += 1
@@ -352,12 +350,12 @@ PrepareNext :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
-	switch msg {
 	// odinfmt: disable
-	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
+	switch msg {
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	//case win32.WM_CLOSE:		return WM_CLOSE(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	//case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	case win32.WM_PAINT:        return canvas.wm_paint_dib(hwnd, dib.hbitmap, dib.size)
@@ -371,16 +369,16 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case WM_STOP_PLAY:	        return StopPlay(hwnd, wparam, lparam)
 	case WM_PREPARE_NEXT_BUFFER: return PrepareNext(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
-	// odinfmt: enable
 	}
+	// odinfmt: enable
 }
 
 list_audio_devices :: proc() {
-	num_devs := win32ex.waveOutGetNumDevs()
+	num_devs := win32.waveOutGetNumDevs()
 	fmt.printf("Audio Devices (%d)\n", num_devs)
-	woc: win32ex.WAVEOUTCAPSW
+	woc: win32.WAVEOUTCAPSW
 	for i in 0 ..< num_devs {
-		if win32ex.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32ex.WAVEOUTCAPSW)) == 0 {
+		if win32.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32.WAVEOUTCAPSW)) == 0 {
 			fmt.printf("Device ID #%d: '%s'\n", i, woc.szPname)
 		}
 	}

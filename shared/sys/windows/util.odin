@@ -1,12 +1,10 @@
 // +build windows
 package sys_windows_ex
 
-import "base:intrinsics"
+//import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
 import win32 "core:sys/windows"
-
-L :: intrinsics.constant_utf16_cstring
 
 LOWORD :: win32.LOWORD
 HIWORD :: win32.HIWORD
@@ -80,9 +78,9 @@ ctprintf :: proc(format: string, args: ..any, newline := false) -> cstring {
 str  := fmt.tprintf(format, args)
 cstr := fmt.ctprintf(format, args)
 wstr := fmt.wtprintf(format, args) ? clashes with fmt.wprintf() a bit :/
-
 */
 
+/*
 wtprintf :: proc(format: string, args: ..any, allocator := context.temp_allocator) -> win32.wstring {
 	// str: strings.Builder
 	// strings.builder_init(&str, context.temp_allocator)
@@ -94,3 +92,4 @@ wtprintf :: proc(format: string, args: ..any, allocator := context.temp_allocato
 	str := fmt.tprintf(format, args)
 	return win32.utf8_to_wstring(str)
 }
+*/

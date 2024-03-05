@@ -5,7 +5,6 @@ import "core:intrinsics"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
-//import win32ex "shared:sys/windows"
 import win32app "shared:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
@@ -25,28 +24,20 @@ write_hello_txt :: proc() {
 	fmt.printf("ok %v\n", ok)
 }
 
-WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_CREATE\n")
-
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.printf("WM_CREATE %v %v\n", hwnd, (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam))))
 	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
-
-	clientRect: win32.RECT
-	win32.GetClientRect(hwnd, &clientRect)
-	fmt.printf("clientRect %v\n", clientRect)
-
 	return 0
 }
 
-WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_DESTROY\n")
-
+WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	fmt.printf("WM_DESTROY %v\n", hwnd)
 	hbrGray = nil
-
 	win32.PostQuitMessage(666) // exit code
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
 	return 1 // paint should fill out the client area so no need to erase the background
 }
 
@@ -90,25 +81,23 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE:
-		return WM_CREATE(hwnd, wparam, lparam)
-	case win32.WM_DESTROY:
-		return WM_DESTROY(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:
-		return WM_ERASEBKGND(hwnd, wparam, lparam)
-	case win32.WM_SIZE:
-		return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:
-		return WM_PAINT(hwnd)
-	case win32.WM_CHAR:
-		return WM_CHAR(hwnd, wparam, lparam)
-	case:
-		return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
+	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_PAINT:		return WM_PAINT(hwnd)
+	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
+	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
 
 main :: proc() {
+
+	stopwatch := win32app.create_stopwatch()
+	stopwatch->start()
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {
@@ -188,7 +177,7 @@ main :: proc() {
 
 	assert(msg.wParam == 666)
 
-	fmt.printf("Done! %v\n", msg)
-
+	stopwatch->stop()
+	fmt.printf("Done! (%fs)\n", stopwatch->get_delta_seconds())
 	os.exit(int(msg.wParam))
 }

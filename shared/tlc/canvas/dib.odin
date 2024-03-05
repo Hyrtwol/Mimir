@@ -8,8 +8,6 @@ import "core:runtime"
 import "core:strings"
 import win32 "core:sys/windows"
 import win32app "shared:tlc/win32app"
-//import win32ex "shared:sys/windows"
-win32ex :: win32
 
 ColorSizeInBytes :: 4
 BitCount :: ColorSizeInBytes * 8
@@ -63,8 +61,8 @@ dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 }
 
 dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
-	bmiV5Header := win32ex.BITMAPV5HEADER {
-		bV5Size        = size_of(win32ex.BITMAPV5HEADER),
+	bmiV5Header := win32.BITMAPV5HEADER {
+		bV5Size        = size_of(win32.BITMAPV5HEADER),
 		bV5Width       = size.x,
 		bV5Height      = -size.y, // minus for top-down
 		bV5Planes      = 1,
@@ -126,7 +124,7 @@ wm_paint_hgdiobj :: proc(hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2)->
 }
 
 @(private)
-wm_paint_hbitmap :: proc(hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2)-> win32.LRESULT {
+wm_paint_hbitmap :: #force_inline proc(hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2)-> win32.LRESULT {
 	return wm_paint_hgdiobj(hwnd, win32.HGDIOBJ(hbitmap), size)
 }
 

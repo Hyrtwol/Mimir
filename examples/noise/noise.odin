@@ -12,7 +12,6 @@ import          "core:runtime"
 import          "core:simd"
 import          "core:strings"
 import win32    "core:sys/windows"
-import win32ex  "shared:sys/windows"
 import win32app "shared:tlc/win32app"
 import canvas   "shared:tlc/canvas"
 
@@ -151,8 +150,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	hdc_target := win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32ex.CreateCompatibleDC(hdc_target)
-	defer win32ex.DeleteDC(hdc_source)
+	hdc_source := win32.CreateCompatibleDC(hdc_target)
+	defer win32.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 
@@ -167,7 +166,7 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	noise_func(&dib)
-	win32ex.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	return 0
 }
 

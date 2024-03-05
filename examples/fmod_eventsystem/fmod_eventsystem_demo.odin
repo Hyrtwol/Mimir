@@ -64,7 +64,7 @@ play_event :: proc(event_id: i32) {
 	res: fmod.FMOD_RESULT
 
 	res = fmod.FMOD_Event_Stop(event, 1)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
 		return
 	}
@@ -74,7 +74,7 @@ play_event :: proc(event_id: i32) {
 	res = fmod.FMOD_Event_Set3DAttributes(event, &position, &velocity, nil)
 
 	res = fmod.FMOD_Event_Start(event)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
 		return
 	}
@@ -84,7 +84,7 @@ play_song :: proc() {
 	res: fmod.FMOD_RESULT
 	if song == nil {
 		res = fmod.FMOD_System_CreateSound(system, "Ktulu.xm", fmod.FMOD_HARDWARE | fmod.FMOD_2D, nil, &song)
-		if res != fmod.FMOD_RESULT.FMOD_OK {
+		if res != .FMOD_OK {
 			fmt.printf("FMOD_System_CreateSound %v\n", res)
 			return
 		}
@@ -92,7 +92,7 @@ play_song :: proc() {
 	if song != nil {
 		channel: ^fmod.FMOD_CHANNEL
 		res = fmod.FMOD_System_PlaySound(system, fmod.FMOD_CHANNELINDEX.FMOD_CHANNEL_FREE, song, 0, &channel)
-		if res != fmod.FMOD_RESULT.FMOD_OK {
+		if res != .FMOD_OK {
 			fmt.printf("FMOD_System_PlaySound %v\n", res)
 			return
 		}
@@ -319,7 +319,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 main :: proc() {
 
 	res := fmod.FMOD_EventSystem_Create(&eventsys)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Create, res)
 		return
 	}
@@ -327,19 +327,19 @@ main :: proc() {
 
 	fmod_version: fmod.FMOD_VERSION
 	res = fmod.FMOD_EventSystem_GetVersion(eventsys, &fmod_version)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetVersion, res)
 		return
 	}
 
 	res = fmod.FMOD_EventSystem_GetSystemObject(eventsys, &system)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetSystemObject, res)
 		return
 	}
 	driver_index: i32 = 0
 	res = fmod.FMOD_System_GetDriver(system, &driver_index)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriver, res)
 		return
 	}
@@ -347,7 +347,7 @@ main :: proc() {
 	output_rate: i32
 	speaker_mode: fmod.FMOD_SPEAKERMODE
 	res = fmod.FMOD_System_GetDriverCaps(system, driver_index, &driver_caps, &output_rate, &speaker_mode)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriverCaps, res)
 		return
 	}
@@ -360,27 +360,26 @@ main :: proc() {
 		fmt.print("HARDWARE_EMULATED\n")
 		res = fmod.FMOD_System_SetDSPBufferSize(system, 1024, 10)
 		/* At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms. */
-		if res != fmod.FMOD_RESULT.FMOD_OK {
+		if res != .FMOD_OK {
 			fmt.printf("%v %v\n", fmod.FMOD_System_SetDSPBufferSize, res)
 			return
 		}
 	}
 
-	//initflags: u32 = init_flags
 	res = fmod.FMOD_EventSystem_Init(eventsys, max_channels, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
 		fmt.print("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...\n")
 		/* Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo... */
-		speakermode = fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO
-		res = fmod.FMOD_System_SetSpeakerMode(system, speakermode)
+		speaker_mode = fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO
+		res = fmod.FMOD_System_SetSpeakerMode(system, speaker_mode)
 		res = fmod.FMOD_EventSystem_Init(eventsys, max_channels, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	}
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Init, res)
 		return
 	}
 	res = fmod.FMOD_System_Set3DSettings(system, 1.0, DistanceFactor, 1.0)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_System_Set3DSettings, res)
 		return
 	}
@@ -389,14 +388,14 @@ main :: proc() {
 	//c_str := strings.clone_to_cstring(name, context.temp_allocator)
 	//res = fmod.FMOD_EventSystem_Load(eventsys, c_str, nil, nil)
 	res = fmod.FMOD_EventSystem_Load(eventsys, "WolfensteinSFX.fev", nil, nil)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
 		return
 	}
 
 	num_events: i32 = 0
 	res = fmod.FMOD_EventSystem_GetNumEvents(eventsys, &num_events)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetNumEvents, res)
 		return
 	}
@@ -415,7 +414,7 @@ main :: proc() {
 	//for i:u32; i in 0..<wolf.EVENTCOUNT_WOLFENSTEINSFX {
 	for i: u32 = 0; i < wolf.EVENTCOUNT_WOLFENSTEINSFX; i += 1 {
 		res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys, i, fmod.FMOD_EVENT_DEFAULT, &events[i])
-		if res != fmod.FMOD_RESULT.FMOD_OK {
+		if res != .FMOD_OK {
 			fmt.printf("%v %v event id %d\n", fmod.FMOD_EventSystem_GetEventBySystemID, res, i)
 			return
 		}

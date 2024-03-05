@@ -4,6 +4,7 @@ import "core:bytes"
 import "core:fmt"
 import "core:runtime"
 import "core:testing"
+import win32app "shared:tlc/win32app"
 
 @(test)
 can_i_inline_asm :: proc(t: ^testing.T) {
@@ -11,6 +12,37 @@ can_i_inline_asm :: proc(t: ^testing.T) {
 	act := asm(u32, u32) -> u32{`add $0, $1
 		 mov $1, $2`,"r,r,=r"}(3, 7)
 	testing.expect(t, act == exp)
+}
+
+// https://learn.microsoft.com/en-us/cpp/intrinsics/rdtsc
+__rdtsc :: #force_inline proc() -> i64 {
+	return asm() -> i64{`rdtsc`,"=r"}()
+}
+
+@(test)
+can_i_call_rdtsc :: proc(t: ^testing.T) {
+	reps :: 100000
+	exp: u64 = 0
+
+	stopwatch := win32app.create_stopwatch()
+	stopwatch->start()
+
+	act := __rdtsc()
+	for i in 0..<reps {
+		exp += exp*exp
+	}
+	act2 := __rdtsc()
+
+	stopwatch->stop()
+	elapsed_ms := stopwatch->get_elapsed_ms()
+
+	clock_cycles := act2 - act
+
+	fmt.printf("rdtsc start  : %d\n", act)
+	fmt.printf("rdtsc stop   : %d\n", act2)
+	fmt.printf("clock cycles : %d\n", clock_cycles)
+	fmt.printf("avg. cc      : %f\n", f64(clock_cycles) / reps)
+	fmt.printf("time         : %fs ms\n", elapsed_ms)
 }
 
 @(test)

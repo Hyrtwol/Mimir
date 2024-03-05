@@ -1,7 +1,10 @@
 // +build windows
 package win32app
 
+import "core:intrinsics"
 import win32 "core:sys/windows"
+
+L :: intrinsics.constant_utf16_cstring
 
 DWORD :: win32.DWORD
 BYTE :: win32.BYTE

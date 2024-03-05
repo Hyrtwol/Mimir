@@ -12,9 +12,6 @@ eventsys: ^fmod.FMOD_EVENTSYSTEM = nil
 
 distance_factor :: 1.0
 
-// GetVersion :: proc() -> (res: int, err: bool) {
-// 	return 666, false
-// }
 
 main :: proc() {
 
@@ -86,7 +83,7 @@ main :: proc() {
 		fmt.print("HARDWARE_EMULATED\n")
 		res = fmod.FMOD_System_SetDSPBufferSize(system, 1024, 10)
 		// At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms.
-		if res != fmod.FMOD_RESULT.FMOD_OK {
+		if res != .FMOD_OK {
 			fmt.printf("FMOD_System_SetDSPBufferSize %v\n", res)
 			return
 		}
@@ -102,27 +99,27 @@ main :: proc() {
 		res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 		// Replace with whatever channel count and flags you use!
 	}
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("FMOD_EventSystem_Init %v\n", res)
 		return
 	}
 
 	// Set the distance units. (meters/feet etc).
 	res = fmod.FMOD_System_Set3DSettings(system, 1.0, distance_factor, 1.0)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("FMOD_System_Set3DSettings %v\n", res)
 		return
 	}
 
 	res = fmod.FMOD_EventSystem_Load(eventsys, "WolfensteinSFX.fev", nil, nil)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("FMOD_EventSystem_Load %v\n", res)
 		return
 	}
 
 	num_events: i32
 	res = fmod.FMOD_EventSystem_GetNumEvents(eventsys, &num_events)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
 		return
 	}
@@ -130,7 +127,7 @@ main :: proc() {
 
 	event: ^fmod.FMOD_EVENT = nil
 	res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys, wolf.EVENTID_WOLFENSTEINSFX_PLAYER_UNDERWATER, fmod.FMOD_EVENT_DEFAULT, &event)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetEventBySystemID, res)
 		return
 	}
@@ -141,7 +138,7 @@ main :: proc() {
 
 	/*
 	res = fmod.FMOD_Event_Start(event)
-	if res != fmod.FMOD_RESULT.FMOD_OK {
+	if res != .FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
 		return
 	}

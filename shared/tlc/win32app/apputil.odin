@@ -1,11 +1,8 @@
+// +build windows
 package win32app
 
 import "core:fmt"
-import "core:intrinsics"
 import win32 "core:sys/windows"
-//import win32ex "shared:sys/windows"
-
-L :: intrinsics.constant_utf16_cstring
 
 int2 :: [2]i32
 
@@ -15,7 +12,7 @@ IDT_TIMER3: win32.UINT_PTR : 10003
 IDT_TIMER4: win32.UINT_PTR : 10004
 
 decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2 {
-	return int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
+	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
 }
 
 show_error_and_panic :: proc(msg: string) {

@@ -21,13 +21,13 @@ main :: proc() {
 	fmt.printf("%s\n", TITLE)
 	fmt.printf("%v %v %v\n", ODIN_VENDOR, ODIN_VERSION, ODIN_ROOT)
 	fmt.printf("%v %v\n", ODIN_OS, ODIN_ARCH)
-	exitcode: int = 0
+	exit_code: int = 0
 	when ODIN_OS == .Windows {
-		exitcode = setup_windows()
+		exit_code = setup_windows()
 	} else {
 		fmt.printf("Sorry this tool dont do anything good on %v for now.\n", ODIN_OS)
-		exitcode = 1
+		exit_code = 1
 	}
 	fmt.print("Done!\n")
-	os.exit(exitcode)
+	os.exit(exit_code)
 }

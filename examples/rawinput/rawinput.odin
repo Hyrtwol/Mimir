@@ -13,7 +13,6 @@ import "core:simd"
 import "core:strings"
 import win32 "core:sys/windows"
 import "core:time"
-import win32ex "shared:sys/windows"
 import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
 
@@ -48,7 +47,7 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 	}
 }
 
-WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_CREATE\n")
 
 	//sc := win32.ShowCursor(false)
@@ -67,19 +66,12 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	return 0
 }
 
-WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.print("WM_DESTROY\n")
-
 	canvas.dib_free_section(&dib)
-
 	//win32.ShowCursor(true)
-
 	win32.PostQuitMessage(0)
 	return 0
-}
-
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return 1
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -94,8 +86,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
 
-	hdc_source := win32ex.CreateCompatibleDC(ps.hdc)
-	defer win32ex.DeleteDC(hdc_source)
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 	client_size := win32app.get_rect_size(&ps.rcPaint)
@@ -142,8 +134,9 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		{
 			mouse_delta: win32app.int2 = {raw.data.mouse.lLastX, raw.data.mouse.lLastY}
 			mouse_pos += mouse_delta
-			mouse_pos.x = clamp(mouse_pos.x, 0, WIDTH - 1)
-			mouse_pos.y = clamp(mouse_pos.y, 0, HEIGHT - 1)
+			// mouse_pos.x = clamp(mouse_pos.x, 0, WIDTH - 1)
+			// mouse_pos.y = clamp(mouse_pos.y, 0, HEIGHT - 1)
+			mouse_pos = {clamp(mouse_pos.x, 0, WIDTH - 1),clamp(mouse_pos.y, 0, HEIGHT - 1)}
 
 			/*fmt.printf(
 				"mouse %v %v %v %v %v\n",
@@ -152,7 +145,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 				raw.data.mouse.DUMMYUNIONNAME.DUMMYSTRUCTNAME.usButtonFlags,
 				cast(i16)raw.data.mouse.DUMMYUNIONNAME.DUMMYSTRUCTNAME.usButtonData)
 			*/
-			win32ex.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 		}
 	case win32.RIM_TYPEKEYBOARD:
 		{
@@ -162,9 +155,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			}
 		}
 	case:
-		{
 			fmt.printf("dwType %v\n", raw.header.dwType)
-		}
 	}
 
 	return 0
@@ -172,24 +163,19 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE:
-		return WM_CREATE(hwnd, wparam, lparam)
-	case win32.WM_DESTROY:
-		return WM_DESTROY(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:
-		return WM_ERASEBKGND(hwnd, wparam, lparam)
-	case win32.WM_SIZE:
-		return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:
-		return WM_PAINT(hwnd, wparam, lparam)
-	case win32.WM_ACTIVATEAPP:
-		return WM_ACTIVATEAPP(hwnd, wparam, lparam)
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:	return 1
+	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
+	case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
 	//case win32.WM_ACTIVATE: return WM_ACTIVATE(hwnd, wparam, lparam)
-	case win32.WM_INPUT: return WM_INPUT(hwnd, wparam, lparam)
-	case:
-		return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	case win32.WM_INPUT:		return WM_INPUT(hwnd, wparam, lparam)
+	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
 
 main :: proc() {
