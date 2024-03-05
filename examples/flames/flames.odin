@@ -3,8 +3,7 @@ package main
 import "core:fmt"
 import "core:intrinsics"
 import "core:math"
-import "core:math/linalg"
-import hlm "core:math/linalg/hlsl"
+//import "core:math/linalg"
 import "core:math/noise"
 import "core:math/rand"
 import "core:mem"
@@ -19,9 +18,9 @@ import win32app "shared:tlc/win32app"
 L :: intrinsics.constant_utf16_cstring
 byte4 :: canvas.byte4
 int2 :: canvas.int2
-float2 :: hlm.float2
-double2 :: hlm.double2
-double3 :: hlm.double3
+double2 :: [2]f64
+double3 :: [3]f64
+
 DIB :: canvas.DIB
 
 TITLE :: "Flames"
@@ -111,9 +110,13 @@ dib_flames :: proc(dib: ^DIB) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	client_size := win32app.get_client_size(hwnd)
+	//fmt.printf("WM_CREATE %v %v\n", hwnd, (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam))))
+
+	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000 / FPS, nil)
+	if timer_id == 0 {win32app.show_error_and_panic("No timer")}
 
 	hdc := win32.GetDC(hwnd)
+	defer win32.ReleaseDC(hwnd, hdc)
 
 	dib = canvas.dib_create_v5(hdc, {WIDTH, HEIGHT})
 	if dib.pvBits != nil {
@@ -122,62 +125,43 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		win32app.show_error_and_panic("No DIB")
 	}
 
-	win32.ReleaseDC(hwnd, hdc)
-
-	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000 / FPS, nil)
-	if timer_id == 0 {win32app.show_error_and_panic("No timer")}
-
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	canvas.dib_free_section(&dib)
+
 	if timer_id != 0 {
 		if !win32.KillTimer(hwnd, timer_id) {
 			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
+			timer_id = 0
 		}
 	}
-	canvas.dib_free_section(&dib)
+
 	win32.PostQuitMessage(0)
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
-	return 1
-}
-
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b': win32.DestroyWindow(hwnd)
-	case '1':    dib_update_func = dib_flames
+	case '\x1b':
+		win32.DestroyWindow(hwnd)
+	case '1':
+		dib_update_func = dib_flames
 	}
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	newtitle := fmt.tprintf("%s %v %v FPS: %d\n", settings.title, size, dib.size, FPS)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+	new_title := fmt.tprintf("%s %v %v FPS: %d\n", settings.title, size, dib.size, FPS)
+	win32app.SetWindowText(hwnd, new_title)
 	return 0
 }
 
-/*WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	ps: win32.PAINTSTRUCT
-	win32.BeginPaint(hwnd, &ps)
-	defer win32.EndPaint(hwnd, &ps)
-
-	hdc_source := win32.CreateCompatibleDC(ps.hdc)
-	defer win32.DeleteDC(hdc_source)
-
-	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
-	client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
-
-	return 0
-}*/
-
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	dib_update_func(&dib)
-	win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	win32app.RedrawWindowNow(hwnd)
 	return 0
 }
 
@@ -199,19 +183,21 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE: 		return WM_CREATE(hwnd, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
-	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:		return canvas.dib_paint(&dib, hwnd) // &dib->dib_paint(hwnd) maybe?
-	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
-	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam)
-	case win32.WM_LBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
-	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	case win32.WM_CREATE:       return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:      return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:   return 1
+	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_PAINT:        return canvas.wm_paint_dib(hwnd, dib.hbitmap, dib.size) // &dib->dib_paint(hwnd) maybe?
+	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam)
+	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
+	case:                       return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
 
 main :: proc() {

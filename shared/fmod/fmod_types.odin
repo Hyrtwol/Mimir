@@ -1,11 +1,6 @@
 package fmod
 
-//USE_LINALG :: #config(FMOD_USE_LINALG, true)
-
 import _c "core:c"
-// when USE_LINALG {
-// 	import "core:math/linalg"
-// }
 
 int :: _c.int // i32
 uint :: _c.uint // u32
@@ -17,7 +12,7 @@ FMOD_BOOL :: _c.int
 FMOD_MODE :: _c.uint
 FMOD_TIMEUNIT :: _c.uint
 FMOD_INITFLAGS :: _c.uint
-FMOD_CAPS :: _c.uint
+//FMOD_CAPS :: _c.uint
 FMOD_DEBUGLEVEL :: _c.uint
 FMOD_MEMORY_TYPE :: _c.uint
 
@@ -28,12 +23,7 @@ FMOD_MUSIC_ID :: _c.uint
 FMOD_MUSIC_CUE_ID :: _c.uint
 FMOD_MUSIC_PARAM_ID :: _c.uint
 
-// when USE_LINALG {
-// 	FMOD_VECTOR :: linalg.Vector3f32
-// } else {
-	FMOD_VECTOR :: [3]f32
-//}
-
+FMOD_VECTOR :: [3]f32
 FMOD_VECTOR_ZERO :: FMOD_VECTOR{0, 0, 0}
 
 /*
@@ -46,38 +36,25 @@ FMOD_VERSION :: struct {
 	Major:       _c.ushort,
 }
 
-FMOD_CAPS_ENUM :: enum _c.uint {
-	// Device has no special capabilities.
-	NONE                   = 0x00000000,
-
+FMOD_CAPS :: distinct bit_set[FMOD_CAPS_FLAG;u32]
+FMOD_CAPS_FLAG :: enum _c.uint {
 	// Device supports hardware mixing.
-	HARDWARE               = 0x00000001,
-
+	HARDWARE               = 0,
 	// User has device set to 'Hardware acceleration = off' in control panel, and now extra 200ms latency is incurred.
-	HARDWARE_EMULATED      = 0x00000002,
-
+	HARDWARE_EMULATED      = 1,
 	// Device can do multichannel output, ie greater than 2 channels.
-	OUTPUT_MULTICHANNEL    = 0x00000004,
-
+	OUTPUT_MULTICHANNEL    = 2,
 	// Device can output to 8bit integer PCM.
-	OUTPUT_FORMAT_PCM8     = 0x00000008,
-
+	OUTPUT_FORMAT_PCM8     = 3,
 	// Device can output to 16bit integer PCM.
-	OUTPUT_FORMAT_PCM16    = 0x00000010,
-
+	OUTPUT_FORMAT_PCM16    = 4,
 	// Device can output to 24bit integer PCM.
-	OUTPUT_FORMAT_PCM24    = 0x00000020,
-
+	OUTPUT_FORMAT_PCM24    = 5,
 	/// Device can output to 32bit integer PCM.
-	OUTPUT_FORMAT_PCM32    = 0x00000040,
-
+	OUTPUT_FORMAT_PCM32    = 6,
 	// Device can output to 32bit floating point PCM.
-	OUTPUT_FORMAT_PCMFLOAT = 0x00000080,
-
+	OUTPUT_FORMAT_PCMFLOAT = 7,
 	// Device supports some form of limited hardware reverb, maybe parameterless and only selectable by environment.
-	REVERB_LIMITED         = 0x00002000,
+	REVERB_LIMITED         = 13,
+	FMOD_CAPS_LOOPBACK     = 14,
 }
-//FMOD_CAPS :: distinct bit_set[FMOD_CAPS_ENUM; u32]
-
-//FMOD_RESULT_FLAGS :: bit_set[FMOD_RESULT; u32]
-//FMOD_RESULT_FLAGS :: bit_set[FMOD_SPEAKERMODE; u32]

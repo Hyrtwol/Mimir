@@ -142,8 +142,8 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, bitmap_size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, bitmap_size)
+	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 	return 0
 }
 

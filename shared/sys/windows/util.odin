@@ -52,3 +52,45 @@ MAKELRESULT :: proc {
 	MAKELRESULT_FROM_LOHI,
 	MAKELRESULT_FROM_BOOL,
 }
+
+/*
+tprintf :: proc(fmt: string, args: ..any) -> string {
+	str: strings.Builder
+	strings.builder_init(&str, context.temp_allocator)
+	sbprintf(&str, fmt, ..args)
+	return strings.to_string(str)
+}
+
+utf8_to_wstring :: proc(s: string, allocator := context.temp_allocator) -> wstring {
+	if res := utf8_to_utf16(s, allocator); res != nil {
+		return &res[0]
+	}
+	return nil
+}
+
+ctprintf :: proc(format: string, args: ..any, newline := false) -> cstring {
+	str: strings.Builder
+	strings.builder_init(&str, context.temp_allocator)
+	sbprintf(&str, format, ..args, newline=newline)
+	strings.write_byte(&str, 0)
+	s := strings.to_string(str)
+	return cstring(raw_data(s))
+}
+
+str  := fmt.tprintf(format, args)
+cstr := fmt.ctprintf(format, args)
+wstr := fmt.wtprintf(format, args) ? clashes with fmt.wprintf() a bit :/
+
+*/
+
+wtprintf :: proc(format: string, args: ..any, allocator := context.temp_allocator) -> win32.wstring {
+	// str: strings.Builder
+	// strings.builder_init(&str, context.temp_allocator)
+	// sbprintf(&str, format, ..args)
+	// strings.write_byte(&str, 0)
+	// s := strings.to_string(str)
+	// return cstring(raw_data(s))
+
+	str := fmt.tprintf(format, args)
+	return win32.utf8_to_wstring(str)
+}

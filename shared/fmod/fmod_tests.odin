@@ -3,34 +3,36 @@ package fmod
 import "core:bytes"
 import "core:fmt"
 import "core:runtime"
+import "core:testing"
 import "shared:ounit"
-//import win32 "core:sys/windows"
-//import win32app "../../shared/tlc/win32app"
+
+@(test)
+fmod_result :: proc(t: ^testing.T) {
+	using ounit
+	expect_value(t, FMOD_RESULT.FMOD_OK, 0)
+	expect_value(t, FMOD_RESULT.FMOD_ERR_MUSIC_NOCALLBACK, 95)
+}
 
 @(test)
 fmod_speaker :: proc(t: ^testing.T) {
-	exp := FMOD_SPEAKER.FMOD_SPEAKER_SBL
-	act := FMOD_SPEAKER.FMOD_SPEAKER_SIDE_LEFT
-	testing.expect(t, act == exp, fmt.tprintf("FMOD_SPEAKER: %v (should be: %v)", act, exp))
-	exp = FMOD_SPEAKER.FMOD_SPEAKER_SBR
-	act = FMOD_SPEAKER.FMOD_SPEAKER_SIDE_RIGHT
-	testing.expect(t, act == exp, fmt.tprintf("FMOD_SPEAKER: %v (should be: %v)", act, exp))
-}
-
-/*
-@(test)
-make_lresult_from_true :: proc(t: ^testing.T) {
-	exp := 1
-	result := win32app.MAKELRESULT(true)
-	testing.expect(t, exp == result, fmt.tprintf("MAKELRESULT: %v -> %v (should be: %v)", false, result, exp))
+	using ounit
+	expect_value(t, FMOD_SPEAKER.FMOD_SPEAKER_FRONT_LEFT, 0)
+	expect_value(t, FMOD_SPEAKER.FMOD_SPEAKER_FRONT_RIGHT, 1)
+	expect_value(t, FMOD_SPEAKER.FMOD_SPEAKER_SBL, FMOD_SPEAKER.FMOD_SPEAKER_SIDE_LEFT)
+	expect_value(t, FMOD_SPEAKER.FMOD_SPEAKER_SBR, FMOD_SPEAKER.FMOD_SPEAKER_SIDE_RIGHT)
 }
 
 @(test)
-wstring_convert :: proc(t: ^testing.T) {
-	exp := "ABC"
-	wstr := win32.utf8_to_wstring(exp)
-	result, err := win32.wstring_to_utf8(wstr, 256, context.allocator)
-	testing.expect(t, exp == result, fmt.tprintf("wstring_convert: %v (should be: %v)", result, exp))
-	testing.expect(t, err == .None, fmt.tprintf("wstring_convert: error %v", err))
+verify_enums :: proc(t: ^testing.T) {
+	using ounit
+	expect_value(t, transmute(u32)FMOD_CAPS({.HARDWARE}), 0x00000001)
+	expect_value(t, transmute(u32)FMOD_CAPS({.HARDWARE_EMULATED}), 0x00000002)
+	expect_value(t, transmute(u32)FMOD_CAPS({.OUTPUT_MULTICHANNEL}), 0x00000004)
+	expect_value(t, transmute(u32)FMOD_CAPS({.OUTPUT_FORMAT_PCM8}), 0x00000008)
+	expect_value(t, transmute(u32)FMOD_CAPS({.OUTPUT_FORMAT_PCM16}), 0x00000010)
+	expect_value(t, transmute(u32)FMOD_CAPS({.OUTPUT_FORMAT_PCM24}), 0x00000020)
+	expect_value(t, transmute(u32)FMOD_CAPS({.OUTPUT_FORMAT_PCM32}), 0x00000040)
+	expect_value(t, transmute(u32)FMOD_CAPS({.OUTPUT_FORMAT_PCMFLOAT}), 0x00000080)
+	expect_value(t, transmute(u32)FMOD_CAPS({.REVERB_LIMITED}), 0x00002000)
+	expect_value(t, transmute(u32)FMOD_CAPS({.FMOD_CAPS_LOOPBACK}), 0x00004000)
 }
-*/

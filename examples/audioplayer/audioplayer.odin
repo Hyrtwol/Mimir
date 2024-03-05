@@ -258,12 +258,12 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	newtitle := fmt.tprintf("%s %v %v\n", TITLE, size, dib.size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, dib.size)
+	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 	return 0
 }
 
-WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+/*WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
@@ -276,7 +276,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
 
 	return 0
-}
+}*/
 
 WM_MOUSEMOVE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	return handle_input(hwnd, wparam, lparam)
@@ -332,8 +332,8 @@ MM_WOM_DONE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM
 	WriteBuffer()
 	n_done += 1
 
-	//newtitle := fmt.tprintf("%s %v\n", TITLE, n_done)
-	//win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+	//new_title := fmt.tprintf("%s %v\n", TITLE, n_done)
+	//win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 
 	return 0
 }
@@ -359,7 +359,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	//case win32.WM_CLOSE:		return WM_CLOSE(hwnd, wparam, lparam)
 	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:		return WM_PAINT(hwnd)
+	//case win32.WM_PAINT:		return WM_PAINT(hwnd)
+	case win32.WM_PAINT:        return canvas.wm_paint_dib(hwnd, dib.hbitmap, dib.size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)

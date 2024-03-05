@@ -1,6 +1,7 @@
 // +build windows
 package sys_windows_ex
 
+/*
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/
 // https://github.com/tpn/winsdk-7/blob/master/v7.1A/Include/WinUser.h
 foreign import user32 "system:User32.lib"
@@ -54,3 +55,4 @@ RedrawWindowFlags :: enum UINT {
 	RDW_FRAME           = 0x0400,
 	RDW_NOFRAME         = 0x0800,
 }
+*/

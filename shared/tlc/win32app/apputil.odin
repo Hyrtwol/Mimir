@@ -2,18 +2,17 @@ package win32app
 
 import "core:fmt"
 import "core:intrinsics"
-import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
-import win32ex "shared:sys/windows"
+//import win32ex "shared:sys/windows"
 
 L :: intrinsics.constant_utf16_cstring
 
-int2 :: hlm.int2
+int2 :: [2]i32
 
-IDT_TIMER1: win32ex.UINT_PTR : 10001
-IDT_TIMER2: win32ex.UINT_PTR : 10002
-IDT_TIMER3: win32ex.UINT_PTR : 10003
-IDT_TIMER4: win32ex.UINT_PTR : 10004
+IDT_TIMER1: win32.UINT_PTR : 10001
+IDT_TIMER2: win32.UINT_PTR : 10002
+IDT_TIMER3: win32.UINT_PTR : 10003
+IDT_TIMER4: win32.UINT_PTR : 10004
 
 decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2 {
 	return int2({win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)})
@@ -121,6 +120,7 @@ window_settings :: struct {
 	dwStyle:     u32,
 	dwExStyle:   u32,
 	wndproc:     win32.WNDPROC,
+	run:         proc(this: ^window_settings),
 }
 
 create_window_settings_default :: proc() -> window_settings {
@@ -131,6 +131,7 @@ create_window_settings_default :: proc() -> window_settings {
 		wndproc     = nil,
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
+		run         = run_settings,
 	}
 	return settings
 }
@@ -143,6 +144,7 @@ create_window_settings_basic :: proc(title: string, width: i32, height: i32, wnd
 		wndproc     = wndproc,
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
+		run         = run_settings,
 	}
 	return settings
 }
@@ -217,4 +219,17 @@ run_settings :: proc(settings: ^window_settings) {
 run :: proc {
 	run_settings,
 	run_wndproc,
+}
+
+// default no draw background erase
+WM_ERASEBKGND_NODRAW :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
+	return 1
+}
+
+RedrawWindowNow :: proc(hwnd: HWND) -> BOOL{
+	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+}
+
+SetWindowText :: proc(hwnd: HWND, text: string) -> BOOL{
+	return win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(text))
 }

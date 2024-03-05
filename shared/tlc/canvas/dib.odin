@@ -7,7 +7,9 @@ import hlm "core:math/linalg/hlsl"
 import "core:runtime"
 import "core:strings"
 import win32 "core:sys/windows"
-import win32ex "shared:sys/windows"
+import win32app "shared:tlc/win32app"
+//import win32ex "shared:sys/windows"
+win32ex :: win32
 
 ColorSizeInBytes :: 4
 BitCount :: ColorSizeInBytes * 8
@@ -90,4 +92,45 @@ dib_setdot :: proc(dib: ^DIB, pos: int2, col: byte4) {
 	if i >= 0 && i < dib.pixel_count {
 		dib.pvBits[i] = col
 	}
+}
+
+/*dib_paint :: proc(dib: ^DIB, hwnd: win32.HWND)-> win32.LRESULT {
+	ps: win32.PAINTSTRUCT
+	win32.BeginPaint(hwnd, &ps)
+	defer win32.EndPaint(hwnd, &ps)
+
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
+
+	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
+	client_size := win32app.get_rect_size(&ps.rcPaint)
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
+
+	return 0
+}*/
+
+@(private)
+wm_paint_hgdiobj :: proc(hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2)-> win32.LRESULT {
+	ps: win32.PAINTSTRUCT
+	win32.BeginPaint(hwnd, &ps)
+	defer win32.EndPaint(hwnd, &ps)
+
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
+
+	win32.SelectObject(hdc_source, hgdiobj)
+	client_size := win32app.get_rect_size(&ps.rcPaint)
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, size.x, size.y, win32.SRCCOPY)
+
+	return 0
+}
+
+@(private)
+wm_paint_hbitmap :: proc(hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2)-> win32.LRESULT {
+	return wm_paint_hgdiobj(hwnd, win32.HGDIOBJ(hbitmap), size)
+}
+
+wm_paint_dib :: proc {
+	wm_paint_hgdiobj,
+	wm_paint_hbitmap,
 }

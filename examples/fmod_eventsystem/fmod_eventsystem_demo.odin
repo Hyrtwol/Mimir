@@ -26,8 +26,8 @@ HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 ZOOM  	:: 8
 
-FMOD_MAXCHANNELS :: 32
-FMOD_INIT_FLAGS :: fmod.FMOD_INIT_3D_RIGHTHANDED
+max_channels :: 32
+init_flags :: fmod.FMOD_INIT_3D_RIGHTHANDED
 DistanceFactor :: 1.0
 
 screen_buffer  :: canvas.screen_buffer
@@ -38,7 +38,7 @@ bitmap_count  : i32
 pvBits        : screen_buffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
-dib           : canvas.DIB
+//dib           : canvas.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
@@ -191,12 +191,9 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return 1
-}
-
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	// odinfmt: disable
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
 	case '1':		play_event(wolf.EVENT_WOLFENSTEINSFX_PLAYER_FOOTSTEPS_CARPET)
@@ -213,21 +210,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case 'm':		play_song()
 	case:
 	}
-	return 0
-}
-
-WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	ps: win32.PAINTSTRUCT
-	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
-	defer win32.EndPaint(hwnd, &ps)
-
-	hdc_source := win32.CreateCompatibleDC(ps.hdc)
-	defer win32.DeleteDC(hdc_source)
-
-	client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.SelectObject(hdc_source, bitmap_handle)
-	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
-
+	// odinfmt: enable
 	return 0
 }
 
@@ -248,8 +231,8 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		{
 			fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
 			fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
-			newtitle := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
-			win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(newtitle))
+			new_title := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
+			win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 		}
 	case win32app.IDT_TIMER2:
 		{
@@ -275,7 +258,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 			win32.InvalidateRect(hwnd, nil, false)
 			//win32.InvalidateRect(hwnd)
-			//win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+			//win32app.RedrawWindowNow(hwnd)
 		}
 	}
 	return 0
@@ -317,12 +300,12 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
-	//case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:	return 1
+	case win32.WM_PAINT:		return canvas.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
@@ -330,6 +313,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
 
 main :: proc() {
@@ -359,16 +343,18 @@ main :: proc() {
 		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriver, res)
 		return
 	}
-	caps: fmod.FMOD_CAPS_ENUM
-	outputrate: i32
-	speakermode: fmod.FMOD_SPEAKERMODE
-	res = fmod.FMOD_System_GetDriverCaps(system, driver_index, &caps, &outputrate, &speakermode)
+	driver_caps: fmod.FMOD_CAPS
+	output_rate: i32
+	speaker_mode: fmod.FMOD_SPEAKERMODE
+	res = fmod.FMOD_System_GetDriverCaps(system, driver_index, &driver_caps, &output_rate, &speaker_mode)
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriverCaps, res)
 		return
 	}
-	res = fmod.FMOD_System_SetSpeakerMode(system, speakermode)
-	if ((caps & .HARDWARE_EMULATED) == .HARDWARE_EMULATED) {
+	fmt.printf("caps: %v\n", driver_caps)
+
+	res = fmod.FMOD_System_SetSpeakerMode(system, speaker_mode)
+	if .HARDWARE_EMULATED in driver_caps {
 		/* The user has the 'Acceleration' slider set to off!  This is really bad for latency!. */
 		/* You might want to warn the user about this. */
 		fmt.print("HARDWARE_EMULATED\n")
@@ -380,14 +366,14 @@ main :: proc() {
 		}
 	}
 
-	//initflags: u32 = FMOD_INIT_FLAGS
-	res = fmod.FMOD_EventSystem_Init(eventsys, FMOD_MAXCHANNELS, FMOD_INIT_FLAGS, nil, fmod.FMOD_EVENT_INIT_NORMAL)
+	//initflags: u32 = init_flags
+	res = fmod.FMOD_EventSystem_Init(eventsys, max_channels, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
 		fmt.print("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...\n")
 		/* Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo... */
 		speakermode = fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO
 		res = fmod.FMOD_System_SetSpeakerMode(system, speakermode)
-		res = fmod.FMOD_EventSystem_Init(eventsys, FMOD_MAXCHANNELS, FMOD_INIT_FLAGS, nil, fmod.FMOD_EVENT_INIT_NORMAL)
+		res = fmod.FMOD_EventSystem_Init(eventsys, max_channels, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	}
 	if res != fmod.FMOD_RESULT.FMOD_OK {
 		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Init, res)

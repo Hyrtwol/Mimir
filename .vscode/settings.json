@@ -29,6 +29,7 @@
         "lwid",
         "metaprogramming",
         "microarch",
+        "odinfmt",
         "ounit",
         "pixelshader",
         "rasterizer",
