@@ -4,8 +4,6 @@ foreign import lightwave "lightwave.lib"
 
 import _c "core:c"
 
-FILE :: struct {}
-
 BEH_RESET :: 0
 BEH_CONSTANT :: 1
 BEH_REPEAT :: 2

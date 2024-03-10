@@ -1,9 +1,15 @@
 package lightwave
 
 import _c "core:c"
+import lc "core:c/libc"
 import la "core:math/linalg"
 
 // D:\dev\lightwave\lwsdk\include\lwtypes.h
+
+lwint:: _c.int
+lwuint:: _c.uint
+lwfloat:: _c.float
+FILE :: lc.FILE
 
 LWImageID :: rawptr
 LWBufferValue :: f32
