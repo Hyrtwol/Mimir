@@ -7,3 +7,7 @@ desktop.ini
 Thumbs.db
 .DS_Store
 *.WinMerge
+/hello.txt
+.vs/
+x64/
+*.user

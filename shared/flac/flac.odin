@@ -20,7 +20,9 @@ FLAC__byte :: FLAC__uint8
 uint32_t :: _c.uint32_t
 size_t :: _c.size_t
 int :: _c.int
+long :: _c.long
 char :: _c.char
+FILE :: rawptr
 
 // format
 
@@ -450,7 +452,14 @@ foreign flac_lib {
 	FLAC__stream_decoder_new :: proc() -> ^FLAC__StreamDecoder ---
 	FLAC__stream_decoder_delete :: proc(decoder: ^FLAC__StreamDecoder) ---
 
-
+	FLAC__stream_decoder_set_ogg_serial_number :: proc(decoder: ^FLAC__StreamDecoder, serial_number: long) -> FLAC__bool ---
+	FLAC__stream_decoder_set_md5_checking :: proc(decoder: ^FLAC__StreamDecoder, value: FLAC__bool) -> FLAC__bool ---
+	FLAC__stream_decoder_set_metadata_respond :: proc(decoder: ^FLAC__StreamDecoder, type: FLAC__MetadataType) -> FLAC__bool ---
+	FLAC__stream_decoder_set_metadata_respond_application :: proc(decoder: ^FLAC__StreamDecoder, id: [4]FLAC__byte) -> FLAC__bool ---
+	FLAC__stream_decoder_set_metadata_respond_all :: proc(decoder: ^FLAC__StreamDecoder) -> FLAC__bool ---
+	FLAC__stream_decoder_set_metadata_ignore :: proc(decoder: ^FLAC__StreamDecoder, type: FLAC__MetadataType) -> FLAC__bool ---
+	FLAC__stream_decoder_set_metadata_ignore_application :: proc(decoder: ^FLAC__StreamDecoder, id: [4]FLAC__byte) -> FLAC__bool ---
+	FLAC__stream_decoder_set_metadata_ignore_all :: proc(decoder: ^FLAC__StreamDecoder) -> FLAC__bool ---
 	FLAC__stream_decoder_get_state :: proc(decoder: ^FLAC__StreamDecoder) -> FLAC__StreamDecoderState ---
 	FLAC__stream_decoder_get_resolved_state_string :: proc(decoder: ^FLAC__StreamDecoder) -> cstring ---
 	FLAC__stream_decoder_get_md5_checking :: proc(decoder: ^FLAC__StreamDecoder) -> FLAC__bool ---
@@ -476,6 +485,13 @@ foreign flac_lib {
 		client_data: rawptr,
 	) -> FLAC__StreamDecoderInitStatus ---
 
+	FLAC__stream_decoder_init_FILE :: proc(
+		decoder: ^FLAC__StreamDecoder,
+		file: FILE,
+		write_callback: FLAC__StreamDecoderWriteCallback,
+		metadata_callback: FLAC__StreamDecoderMetadataCallback,
+		error_callback: FLAC__StreamDecoderErrorCallback,
+	) -> FLAC__StreamDecoderInitStatus ---
 
 	FLAC__stream_encoder_new :: proc() -> ^FLAC__StreamEncoder ---
 	FLAC__stream_encoder_delete :: proc(encoder: ^FLAC__StreamEncoder) ---

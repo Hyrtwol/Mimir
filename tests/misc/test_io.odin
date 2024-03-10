@@ -9,8 +9,9 @@ import "shared:ounit"
 write_hello_txt :: proc(t: ^testing.T) {
 	path := "hello.txt"
 	fmt.printf("writing %s\n", path)
-	data: []byte = {65, 66, 67, 68} // "ABCD"
-	ok := os.write_entire_file(path, data)
+	//data: []byte = {65, 66, 67, 68} // "ABCD"
+	data := "ABCD"
+	ok := os.write_entire_file(path, transmute([]byte)data)
 	testing.expect(t, ok)
 	testing.expect(t, os.exists("hello.txt"))
 }

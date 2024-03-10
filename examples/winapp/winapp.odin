@@ -62,7 +62,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	ColorSizeInBytes :: 4
 	BitCount :: ColorSizeInBytes * 8
 
-	bmiHeader := win32.BITMAPINFOHEADER {
+	bmi_header := win32.BITMAPINFOHEADER {
 		biSize = size_of(win32.BITMAPINFOHEADER),
 		biWidth = bitmap_size.x,
 		biHeight = bitmap_size.y,
@@ -76,7 +76,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 		biClrUsed = 0,
 	}
 
-	bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmiHeader, 0, &pvBits, nil, 0))
+	bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y

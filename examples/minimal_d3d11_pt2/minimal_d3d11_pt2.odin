@@ -203,7 +203,7 @@ main :: proc() {
 	hr = device->CreateDepthStencilState(&depth_stencil_desc, &depth_stencil_state)
 	assert(hr == 0);assert(depth_stencil_state != nil)
 
-	///////////////////////////////////////////////////////////////////////////////////////////////
+	//-- Constant Buffer --//
 
 	constant_buffer_desc := d3d11.BUFFER_DESC {
 		ByteWidth      = size_of(Constants),
@@ -211,11 +211,12 @@ main :: proc() {
 		BindFlags      = {.CONSTANT_BUFFER},
 		CPUAccessFlags = {.WRITE},
 	}
-	assert(constant_buffer_desc.ByteWidth == 128, fmt.tprintf("constant_buffer_desc=%v\n", constant_buffer_desc))
-	fmt.printf("constant_buffer_desc=%v\n", constant_buffer_desc)
+	//fmt.printf("constant_buffer_desc=%v\n", constant_buffer_desc)
 	constant_buffer: ^d3d11.IBuffer
 	hr = device->CreateBuffer(&constant_buffer_desc, nil, &constant_buffer)
 	assert(hr == 0);assert(constant_buffer != nil)
+
+	//-- Vertex Buffer --//
 
 	vertex_buffer_desc := d3d11.BUFFER_DESC {
 		ByteWidth = size_of(vertex_data),
@@ -247,7 +248,7 @@ main :: proc() {
 	hr = device->CreateBuffer(&index_buffer_desc, &index_buffer_data, &index_buffer)
 	assert(hr == 0);assert(index_buffer != nil)
 
-	///////////////////////////////////////////////////////////////////////////////////////////////
+	//-- Instance Buffer --//
 
 	instanceBufferDesc: d3d11.BUFFER_DESC = {
 		Usage     = .IMMUTABLE,

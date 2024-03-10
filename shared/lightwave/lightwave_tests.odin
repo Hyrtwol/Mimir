@@ -6,7 +6,7 @@ import "core:runtime"
 import "core:testing"
 import "shared:ounit"
 
-box :: "../models/box.lwo"
+box :: "../data/models/box.lwo"
 
 @(private)
 expect_u32 :: proc(t: ^testing.T, act, exp: u32) {

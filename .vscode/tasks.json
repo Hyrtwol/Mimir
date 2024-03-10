@@ -153,6 +153,20 @@
             }
         },
         {
+            "label": "clean up",
+            "type": "shell",
+            "command": "build_cleanup",
+            "args": [],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
             "label": "build docs",
             "type": "shell",
             "command": "build",

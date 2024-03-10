@@ -3,7 +3,7 @@ package main
 import "core:fmt"
 import lw "shared:lightwave"
 
-box :: "../models/box.lwo"
+box :: "../data/models/box.lwo"
 multi_layer :: "../models/multi_layer.lwo"
 
 main :: proc() {
@@ -49,7 +49,6 @@ main :: proc() {
 			fmt.printf("    type: 0x%8X\n", poly^.type)
 			fmt.printf("    norm: %v\n", poly^.norm)
 			fmt.printf("    nverts: %d\n", poly^.nverts)
-			//fmt.printf("  polygon[%d]: %v\n", i, polys[i])
 		}
 	}
 

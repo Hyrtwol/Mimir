@@ -39,7 +39,7 @@ dib_free_section :: proc(dib: ^DIB) {
 
 dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	PelsPerMeter :: 3780
-	bmiHeader := win32.BITMAPINFOHEADER {
+	bmi_header := win32.BITMAPINFOHEADER {
 		biSize          = size_of(win32.BITMAPINFOHEADER),
 		biWidth         = size.x,
 		biHeight        = size.y,
@@ -56,7 +56,7 @@ dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		size        = size,
 		pixel_count = size.x * size.y,
 	}
-	dib_create_section(&dib, hdc, cast(^win32.BITMAPINFO)&bmiHeader)
+	dib_create_section(&dib, hdc, cast(^win32.BITMAPINFO)&bmi_header)
 	return dib
 }
 

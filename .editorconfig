@@ -25,6 +25,9 @@ indent_size = 4
 [*.{json,code-workspace}]
 indent_size = 4
 
+[*.{xml,csproj,props,targets,recipe,shproj,projitems}]
+insert_final_newline = false
+
 [*.hlsl]
 max_line_length = off
 indent_style = tab
