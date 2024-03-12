@@ -1,0 +1,146 @@
+<Project DefaultTargets="All" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <RecipeVersion>0.1</RecipeVersion>
+        <ArtifactName>Mimir</ArtifactName>
+        <ArtifactCompany>Hyrtwol</ArtifactCompany>
+        <ArtifactAuthors>Thomas la Cour</ArtifactAuthors>
+        <ArtifactCopyright>Copyright 2023 $(ArtifactCompany)</ArtifactCopyright>
+        <ArtifactProjectUrl>https://github.com/Hyrtwol/Mimir</ArtifactProjectUrl>
+        <ArtifactVCSRootUrl>git@github.com:Hyrtwol/Mimir.git</ArtifactVCSRootUrl>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <OdinOutputDir>$(MSBuildProjectDirectory)\bin</OdinOutputDir>
+        <DocDir>$(MSBuildProjectDirectory)\doc</DocDir>
+        <OdinExe>$(ODIN_ROOT)\odin.exe</OdinExe>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Project Include="examples\amstrad">
+            <Flavour>Odin</Flavour>
+            <Description>Amstrad emulator</Description>
+        </Project>
+        <Project Include="examples\audioplayer">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\coreclr">
+            <Flavour>Odin</Flavour>
+            <OutputType>Exe</OutputType>
+        </Project>
+        <Project Include="examples\flames">
+            <Flavour>Odin</Flavour>
+            <OutputType>WinExe</OutputType>
+        </Project>
+        <Project Include="examples\fmod">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\fmod_eventsystem">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\glfw">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\glfw_window">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\hello">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\hello_winapp">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\lightwave">
+            <Flavour>Odin</Flavour>
+        </Project>
+
+        <Project Include="examples\newton_dynamics">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\noise">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\rawinput">
+            <Flavour>Odin</Flavour>
+        </Project>
+
+        <Project Include="examples\winapp">
+            <Flavour>Odin</Flavour>
+        </Project>
+        <Project Include="examples\z80emulator">
+            <Flavour>Odin</Flavour>
+        </Project>
+
+        <Project Include="tests\core\sys\windows">
+            <Flavour>OdinTest</Flavour>
+        </Project>
+        <Project Include="tests\misc">
+            <Flavour>OdinTest</Flavour>
+        </Project>
+        <Project Include="tests\win32app">
+            <Flavour>OdinTest</Flavour>
+        </Project>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Collection Include="shared" />
+    </ItemGroup>
+
+    <!-- <Import Project="$(Pantry)\Fry.targets"/> -->
+
+    <Target Name="Prologue">
+        <Message Text="ODIN_ROOT: $(ODIN_ROOT)" Importance="High" />
+        <Exec Command="$(OdinExe) version" EchoOff="true" />
+        <Message Text="%(Project.RelativeDir) %(Project.Filename) (%(Project.Flavour))" Importance="High" />
+    </Target>
+
+    <Target Name="Clean" DependsOnTargets="Prologue">
+        <Message Text="Clean" Importance="High" />
+    </Target>
+
+    <Target Name="Build" DependsOnTargets="Clean">
+        <Message Text="Build" Importance="High" />
+        <MSBuild Projects="$(MSBuildProjectFile)" Targets="_OdinBuild" Condition=" '%(Project.Flavour)'=='Odin' "
+            Properties="OdinProject=%(Project.FullPath);OdinProjectName=%(Project.Filename)" />
+    </Target>
+
+    <Target Name="Test" DependsOnTargets="Clean">
+        <Message Text="Test" Importance="High" />
+        <MSBuild Projects="$(MSBuildProjectFile)" Targets="_OdinTest" Condition=" '%(Project.Flavour)'=='OdinTest' "
+            Properties="OdinProject=%(Project.FullPath);OdinProjectName=%(Project.Filename)" />
+    </Target>
+
+    <Target Name="All" DependsOnTargets="Build">
+    </Target>
+
+
+    <Target Name="_OdinBuild">
+        <CreateItem Include="-collection:%(Collection.Filename)=%(Collection.FullPath)">
+            <Output TaskParameter="Include" ItemName="_Collection" />
+        </CreateItem>
+        <PropertyGroup>
+            <OdinCollections>@(_Collection)</OdinCollections>
+            <OdinCollections>$(OdinCollections.Replace(';',' '))</OdinCollections>
+            <OdinResource>-resource:$(DocDir)\odin.rc</OdinResource>
+            <OdinCmd>$(OdinExe) build $(OdinProject) -out:$(OdinOutputDir)\$(OdinProjectName).exe $(OdinCollections) $(OdinResource)</OdinCmd>
+        </PropertyGroup>
+        <!--<Message Text="$(OdinCmd)" Importance="High" />-->
+        <Exec Command="$(OdinCmd)" EchoOff="false" WorkingDirectory="$(ODIN_ROOT)" />
+    </Target>
+
+
+    <Target Name="_OdinTest">
+        <CreateItem Include="-collection:%(Collection.Filename)=%(Collection.FullPath)">
+            <Output TaskParameter="Include" ItemName="_Collection" />
+        </CreateItem>
+        <PropertyGroup>
+            <OdinCollections>@(_Collection)</OdinCollections>
+            <OdinCollections>$(OdinCollections.Replace(';',' '))</OdinCollections>
+            <OdinResource>-resource:$(DocDir)\odin.rc</OdinResource>
+            <OdinCmd>$(OdinExe) test $(OdinProject) -out:$(OdinOutputDir)\$(OdinProjectName).exe $(OdinCollections) $(OdinResource)</OdinCmd>
+        </PropertyGroup>
+        <!--<Message Text="$(OdinCmd)" Importance="High" />-->
+        <Exec Command="$(OdinCmd)" EchoOff="false" WorkingDirectory="$(ODIN_ROOT)" />
+    </Target>
+
+</Project>

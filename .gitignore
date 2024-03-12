@@ -11,3 +11,6 @@ Thumbs.db
 .vs/
 x64/
 *.user
+Debug/
+Release/
+examples/coreclr/obj

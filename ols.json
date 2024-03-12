@@ -8,6 +8,6 @@
     ],
     "enable_document_symbols": true,
     "enable_semantic_tokens": false,
-    "enable_hover": true,
-    "enable_snippets": true
+    "enable_hover": false,
+    "enable_snippets": false
 }
