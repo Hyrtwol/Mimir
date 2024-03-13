@@ -1,75 +1,71 @@
-package main
+package example_coreclr
 
-import "core:fmt"
+import _c "core:c"
 import "core:os"
-import "core:time"
+import "core:fmt"
+import "core:runtime"
 import clr "vendor:coreclr"
 
 trusted_platform_assemblies: string = #load("trusted_platform_assemblies.txt")
 
-bootstrap :: #type proc "c" () -> cstring
-plus_proc :: #type proc "c" (x: f64, y: f64) -> f64
+print_if_error :: proc(hr: clr.error, loc := #caller_location) {
+	if hr != .ok {fmt.printf("Error %v (0x%X8) @ %v\n", hr, u32(hr), loc)}
+}
+pie :: print_if_error
 
-// see gateway.cs
-gateway :: struct {
-	bootstrap : #type proc "c" () -> cstring,
-    plus : #type proc "c" (x: f64, y: f64) -> f64,
+event_callback :: proc(ch: ^clr.clr_host, type: clr.event_type, hr: clr.error) {
+	fmt.printf("[%v] %v (%p,%p)\n", type, hr, ch.host, ch.hostHandle)
+}
+
+create_gateway_delegates :: proc(host: ^clr.clr_host, gateway: ^Gateway) {
+	an :: "gateway"
+	tn :: "Gateway"
+	pie(clr.create_delegate(host, an, tn, "Bootstrap", &gateway.Bootstrap))
+	pie(clr.create_delegate(host, an, tn, "Plus", &gateway.Plus))
+	pie(clr.create_delegate(host, an, tn, "Sum", &gateway.Sum))
+	pie(clr.create_delegate(host, an, tn, "Sum2", &gateway.Sum2))
+	pie(clr.create_delegate(host, an, tn, "ManagedDirectMethod", &gateway.ManagedDirectMethod))
+}
+
+unmanaged_callback :: proc "c" (actionName: cstring, jsonArgs: cstring) -> _c.bool {
+	context = runtime.default_context()
+	fmt.printf("Odin>> %s, %v\n", actionName, jsonArgs)
+	return true
+}
+
+call_csharp :: proc(gateway: ^Gateway) {
+
+	f:= gateway.Plus(13, 27)
+	fmt.printf("Plus=%v\n", f)
+
+	s := gateway.Bootstrap()
+	fmt.printf("Bootstrap=%v\n", s)
+
+	fmt.print("ManagedDirectMethod\n")
+	ok := gateway.ManagedDirectMethod("funky", "json doc", unmanaged_callback)
+	fmt.printf("Result: '%v'\n", ok)
+}
+
+execute_clr_host :: proc() {
+	host: clr.clr_host = {event_cb = event_callback}
+
+	hr := clr.load_coreclr_library(&host)
+	if hr != .ok {fmt.print("Unable to load coreclr library.\n");return}
+	defer clr.unload_coreclr_library(&host)
+
+	hr = clr.initialize(&host, trusted_platform_assemblies)
+	if hr != .ok {fmt.print("Unable to initialize coreclr host.\n");return}
+	defer clr.coreclr_shutdown(&host)
+
+	gateway: Gateway = {}
+	create_gateway_delegates(&host, &gateway)
+
+	call_csharp(&gateway)
 }
 
 main :: proc() {
-	host := clr.load_coreclr_library()
-	assert(host != nil, "load_coreclr_library failure")
-	defer
-	fmt.print("initialize\n")
-	hr := clr.initialize(host, trusted_platform_assemblies)
-	assert(hr == 0, fmt.tprintf("initialize (%v)", hr))
-	fmt.printf("host=%v\n", host)
-	fmt.printf("hostHandle=%v domainId=%v\n", host.hostHandle, host.domainId)
-
-	//delegate: rawptr = nil
-	//delegate, hr = clr.create_delegate_2(host, "gateway", "Gateway", entryPointMethodName)
-	{
-		entryPointMethodName: cstring = "Plus"
-		plus: plus_proc
-		hr = clr.create_delegate_3(host, "gateway", "Gateway", entryPointMethodName, &plus)
-		//assert(hr == 0, fmt.tprintf("create_delegate (%v)", hr))
-		fmt.printf("calling %v\n", plus)
-		if (plus != nil) {
-			q := plus(13, 27)
-			fmt.printf("plus=%v\n", q)
-		} else {
-			fmt.printf("no delegate found for %v\n", entryPointMethodName)
-		}
-	}
-	{
-		entryPointMethodName: cstring = "Bootstrap"
-		bootstrap: bootstrap
-		hr = clr.create_delegate_3(host, "gateway", "Gateway", entryPointMethodName, &bootstrap)
-		fmt.printf("calling %v\n", bootstrap)
-		if (bootstrap != nil) {
-			q := bootstrap()
-			fmt.printf("bootstrap=%v\n", q)
-		} else {
-			fmt.printf("no delegate found for %v\n", entryPointMethodName)
-		}
-	}
-
-	fmt.print("shutdown\n")
-	hr = clr.coreclr_shutdown(host)
-	if hr != 0 {fmt.printf("shutdown error %v\n", hr)}
-	hr = clr.unload_coreclr_library(host)
-	if hr != 0 {fmt.printf("unload error %v\n", hr)}
-	fmt.print("done.\n")
+	fmt.print(" -=< CoreCLR Host Demo >=- \n")
+	execute_clr_host()
+	fmt.print("Done.\n")
+	os.exit(int(0))
 }
-
-/*
-// typedef bool (*unmanaged_callback_ptr)(const char* actionName, const char* jsonArgs);
-unmanaged_callback_ptr :: #type proc "c" (actionName: cstring, jsonArgs: cstring) -> _c.bool
-
-// typedef char* (*managed_direct_method_ptr)(const char* actionName, const char* jsonArgs, unmanaged_callback_ptr unmanagedCallback);
-managed_direct_method_ptr :: #type proc "c" (
-	actionName: cstring,
-	jsonArgs: cstring,
-	unmanagedCallback: unmanaged_callback_ptr,
-) -> ^_c.char
-*/

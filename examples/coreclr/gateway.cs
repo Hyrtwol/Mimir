@@ -2,11 +2,11 @@
 to build run the following in this folder:
 dotnet build
 
-the see the il code use:
+to see the il code use:
 ildasm gateway.dll /out=gateway.il
 
 to re-compile use:
-ilasm gateway.il /dll /output=gateway_il.dll
+ilasm gateway.il /dll /output=gateway.dll
 */
 using System;
 using System.Runtime.InteropServices;
@@ -48,7 +48,7 @@ public static class Gateway
 		[MarshalAs(UnmanagedType.LPStr)] string jsonArgs,
 		UnmanagedCallbackDelegate dlgUnmanagedCallback)
 	{
-		Console.WriteLine($"ManagedDirectMethod(funcName: {funcName}, jsonArgs: {jsonArgs})");
+		Console.WriteLine($"C#>> {funcName}, {jsonArgs}");
 
 		string strRet = null;
 
@@ -56,7 +56,7 @@ public static class Gateway
 		{
 			//strRet = directCall(funcName, jsonArgs, dlgUnmanagedCallback);
 			var res = dlgUnmanagedCallback?.Invoke(funcName, jsonArgs);
-			strRet = $"res={res}";
+			strRet = $"Invoke was {res}";
 		}
 		catch (Exception e)
 		{
