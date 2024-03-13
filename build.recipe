@@ -20,6 +20,8 @@
         <Project Include="examples\amstrad">
             <Flavour>Odin</Flavour>
             <Description>Amstrad emulator</Description>
+            <Optimization>speed</Optimization>
+            <BuildMode>exe</BuildMode>
         </Project>
         <Project Include="examples\audioplayer">
             <Flavour>Odin</Flavour>
@@ -37,15 +39,18 @@
         </Project>
         <Project Include="examples\fmod_eventsystem">
             <Flavour>Odin</Flavour>
+            <SubSystem>windows</SubSystem>
         </Project>
         <Project Include="examples\glfw">
             <Flavour>Odin</Flavour>
         </Project>
         <Project Include="examples\glfw_window">
             <Flavour>Odin</Flavour>
+            <SubSystem>windows</SubSystem>
         </Project>
         <Project Include="examples\hello">
             <Flavour>Odin</Flavour>
+            <SubSystem>console</SubSystem>
         </Project>
         <Project Include="examples\hello_winapp">
             <Flavour>Odin</Flavour>

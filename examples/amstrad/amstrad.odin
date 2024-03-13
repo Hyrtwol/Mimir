@@ -14,6 +14,14 @@ mem_size :: 0x10000
 memory: [mem_size]u8
 running: bool = false
 
+/*
+Mode 0: 01010101
+Mode 1: 01230123
+Mode 2: 01234567
+
+// https://www.chibiakumas.com/z80/AmstradCPC.php
+*/
+
 z_fetch_opcode :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	//fmt.printf("fetch_opcode[%d]=0x%2X\n", address, memory[address])
 	return memory[address]

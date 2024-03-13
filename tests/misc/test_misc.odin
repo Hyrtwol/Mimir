@@ -28,3 +28,20 @@ string_vs_cstring :: proc(t: ^testing.T) {
 
 	testing.expect(t, dst == "Can i convert")
 }
+
+// when
+MODE :: 1
+
+@(test)
+when_to_use_when :: proc(t: ^testing.T) {
+	using ounit
+
+	str: cstring
+	when MODE == 1 {
+		str = "Can i convert"
+	} else {
+		str = "Oh no"
+	}
+
+	testing.expectf(t, str == "Can i convert", "%v", str)
+}

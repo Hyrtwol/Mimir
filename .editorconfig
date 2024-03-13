@@ -1,4 +1,3 @@
-# Editor configuration, see https://editorconfig.org
 root = true
 
 [*]
@@ -14,18 +13,17 @@ max_line_length = off
 indent_style = tab
 
 [*{.h,*.cpp}]
-indent_size = 4
 max_line_length = off
 
-[*.md]
+[*.{md,txt,log,bat}]
 max_line_length = off
 indent_style = tab
-indent_size = 4
 
 [*.{json,code-workspace}]
-indent_size = 4
+indent_style = tab
 
 [*.{xml,csproj,props,targets,recipe,shproj,projitems}]
+indent_style = tab
 insert_final_newline = false
 
 [*.hlsl]
