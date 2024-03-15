@@ -65,7 +65,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\t':		fmt.print("tab\n")
 	case '\r':		fmt.print("return\n")
 	case 'm':		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
-	case 'p':		win32app.show_error_and_panic("Test Panic")
+	case 'p':		win32app.show_error_and_panic("Don't worry it's just a test!")
 	}
 	return 0
 }
@@ -88,25 +88,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 main :: proc() {
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
-	if (instance == nil) {
-		win32app.show_error_and_panic("No instance")
-	}
+	if (instance == nil) {win32app.show_error_and_panic("No instance")}
 
-	icon: win32.HICON = nil // win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
-	if icon == nil {
-		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))
-	}
-	if icon == nil {
-		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
-	}
-	if (icon == nil) {
-		win32app.show_error_and_panic("Missing icon")
-	}
+	icon := win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
+	if (icon == nil) {win32app.show_error_and_panic("Missing icon")}
 
 	cursor := win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
-	if (cursor == nil) {
-		win32app.show_error_and_panic("Missing cursor")
-	}
+	if (cursor == nil) {win32app.show_error_and_panic("Missing cursor")}
 
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),

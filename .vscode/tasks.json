@@ -118,11 +118,12 @@
 		},
 		{
 			"label": "odin doc",
-			"type": "process",
+			"type": "shell",
 			"command": "odin",
 			"args": [
 				"doc",
 				"..\\${relativeFileDirname}", //"-doc-format",
+				"-collection:shared=..\\shared",
 				">",
 				"${fileDirnameBasename}.txt"
 			],

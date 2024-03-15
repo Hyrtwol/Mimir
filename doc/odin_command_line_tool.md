@@ -1,6 +1,6 @@
 # Odin
 
-odin version dev-2024-03:7323a19d3
+odin version dev-2024-03:db222eb6b
 
 ## Commands
 

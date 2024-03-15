@@ -2,12 +2,16 @@ package test_win32app
 
 import "core:bytes"
 import "core:fmt"
+import "core:intrinsics"
 import "core:runtime"
-import "core:testing"
 import win32 "core:sys/windows"
+import "core:testing"
+import o "shared:ounit"
 import win32ex "shared:sys/windows"
 import win32app "shared:tlc/win32app"
-import o "shared:ounit"
+
+L :: intrinsics.constant_utf16_cstring
+utf8_to_wstring :: win32.utf8_to_wstring
 
 @(test)
 make_lresult_from_false :: proc(t: ^testing.T) {

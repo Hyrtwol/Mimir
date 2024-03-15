@@ -21,17 +21,15 @@ WIDTH  	:: 640
 HEIGHT 	:: WIDTH * 9 / 16
 ZOOM  	:: 4
 
-settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
-
-timer_id : win32.UINT_PTR
-dib      : DIB
-npos1    : double3 = {0, 0, 0}
-ndir1    : double3 = {0.007, 0.009, 0.011}
-npos2    : double2 = {0, 0}
-ndir2    : double2 = {0.007, 0.003}
-nseed    : i64 = 12345
-
-noise_func : proc(dib: ^DIB) = dib_noise1
+settings    := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+timer_id	: win32.UINT_PTR
+dib			: DIB
+npos1		: double3 = {0, 0, 0}
+ndir1		: double3 = {0.007, 0.009, 0.011}
+npos2		: double2 = {0, 0}
+ndir2		: double2 = {0.007, 0.003}
+nseed		: i64 = 12345
+noise_func	: proc(dib: ^DIB) = dib_noise1
 
 dib_noise1 :: proc(dib: ^DIB) {
 	p := dib.pvBits
@@ -86,44 +84,27 @@ dib_noise2 :: proc(dib: ^DIB) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	client_size := win32app.get_client_size(hwnd)
-
+	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 50, nil)
+	if timer_id == 0 {
+		win32app.show_error_and_panic("No timer")
+	}
 	hdc := win32.GetDC(hwnd)
-
-	dib = canvas.dib_create_v5(hdc, client_size / ZOOM)
+	defer win32.ReleaseDC(hwnd, hdc)
+	dib = canvas.dib_create_v5(hdc, win32app.get_client_size(hwnd) / ZOOM)
 	if dib.pvBits != nil {
 		canvas.dib_clear(&dib, {50, 150, 100, 255})
 	} else {
 		win32app.show_error_and_panic("No DIB")
 	}
-
-	win32.ReleaseDC(hwnd, hdc)
-
-	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 50, nil)
-	if timer_id == 0 {
-		win32app.show_error_and_panic("No timer")
-	}
-
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	if timer_id != 0 {
-		if !win32.KillTimer(hwnd, timer_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
-		}
+		if !win32.KillTimer(hwnd, timer_id) {win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)}
 	}
 	canvas.dib_free_section(&dib)
 	win32.PostQuitMessage(0)
-	return 0
-}
-
-WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	switch wparam {
-	case '\x1b':	win32.DestroyWindow(hwnd)
-	case '1':	    noise_func = dib_noise1
-	case '2':	    noise_func = dib_noise2
-	}
 	return 0
 }
 
@@ -144,11 +125,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 
-    client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.StretchBlt(
-		hdc_target, 0, 0, client_size.x, client_size.y,
-		hdc_source, 0, 0, dib.size.x, dib.size.y,
-		win32.SRCCOPY)
+	client_size := win32app.get_rect_size(&ps.rcPaint)
+	win32.StretchBlt(hdc_target, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
 
 	return 0
 }
@@ -156,6 +134,17 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	noise_func(&dib)
 	win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	return 0
+}
+
+// odinfmt: disable
+
+WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	switch wparam {
+	case '\x1b':	win32.DestroyWindow(hwnd)
+	case '1':	    noise_func = dib_noise1
+	case '2':	    noise_func = dib_noise2
+	}
 	return 0
 }
 
@@ -172,6 +161,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 }
+
+// odinfmt: enable
 
 main :: proc() {
 	win32app.run(&settings)

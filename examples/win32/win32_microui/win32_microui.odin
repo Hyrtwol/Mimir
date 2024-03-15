@@ -8,7 +8,7 @@ import mud "shared:microui/demo"
 import win32app "shared:tlc/win32app"
 import canvas "shared:tlc/canvas"
 
-state := struct {
+application :: struct {
 	mu_ctx:          mu.Context,
 	log_buf:         [1 << 16]byte,
 	log_buf_len:     int,
@@ -18,6 +18,12 @@ state := struct {
 } {
 	bg = {90, 95, 100, 255},
 }
+
+state : application
+
+set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
+
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
 main :: proc() {
 	//rl.InitWindow(960, 540, "microui-odin")

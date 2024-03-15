@@ -231,7 +231,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 			bitmap_info.bmiColors[i] = color{u8(rbg.b), u8(rbg.g), u8(rbg.r), 0}
 		}
 	}
-	fmt.printf("bitmap_info=%v\n", bitmap_info)
 	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
 
 	/*
@@ -366,9 +365,7 @@ register_class :: proc (instance: win32.HINSTANCE) -> win32.ATOM {
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if (icon == nil) {show_error_and_panic("Missing icon")}
 	cursor := win32.LoadCursorW(nil, wstring(win32._IDC_ARROW))
-	if (cursor == nil) {
-		show_error_and_panic("Missing cursor")
-	}
+	if (cursor == nil) {show_error_and_panic("Missing cursor")}
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),
 		style         = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC,

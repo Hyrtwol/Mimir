@@ -15,10 +15,26 @@ decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2
 	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
 }
 
-show_error_and_panic :: proc(msg: string) {
-	last_error := win32.utf8_to_wstring(fmt.tprintf("%s\nLast error: %x\n", msg, win32.GetLastError()))
-	win32.MessageBoxW(nil, last_error, L("Panic"), win32.MB_ICONSTOP | win32.MB_OK)
-	panic(msg)
+// wtprintf :: proc(format: string, args: ..any) -> win32.wstring {
+// 	str := fmt.tprintf(format, ..args)
+// 	return utf8_to_wstring(str)
+// }
+
+show_messagebox :: proc(caption: string, text: string) {
+	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), win32.MB_ICONSTOP | win32.MB_OK)
+}
+
+show_messageboxf :: proc(caption: string, format: string, args: ..any) {
+	show_messagebox(caption, fmt.tprintf(format, ..args))
+}
+
+show_error :: proc(msg: string, loc := #caller_location) {
+	show_messageboxf("Panic", "%s\nLast error: %x\n%v\n", msg, win32.GetLastError(), loc)
+}
+
+show_error_and_panic :: proc(msg: string, loc := #caller_location) {
+	show_error(msg, loc = loc)
+	fmt.panicf("%s (Last error: %x)", msg, win32.GetLastError(), loc = loc)
 }
 
 get_rect_size :: #force_inline proc(rect: ^RECT) -> int2 {
@@ -102,7 +118,7 @@ create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwEx
 	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
 	position := get_window_position(size, settings.center)
 
-	hwnd: win32.HWND = win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), win32.utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
+	hwnd: win32.HWND = win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
 
 	return hwnd
 }
@@ -128,7 +144,7 @@ create_window_settings_default :: proc() -> window_settings {
 		wndproc     = nil,
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
-		run         = run_settings,
+		run         = run,
 	}
 	return settings
 }
@@ -141,7 +157,7 @@ create_window_settings_basic :: proc(title: string, width: i32, height: i32, wnd
 		wndproc     = wndproc,
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
-		run         = run_settings,
+		run         = run,
 	}
 	return settings
 }
@@ -154,7 +170,7 @@ create_window_settings_app :: proc(title: string, width: i32, height: i32, wndpr
 		wndproc     = win32.WNDPROC(wndproc),
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
-		run         = run_settings,
+		run         = run,
 	}
 	return settings
 }
@@ -213,7 +229,7 @@ loop_messages :: proc() {
 	}
 }
 
-run_wndproc :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) -> win32.HWND {
+/*run_wndproc :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) -> win32.HWND {
 	inst := get_instance()
 	atom := register_window_class(inst, wndproc)
 	hwnd := create_and_show_window(inst, atom, settings)
@@ -232,17 +248,25 @@ run_settings :: proc(settings: ^window_settings) -> win32.HWND {
 run :: proc {
 	run_settings,
 	run_wndproc,
+}*/
+
+run :: proc(settings: ^window_settings) -> win32.HWND {
+	inst := get_instance()
+	atom := register_window_class(inst, settings.wndproc)
+	hwnd := create_and_show_window(inst, atom, settings)
+	loop_messages()
+	return hwnd
 }
 
 // default no draw background erase
-WM_ERASEBKGND_NODRAW :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
+WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
 	return 1
 }
 
-RedrawWindowNow :: proc(hwnd: HWND) -> BOOL{
+RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL{
 	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 }
 
-SetWindowText :: proc(hwnd: HWND, text: string) -> BOOL{
-	return win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(text))
+SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL{
+	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }

@@ -51,3 +51,14 @@ rem RC
 @rc /?>> %OUTF%
 @echo ```>> %OUTF%
 @echo.>> %OUTF%
+
+rem Odin doc's
+rem -short
+rem -all-packages
+rem -doc-format
+
+@set OUTF=doc.txt
+@echo Generating %OUTF%
+odin doc . -collection:shared=..\\shared -all-packages -doc-format> %OUTF%
+
+@echo Done.
