@@ -6,9 +6,10 @@ import "core:runtime"
 import z80 "shared:z80"
 
 dump_cpu :: false
-
+cycles_per_tick :: 100
 mem_size :: 0x10000
 memory: [mem_size]u8
+running: bool = false
 
 z_fetch_opcode :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	//fmt.printf("fetch_opcode[%d]=0x%2X\n", address, memory[address])
@@ -33,7 +34,16 @@ z_write :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	port := address & 0xFF
 	value: z80.zuint8 = 0
-	fmt.printf("in[0x%2X]=0x%2X\n", port, value)
+	switch port {
+	case 1:
+		value = 1
+	case:
+		{
+			fmt.printf("in[0x%2X]=0x%2X", port, value)
+			if value >= 32 {fmt.printf(" '%v'", rune(value))}
+			fmt.println()
+		}
+	}
 	return value
 }
 
@@ -41,7 +51,12 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 	port := address & 0xFF
 	switch port {
 	case 1:
-		fmt.print(rune(value))
+		switch value {
+			case '\n': fmt.println(flush = true) /* Line Feed */
+			case '\f': /*skip Form Feed*/
+			case '\r': /*skip Carriage Return*/
+			case: fmt.print(rune(value))
+		}
 	case:
 		{
 			fmt.printf("out[0x%2X]=0x%2X", port, value)
@@ -52,7 +67,8 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 }
 
 z_halt :: proc(zcontext: rawptr, signal: z80.zuint8) {
-	fmt.printf("halt %d\n", signal)
+	fmt.printf("\nhalt %d\n", signal)
+	running = false
 }
 
 z_reti :: proc(zcontext: rawptr) {
@@ -122,9 +138,18 @@ main :: proc() {
 	z80.z80_power(&cpu, true)
 	z80.z80_instant_reset(&cpu)
 
-	cycles :: 4000
-	res := z80.z80_run(&cpu, cycles)
-	fmt.printf("\nRun %v\n", res)
+	//cycles :: 4000
+	//res := z80.z80_run(&cpu, cycles)
+	//fmt.printf("\nRun %v\n", res)
+
+	running = true
+	total: z80.zusize = 0
+	reps := 0
+	for running {
+		total += z80.z80_run(&cpu, cycles_per_tick)
+		reps += 1
+	}
+	fmt.printf("total %v (%v)\n", total, reps)
 
 	if dump_cpu {fmt.printf("CPU %v\n", cpu)}
 

@@ -1,203 +1,210 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "odin run",
-            "type": "process",
-            "command": "odin",
-            "args": [
-                "run",
-                "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc",
-                "-collection:shared=..\\shared"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": "**/*.odin"
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        },
-        {
-            "label": "odin build",
-            "type": "process",
-            "command": "odin",
-            "args": [
-                "build",
-                "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc",
-                "-collection:shared=..\\shared"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        },
-        {
-            "label": "odin test",
-            "type": "shell",
-            "command": "odin",
-            "args": [
-                "test",
-                "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc",
-                "-collection:shared=..\\shared"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        },
-        {
-            "label": "odin debug build",
-            "type": "process",
-            "command": "odin",
-            "args": [
-                "build",
-                "..\\${relativeFileDirname}",
-                "-resource:..\\doc\\odin.rc",
-                "-collection:shared=..\\shared",
-                "-debug"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        },
-        {
-            "label": "odin check",
-            "type": "process",
-            "command": "odin",
-            "args": [
-                "check",
-                "${relativeFileDirname}",
-                "-collection:shared=..\\shared",
-                "-no-entry-point"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
-            "label": "odin strip semicolon",
-            "type": "shell",
-            "command": "odin",
-            "args": [
-                "strip-semicolon",
-                "..\\${relativeFileDirname}",
-                "-collection:shared=..\\shared",
-                "-no-entry-point"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        },
-        {
-            "label": "odin doc",
-            "type": "process",
-            "command": "odin",
-            "args": [
-                "doc",
-                "..\\${relativeFileDirname}", //"-doc-format",
-                ">", "${fileDirnameBasename}.txt"
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        },
-        {
-            "label": "echo vars",
-            "type": "shell",
-            "command": "echo",
-            "args": [
-                "vars:",
-                "${workspaceFolder}",
-                //"${workspaceFolder:src}",
-                "${cwd}",
-                "${relativeFile}",
-                "${relativeFileDirname}"
-            ],
-            "group": {
-                "kind": "none",
-                "isDefault": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "bin"
-            }
-        },
-        {
-            "label": "clean up",
-            "type": "shell",
-            "command": "build_cleanup",
-            "args": [],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "build docs",
-            "type": "shell",
-            "command": "build",
-            "args": [],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/doc"
-            }
-        },
-        {
-            "label": "pandoc md",
-            "type": "shell",
-            "command": "pandoc",
-            "args": [
-                //"--help"
-                "-o","${fileBasenameNoExtension}.html",
-                "-f", "markdown",
-                "-t", "html",
-                "../${relativeFile}"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": "**/*.md"
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bin"
-            }
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "odin run",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"run",
+				"..\\${relativeFileDirname}",
+				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\shared"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": "**/*.odin"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin build",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"build",
+				"..\\${relativeFileDirname}",
+				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\shared",
+				"-vet"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin test",
+			"type": "shell",
+			"command": "odin",
+			"args": [
+				"test",
+				"..\\${relativeFileDirname}",
+				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\shared",
+				"-vet"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin debug build",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"build",
+				"..\\${relativeFileDirname}",
+				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\shared",
+				"-debug"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin check",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"check",
+				"${relativeFileDirname}",
+				"-collection:shared=..\\shared",
+				"-no-entry-point",
+				"-vet"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"label": "odin strip semicolon",
+			"type": "shell",
+			"command": "odin",
+			"args": [
+				"strip-semicolon",
+				"..\\${relativeFileDirname}",
+				"-collection:shared=..\\shared",
+				"-no-entry-point"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin doc",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"doc",
+				"..\\${relativeFileDirname}", //"-doc-format",
+				">",
+				"${fileDirnameBasename}.txt"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "echo vars",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"vars:",
+				"${workspaceFolder}",
+				//"${workspaceFolder:src}",
+				"${cwd}",
+				"${relativeFile}",
+				"${relativeFileDirname}"
+			],
+			"group": {
+				"kind": "none",
+				"isDefault": false
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "bin"
+			}
+		},
+		{
+			"label": "clean up",
+			"type": "shell",
+			"command": "build_cleanup",
+			"args": [],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "build docs",
+			"type": "shell",
+			"command": "build",
+			"args": [],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/doc"
+			}
+		},
+		{
+			"label": "pandoc md",
+			"type": "shell",
+			"command": "pandoc",
+			"args": [
+				//"--help"
+				"-o",
+				"${fileBasenameNoExtension}.html",
+				"-f",
+				"markdown",
+				"-t",
+				"html",
+				"../${relativeFile}"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": "**/*.md"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		}
+	]
 }

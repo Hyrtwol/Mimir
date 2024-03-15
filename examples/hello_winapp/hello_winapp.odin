@@ -16,16 +16,9 @@ CENTER :: true
 
 hbrGray: win32.HBRUSH
 
-write_hello_txt :: proc() {
-	path := "hello.txt"
-	fmt.printf("writing %s\n", path)
-	data: []byte = {65, 66, 67, 68} // "ABCD"
-	ok := os.write_entire_file(path, data)
-	fmt.printf("ok %v\n", ok)
-}
-
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printf("WM_CREATE %v %v\n", hwnd, (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam))))
+	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	fmt.printf("WM_CREATE %v %v\n", hwnd, pcs)
 	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
 	return 0
 }
@@ -37,25 +30,8 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
+WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	return 1 // paint should fill out the client area so no need to erase the background
-}
-
-WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
-	switch wparam {
-	case '\x1b':
-		win32.DestroyWindow(hwnd)
-	case '\t':
-		fmt.print("tab\n")
-	case '\r':
-		fmt.print("return\n")
-	case 'm':
-		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
-	case 'p':
-		win32app.show_error_and_panic("Test Panic")
-	}
-	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -79,9 +55,23 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
+
+// odinfmt: disable
+
+WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	switch wparam {
+	case '\x1b':	win32.DestroyWindow(hwnd)
+	case '\t':		fmt.print("tab\n")
+	case '\r':		fmt.print("return\n")
+	case 'm':		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
+	case 'p':		win32app.show_error_and_panic("Test Panic")
+	}
+	return 0
+}
+
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
-	// odinfmt: disable
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
@@ -91,20 +81,21 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
-	// odinfmt: enable
 }
 
-main :: proc() {
+// odinfmt: enable
 
-	stopwatch := win32app.create_stopwatch()
-	stopwatch->start()
+main :: proc() {
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {
 		win32app.show_error_and_panic("No instance")
 	}
 
-	icon := win32.LoadIconW(instance, win32.wstring(win32._IDI_APPLICATION))
+	icon: win32.HICON = nil // win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
+	if icon == nil {
+		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))
+	}
 	if icon == nil {
 		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
 	}
@@ -148,16 +139,16 @@ main :: proc() {
 			size = {i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
 		}
 	}
-	fmt.printf("size %d, %d\n", size.x, size.y)
+	fmt.printf("size %v\n", size)
 
 	position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
 	if CENTER {
 		if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
-			dmsize := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
+			dmsize := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)}
 			position = (dmsize - size) / 2
 		}
 	}
-	fmt.printf("position %d, %d\n", position.x, position.y)
+	fmt.printf("position %v\n", position)
 
 	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
 	if hwnd == nil {
@@ -176,8 +167,5 @@ main :: proc() {
 	}
 
 	assert(msg.wParam == 666)
-
-	stopwatch->stop()
-	fmt.printf("Done! (%fs)\n", stopwatch->get_delta_seconds())
 	os.exit(int(msg.wParam))
 }

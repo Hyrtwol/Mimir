@@ -1,10 +1,12 @@
-package microui_raylib_demo
+package main
 
 import "core:fmt"
 import "core:unicode/utf8"
-import rl "vendor:raylib"
+import win32 "core:sys/windows"
 import mu "vendor:microui"
 import mud "shared:microui/demo"
+import win32app "shared:tlc/win32app"
+import canvas "shared:tlc/canvas"
 
 state := struct {
 	mu_ctx:          mu.Context,
@@ -12,14 +14,14 @@ state := struct {
 	log_buf_len:     int,
 	log_buf_updated: bool,
 	bg:              mu.Color,
-	atlas_texture:   rl.Texture2D,
+	atlas_texture:   canvas.DIB,
 } {
 	bg = {90, 95, 100, 255},
 }
 
 main :: proc() {
-	rl.InitWindow(960, 540, "microui-odin")
-	defer rl.CloseWindow()
+	//rl.InitWindow(960, 540, "microui-odin")
+	//defer rl.CloseWindow()
 
 	pixels := make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
 	for alpha, i in mu.default_atlas_alpha {
@@ -27,15 +29,15 @@ main :: proc() {
 	}
 	defer delete(pixels)
 
-	image := rl.Image {
-		data    = raw_data(pixels),
-		width   = mu.DEFAULT_ATLAS_WIDTH,
-		height  = mu.DEFAULT_ATLAS_HEIGHT,
-		mipmaps = 1,
-		format  = .UNCOMPRESSED_R8G8B8A8,
-	}
-	state.atlas_texture = rl.LoadTextureFromImage(image)
-	defer rl.UnloadTexture(state.atlas_texture)
+	// image := rl.Image {
+	// 	data    = raw_data(pixels),
+	// 	width   = mu.DEFAULT_ATLAS_WIDTH,
+	// 	height  = mu.DEFAULT_ATLAS_HEIGHT,
+	// 	mipmaps = 1,
+	// 	format  = .UNCOMPRESSED_R8G8B8A8,
+	// }
+	// state.atlas_texture = rl.LoadTextureFromImage(image)
+	// defer rl.UnloadTexture(state.atlas_texture)
 
 	ctx := &state.mu_ctx
 	mu.init(ctx)
@@ -43,8 +45,10 @@ main :: proc() {
 	ctx.text_width = mu.default_atlas_text_width
 	ctx.text_height = mu.default_atlas_text_height
 
-	rl.SetTargetFPS(60)
-	main_loop: for !rl.WindowShouldClose() {
+	//rl.SetTargetFPS(60)
+	//main_loop: for !rl.WindowShouldClose() {
+	main_loop: for false {
+		/*
 		{ 	// text input
 			text_input: [512]byte = ---
 			text_input_offset := 0
@@ -103,29 +107,38 @@ main :: proc() {
 				mu.input_key_up(ctx, key.mu_key)
 			}
 		}
-
+		*/
 		mu.begin(ctx)
 		all_windows(ctx)
 		mu.end(ctx)
 
-		render(ctx)
+		hdc, hdc_source: win32.HDC
+		render(ctx, hdc, hdc_source)
 	}
 }
 
-render :: proc(ctx: ^mu.Context) {
-	render_texture :: proc(rect: mu.Rect, pos: [2]i32, color: mu.Color) {
-		source := rl.Rectangle{f32(rect.x), f32(rect.y), f32(rect.w), f32(rect.h)}
-		position := rl.Vector2{f32(pos.x), f32(pos.y)}
-		rl.DrawTextureRec(state.atlas_texture, source, position, transmute(rl.Color)color)
-	}
+render :: proc(ctx: ^mu.Context, hdc, hdc_source: win32.HDC) {
 
-	rl.ClearBackground(transmute(rl.Color)state.bg)
+	// render_texture :: proc(rect: mu.Rect, pos: [2]i32, color: mu.Color) {
+	// 	// source := rl.Rectangle{f32(rect.x), f32(rect.y), f32(rect.w), f32(rect.h)}
+	// 	// position := rl.Vector2{f32(pos.x), f32(pos.y)}
+	// 	// rl.DrawTextureRec(state.atlas_texture, source, position, transmute(rl.Color)color)
+	// 	win32.BitBlt(hdc, rect.x, rect.y, rect.w, rect.h, hdc_source, x, y, win32.SRCCOPY)
+	// }
 
-	rl.BeginDrawing()
-	defer rl.EndDrawing()
+	//win32.BitBlt(ps.hdc, 0, 0, bwidth, bheight, hdc_source, 0, 0, win32.SRCCOPY)
+	//win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bwidth, bheight, win32.SRCCOPY)
 
-	rl.BeginScissorMode(0, 0, rl.GetScreenWidth(), rl.GetScreenHeight())
-	defer rl.EndScissorMode()
+	// rl.ClearBackground(transmute(rl.Color)state.bg)
+
+	// rl.BeginDrawing()
+	// defer rl.EndDrawing()
+
+	// hrgn = CreateRectRgn(aptRect[0].x, aptRect[0].y, aptRect[2].x, aptRect[2].y);
+
+	// rl.BeginScissorMode(0, 0, rl.GetScreenWidth(), rl.GetScreenHeight())
+	// defer rl.EndScissorMode()
+	//todo win32.SelectClipRgn(hdc, nil)
 
 	command_backing: ^mu.Command
 	for variant in mu.next_command_iterator(ctx, &command_backing) {
@@ -135,19 +148,26 @@ render :: proc(ctx: ^mu.Context) {
 			for ch in cmd.str do if ch & 0xc0 != 0x80 {
 				r := min(int(ch), 127)
 				rect := mu.default_atlas[mu.DEFAULT_ATLAS_FONT + r]
-				render_texture(rect, pos, cmd.color)
+				//render_texture(rect, pos, cmd.color)
+				win32.BitBlt(hdc, rect.x, rect.y, rect.w, rect.h, hdc_source, pos.x, pos.y, win32.SRCCOPY)
 				pos.x += rect.w
 			}
 		case ^mu.Command_Rect:
-			rl.DrawRectangle(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h, transmute(rl.Color)cmd.color)
+			//rl.DrawRectangle(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h, transmute(rl.Color)cmd.color)
+			// https://learn.microsoft.com/en-us/windows/win32/gdi/using-pens
+			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
 		case ^mu.Command_Icon:
 			rect := mu.default_atlas[cmd.id]
 			x := cmd.rect.x + (cmd.rect.w - rect.w) / 2
 			y := cmd.rect.y + (cmd.rect.h - rect.h) / 2
-			render_texture(rect, {x, y}, cmd.color)
+			//render_texture(rect, {x, y}, cmd.color)
+			win32.BitBlt(hdc, rect.x, rect.y, rect.w, rect.h, hdc_source, x, y, win32.SRCCOPY)
+
 		case ^mu.Command_Clip:
-			rl.EndScissorMode()
-			rl.BeginScissorMode(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h)
+			// rl.EndScissorMode()
+			// rl.BeginScissorMode(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h)
+			// https://learn.microsoft.com/en-us/windows/win32/gdi/clipping-output
+			// To remove a device-context's clipping region, specify a NULL region handle.
 		case ^mu.Command_Jump:
 			unreachable()
 		}

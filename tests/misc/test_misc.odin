@@ -45,3 +45,5 @@ when_to_use_when :: proc(t: ^testing.T) {
 
 	testing.expectf(t, str == "Can i convert", "%v", str)
 }
+
+//TODO investigate #config

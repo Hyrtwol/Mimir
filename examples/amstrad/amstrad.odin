@@ -1,7 +1,6 @@
 package amstrad
 
 import "core:fmt"
-import "core:math/linalg"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
@@ -20,6 +19,7 @@ Mode 1: 01230123
 Mode 2: 01234567
 
 // https://www.chibiakumas.com/z80/AmstradCPC.php
+// https://neuro-sys.github.io/2019/10/01/amstrad-cpc-crtc.html
 */
 
 z_fetch_opcode :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
@@ -52,7 +52,7 @@ z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 		{
 			fmt.printf("in[0x%2X]=0x%2X", port, value)
 			if value >= 32 {fmt.printf(" '%v'", rune(value))}
-			fmt.print("\n")
+			fmt.println()
 		}
 	}
 	return value
@@ -62,7 +62,12 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 	port := address & 0xFF
 	switch port {
 	case 1:
-		fmt.print(rune(value))
+		switch value {
+			case '\n': fmt.println(flush = true) /* Line Feed */
+			case '\f': /*skip Form Feed*/
+			case '\r': /*skip Carriage Return*/
+			case: fmt.print(rune(value))
+		}
 	case:
 		{
 			fmt.printf("out[0x%2X]=0x%2X", port, value)
@@ -73,7 +78,7 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 }
 
 z_halt :: proc(zcontext: rawptr, signal: z80.zuint8) {
-	fmt.printf("halt %d\n", signal)
+	fmt.printf("\nhalt %d\n", signal)
 	running = false
 }
 
@@ -114,6 +119,7 @@ main :: proc() {
 		out          = z_out,
 		halt         = z_halt,
 	}
+
 	z80.z80_power(&cpu, true)
 	//fmt.printf("CPU %v\n", cpu)
 

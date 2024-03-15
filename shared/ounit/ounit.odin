@@ -29,6 +29,10 @@ expect_value :: proc(t: ^testing.T, #any_int act: u32, #any_int exp: u32, loc :=
 	testing.expectf(t, act == exp, "0x%8X (should be: 0x%8X)", act, exp, loc = loc)
 }
 
+expect_valuei :: proc(t: ^testing.T, act: i32, exp: i32, loc := #caller_location) {
+	testing.expectf(t, act == exp, "%d (should be: %d)", act, exp, loc = loc)
+}
+
 expect_valuef :: proc(t: ^testing.T, act, exp, delta: f32, loc := #caller_location) {
 	testing.expectf(t, abs(act - exp) <= delta, "%f (should be: %f) %f", act, exp, abs(act - exp), loc = loc)
 }

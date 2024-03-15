@@ -3,27 +3,19 @@ package main
 import          "core:fmt"
 import          "core:intrinsics"
 import          "core:math"
-import          "core:math/linalg"
-import hlm      "core:math/linalg/hlsl"
 import          "core:math/noise"
-import          "core:math/rand"
-import          "core:mem"
 import          "core:runtime"
-import          "core:simd"
-import          "core:strings"
-import win32    "core:sys/windows"
-import          "core:time"
-import win32app "shared:tlc/win32app"
-import canvas   "shared:tlc/canvas"
-import "shared:fmod"
-import "shared:tlc/wolf"
+import win32	"core:sys/windows"
+import			"shared:tlc/win32app"
+import			"shared:tlc/canvas"
+import			"shared:fmod"
+import			"shared:tlc/wolf"
 
 L :: intrinsics.constant_utf16_cstring
 
 TITLE 	:: "FMOD Event System"
 WIDTH  	:: 64 * 8
 HEIGHT 	:: WIDTH * 9 / 16
-CENTER  :: true
 ZOOM  	:: 8
 
 max_channels :: 32
@@ -113,7 +105,7 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 	}
 }
 
-WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_CREATE\n")
 
 	client_size := win32app.get_client_size(hwnd)
@@ -123,7 +115,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	hdc := win32.GetDC(hwnd)
 	// todo defer win32.ReleaseDC(hwnd, hdc)
 
-	PelsPerMeter :: 3780
+	pels_per_meter :: 3780
 	ColorSizeInBytes :: 4
 	BitCount :: ColorSizeInBytes * 8
 
@@ -135,8 +127,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 		biBitCount = BitCount,
 		biCompression = win32.BI_RGB,
 		biSizeImage = 0,
-		biXPelsPerMeter = PelsPerMeter,
-		biYPelsPerMeter = PelsPerMeter,
+		biXPelsPerMeter = pels_per_meter,
+		biYPelsPerMeter = pels_per_meter,
 		biClrImportant = 0,
 		biClrUsed = 0,
 	}
@@ -147,7 +139,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 		bitmap_count = bitmap_size.x * bitmap_size.y
 		canvas.fill_screen(pvBits, bitmap_count, clear_color)
 	} else {
-		bitmap_size = canvas.ZERO2
+		bitmap_size = {0, 0}
 		bitmap_count = 0
 	}
 
@@ -166,7 +158,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) 
 	return 0
 }
 
-WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.print("WM_DESTROY\n")
 
 	if timer1_id != 0 {
@@ -183,7 +175,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 		win32.DeleteObject(bitmap_handle)
 	}
 	bitmap_handle = nil
-	bitmap_size = canvas.ZERO2
+	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
 
@@ -302,8 +294,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
 	case win32.WM_PAINT:		return canvas.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
@@ -423,10 +415,6 @@ main :: proc() {
 	title = fmt.aprintf("%s Version : %d.%d.%d (0x%x)\n", TITLE, fmod_version.Major, fmod_version.Minor, fmod_version.Development, transmute(u32)fmod_version)
 	defer delete(title)
 
-	settings: win32app.window_settings = {
-		title       = title,
-		window_size = {WIDTH, HEIGHT},
-		center      = CENTER,
-	}
-	win32app.run(&settings, wndproc)
+	settings := win32app.create_window_settings(title, WIDTH, HEIGHT, wndproc)
+	win32app.run(&settings)
 }

@@ -61,7 +61,7 @@ register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> wi
 
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
 	if icon == nil {
-		icon = win32.LoadIconW(instance, win32.wstring(win32._IDI_APPLICATION))
+		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))
 	}
 	if icon == nil {
 		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
@@ -117,7 +117,7 @@ window_settings :: struct {
 	dwStyle:     u32,
 	dwExStyle:   u32,
 	wndproc:     win32.WNDPROC,
-	run:         proc(this: ^window_settings),
+	run:         proc(this: ^window_settings) -> win32.HWND,
 }
 
 create_window_settings_default :: proc() -> window_settings {
@@ -146,9 +146,23 @@ create_window_settings_basic :: proc(title: string, width: i32, height: i32, wnd
 	return settings
 }
 
+create_window_settings_app :: proc(title: string, width: i32, height: i32, wndproc: WNDPROC) -> window_settings {
+	settings: window_settings = {
+		title       = title,
+		window_size = {width, height},
+		center      = true,
+		wndproc     = win32.WNDPROC(wndproc),
+		dwStyle     = default_dwStyle,
+		dwExStyle   = default_dwExStyle,
+		run         = run_settings,
+	}
+	return settings
+}
+
 create_window_settings :: proc {
 	create_window_settings_default,
 	create_window_settings_basic,
+	create_window_settings_app,
 }
 
 register_and_create_window :: proc(settings: ^window_settings) -> win32.HWND {
@@ -199,18 +213,20 @@ loop_messages :: proc() {
 	}
 }
 
-run_wndproc :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) {
+run_wndproc :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) -> win32.HWND {
 	inst := get_instance()
 	atom := register_window_class(inst, wndproc)
 	hwnd := create_and_show_window(inst, atom, settings)
 	loop_messages()
+	return hwnd
 }
 
-run_settings :: proc(settings: ^window_settings) {
+run_settings :: proc(settings: ^window_settings) -> win32.HWND {
 	inst := get_instance()
 	atom := register_window_class(inst, settings.wndproc)
 	hwnd := create_and_show_window(inst, atom, settings)
 	loop_messages()
+	return hwnd
 }
 
 run :: proc {

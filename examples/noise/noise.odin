@@ -2,25 +2,18 @@ package main
 
 import          "core:fmt"
 import          "core:intrinsics"
-import          "core:math"
-import          "core:math/linalg"
-import hlm      "core:math/linalg/hlsl"
 import          "core:math/noise"
-import          "core:math/rand"
-import          "core:mem"
 import          "core:runtime"
-import          "core:simd"
-import          "core:strings"
 import win32    "core:sys/windows"
 import win32app "shared:tlc/win32app"
 import canvas   "shared:tlc/canvas"
 
 L       :: intrinsics.constant_utf16_cstring
-byte4   :: canvas.byte4
-int2    :: canvas.int2
-float2  :: hlm.float2
-double2 :: hlm.double2
-double3 :: hlm.double3
+byte4   :: [4]u8 //canvas.byte4
+int2    :: [2]i32 //canvas.int2
+float2  :: [2]f32 //canvas.float2
+double2 :: [2]f64 //canvas.double2
+double3 :: [3]f64 //canvas.double3
 DIB     :: canvas.DIB
 
 TITLE 	:: "Noise"
@@ -92,7 +85,7 @@ dib_noise2 :: proc(dib: ^DIB) {
 	npos2 += ndir2
 }
 
-WM_CREATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	client_size := win32app.get_client_size(hwnd)
 
 	hdc := win32.GetDC(hwnd)
@@ -123,10 +116,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 	canvas.dib_free_section(&dib)
 	win32.PostQuitMessage(0)
 	return 0
-}
-
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	return 1
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -173,9 +162,9 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
-	case win32.WM_CREATE:		return WM_CREATE(hwnd, wparam, lparam)
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:	return 1
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)

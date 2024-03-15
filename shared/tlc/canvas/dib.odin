@@ -1,11 +1,9 @@
 package canvas
 
-import "core:fmt"
+//import "core:fmt"
 import "core:intrinsics"
-import "core:math/linalg"
-import hlm "core:math/linalg/hlsl"
-import "core:runtime"
-import "core:strings"
+//import "core:runtime"
+//import "core:strings"
 import win32 "core:sys/windows"
 import win32app "shared:tlc/win32app"
 
@@ -22,7 +20,7 @@ DIB :: struct {
 dib_create_section :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
 	dib.hbitmap = win32.CreateDIBSection(hdc, pbmi, win32.DIB_RGB_COLORS, &dib.pvBits, nil, 0)
 	if dib.pvBits == nil {
-		dib.size = ZERO2
+		dib.size = {0, 0}
 		dib.pixel_count = 0
 	}
 }
@@ -33,7 +31,7 @@ dib_free_section :: proc(dib: ^DIB) {
 	}
 	dib.hbitmap = nil
 	dib.pvBits = nil
-	dib.size = ZERO2
+	dib.size = {0, 0}
 	dib.pixel_count = 0
 }
 

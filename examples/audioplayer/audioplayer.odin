@@ -2,17 +2,13 @@ package audioplayer
 
 import "core:fmt"
 import "core:intrinsics"
-import "core:math"
-import "core:math/linalg"
-import hlm "core:math/linalg/hlsl"
-import "core:math/noise"
+//import "core:math/noise"
 import "core:math/rand"
-import "core:mem"
+//import "core:mem"
 import "core:runtime"
-import "core:simd"
-import "core:strings"
+//import "core:simd"
 import win32 "core:sys/windows"
-import "core:time"
+//import "core:time"
 import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
 
@@ -141,7 +137,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 		fmt.printf("header[%d]=%v\n", i, header)
 	}
 
-	for i in 0 ..< NUM_BUFFERS {
+	for _ in 0 ..< NUM_BUFFERS {
 		WriteBuffer()
 	}
 }
@@ -233,16 +229,13 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }*/
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
+/*WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
 	return 1
-}
+}*/
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	switch wparam {
-	//case '\x1b':win32.DestroyWindow(hwnd)
-	//case '\x1b':assert( win32.CloseWindow(hwnd) == true )
-	//case '\x1b': win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
 	case '\x1b': CloseFile()
 	case '\t':	 fmt.print("tab\n")
 	case '\r':	 fmt.print("return\n")
@@ -355,7 +348,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	//case win32.WM_CLOSE:		return WM_CLOSE(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
+	case win32.WM_ERASEBKGND:	return 1
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	//case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	case win32.WM_PAINT:        return canvas.wm_paint_dib(hwnd, dib.hbitmap, dib.size)

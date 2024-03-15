@@ -7,6 +7,7 @@ import "core:testing"
 import win32 "core:sys/windows"
 import win32ex "shared:sys/windows"
 import win32app "shared:tlc/win32app"
+import o "shared:ounit"
 
 @(test)
 make_lresult_from_false :: proc(t: ^testing.T) {
@@ -29,4 +30,18 @@ wstring_convert :: proc(t: ^testing.T) {
 	result, err := win32.wstring_to_utf8(wstr, 256, context.allocator)
 	testing.expect(t, exp == result, fmt.tprintf("wstring_convert: %v (should be: %v)", result, exp))
 	testing.expect(t, err == .None, fmt.tprintf("wstring_convert: error %v", err))
+}
+
+@(test)
+min_max_msg :: proc(t: ^testing.T) {
+
+	p := wstring_convert
+	o.expect_value(t, min(win32app.MSG), 0x0001)
+	o.expect_value(t, max(win32app.MSG), 0x0204)
+	o.expect_value(t, max(win32app.MSG), 516)
+	o.expect_value(t, size_of(p), 8)
+	o.expect_value(t, int(max(win32app.MSG)) * size_of(p), 4128)
+
+	o.expect_value(t, min(win32app.MSG), win32app.MSG.WM_CREATE)
+	o.expect_value(t, max(win32app.MSG), win32app.MSG.WM_RBUTTONDOWN)
 }
