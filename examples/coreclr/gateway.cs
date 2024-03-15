@@ -9,6 +9,8 @@ to re-compile use:
 ilasm gateway.il /dll /output=gateway.dll
 */
 using System;
+using System.Reflection;
+using System.Threading;
 using System.Runtime.InteropServices;
 
 public delegate bool UnmanagedCallbackDelegate(string funcName, string jsonArgs);
@@ -17,7 +19,8 @@ public static class Gateway
 {
     public static string Bootstrap()
     {
-        return "Bootstrap!";
+        return Thread.GetDomain().FriendlyName;
+        //return "Bootstrap!";
     }
 
     public static double Plus(double x, double y)
