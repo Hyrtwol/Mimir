@@ -40,12 +40,48 @@ wstring_convert :: proc(t: ^testing.T) {
 min_max_msg :: proc(t: ^testing.T) {
 
 	p := wstring_convert
-	o.expect_value(t, min(win32app.MSG), 0x0001)
-	o.expect_value(t, max(win32app.MSG), 0x0204)
-	o.expect_value(t, max(win32app.MSG), 516)
+	o.expect_value(t, min(win32app.WM_MSG), 0x0001)
+	o.expect_value(t, max(win32app.WM_MSG), 0x0204)
+	o.expect_value(t, max(win32app.WM_MSG), 516)
 	o.expect_value(t, size_of(p), 8)
-	o.expect_value(t, int(max(win32app.MSG)) * size_of(p), 4128)
+	o.expect_value(t, int(max(win32app.WM_MSG)) * size_of(p), 4128)
 
-	o.expect_value(t, min(win32app.MSG), win32app.MSG.WM_CREATE)
-	o.expect_value(t, max(win32app.MSG), win32app.MSG.WM_RBUTTONDOWN)
+	o.expect_value(t, min(win32app.WM_MSG), win32app.WM_MSG.WM_CREATE)
+	o.expect_value(t, max(win32app.WM_MSG), win32app.WM_MSG.WM_RBUTTONDOWN)
+}
+
+@(test)
+verify_bitmap_headers :: proc(t: ^testing.T) {
+	//o.expect_size(t, xatlasChart, 24)
+	size: [2]i32 = {300, 200}
+	ppm: i32 = 666
+	bpp: u16 = 4
+	bmp5 := win32.BITMAPV5HEADER {
+		bV5Size          = size_of(win32.BITMAPV5HEADER),
+		bV5Width         = size.x,
+		bV5Height        = -size.y, // minus for top-down
+		bV5Planes        = 1,
+		bV5BitCount      = bpp,
+		bV5Compression   = win32.BI_BITFIELDS,
+		bV5XPelsPerMeter = 1001,
+		bV5YPelsPerMeter = 1002,
+		
+		bV5RedMask       = 0x000000FF,
+		bV5GreenMask     = 0x0000FF00,
+		bV5BlueMask      = 0x00FF0000,
+		bV5AlphaMask     = 0xFF000000,
+	}
+	pbmp5 := &bmp5
+	pbmp := cast(^win32.BITMAPINFOHEADER)pbmp5
+	o.expect_value(t, pbmp5.bV5Size, pbmp.biSize )
+	o.expect_value(t, pbmp5.bV5Width, pbmp.biWidth )
+	o.expect_value(t, pbmp5.bV5Height, pbmp.biHeight )
+	o.expect_value(t, pbmp5.bV5Planes, pbmp.biPlanes )
+	o.expect_value(t, pbmp5.bV5BitCount, pbmp.biBitCount )
+	o.expect_value(t, pbmp5.bV5Compression, pbmp.biCompression )
+	o.expect_value(t, pbmp5.bV5SizeImage, pbmp.biSizeImage )
+	o.expect_value(t, pbmp5.bV5XPelsPerMeter, pbmp.biXPelsPerMeter )
+	o.expect_value(t, pbmp5.bV5YPelsPerMeter, pbmp.biYPelsPerMeter )
+	o.expect_value(t, pbmp5.bV5ClrUsed, pbmp.biClrUsed )
+	o.expect_value(t, pbmp5.bV5ClrImportant, pbmp.biClrImportant )
 }

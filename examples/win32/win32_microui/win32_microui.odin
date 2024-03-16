@@ -15,11 +15,11 @@ application :: struct {
 	log_buf_updated: bool,
 	bg:              mu.Color,
 	atlas_texture:   canvas.DIB,
-} {
-	bg = {90, 95, 100, 255},
 }
 
-state : application
+state : application = {
+	bg = {90, 95, 100, 255},
+}
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
 

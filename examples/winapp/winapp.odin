@@ -194,7 +194,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
-wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.MSG, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
 	case .WM_CREATE:		return WM_CREATE(hwnd, lparam)

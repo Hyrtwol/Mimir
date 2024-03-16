@@ -50,7 +50,7 @@ WM_SIZE_WPARAM :: enum win32.WPARAM {
 	MAXHIDE   = win32.SIZE_MAXHIDE,
 }
 
-MSG :: enum win32.UINT {
+WM_MSG :: enum win32.UINT {
 	WM_CREATE = win32.WM_CREATE,
 	WM_DESTROY = win32.WM_DESTROY,
 	WM_ERASEBKGND = win32.WM_ERASEBKGND,
@@ -63,4 +63,4 @@ MSG :: enum win32.UINT {
 	WM_RBUTTONDOWN = win32.WM_RBUTTONDOWN,
 }
 
-WNDPROC :: #type proc "system" (HWND, MSG, WPARAM, LPARAM) -> LRESULT
+WNDPROC :: #type proc "system" (HWND, WM_MSG, WPARAM, LPARAM) -> LRESULT

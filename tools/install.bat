@@ -1,1 +1,1 @@
-nuget install -ExcludeVersion
+nuget install -ExcludeVersion -OutputDirectory packages

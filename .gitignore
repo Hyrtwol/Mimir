@@ -3,6 +3,7 @@
 *.log
 *.res
 bin/
+obj/
 desktop.ini
 Thumbs.db
 .DS_Store
@@ -13,4 +14,3 @@ x64/
 *.user
 Debug/
 Release/
-examples/coreclr/obj

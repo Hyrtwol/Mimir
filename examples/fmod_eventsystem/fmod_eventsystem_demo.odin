@@ -117,14 +117,14 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	pels_per_meter :: 3780
 	ColorSizeInBytes :: 4
-	BitCount :: ColorSizeInBytes * 8
+	color_bit_count :: ColorSizeInBytes * 8
 
 	bmi_header := win32.BITMAPINFOHEADER {
 		biSize = size_of(win32.BITMAPINFOHEADER),
 		biWidth = bitmap_size.x,
 		biHeight = bitmap_size.y,
 		biPlanes = 1,
-		biBitCount = BitCount,
+		biBitCount = color_bit_count,
 		biCompression = win32.BI_RGB,
 		biSizeImage = 0,
 		biXPelsPerMeter = pels_per_meter,

@@ -4,7 +4,7 @@ import "core:intrinsics"
 import win32 "core:sys/windows"
 import win32app "shared:tlc/win32app"
 
-pels_per_meter :: 3780
+default_pels_per_meter : int2 : {3780, 3780}
 
 DIB :: struct {
 	hbitmap:     win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
@@ -45,8 +45,8 @@ dib_free_section :: proc(dib: ^DIB) {
 	dib.pixel_count = 0
 }
 
-dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
-	bmi_header := win32.BITMAPINFOHEADER {
+dib_create :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pels_per_meter) -> DIB {
+	bmp_header := win32.BITMAPINFOHEADER {
 		biSize          = size_of(win32.BITMAPINFOHEADER),
 		biWidth         = size.x,
 		biHeight        = -size.y, // minus for top-down
@@ -54,8 +54,8 @@ dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		biBitCount      = color_bit_count,
 		biCompression   = win32.BI_RGB,
 		biSizeImage     = 0,
-		biXPelsPerMeter = pels_per_meter,
-		biYPelsPerMeter = pels_per_meter,
+		biXPelsPerMeter = pels_per_meter.x,
+		biYPelsPerMeter = pels_per_meter.y,
 		biClrImportant  = 0,
 		biClrUsed       = 0,
 	}
@@ -63,20 +63,20 @@ dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		size        = size,
 		pixel_count = size.x * size.y,
 	}
-	dib_create_section(&dib, hdc, &bmi_header)
+	dib_create_section(&dib, hdc, &bmp_header)
 	return dib
 }
 
-dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
-	bmiV5Header := win32.BITMAPV5HEADER {
+dib_create_v5 :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pels_per_meter) -> DIB {
+	bmp_v5_header := win32.BITMAPV5HEADER {
 		bV5Size          = size_of(win32.BITMAPV5HEADER),
 		bV5Width         = size.x,
 		bV5Height        = -size.y, // minus for top-down
 		bV5Planes        = 1,
 		bV5BitCount      = color_bit_count,
 		bV5Compression   = win32.BI_BITFIELDS,
-		bV5XPelsPerMeter = pels_per_meter,
-		bV5YPelsPerMeter = pels_per_meter,
+		bV5XPelsPerMeter = pels_per_meter.x,
+		bV5YPelsPerMeter = pels_per_meter.y,
 		bV5RedMask       = 0x000000FF,
 		bV5GreenMask     = 0x0000FF00,
 		bV5BlueMask      = 0x00FF0000,
@@ -86,7 +86,7 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		size        = size,
 		pixel_count = size.x * size.y,
 	}
-	dib_create_section(&dib, hdc, &bmiV5Header)
+	dib_create_section(&dib, hdc, &bmp_v5_header)
 	return dib
 }
 

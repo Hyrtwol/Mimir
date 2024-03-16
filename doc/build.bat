@@ -5,9 +5,11 @@ rem Title Visual Studio 2022 Command Prompt - %~n1
 rem cd /d %1
 @prompt "$P"$_$G
 
+pushd command_line_tool
+
 rem Odin
 
-@set OUTF=odin_command_line_tool.md
+@set OUTF=odin.md
 @echo Generating %OUTF%
 
 @echo # Odin> %OUTF%
@@ -30,7 +32,7 @@ rem Odin
 
 rem C/C++ Compiler
 
-@set OUTF=cl_command_line_tool.md
+@set OUTF=cl.md
 @echo Generating %OUTF%
 
 @echo # C/C++ Compiler> %OUTF%
@@ -42,7 +44,7 @@ rem C/C++ Compiler
 
 rem RC
 
-@set OUTF=rc_command_line_tool.md
+@set OUTF=rc.md
 @echo Generating %OUTF%
 
 @echo # Resource Compiler> %OUTF%
@@ -51,6 +53,32 @@ rem RC
 @rc /?>> %OUTF%
 @echo ```>> %OUTF%
 @echo.>> %OUTF%
+
+rem ilasm
+
+@set OUTF=ilasm.md
+@echo Generating %OUTF%
+
+@echo # Resource Compiler> %OUTF%
+@echo.>> %OUTF%
+@echo ```txt>> %OUTF%
+../../tools/ilasm /?>> %OUTF%
+@echo ```>> %OUTF%
+@echo.>> %OUTF%
+
+rem ilasm
+
+@set OUTF=ildasm.md
+@echo Generating %OUTF%
+
+@echo # Resource Compiler> %OUTF%
+@echo.>> %OUTF%
+@echo ```txt>> %OUTF%
+../../tools/ildasm /?>> %OUTF%
+@echo ```>> %OUTF%
+@echo.>> %OUTF%
+
+popd
 
 rem Odin doc's
 rem -short
