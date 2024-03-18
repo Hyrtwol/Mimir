@@ -1,11 +1,13 @@
 @echo off
 
 rem Title Visual Studio 2022 Command Prompt - %~n1
-@call "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
+rem if "%VSCMD_ARG_TGT_ARCH%"=="" call "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
+if "%VSCMD_ARG_TGT_ARCH%"=="" call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 rem cd /d %1
 @prompt "$P"$_$G
 
-pushd command_line_tool
+pushd command_line_tools
+cd
 
 rem Odin
 
@@ -59,24 +61,34 @@ rem ilasm
 @set OUTF=ilasm.md
 @echo Generating %OUTF%
 
-@echo # Resource Compiler> %OUTF%
+@echo # ilasm> %OUTF%
 @echo.>> %OUTF%
 @echo ```txt>> %OUTF%
-../../tools/ilasm /?>> %OUTF%
+..\..\tools\ilasm /?>> %OUTF%
 @echo ```>> %OUTF%
 @echo.>> %OUTF%
 
-rem ilasm
+rem ildasm
 
 @set OUTF=ildasm.md
 @echo Generating %OUTF%
 
-@echo # Resource Compiler> %OUTF%
+@echo # ildasm> %OUTF%
 @echo.>> %OUTF%
 @echo ```txt>> %OUTF%
-../../tools/ildasm /?>> %OUTF%
+..\..\tools\ildasm /?>> %OUTF%
 @echo ```>> %OUTF%
+
+rem nuget
+
+@set OUTF=nuget.md
+@echo Generating %OUTF%
+
+@echo # nuget> %OUTF%
 @echo.>> %OUTF%
+@echo ```txt>> %OUTF%
+..\..\tools\nuget help>> %OUTF%
+@echo ```>> %OUTF%
 
 popd
 
@@ -87,6 +99,9 @@ rem -doc-format
 
 @set OUTF=doc.txt
 @echo Generating %OUTF%
-odin doc . -collection:shared=..\\shared -all-packages -doc-format> %OUTF%
+set doc_opt=-collection:shared=..\\shared
+set doc_opt=%doc_opt% -all-packages
+set doc_opt=%doc_opt% -doc-format
+odin doc . %doc_opt%> %OUTF%
 
 @echo Done.

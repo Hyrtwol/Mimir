@@ -1,3 +1,9 @@
+# ildasm
+
+```txt
+.NET IL Disassembler.  Version 8.0.0
+Copyright (c) Microsoft Corporation.  All rights reserved.
+
 Usage: ildasm [options] <file_name> [options]
 
 Options for output redirection:
@@ -49,3 +55,4 @@ Option key is '-' or '/', options are recognized by first 3 characters
 
 Example:  ildasm /tok /byt myfile.exe /out=myfile.il
 
+```

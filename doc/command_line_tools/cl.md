@@ -10,9 +10,11 @@
 /Ob<n> inline expansion (default n=0)   /Od disable optimizations (default)
 /Og enable global optimization          /Oi[-] enable intrinsic functions
 /Os favor code space                    /Ot favor code speed
-/Ox optimizations (favor speed)         /Oy[-] enable frame pointer omission 
-/favor:<blend|ATOM> select processor to optimize for, one of:
-    blend - a combination of optimizations for several different x86 processors
+/Ox optimizations (favor speed)         
+/favor:<blend|AMD64|INTEL64|ATOM> select processor to optimize for, one of:
+    blend - a combination of optimizations for several different x64 processors
+    AMD64 - 64-bit AMD processors
+    INTEL64 - Intel(R)64 architecture processors
     ATOM - Intel(R) Atom(TM) processors
 
                              -CODE GENERATION-
@@ -59,25 +61,20 @@
     initialAppDomain : enable initial AppDomain behavior of Visual C++ 2002
     implicitKeepAlive- : turn off implicit emission of System::GC::KeepAlive(this)
 /fsanitize=address Enable address sanitizer codegen
-/Gd __cdecl calling convention          /Gr __fastcall calling convention
-/Gz __stdcall calling convention        /GZ Enable stack checks (/RTCs)
-/Gv __vectorcall calling convention     
-/hotpatch ensure function padding for hotpatchable images
-/arch:<IA32|SSE|SSE2|AVX|AVX2|AVX512> minimum CPU architecture requirements, one of:
-   IA32 - use no enhanced instructions and use x87 for floating point
-   SSE - enable use of instructions available with SSE-enabled CPUs
-   SSE2 - (default) enable use of instructions available with SSE2-enabled CPUs
+/homeparams Force parameters passed in registers to be written to the stack
+/GZ Enable stack checks (/RTCs)         /Gv __vectorcall calling convention
+/arch:<AVX|AVX2|AVX512> minimum CPU architecture requirements, one of:
    AVX - enable use of instructions available with AVX-enabled CPUs
    AVX2 - enable use of instructions available with AVX2-enabled CPUs
    AVX512 - enable use of instructions available with AVX-512-enabled CPUs
-/Qimprecise_fwaits generate FWAITs only on "try" boundaries, not inside "try"
-/Qsafe_fp_loads generate safe FP loads  
 /QIntel-jcc-erratum enable mitigations for Intel JCC erratum
 /Qspectre-load Enable spectre mitigations for all instructions which load memory
 /Qspectre-load-cf Enable spectre mitigations for all control-flow instructions which load memory
+/Qspectre-jmp[-] Enable spectre mitigations for unconditional jump instructions
 /fpcvt:<IA|BC> FP to unsigned integer conversion compatibility
    IA - results compatible with VCVTTSD2USI instruction
    BC - results compatible with VS2017 and earlier compiler
+/jumptablerdata Place jump tables for switch case statements in .rdata section
 
                               -OUTPUT FILES-
 

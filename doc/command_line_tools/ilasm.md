@@ -1,3 +1,10 @@
+# ilasm
+
+```txt
+
+.NET IL Assembler version 9.0.0-preview.1.24080.9
+Copyright (c) Microsoft Corporation.  All rights reserved.
+
 
 
 Usage: ilasm [Options] <sourcefile> [Options]
@@ -48,4 +55,6 @@ Target defaults:
 /PE64      => /PE64 /X64
 /X64       => /PE64 /X64
 /ARM64     => /PE64 /ARM64
+
+```
 
