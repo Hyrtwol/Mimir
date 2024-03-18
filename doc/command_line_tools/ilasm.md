@@ -2,7 +2,7 @@
 
 ```txt
 
-.NET IL Assembler version 9.0.0-preview.1.24080.9
+.NET IL Assembler version 8.0.0
 Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
