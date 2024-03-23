@@ -1,5 +1,20 @@
 package amstrad
 
+import "core:math/rand"
+
+int2			:: [2]i32
+color			:: [4]u8
+color_bits		:: 1
+palette_count	:: 16 // 1 << color_bits
+color_palette	:: [palette_count]color
+
+SCREEN_WIDTH  	:: 640
+SCREEN_HEIGHT 	:: 200
+screen_pixel_count :: SCREEN_WIDTH * SCREEN_HEIGHT
+screen_byte_count :: screen_pixel_count * color_bits / 8
+
+screen_buffer	:: [^]u8
+
 /*
 #define MODE_1_P0(c) (((c & 2) >> 1) << 3) | ((c & 1) << 7)
 #define MODE_1_P1(c) (((c & 2) >> 1) << 2) | ((c & 1) << 6)
@@ -40,6 +55,7 @@ M2: byte -> byte (1 bpp)
 Overscan modes (192x272, 384x272, 768x272),
 
 */
+
 screen_sizes_mode : [3][2]i32 : {
 	{160,200},
 	{320,200},
@@ -55,21 +71,10 @@ screen_size_mode :: screen_sizes_mode[2]
 screen_size_overscan :: screen_sizes_overscan[2]
 
 screen_size :: struct {
-	size: [2]i32,
+	size: int2,
 	bpp:  i32,
 }
 screen_sizes: [3]screen_size : {{size = {160, 200}, bpp = 4}, {size = {320, 200}, bpp = 4}, {size = {640, 200}, bpp = 4}}
-
-screen_buffer :: [^]u8
-
-color_bits    :: 1
-palette_count :: 16 // 1 << color_bits
-color_palette :: [palette_count]color
-
-SCREEN_WIDTH  	:: 640
-SCREEN_HEIGHT 	:: 200
-screen_pixel_count :: SCREEN_WIDTH * SCREEN_HEIGHT
-screen_byte_count :: screen_pixel_count * color_bits / 8
 
 
 update_screen_1 :: proc(app: papp) {

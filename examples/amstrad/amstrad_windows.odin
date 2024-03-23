@@ -1,3 +1,4 @@
+// +build windows
 package amstrad
 
 import "core:fmt"
@@ -12,10 +13,9 @@ import z80 "shared:z80"
 
 // aliases
 L				:: intrinsics.constant_utf16_cstring
-color			:: [4]u8
 wstring			:: win32.wstring
 utf8_to_wstring	:: win32.utf8_to_wstring
-int2			:: [2]i32
+UINT_PTR        :: win32.UINT_PTR
 
 IDT_TIMER1: win32.UINT_PTR : 10001
 
@@ -36,16 +36,6 @@ BITMAPINFO :: struct {
 	bmiColors: color_palette,
 }
 
-app :: struct {
-	pause:    bool,
-	//colors:    []color,
-	size:     int2,
-	timer_id: win32.UINT_PTR,
-	tick:     u32,
-	//title:     wstring,
-	hbitmap:  win32.HBITMAP,
-	pvBits:   screen_buffer,
-}
 papp :: ^app
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
@@ -119,12 +109,13 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	//fmt.printf("WM_DESTROY %v\n%v\n", hwnd, app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	if app.timer_id != 0 {
+	/*if app.timer_id != 0 {
 		if !win32.KillTimer(hwnd, app.timer_id) {
 			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
 		}
 		app.timer_id = 0
-	}
+	}*/
+	win32app.kill_timer(hwnd, &app.timer_id)
 	if app.hbitmap != nil {
 		if !win32.DeleteObject(win32.HGDIOBJ(app.hbitmap)) {
 			win32.MessageBoxW(nil, L("Unable to delete hbitmap"), L("Error"), win32.MB_OK)

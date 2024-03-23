@@ -5,7 +5,7 @@ import "core:fmt"
 import "core:intrinsics"
 import "core:os"
 import "core:runtime"
-// import win32 "core:sys/windows"
+import win32 "core:sys/windows"
 // import canvas "shared:tlc/canvas"
 // import win32app "shared:tlc/win32app"
 import z80 "shared:z80"
@@ -67,11 +67,9 @@ z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	case 1:
 		value = 1
 	case:
-		{
-			fmt.printf("in[0x%2X]=0x%2X", port, value)
-			if value >= 32 {fmt.printf(" '%v'", rune(value))}
-			fmt.println()
-		}
+		fmt.printf("in[0x%2X]=0x%2X", port, value)
+		if value >= 32 {fmt.printf(" '%v'", rune(value))}
+		fmt.println()
 	}
 	return value
 }
@@ -81,19 +79,15 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 	switch port {
 	case 1:
 		switch value {
-		case '\n':
-			fmt.println(flush = true) /* Line Feed */
+		case '\n': fmt.println(flush = true) /* Line Feed */
 		case '\f': /*skip Form Feed*/
 		case '\r': /*skip Carriage Return*/
-		case:
-			fmt.print(rune(value))
+		case: fmt.print(rune(value))
 		}
 	case:
-		{
-			fmt.printf("out[0x%2X]=0x%2X", port, value)
-			if value >= 32 {fmt.printf(" '%v'", rune(value))}
-			fmt.print("\n")
-		}
+		fmt.printf("out[0x%2X]=0x%2X", port, value)
+		if value >= 32 {fmt.printf(" '%v'", rune(value))}
+		fmt.print("\n")
 	}
 }
 
@@ -135,10 +129,22 @@ print_info :: proc() {
 	fmt.printfln("screen_byte_count      =%v", screen_byte_count)
 }
 
+app :: struct {
+	pause:    bool,
+	//colors:    []color,
+	size:     int2,
+	timer_id: win32.UINT_PTR,
+	tick:     u32,
+	//title:     wstring,
+	hbitmap:  win32.HBITMAP,
+	pvBits:   screen_buffer,
+}
+
 main :: proc() {
 	fmt.print("Amstrad\n")
 
-	load_rom("../data/z80/hello.rom")
+	rom_path :: "../data/z80/hello.rom"
+	load_rom(rom_path)
 
 	cpu: z80.TZ80 = {
 		fetch_opcode = z_fetch_opcode,
