@@ -5,18 +5,38 @@ import "core:fmt"
 import "core:math"
 import "core:runtime"
 import "core:testing"
-import "shared:ounit"
+import o "shared:ounit"
 
 vec2 :: [2]i32
 
 @(test)
 can_i_swizzle :: proc(t: ^testing.T) {
-	using ounit
 	v: vec2 = {3, 7}
-	expect_value(t, v[0], 3)
-	expect_value(t, v[1], 7)
-	expect_value(t, v.x, 3)
-	expect_value(t, v.y, 7)
+	o.expect_value(t, v[0], 3)
+	o.expect_value(t, v[1], 7)
+	o.expect_value(t, v.x, 3)
+	o.expect_value(t, v.y, 7)
+}
+
+@(test)
+swapping :: proc(t: ^testing.T) {
+
+	a, b: u32 = 47, 1337
+
+	// stack swap
+	a, b = b, a
+
+	o.expect_value(t, a, 1337)
+	o.expect_value(t, b, 47)
+
+	// xor swap
+	a ~= b
+	b ~= a
+	a ~= b
+
+	o.expect_value(t, a, 47)
+	o.expect_value(t, b, 1337)
+
 }
 
 @(test)

@@ -96,7 +96,9 @@ control_characters :: enum u8 {
 newline_style_config : newline_style : .CRLF*/
 
 when ODIN_OS == .Windows {
-	newline := "\n"
-} else {
 	newline := "\r\n"
+	listsep := ';'
+} else {
+	newline := "\n"
+	listsep := ':'
 }

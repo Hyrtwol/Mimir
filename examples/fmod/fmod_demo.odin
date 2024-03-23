@@ -147,5 +147,5 @@ main :: proc() {
 		os.read(os.stdin, ch[:])
 	}
 	*/
-	fmt.print("Done.\n")
+	fmt.println("Done.")
 }

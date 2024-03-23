@@ -1,17 +1,35 @@
+// +vet
 package amstrad
 
 import "core:fmt"
+import "core:intrinsics"
 import "core:os"
 import "core:runtime"
-import win32 "core:sys/windows"
-import canvas "shared:tlc/canvas"
-import win32app "shared:tlc/win32app"
+// import win32 "core:sys/windows"
+// import canvas "shared:tlc/canvas"
+// import win32app "shared:tlc/win32app"
 import z80 "shared:z80"
+import z80m "shared:z80/amstrad"
 
 cycles_per_tick :: 100
 mem_size :: 0x10000
 memory: [mem_size]u8
 running: bool = false
+put_chars: bool = false
+
+size_16kb :: z80m.size_16kb
+mask_16kb :: z80m.mask_16kb
+size_64kb :: z80m.size_64kb
+
+//p_image := #load("data/mode2.raw")
+p_image := #load("data/pinup.raw")
+/*
+foreign import mode2 "data/mode2.asm"
+//foreign import mode2 "data/pinup2.asm"
+foreign mode2 {imagedata: [16000]u8}
+p_image := imagedata
+*/
+
 
 /*
 Mode 0: 01010101
@@ -63,10 +81,12 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 	switch port {
 	case 1:
 		switch value {
-			case '\n': fmt.println(flush = true) /* Line Feed */
-			case '\f': /*skip Form Feed*/
-			case '\r': /*skip Carriage Return*/
-			case: fmt.print(rune(value))
+		case '\n':
+			fmt.println(flush = true) /* Line Feed */
+		case '\f': /*skip Form Feed*/
+		case '\r': /*skip Carriage Return*/
+		case:
+			fmt.print(rune(value))
 		}
 	case:
 		{
@@ -105,6 +125,16 @@ load_rom :: proc(filename: string) {
 	}
 }
 
+print_info :: proc() {
+	fmt.printfln("color_bits             =%v", color_bits)
+	fmt.printfln("palette_count          =%v", palette_count)
+	fmt.printfln("len(color_palette)     =%v", len(color_palette))
+	fmt.printfln("size_of(color)         =%v", size_of(color))
+	fmt.printfln("size_of(color_palette) =%v", size_of(color_palette))
+	fmt.printfln("screen_pixel_count     =%v", screen_pixel_count)
+	fmt.printfln("screen_byte_count      =%v", screen_byte_count)
+}
+
 main :: proc() {
 	fmt.print("Amstrad\n")
 
@@ -132,5 +162,10 @@ main :: proc() {
 	}
 	fmt.printf("total %v (%v)\n", total, reps)
 
-	fmt.print("Done.\n")
+	app: app = {}
+	run_app(&app)
+
+	print_info()
+
+	fmt.println("Done.")
 }

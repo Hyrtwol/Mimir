@@ -78,7 +78,7 @@ verify_z80_memory :: proc(t: ^testing.T) {
 	o.expect_value(t, size_of(a.bank16kb), _16kb)
 	//o.expect_value(t, size_of(a.banks), _64kb)
 
-	bank_select : [4]i32 = {0,0,0,0}
+	//bank_select : [4]i32 = {0,0,0,0}
 
 	ram : [4]a.bank16kb = ---
 	rom : [2]a.bank16kb = ---

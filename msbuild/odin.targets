@@ -1,0 +1,63 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<OdinOutputDir Condition="'$(OdinOutputDir)'==''">$(MSBuildProjectDirectory)\bin</OdinOutputDir>
+		<DocDir Condition="'$(DocDir)'==''">$(MSBuildProjectDirectory)\doc</DocDir>
+		<OdinExe Condition="'$(OdinExe)'==''">$(ODIN_ROOT)\odin.exe</OdinExe>
+	</PropertyGroup>
+
+	<Target Name="Prologue">
+		<Message Text="ODIN_ROOT: $(ODIN_ROOT)" Importance="High" />
+		<Exec Command="$(OdinExe) version" EchoOff="true" />
+		<Message Text="%(Project.RelativeDir) %(Project.Filename) (%(Project.Flavour))" Importance="High" />
+	</Target>
+
+	<Target Name="Clean" DependsOnTargets="Prologue">
+		<Message Text="Clean" Importance="High" />
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="Clean">
+		<Message Text="Build" Importance="High" />
+		<MSBuild Projects="$(MSBuildProjectFile)" Targets="_OdinBuild" Condition=" '%(Project.Flavour)'=='Odin' " Properties="OdinProject=%(Project.FullPath);OdinProjectName=%(Project.Filename)" />
+	</Target>
+
+	<Target Name="Test" DependsOnTargets="Clean">
+		<Message Text="Test" Importance="High" />
+		<MSBuild Projects="$(MSBuildProjectFile)" Targets="_OdinTest" Condition=" '%(Project.Flavour)'=='OdinTest' " Properties="OdinProject=%(Project.FullPath);OdinProjectName=%(Project.Filename)" />
+	</Target>
+
+	<Target Name="All" DependsOnTargets="Build">
+	</Target>
+
+	<Target Name="_OdinBuild">
+		<Error Condition="'$(OdinProject)'==''" Text="OdinProject is missing" />
+		<CreateItem Include="-collection:%(Collection.Filename)=%(Collection.FullPath)">
+			<Output TaskParameter="Include" ItemName="_Collection" />
+		</CreateItem>
+		<PropertyGroup>
+			<OdinCollections>@(_Collection)</OdinCollections>
+			<OdinCollections>$(OdinCollections.Replace(';',' '))</OdinCollections>
+			<OdinResource>-resource:$(DocDir)\odin.rc</OdinResource>
+			<OdinCmd>$(OdinExe) build $(OdinProject) -out:$(OdinOutputDir)\$(OdinProjectName).exe $(OdinCollections) $(OdinResource)</OdinCmd>
+		</PropertyGroup>
+		<!--<Message Text="$(OdinCmd)" Importance="High" />-->
+		<Exec Command="$(OdinCmd)" EchoOff="false" WorkingDirectory="$(ODIN_ROOT)" />
+	</Target>
+
+
+	<Target Name="_OdinTest">
+		<Error Condition="'$(OdinProject)'==''" Text="OdinProject is missing" />
+		<CreateItem Include="-collection:%(Collection.Filename)=%(Collection.FullPath)">
+			<Output TaskParameter="Include" ItemName="_Collection" />
+		</CreateItem>
+		<PropertyGroup>
+			<OdinCollections>@(_Collection)</OdinCollections>
+			<OdinCollections>$(OdinCollections.Replace(';',' '))</OdinCollections>
+			<OdinResource>-resource:$(DocDir)\odin.rc</OdinResource>
+			<OdinCmd>$(OdinExe) test $(OdinProject) -out:$(OdinOutputDir)\$(OdinProjectName).exe $(OdinCollections) $(OdinResource)</OdinCmd>
+		</PropertyGroup>
+		<!--<Message Text="$(OdinCmd)" Importance="High" />-->
+		<Exec Command="$(OdinCmd)" EchoOff="false" WorkingDirectory="$(ODIN_ROOT)" />
+	</Target>
+
+</Project>

@@ -1,10 +1,10 @@
 package lightwave
 
-import "core:bytes"
-import "core:fmt"
-import "core:runtime"
+//import "core:bytes"
+//import "core:fmt"
+//import "core:runtime"
 import "core:testing"
-import "shared:ounit"
+//import "shared:ounit"
 
 box :: "../data/models/box.lwo"
 

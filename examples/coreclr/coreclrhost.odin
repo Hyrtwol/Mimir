@@ -3,8 +3,10 @@ package example_coreclr
 import "core:os"
 import "core:fmt"
 import "core:runtime"
+import "core:strings"
 import "core:path/filepath"
 import clr "vendor:coreclr"
+
 
 CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2"
 trusted_platform_assemblies:= #load("trusted_platform_assemblies.txt")
@@ -52,14 +54,10 @@ execute_clr_host :: proc() -> clr.error {
 	host: clr.clr_host = {event_cb = event_callback}
 
 	// Prepare the coreclr lib
-	//hr := clr.load_coreclr_library(&host, CORECLR_DIR)
-	//if hr != .ok {fmt.print("Unable to load coreclr library.\n");return hr}
 	clr.load_coreclr_library(&host, CORECLR_DIR) or_return
 	defer clr.unload_coreclr_library(&host)
 
 	// Prepare the coreclr host
-	// hr = clr.initialize(&host, CORECLR_DIR, "SampleHost", string(trusted_platform_assemblies))
-	// if hr != .ok {fmt.print("Unable to initialize coreclr host.\n");return hr}
 	clr.initialize(&host, CORECLR_DIR, "SampleHost", string(trusted_platform_assemblies)) or_return
 	defer clr.shutdown(&host)
 
@@ -87,13 +85,16 @@ main :: proc() {
 		return
 	}
 
-	path_pattern := fmt.tprintf("%s/*.odin", pkg_path)
+	path_pattern := fmt.tprintf("%s/*.dll", pkg_path)
 	matches, err := filepath.glob(path_pattern)
 	defer delete(matches)
 
 	if err != nil {
+		fmt.printf("Oh no %v\n", err)
 		return
 	}
 
+	//for x in matches {fmt.printf("%v\n", x)}
 
+	fmt.print(strings.join(matches, ";"))
 }

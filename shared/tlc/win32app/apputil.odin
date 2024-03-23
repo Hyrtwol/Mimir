@@ -20,8 +20,8 @@ decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2
 // 	return utf8_to_wstring(str)
 // }
 
-show_messagebox :: proc(caption: string, text: string) {
-	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), win32.MB_ICONSTOP | win32.MB_OK)
+show_messagebox :: proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
+	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), type)
 }
 
 show_messageboxf :: proc(caption: string, format: string, args: ..any) {
@@ -118,7 +118,17 @@ create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwEx
 	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
 	position := get_window_position(size, settings.center)
 
-	hwnd: win32.HWND = win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
+	hwnd: win32.HWND = win32.CreateWindowExW(
+		dwExStyle,
+		win32.LPCWSTR(uintptr(atom)),
+		utf8_to_wstring(settings.title),
+		dwStyle,
+		position.x, position.y,
+		size.x, size.y,
+		nil, nil,
+		instance,
+		settings.app,
+	)
 
 	return hwnd
 }
@@ -134,6 +144,7 @@ window_settings :: struct {
 	dwExStyle:   u32,
 	wndproc:     win32.WNDPROC,
 	run:         proc(this: ^window_settings) -> win32.HWND,
+	app:         rawptr,
 }
 
 create_window_settings_default :: proc() -> window_settings {
@@ -269,4 +280,20 @@ RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL{
 
 SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL{
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
+}
+
+set_timer :: proc(hwnd: win32.HWND, id_event: UINT_PTR, elapse: win32.UINT) -> win32.UINT_PTR {
+	timer_id := win32.SetTimer(hwnd, id_event, elapse, nil)
+	if timer_id == 0 {show_error_and_panic("No timer")}
+	return timer_id
+}
+
+kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR) {
+	if timer_id^ != 0 {
+		if win32.KillTimer(hwnd, timer_id^) {
+			timer_id^ = 0
+		} else {
+			show_messageboxf("Error", "Unable to kill timer %X", timer_id^)
+		}
+	}
 }

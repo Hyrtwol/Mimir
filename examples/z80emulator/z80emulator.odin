@@ -153,5 +153,5 @@ main :: proc() {
 
 	if dump_cpu {fmt.printf("CPU %v\n", cpu)}
 
-	fmt.print("Done.\n")
+	fmt.println("Done.")
 }

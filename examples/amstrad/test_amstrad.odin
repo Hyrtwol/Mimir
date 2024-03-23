@@ -1,8 +1,7 @@
 package amstrad
 
 import "core:fmt"
-import "core:os"
-import "core:bytes"
+//import "core:bytes"
 import "core:testing"
 import "shared:ascii"
 import a "shared:z80/amstrad"
@@ -90,12 +89,23 @@ pixel_defines :: proc(t: ^testing.T) {
 
 @(test)
 verify_screen_size :: proc(t: ^testing.T) {
-	size_16kb :: 0x04000
-	o.expect_valuei(t, 16384, size_16kb)
+	o.expect_valuei(t, 16384, a.size_16kb)
+	o.expect_valuei(t, 16384, a.size_16kb)
 
 	byte_size : [2]i32 = {80, 200}
 	o.expect_valuei(t, byte_size.x * byte_size.y, 16000)
 
 	o.expect_valuef(t, f32(a.size_16kb) / 80, 204.800, 0.1)
 	o.expect_valuei(t, size_16kb - (80 * 204), 64)
+}
+
+// @(private, export, link_name="_fltused") _fltused: i32 = 0x9875
+//@(private, export, link_name="imagedata") imagedata: u8
+
+//_imgdata: rawptr
+//@(link_name="_imgdata")
+
+@(test)
+tinker :: proc(t: ^testing.T) {
+	fmt.printfln("imagedata=0x%X", p_image[0])
 }

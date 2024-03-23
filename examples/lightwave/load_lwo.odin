@@ -7,7 +7,7 @@ box :: "../data/models/box.lwo"
 multi_layer :: "../models/multi_layer.lwo"
 
 main :: proc() {
-	fmt.print("hello world\n")
+	fmt.println("LightWave Object Reader")
 
 	lwo_file: cstring = box
 
@@ -52,4 +52,5 @@ main :: proc() {
 		}
 	}
 
+	fmt.println("Done.")
 }

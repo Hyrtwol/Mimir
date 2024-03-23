@@ -22,11 +22,11 @@ BLACK :: color{0, 0, 0, 255}
 WHITE :: color{255, 255, 255, 255}
 
 //TITLE :: "Monochrome Bitmap"
-WIDTH :: 512
-HEIGHT :: 512
+WIDTH :: 80*8
+HEIGHT :: 200
 CENTER :: true
 
-ZOOM :: 4
+ZOOM :: 1
 FPS :: 10
 
 IDT_TIMER1: win32.UINT_PTR : 10001
@@ -115,11 +115,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 			biPlanes        = 1,
 			biBitCount      = 1,
 			biCompression   = win32.BI_RGB,
-			biSizeImage     = 0,
-			biXPelsPerMeter = 0,
-			biYPelsPerMeter = 0,
 			biClrUsed       = 2,
-			biClrImportant  = 0,
 		},
 	}
 
@@ -303,7 +299,7 @@ message_loop :: proc() -> int {
 run :: proc() -> int {
 	window := Window {
 		name = L("Monochrome Bitmap"),
-		size = {512, 512},
+		size = {640, 400},
 		fps  = 60,
 		control_flags = {.CENTER},
 	}

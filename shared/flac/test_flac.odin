@@ -1,30 +1,28 @@
 package flac
 
-import "core:bytes"
+//import "core:bytes"
 import "core:fmt"
-import "core:runtime"
+//import "core:runtime"
 import "core:testing"
-import "shared:ounit"
+import _u "shared:ounit"
 
 @(test)
 verify_sizes :: proc(t: ^testing.T) {
-	using ounit
-	expect_size(t, FLAC__int8, 1)
-	expect_size(t, FLAC__int16, 2)
-	expect_size(t, FLAC__int32, 4)
-	expect_size(t, FLAC__int64, 8)
-	expect_size(t, FLAC__uint8, 1)
-	expect_size(t, FLAC__uint16, 2)
-	expect_size(t, FLAC__uint32, 4)
-	expect_size(t, FLAC__uint64, 8)
-	expect_size(t, FLAC__bool, 1)
-	expect_size(t, FLAC__byte, 1)
+	_u.expect_size(t, FLAC__int8, 1)
+	_u.expect_size(t, FLAC__int16, 2)
+	_u.expect_size(t, FLAC__int32, 4)
+	_u.expect_size(t, FLAC__int64, 8)
+	_u.expect_size(t, FLAC__uint8, 1)
+	_u.expect_size(t, FLAC__uint16, 2)
+	_u.expect_size(t, FLAC__uint32, 4)
+	_u.expect_size(t, FLAC__uint64, 8)
+	_u.expect_size(t, FLAC__bool, 1)
+	_u.expect_size(t, FLAC__byte, 1)
 }
 
 @(test)
 verify_struct_sizes :: proc(t: ^testing.T) {
-	using ounit
-	expect_size(t, FLAC__StreamMetadata_StreamInfo, 56)
+	_u.expect_size(t, FLAC__StreamMetadata_StreamInfo, 56)
 
 }
 
