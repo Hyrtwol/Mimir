@@ -126,11 +126,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		biPlanes = 1,
 		biBitCount = color_bit_count,
 		biCompression = win32.BI_RGB,
-		biSizeImage = 0,
-		biXPelsPerMeter = pels_per_meter,
-		biYPelsPerMeter = pels_per_meter,
-		biClrImportant = 0,
-		biClrUsed = 0,
 	}
 
 	bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
@@ -146,14 +141,10 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	win32.ReleaseDC(hwnd, hdc)
 
 	timer1_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000, nil)
-	if timer1_id == 0 {
-		win32app.show_error_and_panic("No timer 1")
-	}
+	if timer1_id == 0 {win32app.show_error_and_panic("No timer 1")}
 
 	timer2_id = win32.SetTimer(hwnd, win32app.IDT_TIMER2, 50, nil)
-	if timer2_id == 0 {
-		win32app.show_error_and_panic("No timer 2")
-	}
+	if timer2_id == 0 {win32app.show_error_and_panic("No timer 2")}
 
 	return 0
 }

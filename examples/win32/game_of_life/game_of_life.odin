@@ -22,14 +22,15 @@ import "core:fmt"
 import "core:math/rand"
 import "core:os"
 import "core:runtime"
-import "core:time"
 import win32 "core:sys/windows"
+import "core:time"
+import win32app "shared:tlc/win32app"
 
 // defines
 L				:: intrinsics.constant_utf16_cstring
-color			:: [4]u8
 wstring			:: win32.wstring
 utf8_to_wstring	:: win32.utf8_to_wstring
+color			:: [4]u8
 int2			:: [2]i32
 
 // constants
@@ -46,8 +47,7 @@ CENTER :: true
 ZOOM :: 4
 FPS :: 10
 
-HELP := L(
-`ESC - Quit
+HELP := L(`ESC - Quit
 P - Toggle Pause
 H - Toggle Help
 C - Change Colors`)
@@ -84,20 +84,18 @@ Window :: struct {
 }
 
 Game :: struct {
-	tick_rate:	time.Duration,
-	last_tick:	time.Time,
-	pause:		bool,
-	colors:		[]color,
-	size:		int2,
-
+	tick_rate:         time.Duration,
+	last_tick:         time.Time,
+	pause:             bool,
+	colors:            []color,
+	size:              int2,
 	world, next_world: ^World,
 	//cell:	Cell,
-
-	timer_id:	win32.UINT_PTR,
-	tick:		u32,
+	timer_id:          win32.UINT_PTR,
+	tick:              u32,
 	//title:	wstring,
-	hbitmap:	win32.HBITMAP,
-	pvBits:		screen_buffer,
+	hbitmap:           win32.HBITMAP,
+	pvBits:            screen_buffer,
 }
 
 World :: struct {
@@ -246,8 +244,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if app.world != nil {
 		cc := app.world.width * app.world.height
-		for i in 0..<cc {app.world.alive[i] = u8(rand.int31_max(2, &rng))}
-		for i in 0..<cc {app.next_world.alive[i] = u8(rand.int31_max(2, &rng))}
+		for i in 0 ..< cc {app.world.alive[i] = u8(rand.int31_max(2, &rng))}
+		for i in 0 ..< cc {app.next_world.alive[i] = u8(rand.int31_max(2, &rng))}
 	}
 	//app.pause = false
 
@@ -292,7 +290,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	}
 
 	if show_help {
-		rect : win32.RECT = {20, 20, 160, 220}
+		rect: win32.RECT = {20, 20, 160, 220}
 		win32.RoundRect(hdc, rect.left, rect.top, rect.right, rect.bottom, 20, 20)
 		win32.InflateRect(&rect, -10, -10)
 		win32.DrawTextW(hdc, HELP, -1, &rect, .DT_TOP)
@@ -322,28 +320,30 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
-// odinfmt: disable
-
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b':	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
-	case 'h':		show_help ~= true
-	case 'p': {
+	case '\x1b':
+		win32app.close_application(hwnd)
+	case 'h':
+		show_help ~= true
+	case 'p':
 		app := get_app(hwnd)
 		app.pause ~= true
 		if !app.pause {
 			show_help = false
 		}
-	}
-	case ' ': {
+	case ' ':
 		app := get_app(hwnd)
 		siz := app.world.width * app.world.height
 		idx := rand.int31_max(siz, &rng)
 		app.world.alive[idx] = 1
 	}
-	}
 	return 0
 }
+
+
+
+// odinfmt: disable
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
@@ -360,7 +360,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 // odinfmt: enable
 
-register_class :: proc (instance: win32.HINSTANCE) -> win32.ATOM {
+register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if (icon == nil) {show_error_and_panic("Missing icon")}
@@ -402,7 +402,15 @@ center_window :: proc(position: ^int2, size: int2) {
 	}
 }
 
-create_window :: #force_inline proc(atom: win32.ATOM, window_name: win32.LPCTSTR, style, ex_style: win32.DWORD, position: int2, size: int2, instance: win32.HINSTANCE, lpParam: win32.LPVOID) -> win32.HWND {
+create_window :: #force_inline proc(
+	atom: win32.ATOM,
+	window_name: win32.LPCTSTR,
+	style, ex_style: win32.DWORD,
+	position: int2,
+	size: int2,
+	instance: win32.HINSTANCE,
+	lpParam: win32.LPVOID,
+) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(uintptr(atom)), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
@@ -418,9 +426,9 @@ message_loop :: proc() -> int {
 
 run :: proc() -> int {
 	window := Window {
-		name = L("Game Of Life"),
-		size = {512, 512},
-		fps  = 10,
+		name          = L("Game Of Life"),
+		size          = {512, 512},
+		fps           = 10,
 		control_flags = {.CENTER},
 	}
 	fmt.printf("window=%p\n%v\n", &window, window)

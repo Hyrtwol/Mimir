@@ -93,7 +93,7 @@
 		"*.lst": "plaintext",
 		"*.fdp": "xml",
 		"*.recipe": "msbuild",
-		"*.csproj": "xml"
+		"*.csproj": "msbuild"
 	},
 	"workbench.editorAssociations": {
 		"*.fsb": "hexEditor.hexedit",

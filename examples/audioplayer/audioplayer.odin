@@ -2,13 +2,14 @@ package audioplayer
 
 import "core:fmt"
 import "core:intrinsics"
-//import "core:math/noise"
 import "core:math/rand"
-//import "core:mem"
 import "core:runtime"
+import "core:math"
+//import "core:math/noise"
+//import "core:mem"
 //import "core:simd"
-import win32 "core:sys/windows"
 //import "core:time"
+import win32 "core:sys/windows"
 import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
 
@@ -18,6 +19,14 @@ import win32app "shared:tlc/win32app"
 // https://www.codeproject.com/articles/6543/playing-wav-files-using-the-windows-multi-media-li
 // https://www.markheath.net/post/waveoutopen-callbacks-in-naudio
 
+// defines
+L				:: intrinsics.constant_utf16_cstring
+wstring			:: win32.wstring
+utf8_to_wstring	:: win32.utf8_to_wstring
+color			:: [4]u8
+int2			:: [2]i32
+
+// constants
 TITLE :: "Audio Player"
 WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
@@ -82,14 +91,36 @@ NoiseDisplayTop: i32
 
 rng := rand.create(1)
 
-DoBuffer := DoBuffer1
+DoBuffer := DoBuffer3
 
-DoBuffer1 :: proc(Buf: rawptr) {
-	data := ([^]sample)(Buf)
+DoBuffer1 :: proc(header: ^win32.WAVEHDR) {
+	data := ([^]sample)(header.lpData)
 	cnt := BufferLength / CHANNELS
 	for i in 0 ..< cnt {
-		//data[i] = i16(i & 255)
+		data[i] = i16(i & 1023)
+	}
+}
+
+DoBuffer2 :: proc(header: ^win32.WAVEHDR) {
+	data := ([^]sample)(header.lpData)
+	cnt := BufferLength / CHANNELS
+	for i in 0 ..< cnt {
 		data[i] = sample(rand.int31_max(4000, &rng))
+	}
+}
+
+time : f64 = 0
+freq : f64 = 2000
+
+scale := SAMPLES_PER_SEC
+
+DoBuffer3 :: proc(header: ^win32.WAVEHDR) {
+	data := ([^]sample)(header.lpData)
+	cnt := BufferLength / CHANNELS
+	for i in 0 ..< cnt {
+		v := math.sin(time) * freq
+		data[i] = sample(v)
+		time += 0.01
 	}
 }
 
@@ -107,6 +138,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 	fmt.printf("WaveFormatEx=%v\n", WaveFormatEx)
 
 	BufferLength = WAVE_DISPLAY_WIDTH << 4
+	fmt.printf("BufferLength=%v\n", BufferLength)
 	CurrentBuffer = 0
 	Ending = 1
 	Closing = false
@@ -115,7 +147,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 	hr := win32.waveOutOpen(&waveout, win32.WAVE_MAPPER, &WaveFormatEx, win32.DWORD_PTR(uintptr(hwnd)), 0, win32.CALLBACK_WINDOW | win32.WAVE_ALLOWSYNC)
 
 	if hr != win32.MMSYSERR_NOERROR {
-		win32app.show_error_and_panic(fmt.tprintf("waveOutOpen %v\n%v", hr, WaveFormatEx))
+		win32app.show_last_errorf("waveOutOpen %v\n%v", hr, WaveFormatEx)
 		return
 	}
 
@@ -133,8 +165,10 @@ OpenFile :: proc(hwnd: win32.HWND) {
 		header.dwFlags = win32.WHDR_DONE
 
 		hr := win32.waveOutPrepareHeader(waveout, header, size_of(win32.WAVEHDR))
-		assert(hr == 0)
-		fmt.printf("header[%d]=%v\n", i, header)
+		if hr != 0 {
+			win32app.show_last_errorf("header[%d]=%v\n", i, header)
+			return
+		}
 	}
 
 	for _ in 0 ..< NUM_BUFFERS {
@@ -171,7 +205,7 @@ WriteBuffer :: proc() {
 	if Closing || (DoBuffer == nil) {return}
 
 	header := &Headers[CurrentBuffer]
-	DoBuffer(header.lpData)
+	DoBuffer(header)
 
 	hr := win32.waveOutWrite(waveout, header, size_of(win32.WAVEHDR))
 	assert(hr == 0)
@@ -221,17 +255,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	win32.PostQuitMessage(0)
 	return 0
 }
-
-/*WM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_CLOSE\n")
-	//CloseFile()
-	win32.DestroyWindow(hwnd)
-	return 0
-}*/
-
-/*WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
-	return 1
-}*/
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
@@ -311,7 +334,7 @@ MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM
 MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	wo: = win32.HWAVEOUT(uintptr(wparam))
 	fmt.printf("MM_WOM_CLOSE waveout=%v\n", wo)
-	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
+	win32app.close_application(hwnd)
 	return 0
 }
 

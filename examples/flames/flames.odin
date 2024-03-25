@@ -3,15 +3,10 @@ package main
 import "core:fmt"
 import "core:intrinsics"
 import "core:math"
-//import "core:math/linalg"
-import "core:math/noise"
 import "core:math/rand"
-import "core:mem"
+import "core:math/noise"
 import "core:runtime"
-import "core:simd"
-import "core:strings"
 import win32 "core:sys/windows"
-import "core:time"
 import canvas "shared:tlc/canvas"
 import win32app "shared:tlc/win32app"
 
@@ -93,60 +88,92 @@ dib_flames :: proc(dib: ^DIB) {
 
 	// set a new bottom line
 	i := w * (h - 1)
-	for x in 0 ..< w {
+	for _ in 0 ..< w {
 		c := u8(rand.int31_max(256, &rng))
 		flamebuffer[i] = c
 		i += 1
 	}
 
-	i = 0;p := dib.pvBits
-	for y in 0 ..< h {
-		for x in 0 ..< w {
-			c := flamebuffer[i]
-			p[i] = palette[c]
-			i += 1
-		}
+	cnt := dib.pixel_count; p := dib.pvBits;
+	for i in 0 ..< cnt {
+		c := flamebuffer[i]
+		p[i] = palette[c]
 	}
 }
 
+cnp :=   noise.Vec3{0,0,0}
+//n_scale := 0.01 // nice
+n_scale := 0.03
+
+dib_flames_2 :: proc(dib: ^DIB) {
+	w := dib.size.x
+	h := dib.size.y
+
+	for y in 0 ..< h {
+		for x in 0 ..< w {
+			// add the values of the surrounding pixels
+			c: i32 = getdot(x, y + 1) + getdot(x - 1, y + 1) + getdot(x + 1, y + 1) + getdot(x, y)
+			// divide by the number of pixels added up
+			//c /= 4
+			c >>= 2
+			// decrement by the decay value
+			if c > 0 {
+				c -= 1
+			}
+			setdot(x, y, u8(c))
+		}
+	}
+
+	np := cnp
+	n: f32
+	// set a new bottom line
+	i := w * (h - 1)
+	for x in 0 ..< w {
+		np.x = f64(x) * n_scale
+		n = noise.noise_3d_improve_xy(nseed, np)
+		flamebuffer[i] = u8(n*127.5 + 127.5)
+		i += 1
+	}
+	cnp.y += n_scale
+
+	cnt := dib.pixel_count; p := dib.pvBits;
+	for i in 0 ..< cnt {
+		c := flamebuffer[i]
+		p[i] = palette[c]
+	}
+}
+
+
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printf("WM_CREATE %v %v\n", hwnd, (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam))))
-
-	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000 / FPS, nil)
-	if timer_id == 0 {win32app.show_error_and_panic("No timer")}
-
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
 	dib = canvas.dib_create_v5(hdc, {WIDTH, HEIGHT})
-	if dib.pvBits != nil {
-		canvas.dib_clear(&dib, {0, 0, 0, 255})
-	} else {
-		win32app.show_error_and_panic("No DIB")
-	}
+	if dib.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
+	canvas.dib_clear(&dib, {0, 0, 0, 255})
+
+	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
+	assert(timer_id != 0)
 
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	canvas.dib_free_section(&dib)
-
-	if timer_id != 0 {
-		if !win32.KillTimer(hwnd, timer_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
-			timer_id = 0
-		}
-	}
+	win32app.kill_timer(hwnd, &timer_id)
+	assert(timer_id == 0)
 	win32.PostQuitMessage(0)
 	return 0
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b':
-		win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
-	case '1':
-		dib_update_func = dib_flames
+		case '\x1b':
+			win32app.close_application(hwnd)
+		case '1':
+			dib_update_func = dib_flames
+		case '2':
+			dib_update_func = dib_flames_2
 	}
 	return 0
 }

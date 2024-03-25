@@ -16,3 +16,7 @@ os.read(os.stdin)
 C:\Program Files\Microsoft Visual Studio\2022\Community\SDK\ScopeCppSDK\vc15\SDK\include\um
 C:\Program Files\Microsoft Visual Studio\2022\Community\SDK\ScopeCppSDK\vc15\SDK\include\um\WinUser.h
 C:\Program Files\Microsoft Visual Studio\2022\Community\SDK\ScopeCppSDK\vc15\SDK\include\um\mmeapi.h
+
+<https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example>
+
+<https://cezarypiatek.github.io/post/develop-vsextension-with-github-actions/>

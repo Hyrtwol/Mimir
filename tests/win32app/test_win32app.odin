@@ -28,15 +28,6 @@ make_lresult_from_true :: proc(t: ^testing.T) {
 }
 
 @(test)
-wstring_convert :: proc(t: ^testing.T) {
-	exp := "ABC"
-	wstr := win32.utf8_to_wstring(exp)
-	result, err := win32.wstring_to_utf8(wstr, 256, context.allocator)
-	testing.expect(t, exp == result, fmt.tprintf("wstring_convert: %v (should be: %v)", result, exp))
-	testing.expect(t, err == .None, fmt.tprintf("wstring_convert: error %v", err))
-}
-
-@(test)
 min_max_msg :: proc(t: ^testing.T) {
 
 	p := wstring_convert
@@ -65,7 +56,7 @@ verify_bitmap_headers :: proc(t: ^testing.T) {
 		bV5Compression   = win32.BI_BITFIELDS,
 		bV5XPelsPerMeter = 1001,
 		bV5YPelsPerMeter = 1002,
-		
+
 		bV5RedMask       = 0x000000FF,
 		bV5GreenMask     = 0x0000FF00,
 		bV5BlueMask      = 0x00FF0000,

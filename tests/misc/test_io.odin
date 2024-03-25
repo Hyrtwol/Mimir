@@ -1,6 +1,7 @@
 package test_misc
 
 import "core:fmt"
+import "core:path/filepath"
 import "core:os"
 import "core:testing"
 import "shared:ounit"
@@ -9,21 +10,22 @@ import "shared:ounit"
 write_hello_txt :: proc(t: ^testing.T) {
 	path := "hello.txt"
 	fmt.printf("writing %s\n", path)
-	//data: []byte = {65, 66, 67, 68} // "ABCD"
 	data := "ABCD"
 	ok := os.write_entire_file(path, transmute([]byte)data)
 	testing.expect(t, ok)
 	testing.expect(t, os.exists("hello.txt"))
 }
 
+EXPECTED_FILE_SIZE :: 2893
+
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
-	path := "readme.md"
+	path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 	fmt.printf("reading %s\n", path)
 
 	data, ok := os.read_entire_file_from_filename(path)
 	testing.expect(t, ok)
-	testing.expectf(t, len(data) == 125, "len=%d", len(data))
+	testing.expectf(t, len(data) == EXPECTED_FILE_SIZE, "len=%d", len(data))
 	//data: []byte = {65, 66, 67, 68} // "ABCD"
 	// data := "ABCD"
 	// ok := os.write_entire_file(path, transmute([]byte)data)
@@ -33,8 +35,7 @@ read_some_bytes :: proc(t: ^testing.T) {
 
 @(test)
 file_io :: proc(t: ^testing.T) {
-	path := "readme.md"
-	fmt.printf("path %s\n", path)
+	path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 
 	fd: os.Handle
 	err: os.Errno
@@ -50,9 +51,7 @@ file_io :: proc(t: ^testing.T) {
 		testing.expect(t, err == 0)
 		return
 	}
-	testing.expectf(t, length == 125, "%d != 125", length)
-
-	fmt.printf("length %d\n", length)
+	testing.expectf(t, length == EXPECTED_FILE_SIZE, "%d != %d", length, EXPECTED_FILE_SIZE)
 
 	data := make([]byte, int(length))
 	testing.expect(t, data != nil)
@@ -66,7 +65,7 @@ file_io :: proc(t: ^testing.T) {
 
 	// data[:bytes_read], true
 
-	testing.expect(t, bytes_read == 125)
+	testing.expect(t, bytes_read == EXPECTED_FILE_SIZE)
 
 	/*
 	if len(buf) < min {

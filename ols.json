@@ -1,13 +1,24 @@
 {
 	"$schema": "https://raw.githubusercontent.com/DanielGavin/ols/master/misc/ols.schema.json",
+	"enable_document_symbols": true,
+	"enable_semantic_tokens": false,
+	"enable_hover": false,
+	"enable_snippets": false,
 	"collections": [
 		{
 			"name": "shared",
 			"path": "shared"
 		}
 	],
-	"enable_document_symbols": true,
-	"enable_semantic_tokens": false,
-	"enable_hover": false,
-	"enable_snippets": false
+	"profiles": [
+		{
+			"name": "default",
+			"checker_path": [
+				"shared",
+				"examples",
+				"tests"
+			]
+		}
+	],
+	"profile": "default"
 }

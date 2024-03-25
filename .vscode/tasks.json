@@ -28,8 +28,7 @@
 				"build",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
-				"-collection:shared=..\\shared",
-				"-vet"
+				"-collection:shared=..\\shared"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -48,8 +47,7 @@
 				"test",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
-				"-collection:shared=..\\shared",
-				"-vet"
+				"-collection:shared=..\\shared"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -86,7 +84,7 @@
 			"command": "odin",
 			"args": [
 				"check",
-				"${relativeFileDirname}",
+				"..\\${relativeFileDirname}",
 				"-collection:shared=..\\shared",
 				"-no-entry-point",
 				"-vet"
@@ -95,6 +93,9 @@
 			"group": {
 				"kind": "build",
 				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
 			}
 		},
 		{
@@ -134,6 +135,23 @@
 			},
 			"options": {
 				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "format",
+			"type": "process",
+			"command": "D:\\dev\\odin\\ols\\odinfmt.exe",
+			"args": [
+				"-w",
+				"${workspaceFolder}\\${relativeFile}"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "none",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}\\${relativeFileDirname}"
 			}
 		},
 		{

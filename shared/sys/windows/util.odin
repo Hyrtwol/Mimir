@@ -8,11 +8,16 @@ import win32 "core:sys/windows"
 
 LOWORD :: win32.LOWORD
 HIWORD :: win32.HIWORD
+LOBYTE :: win32.LOBYTE
+HIBYTE :: win32.HIBYTE
+MAKEWORD :: win32.MAKEWORD
+MAKELONG :: win32.MAKELONG
+MAKEWPARAM :: win32.MAKEWPARAM
+MAKELPARAM :: win32.MAKELPARAM
 GET_X_LPARAM :: win32.GET_X_LPARAM
 GET_Y_LPARAM :: win32.GET_Y_LPARAM
-MAKE_WORD :: win32.MAKE_WORD
-
-// #define MAKELONG(a, b)    ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
+/*
+#define MAKELONG(a, b)    ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
 MAKELONG :: #force_inline proc "contextless" (a, b: INT) -> LONG {
 	return LONG((a & 0xffff) | ((b & 0xffff) << 16))
 }
@@ -27,23 +32,24 @@ HIBYTE :: #force_inline proc "contextless" (w: WORD) -> BYTE {
 	return BYTE(w >> 8)
 }
 
-// #define POINTTOPOINTS(pt) (MAKELONG((short)((pt).x), (short)((pt).y)))
+#define POINTTOPOINTS(pt) (MAKELONG((short)((pt).x), (short)((pt).y)))
 
 // #define MAKEWPARAM(l, h)  ((WPARAM)(DWORD)MAKELONG(l, h))
 MAKEWPARAM :: #force_inline proc "contextless" (l, h: INT) -> WPARAM {
-	return cast(WPARAM)MAKELONG(l, h)
+	return WPARAM(MAKELONG(l, h))
 }
 // #define MAKELPARAM(l, h)  ((LPARAM)(DWORD)MAKELONG(l, h))
 MAKELPARAM :: #force_inline proc "contextless" (l, h: INT) -> LPARAM {
-	return cast(LPARAM)MAKELONG(l, h)
+	return LPARAM(MAKELONG(l, h))
 }
-// #define MAKELRESULT(l, h) ((LRESULT)(DWORD)MAKELONG(l, h))
+//#define MAKELRESULT(l, h) ((LRESULT)(DWORD)MAKELONG(l, h))
+*/
 MAKELRESULT_FROM_LOHI :: #force_inline proc "contextless" (l, h: INT) -> LRESULT {
-	return cast(LRESULT)MAKELONG(l, h)
+	return LRESULT(MAKELONG(l, h))
 }
 
 MAKELRESULT_FROM_BOOL :: #force_inline proc "contextless" (result: BOOL) -> LRESULT {
-	return cast(LRESULT)transmute(i32)result
+	return LRESULT(transmute(i32)result)
 }
 
 MAKELRESULT :: proc {

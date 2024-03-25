@@ -22,7 +22,7 @@ BLACK :: color{0, 0, 0, 255}
 WHITE :: color{255, 255, 255, 255}
 
 //TITLE :: "Monochrome Bitmap"
-WIDTH :: 80*8
+WIDTH :: 320
 HEIGHT :: 200
 CENTER :: true
 

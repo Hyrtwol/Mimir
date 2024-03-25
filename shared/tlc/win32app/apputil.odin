@@ -2,6 +2,7 @@
 package win32app
 
 import "core:fmt"
+import "core:math/rand"
 import win32 "core:sys/windows"
 
 int2 :: [2]i32
@@ -36,6 +37,28 @@ show_error_and_panic :: proc(msg: string, loc := #caller_location) {
 	show_error(msg, loc = loc)
 	fmt.panicf("%s (Last error: %x)", msg, win32.GetLastError(), loc = loc)
 }
+
+show_last_error :: proc(caption: string, loc := #caller_location) {
+	error_text: [512]win32.WCHAR
+
+	fmt.eprintln(caption)
+	last_error := win32.GetLastError()
+
+	error_wstring := wstring(&error_text)
+	cch := win32.FormatMessageW(win32.FORMAT_MESSAGE_FROM_SYSTEM | win32.FORMAT_MESSAGE_IGNORE_INSERTS, nil, last_error, win32.LANGID_NEUTRAL, error_wstring, len(error_text) - 1, nil)
+	if (cch != 0) {return}
+	error_string, err := wstring_to_utf8(&error_wstring[0], int(cch))
+	if err == .None {
+		fmt.eprintln(error_string)
+	} else {
+		fmt.eprintfln("Last error code: %d (0x%8X)", last_error)
+	}
+}
+
+show_last_errorf :: proc(format: string, args: ..any, loc := #caller_location) {
+	show_last_error(fmt.tprintf(format, ..args), loc = loc)
+}
+
 
 get_rect_size :: #force_inline proc(rect: ^RECT) -> int2 {
 	return {(rect.right - rect.left), (rect.bottom - rect.top)}
@@ -147,23 +170,11 @@ window_settings :: struct {
 	app:         rawptr,
 }
 
-create_window_settings_default :: proc() -> window_settings {
-	settings: window_settings = {
-		title       = "Odin",
-		window_size = {640, 480},
-		center      = true,
-		wndproc     = nil,
-		dwStyle     = default_dwStyle,
-		dwExStyle   = default_dwExStyle,
-		run         = run,
-	}
-	return settings
-}
-
-create_window_settings_basic :: proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
+@(private = "file")
+create_window_settings_1 :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
 	settings: window_settings = {
 		title       = title,
-		window_size = {width, height},
+		window_size = size,
 		center      = true,
 		wndproc     = wndproc,
 		dwStyle     = default_dwStyle,
@@ -173,23 +184,20 @@ create_window_settings_basic :: proc(title: string, width: i32, height: i32, wnd
 	return settings
 }
 
-create_window_settings_app :: proc(title: string, width: i32, height: i32, wndproc: WNDPROC) -> window_settings {
-	settings: window_settings = {
-		title       = title,
-		window_size = {width, height},
-		center      = true,
-		wndproc     = win32.WNDPROC(wndproc),
-		dwStyle     = default_dwStyle,
-		dwExStyle   = default_dwExStyle,
-		run         = run,
-	}
-	return settings
+@(private = "file")
+create_window_settings_2 :: proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
+	return create_window_settings_1(title, {width, height}, wndproc)
+}
+
+@(private = "file")
+create_window_settings_3 :: proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
+	return create_window_settings_1(title, size, win32.WNDPROC(wndproc))
 }
 
 create_window_settings :: proc {
-	create_window_settings_default,
-	create_window_settings_basic,
-	create_window_settings_app,
+	create_window_settings_1,
+	create_window_settings_2,
+	create_window_settings_3,
 }
 
 register_and_create_window :: proc(settings: ^window_settings) -> win32.HWND {
@@ -288,12 +296,34 @@ set_timer :: proc(hwnd: win32.HWND, id_event: UINT_PTR, elapse: win32.UINT) -> w
 	return timer_id
 }
 
-kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR) {
+kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR, loc := #caller_location) {
 	if timer_id^ != 0 {
 		if win32.KillTimer(hwnd, timer_id^) {
 			timer_id^ = 0
 		} else {
-			show_messageboxf("Error", "Unable to kill timer %X", timer_id^)
+			show_messageboxf("Error", "Unable to kill timer %X\n%v", timer_id^, loc)
 		}
 	}
+}
+
+close_application :: #force_inline proc "contextless" (hwnd: win32.HWND) {
+	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
+}
+
+is_user_interactive :: proc() -> bool {
+	is_user_non_interactive := false
+	process_window_station := win32.GetProcessWindowStation()
+	if process_window_station != nil {
+		length_needed: win32.DWORD = 0
+		user_object_flags: win32.USEROBJECTFLAGS
+		if (win32.GetUserObjectInformationW(win32.HANDLE(process_window_station), .UOI_FLAGS, &user_object_flags, size_of(win32.USEROBJECTFLAGS), &length_needed)) {
+			assert(length_needed == size_of(win32.USEROBJECTFLAGS))
+			is_user_non_interactive = (user_object_flags.dwFlags & 1) == 0
+		}
+	}
+	return !is_user_non_interactive
+}
+
+key_input :: struct {
+
 }
