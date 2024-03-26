@@ -1,18 +1,15 @@
 package example_coreclr
 
-import "core:os"
 import "core:fmt"
+import "core:os"
+import "core:path/filepath"
 import "core:runtime"
 import "core:strings"
-import "core:path/filepath"
 import clr "vendor:coreclr"
 
+//trusted_platform_assemblies := string(#load("trusted_platform_assemblies.txt"))
 
 CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2"
-
-trusted_platform_assemblies: string
-
-trusted_platform_assemblies = string(#load("trusted_platform_assemblies.txt"))
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
 	if hr != .ok {fmt.printf("Error %v (0x%X8) @ %v\n", hr, u32(hr), loc)}
@@ -41,7 +38,7 @@ unmanaged_callback :: proc "c" (actionName: cstring, jsonArgs: cstring) -> bool 
 
 call_csharp :: proc(gateway: ^Gateway) {
 
-	f:= gateway.Plus(13, 27)
+	f := gateway.Plus(13, 27)
 	fmt.printf("Plus=%v\n", f)
 
 	s := gateway.Bootstrap()
@@ -52,15 +49,17 @@ call_csharp :: proc(gateway: ^Gateway) {
 	fmt.printf("Result: '%v'\n", ok)
 }
 
-execute_clr_host :: proc() -> clr.error {
-	host: clr.clr_host = {event_cb = event_callback}
+execute_clr_host :: proc(tpa: string) -> clr.error {
+	host: clr.clr_host = {
+		event_cb = event_callback,
+	}
 
 	// Prepare the coreclr lib
 	clr.load_coreclr_library(&host, CORECLR_DIR) or_return
 	defer clr.unload_coreclr_library(&host)
 
 	// Prepare the coreclr host
-	clr.initialize(&host, CORECLR_DIR, "SampleHost", string(trusted_platform_assemblies)) or_return
+	clr.initialize(&host, CORECLR_DIR, "SampleHost", tpa) or_return
 	defer clr.shutdown(&host)
 
 	// Prepare the delegates for calling C#
@@ -72,32 +71,48 @@ execute_clr_host :: proc() -> clr.error {
 	return .ok
 }
 
+asm_scan :: proc(totmatches: ^[dynamic]string, path: string, pattern: string = "*.dll") {
+	pkg_path, pkg_path_ok := filepath.abs(path)
+	if !pkg_path_ok {return}
+	path_pattern := filepath.join({pkg_path, pattern}, context.temp_allocator)
+	matches, err := filepath.glob(path_pattern, context.temp_allocator)
+	if err != .None {return}
+	append_elems(totmatches, ..matches)
+}
+
+get_list_separator :: proc() -> string {
+	b, n := runtime.encode_rune(filepath.LIST_SEPARATOR)
+	return string(b[:n])
+}
+
+write_tpa :: proc(tpa_path: string, assemblies: []string) {
+	path, ok := filepath.abs(tpa_path)
+	if ok {
+		txt := strings.join(assemblies[:], "\n")
+		fmt.printfln("tpa_path: %s", path)
+		fd, err := os.open(path, os.O_CREATE | os.O_WRONLY)
+		if err != 0 {return}
+		defer os.close(fd)
+		for assembly in assemblies {
+			os.write_string(fd, assembly)
+			os.write_string(fd, "\n")
+		}
+	}
+}
+
+create_tpa :: proc(path: string) -> string {
+	assemblies := make([dynamic]string, 0, 200)
+	defer delete(assemblies)
+	asm_scan(&assemblies, CORECLR_DIR)
+	asm_scan(&assemblies, "../examples/coreclr")
+	write_tpa("tpa.txt", assemblies[:])
+	return strings.join(assemblies[:], get_list_separator())
+}
+
 main :: proc() {
 	fmt.print(" -=< CoreCLR Host Demo >=- \n")
-
-	path := CORECLR_DIR
-
-	pkg_path, pkg_path_ok := filepath.abs(path)
-	if !pkg_path_ok {
-		return
-	}
-
-	path_pattern := fmt.tprintf("%s/*.dll", pkg_path)
-	matches, err := filepath.glob(path_pattern)
-	defer delete(matches)
-
-	if err != nil {
-		fmt.printf("Oh no %v\n", err)
-		return
-	}
-
-	tpa := strings.join(matches, ";")
-	fmt.print(tpa)
-
-
-	/*
-	hr := execute_clr_host()
-	fmt.printf("exit %v\n", hr)
+	tpa := create_tpa("../examples/coreclr")
+	hr := execute_clr_host(tpa)
+	fmt.printfln("exit %v\n", hr)
 	os.exit(int(hr))
-	*/
 }

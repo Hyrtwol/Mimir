@@ -1,3 +1,3 @@
 @echo off
 dotnet build .
-odin test . -vet
+odin run . -vet

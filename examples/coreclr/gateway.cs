@@ -5,16 +5,9 @@ public delegate bool UnmanagedCallbackDelegate(string funcName, string jsonArgs)
 
 public static unsafe class Gateway
 {
-    public static string Bootstrap()
-    {
-        return Thread.GetDomain().FriendlyName;
-        //return "Bootstrap!";
-    }
+    public static string Bootstrap() => typeof(Gateway).Assembly.Location;
 
-    public static double Plus(double x, double y)
-    {
-        return x + y;
-    }
+    public static double Plus(double x, double y) => x + y;
 
     public static double Sum(double* x, int n)
     {
