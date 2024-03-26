@@ -1,21 +1,9 @@
-/*
-to build run the following in this folder:
-dotnet build
-
-to see the il code use:
-ildasm gateway.dll /out=gateway.il
-
-to re-compile use:
-ilasm gateway.il /dll /output=gateway.dll
-*/
 using System;
-using System.Reflection;
-using System.Threading;
 using System.Runtime.InteropServices;
 
 public delegate bool UnmanagedCallbackDelegate(string funcName, string jsonArgs);
 
-public static class Gateway
+public static unsafe class Gateway
 {
     public static string Bootstrap()
     {
@@ -28,7 +16,7 @@ public static class Gateway
         return x + y;
     }
 
-    unsafe public static double Sum(double* x, int n)
+    public static double Sum(double* x, int n)
     {
         double sum = 0;
         for (var i = 0; i < n; i++)
@@ -38,18 +26,17 @@ public static class Gateway
         return sum;
     }
 
-    unsafe public static double Sum2(double* x, int n)
+    public static double Sum2(double* x, int n)
     {
         var span = new Span<double>(x, n);
         return span.ToArray().Sum();
     }
 
-	// This method is called from unmanaged code
 	[return: MarshalAs(UnmanagedType.LPStr)]
 	public static string ManagedDirectMethod(
 		[MarshalAs(UnmanagedType.LPStr)] string funcName,
 		[MarshalAs(UnmanagedType.LPStr)] string jsonArgs,
-		UnmanagedCallbackDelegate dlgUnmanagedCallback)
+		UnmanagedCallbackDelegate unmanagedCallback)
 	{
 		Console.WriteLine($"C#>> {funcName}, {jsonArgs}");
 
@@ -57,9 +44,8 @@ public static class Gateway
 
 		try
 		{
-			//strRet = directCall(funcName, jsonArgs, dlgUnmanagedCallback);
-			var res = dlgUnmanagedCallback?.Invoke(funcName, jsonArgs);
-			strRet = $"Invoke was {res}";
+			var res = unmanagedCallback?.Invoke(funcName, jsonArgs);
+			strRet = $"Invoke was \"{res}\"";
 		}
 		catch (Exception e)
 		{

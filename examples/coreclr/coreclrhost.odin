@@ -9,12 +9,14 @@ import clr "vendor:coreclr"
 
 
 CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2"
-trusted_platform_assemblies:= #load("trusted_platform_assemblies.txt")
+
+trusted_platform_assemblies: string
+
+trusted_platform_assemblies = string(#load("trusted_platform_assemblies.txt"))
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
 	if hr != .ok {fmt.printf("Error %v (0x%X8) @ %v\n", hr, u32(hr), loc)}
 }
-pie :: print_if_error
 
 event_callback :: proc(ch: ^clr.clr_host, type: clr.event_type, hr: clr.error) {
 	fmt.printf("[%v] %v (%p,%p)\n", type, hr, ch.host, ch.hostHandle)
@@ -23,11 +25,11 @@ event_callback :: proc(ch: ^clr.clr_host, type: clr.event_type, hr: clr.error) {
 create_gateway_delegates :: proc(host: ^clr.clr_host, gateway: ^Gateway) -> (res: clr.error) {
 	an :: "gateway"
 	tn :: "Gateway"
-	pie(clr.create_delegate(host, an, tn, "Bootstrap", &gateway.Bootstrap))
-	pie(clr.create_delegate(host, an, tn, "Plus", &gateway.Plus))
-	pie(clr.create_delegate(host, an, tn, "Sum", &gateway.Sum))
-	pie(clr.create_delegate(host, an, tn, "Sum2", &gateway.Sum2))
-	pie(clr.create_delegate(host, an, tn, "ManagedDirectMethod", &gateway.ManagedDirectMethod))
+	print_if_error(clr.create_delegate(host, an, tn, "Bootstrap", &gateway.Bootstrap))
+	print_if_error(clr.create_delegate(host, an, tn, "Plus", &gateway.Plus))
+	print_if_error(clr.create_delegate(host, an, tn, "Sum", &gateway.Sum))
+	print_if_error(clr.create_delegate(host, an, tn, "Sum2", &gateway.Sum2))
+	print_if_error(clr.create_delegate(host, an, tn, "ManagedDirectMethod", &gateway.ManagedDirectMethod))
 	return .ok
 }
 
@@ -72,11 +74,6 @@ execute_clr_host :: proc() -> clr.error {
 
 main :: proc() {
 	fmt.print(" -=< CoreCLR Host Demo >=- \n")
-	/*
-	hr := execute_clr_host()
-	fmt.printf("exit %v\n", hr)
-	os.exit(int(hr))
-	*/
 
 	path := CORECLR_DIR
 
@@ -94,7 +91,13 @@ main :: proc() {
 		return
 	}
 
-	//for x in matches {fmt.printf("%v\n", x)}
+	tpa := strings.join(matches, ";")
+	fmt.print(tpa)
 
-	fmt.print(strings.join(matches, ";"))
+
+	/*
+	hr := execute_clr_host()
+	fmt.printf("exit %v\n", hr)
+	os.exit(int(hr))
+	*/
 }
