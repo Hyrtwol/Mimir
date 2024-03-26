@@ -32,12 +32,8 @@ p_image := imagedata
 
 
 /*
-Mode 0: 01010101
-Mode 1: 01230123
-Mode 2: 01234567
-
-// https://www.chibiakumas.com/z80/AmstradCPC.php
-// https://neuro-sys.github.io/2019/10/01/amstrad-cpc-crtc.html
+https://www.chibiakumas.com/z80/AmstradCPC.php
+https://neuro-sys.github.io/2019/10/01/amstrad-cpc-crtc.html
 */
 
 z_fetch_opcode :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
@@ -171,7 +167,7 @@ main :: proc() {
 	app: app = {}
 	run_app(&app)
 
-	print_info()
+	//print_info()
 
 	fmt.println("Done.")
 }

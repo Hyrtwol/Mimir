@@ -13,7 +13,7 @@ SCREEN_HEIGHT 	:: 200
 screen_pixel_count :: SCREEN_WIDTH * SCREEN_HEIGHT
 screen_byte_count :: screen_pixel_count * color_bits / 8
 
-screen_buffer	:: [^]u8
+screen_buffer :: [^]u8
 
 /*
 #define MODE_1_P0(c) (((c & 2) >> 1) << 3) | ((c & 1) << 7)
@@ -36,6 +36,10 @@ MODE_0_P1 :: #force_inline proc "contextless" (c: u8) -> u8 {return ((c & 8) >> 
 //MODE_1_PS :: #force_inline proc "contextless" (c: u8) -> u8 {return	(((c & 2) >> 1) << 3) | ((c & 1) << 7)}
 
 /*
+Mode 0: 01010101
+Mode 1: 01230123
+Mode 2: 01234567
+
 +-----------+---------------------------------------+-----------------------------------------------------------------------------------+
 |           |           Byte/Pixel structure        |                                                                                   |
 |-----------+----+----+----+----+----+----+----+----+-------------------------------+---------------------------------------------------|
@@ -56,16 +60,8 @@ Overscan modes (192x272, 384x272, 768x272),
 
 */
 
-screen_sizes_mode : [3][2]i32 : {
-	{160,200},
-	{320,200},
-	{640,200},
-}
-screen_sizes_overscan : [3][2]i32 : {
-	{192,272},
-	{384,272},
-	{768,272},
-}
+screen_sizes_mode: [3][2]i32 : {{160, 200}, {320, 200}, {640, 200}}
+screen_sizes_overscan: [3][2]i32 : {{192, 272}, {384, 272}, {768, 272}}
 
 screen_size_mode :: screen_sizes_mode[2]
 screen_size_overscan :: screen_sizes_overscan[2]
@@ -87,18 +83,37 @@ update_screen_1 :: proc(app: papp) {
 	}
 }
 
-cursor_x, cursor_y: i32 = 0, 0
+cursor_x, cursor_y: u32 = 0, 0
 ci: u8 = 0
 
-put_char :: proc(pvBits: screen_buffer, char: u8) {
 
+
+poke_char :: proc(pvBits: screen_buffer, char: u8) {
+	ch := i32(char) * 8
+	sy := cursor_x + cursor_y * (80 * 8)
+	#unroll for _ in 0 ..< 8 {
+		pvBits[sy] = amstrad_font[ch]
+		sy += 80
+		ch += 1
+	}
+	cursor_x += 1
+	if cursor_x >= 80 {
+		cursor_x = 0
+		cursor_y += 1
+		if cursor_y >= 25 {
+			cursor_y = 0
+		}
+	}
+}
+
+put_char :: proc(pvBits: screen_buffer, char: u8) {
 	if char == 13 {
 		cursor_x = 80
 	} else {
 
 		ch := i32(char) * 8
 		sy := cursor_x + cursor_y * (80 * 8)
-		for i in 0 ..< 8 {
+		#unroll for _ in 0 ..< 8 {
 			pvBits[sy] = amstrad_font[ch]
 			sy += 80
 			ch += 1
@@ -123,5 +138,16 @@ update_screen_2 :: proc(app: papp) {
 	for _ in 0 ..< 60 {
 		ch := u8(rand.int31_max(256, &rng))
 		put_char(pvBits, ch)
+	}
+}
+
+update_screen_3 :: proc(app: papp) {
+	//fnt := amstrad_font
+	pvBits := app.pvBits
+	if pvBits == nil {return}
+
+	for _ in 0 ..< 60 {
+		ch := u8(rand.int31_max(256, &rng))
+		poke_char(pvBits, ch)
 	}
 }

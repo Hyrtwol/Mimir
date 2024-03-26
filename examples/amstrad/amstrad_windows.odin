@@ -42,6 +42,19 @@ set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {win32.SetWindowLongP
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {return (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
+fill_screen_with_image :: proc(app: papp) {
+	pvBits := app.pvBits
+	if pvBits != nil {
+		cc := min(screen_byte_count, len(p_image))
+		for i in 0 ..< cc {
+			pvBits[i] = p_image[i]
+		}
+	}
+}
+
+amstrad_colors := canvas.AMSTRAD_COLORS
+amstrad_ink := canvas.AMSTRAD_INK
+
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
@@ -68,9 +81,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.printfln("dib byte size=%d ~ %d", bs, bs - 16384)
 
 	for i in 0 ..< min(palette_count, 16) {
-		ink := canvas.AMSTRAD_INK[i]
+		ink := amstrad_ink[i]
 		//ink := rand.int31_max(27, &rng)
-		bitmap_info.bmiColors[i] = canvas.AMSTRAD_COLORS[ink].bgra
+		bitmap_info.bmiColors[i] = amstrad_colors[ink].bgra
 	}
 
 	{
@@ -91,13 +104,14 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		// }
 	}
 
-	pvBits := app.pvBits
-	if pvBits != nil {
-		cc := min(screen_byte_count, len(p_image))
-		for i in 0 ..< cc {
-			pvBits[i] = p_image[i]
-		}
-	}
+	// pvBits := app.pvBits
+	// if pvBits != nil {
+	// 	cc := min(screen_byte_count, len(p_image))
+	// 	for i in 0 ..< cc {
+	// 		pvBits[i] = p_image[i]
+	// 	}
+	// }
+	fill_screen_with_image(app)
 
 	app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
 	if app.timer_id == 0 {win32app.show_error_and_panic("No timer")}
@@ -133,7 +147,7 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 		defer win32.ReleaseDC(hwnd, hdc)
 		rect: win32.RECT
 		win32.GetClientRect(hwnd, &rect)
-		fmt.printf("rect=%v\n", rect)
+		//fmt.printf("rect=%v\n", rect)
 		win32.FillRect(hdc, &rect, hbrGray)
 	}
 	return 0
@@ -168,7 +182,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		if app != nil {
 			app.tick += 1
 
-			if put_chars {update_screen_2(app)}
+			if put_chars {update_screen_3(app)}
 
 			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 		}
@@ -181,18 +195,60 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 // odinfmt: disable
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	/*
 	switch wparam {
-	case '\x1b':	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
-	case '\t':		put_chars ~= true
+	//case '\x1b':	win32app.close_application(hwnd)
+	//case '\t':	put_chars ~= true
 	case: {
 		app := get_app(hwnd)
 		if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-		//ch := u8(wparam)
-		//fmt.printfln("WM_CHAR %x %d %v", wparam, ch, rune(ch))
+		//ch := u8(wparam);fmt.printfln("WM_CHAR %x %d %v", wparam, ch, rune(ch))
 		put_char(app.pvBits, u8(wparam))
 	}
 	}
+	*/
+	app := get_app(hwnd)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	put_char(app.pvBits, u8(wparam))
+	return 0
+}
 
+handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	vkCode := win32.LOWORD(wparam) // virtual-key code
+	keyFlags := win32.HIWORD(lparam)
+	scanCode := win32.WORD(win32.LOBYTE(keyFlags)) // scan code
+    isExtendedKey := (keyFlags & win32.KF_EXTENDED) == win32.KF_EXTENDED; // extended-key flag, 1 if scancode has 0xE0 prefix
+	if isExtendedKey {scanCode = win32.MAKEWORD(scanCode, 0xE0)}
+    wasKeyDown := (keyFlags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
+    repeatCount := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
+    isKeyReleased := (keyFlags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
+
+	switch (vkCode)
+    {
+    case win32.VK_SHIFT:   // converts to VK_LSHIFT or VK_RSHIFT
+    case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
+    case win32.VK_MENU:    // converts to VK_LMENU or VK_RMENU
+        vkCode = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scanCode), win32.MAPVK_VSC_TO_VK_EX));
+        break;
+    }
+
+	switch vkCode {
+		case win32.VK_ESCAPE: if isKeyReleased {win32app.close_application(hwnd)}
+		case win32.VK_F1: if isKeyReleased {put_chars ~= true}
+		case win32.VK_F2: {
+			app := get_app(hwnd)
+			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+			fill_screen_with_image(app)
+		}
+		case win32.VK_F3: print_info()
+		//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vkCode, keyFlags, scanCode, isExtendedKey, wasKeyDown, isKeyReleased)
+		}
+	return 0
+}
+
+handle_sys_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	// F10 or ALT
+	//fmt.printfln("sys key: %d 0x%8X", wparam, lparam)
 	return 0
 }
 
@@ -203,6 +259,11 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd)
+	// WM_SETFOCUS WM_KILLFOCUS
+	//case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
+	//case win32.WM_SYSKEYDOWN:	return handle_sys_key_input(hwnd, wparam, lparam)
+	//case win32.WM_SYSKEYUP:	return handle_sys_key_input(hwnd, wparam, lparam)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
