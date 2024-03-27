@@ -16,11 +16,6 @@ decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2
 	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
 }
 
-// wtprintf :: proc(format: string, args: ..any) -> win32.wstring {
-// 	str := fmt.tprintf(format, ..args)
-// 	return utf8_to_wstring(str)
-// }
-
 show_messagebox :: proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
 	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), type)
 }
@@ -324,6 +319,13 @@ is_user_interactive :: proc() -> bool {
 	return !is_user_non_interactive
 }
 
-key_input :: struct {
+/*key_input :: struct {
+}*/
 
-}
+// https://cplusplus.com/reference/cwchar/wprintf/
+// int wprintf (const wchar_t* format, ...);
+// wtprintf :: proc(format: string, args: ..any) -> win32.wstring {
+// 	str := fmt.tprintf(format, ..args)
+// 	return utf8_to_wstring(str)
+// }
+// int fwprintf (FILE* stream, const wchar_t* format, ...);

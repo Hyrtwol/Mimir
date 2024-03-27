@@ -6,6 +6,7 @@ Console Virtual Terminal aka xterm
 - <https://learn.microsoft.com/en-us/windows/console/registering-a-control-handler-function>
 - <https://invisible-island.net/xterm/ctlseqs/ctlseqs.html>
 - <https://vt100.net/>
+- <https://learn.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences#screen-colors>
 
 ```txt
 38 ; 2 ; <r> ; <g> ; <b>	Set foreground color to RGB value specified in <r>, <g>, <b> parameters*

@@ -3,17 +3,22 @@ package test_misc
 import "core:fmt"
 import "core:path/filepath"
 import "core:os"
+import "core:strings"
+import "core:slice"
 import "core:testing"
 import "shared:ounit"
 
 @(test)
 write_hello_txt :: proc(t: ^testing.T) {
-	path := "hello.txt"
+	path := "hello.log"
 	fmt.printf("writing %s\n", path)
 	data := "ABCD"
 	ok := os.write_entire_file(path, transmute([]byte)data)
 	testing.expect(t, ok)
-	testing.expect(t, os.exists("hello.txt"))
+	testing.expect(t, os.exists(path))
+	err := os.remove(path)
+	testing.expect(t, err == 0)
+	testing.expect(t, !os.exists(path))
 }
 
 EXPECTED_FILE_SIZE :: 2893
@@ -80,4 +85,46 @@ file_io :: proc(t: ^testing.T) {
 		err = 0
 	}
 	*/
+}
+
+@(test)
+lowercase_dictionary :: proc(t: ^testing.T) {
+	path := filepath.join({"..", "doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
+	//path := filepath.join({"doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
+	fmt.printfln("reading %s", path)
+
+	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
+	testing.expect(t, ok)
+	if !ok {return}
+
+	newline :: "\r\n"
+
+	words, err := strings.split(string(data), newline)
+	testing.expect(t, err == .None)
+	if err != .None {return}
+
+	new_words := make([dynamic]string, 0, len(words), context.temp_allocator)
+
+	for w in words {
+		if len(w) == 0 {continue}
+		if w[0] == '#' {continue}
+		append(&new_words, strings.to_lower(w))
+	}
+
+	slice.sort(new_words[:])
+
+	/*fmt.println("----")
+	for w in new_words {fmt.println(w)}
+	fmt.println("----")*/
+
+	fmt.printfln("writing %s", path)
+	fd, ferr := os.open(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
+	testing.expect(t, ferr == 0)
+	if ferr != 0 {return}
+	defer os.close(fd)
+	os.write_string(fd, "# Odin Dictionary Words" + newline)
+	for w in new_words {
+		os.write_string(fd, w)
+		os.write_string(fd, newline)
+	}
 }

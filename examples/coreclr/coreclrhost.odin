@@ -105,7 +105,7 @@ create_tpa :: proc(path: string) -> string {
 	defer delete(assemblies)
 	asm_scan(&assemblies, CORECLR_DIR)
 	asm_scan(&assemblies, "../examples/coreclr")
-	write_tpa("tpa.txt", assemblies[:])
+	write_tpa("tpa.log", assemblies[:])
 	return strings.join(assemblies[:], get_list_separator())
 }
 

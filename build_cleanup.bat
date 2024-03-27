@@ -5,7 +5,6 @@ setlocal EnableDelayedExpansion
 echo Cleaning root
 del *.exe > NUL 2> NUL
 del *.log > NUL 2> NUL
-del hello.txt > NUL 2> NUL
 
 echo Cleaning doc
 del doc\*.res > NUL 2> NUL
