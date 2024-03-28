@@ -43,7 +43,6 @@ public static unsafe class Gateway
 		catch (Exception e)
 		{
 			strRet = $"ERROR in \"{funcName}\" invoke:{Environment.NewLine} {e}";
-			Console.WriteLine(strRet);
 		}
 
 		return strRet;
