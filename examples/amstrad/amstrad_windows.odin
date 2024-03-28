@@ -36,8 +36,6 @@ BITMAPINFO :: struct {
 	bmiColors: color_palette,
 }
 
-papp :: ^app
-
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {return (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
@@ -115,6 +113,10 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
 	if app.timer_id == 0 {win32app.show_error_and_panic("No timer")}
+
+	if app.cpu != nil {
+		z80.z80_power(app.cpu, true)
+	}
 
 	return 0
 }
@@ -240,7 +242,22 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 			fill_screen_with_image(app)
 		}
-		case win32.VK_F3: print_info()
+		case win32.VK_F3: {
+			app := get_app(hwnd)
+			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+			z80.z80_instant_reset(app.cpu)
+			fmt.printfln("pc=%d", app.cpu.pc)
+			//running = true
+		}
+		case win32.VK_F4: {
+			app := get_app(hwnd)
+			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+			z80.z80_power(app.cpu, true)
+			fmt.printfln("pc=%d", app.cpu.pc)
+			//running = true
+		}
+
+		case win32.VK_F9: print_info()
 		//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vkCode, keyFlags, scanCode, isExtendedKey, wasKeyDown, isKeyReleased)
 		}
 	return 0
@@ -276,5 +293,17 @@ run_app :: proc(app: papp) {
 
 	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT * HEIGHT_SCALE, wndproc)
 	settings.app = app
-	win32app.run(&settings)
+	//win32app.run(&settings)
+
+	inst := win32app.get_instance()
+	atom := win32app.register_window_class(inst, settings.wndproc)
+	hwnd := win32app.create_and_show_window(inst, atom, &settings)
+	//loop_messages()
+	for win32app.pull_messages() {
+		for running {
+			total += z80.z80_run(app.cpu, cycles_per_tick)
+			reps += 1
+		}
+	}
+
 }

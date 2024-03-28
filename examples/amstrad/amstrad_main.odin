@@ -11,6 +11,8 @@ import win32 "core:sys/windows"
 import z80 "shared:z80"
 import z80m "shared:z80/amstrad"
 
+Z80 :: z80.TZ80
+
 cycles_per_tick :: 100
 mem_size :: 0x10000
 memory: [mem_size]u8
@@ -30,6 +32,18 @@ foreign mode2 {imagedata: [16000]u8}
 p_image := imagedata
 */
 
+app :: struct {
+	pause:    bool,
+	//colors:    []color,
+	size:     int2,
+	timer_id: win32.UINT_PTR,
+	tick:     u32,
+	//title:     wstring,
+	hbitmap:  win32.HBITMAP,
+	pvBits:   screen_buffer,
+	cpu: ^Z80,
+}
+papp :: ^app
 
 /*
 https://www.chibiakumas.com/z80/AmstradCPC.php
@@ -71,25 +85,28 @@ z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 }
 
 z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
+	app := papp(zcontext)
 	port := address & 0xFF
 	switch port {
 	case 1:
 		switch value {
-		case '\n': fmt.println(flush = true) /* Line Feed */
+		case '\n': /* Line Feed */
 		case '\f': /*skip Form Feed*/
-		case '\r': /*skip Carriage Return*/
-		case: fmt.print(rune(value))
+		//case '\r': /*skip Carriage Return*/
+		//case: fmt.print(rune(value))
+		case: put_char(app.pvBits, value)
 		}
 	case:
-		fmt.printf("out[0x%2X]=0x%2X", port, value)
+		fmt.printf("out[0x%2X]=0x%2X %v", port, value, app)
 		if value >= 32 {fmt.printf(" '%v'", rune(value))}
 		fmt.print("\n")
 	}
 }
 
 z_halt :: proc(zcontext: rawptr, signal: z80.zuint8) {
-	fmt.printf("\nhalt %d\n", signal)
-	running = false
+	app := papp(zcontext)
+	fmt.printf("\nhalt %d pc=%d\n", signal, app.cpu.pc)
+	running = signal == 0
 }
 
 reset :: proc() {
@@ -125,16 +142,8 @@ print_info :: proc() {
 	fmt.printfln("screen_byte_count      =%v", screen_byte_count)
 }
 
-app :: struct {
-	pause:    bool,
-	//colors:    []color,
-	size:     int2,
-	timer_id: win32.UINT_PTR,
-	tick:     u32,
-	//title:     wstring,
-	hbitmap:  win32.HBITMAP,
-	pvBits:   screen_buffer,
-}
+total: z80.zusize = 0
+reps := 0
 
 main :: proc() {
 	fmt.print("Amstrad\n")
@@ -152,21 +161,28 @@ main :: proc() {
 		halt         = z_halt,
 	}
 
-	z80.z80_power(&cpu, true)
+	app: app = {
+		size = {WIDTH, HEIGHT * HEIGHT_SCALE},
+		cpu = &cpu,
+	}
+	cpu._context = &app
+
+
+	//z80.z80_power(&cpu, true)
 	//fmt.printf("CPU %v\n", cpu)
 
 	running = true
-	total: z80.zusize = 0
-	reps := 0
-	for running {
-		total += z80.z80_run(&cpu, cycles_per_tick)
-		reps += 1
-	}
-	fmt.printf("total %v (%v)\n", total, reps)
+	// total: z80.zusize = 0
+	// reps := 0
+	// for running {
+	// 	total += z80.z80_run(&cpu, cycles_per_tick)
+	// 	reps += 1
+	// }
+	// fmt.printf("total %v (%v)\n", total, reps)
 
-	app: app = {}
 	run_app(&app)
 
+	fmt.printf("total %v (%v)\n", total, reps)
 	//print_info()
 
 	fmt.println("Done.")
