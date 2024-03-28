@@ -31,13 +31,11 @@ timer2_id     : win32.UINT_PTR
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
 application :: struct {
-	title: string,
-	size : [2]i32,
-	center: bool,
+	// title: string,
+	// size : [2]i32,
+	// center: bool,
 }
-
-set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
+papp :: ^application
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	scrpos := win32app.decode_lparam(lparam) / ZOOM
@@ -57,37 +55,27 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_CREATE\n")
-
-	timer1_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000, nil)
-	if timer1_id == 0 {win32app.show_error_and_panic("No timer 1")}
-	timer2_id = win32.SetTimer(hwnd, win32app.IDT_TIMER2, 3000, nil)
-	if timer2_id == 0 {win32app.show_error_and_panic("No timer 2")}
+	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
+	settings := (win32app.psettings)(pcs.lpCreateParams)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+	app := (papp)(settings.app)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, pcs, app)
+	win32app.set_settings(hwnd, settings)
+	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
+	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
 
 	client_size := win32app.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
 
 	hdc := win32.GetDC(hwnd)
-	// todo defer win32.ReleaseDC(hwnd, hdc)
+	defer win32.ReleaseDC(hwnd, hdc)
 
-	pels_per_meter :: 3780
-	ColorSizeInBytes :: 4
-	BitCount :: ColorSizeInBytes * 8
-
-	bmi_header := win32.BITMAPINFOHEADER {
-		biSize = size_of(win32.BITMAPINFOHEADER),
-		biWidth = bitmap_size.x,
-		biHeight = bitmap_size.y,
-		biPlanes = 1,
-		biBitCount = BitCount,
-		biCompression = win32.BI_RGB,
-		biSizeImage = 0,
-		biXPelsPerMeter = pels_per_meter,
-		biYPelsPerMeter = pels_per_meter,
-		biClrImportant = 0,
-		biClrUsed = 0,
-	}
-
+	color_byte_count :: 4
+	color_bit_count :: color_byte_count * 8
+	bmi_header := win32app.create_bmi_header(bitmap_size, false, color_bit_count)
+	fmt.printf("bmi_header %v\n", bmi_header)
 	bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
 
 	if pvBits != nil {
@@ -98,33 +86,20 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		bitmap_count = 0
 	}
 
-	win32.ReleaseDC(hwnd, hdc)
-
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.print("WM_DESTROY\n")
-
-	if timer1_id != 0 {
-		if !win32.KillTimer(hwnd, timer1_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer1"), L("Error"), win32.MB_OK)
-		}
-	}
-	if timer2_id != 0 {
-		if !win32.KillTimer(hwnd, timer2_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer2"), L("Error"), win32.MB_OK)
-		}
-	}
-
-	if bitmap_handle != nil {
-		win32.DeleteObject(bitmap_handle)
-	}
-	bitmap_handle = nil
+	settings := win32app.get_settings(hwnd)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+	app := settings.app
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	win32app.kill_timer(hwnd, &timer1_id)
+	win32app.kill_timer(hwnd, &timer2_id)
+	win32app.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-
 	win32.PostQuitMessage(0)
 	return 0
 }
@@ -136,16 +111,17 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
-	case:			fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	case:			fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	}
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	settings := win32app.get_settings(hwnd)
+	if settings == nil {return 1}
 	type := win32app.WM_SIZE_WPARAM(wparam)
-	size := win32app.decode_lparam(lparam)
-	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, bitmap_size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
+	settings.window_size = win32app.decode_lparam(lparam)
+	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, bitmap_size)
 	return 0
 }
 
@@ -215,10 +191,15 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.
 
 main :: proc() {
 
+	app: application = {
+		//size = {WIDTH, HEIGHT},
+	}
+
 	stopwatch := win32app.create_stopwatch()
 	stopwatch->start()
 
-	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+	settings := win32app.create_window_settings(TITLE, {WIDTH, HEIGHT}, wndproc)
+	settings.app = &app
 	win32app.run(&settings)
 
 	stopwatch->stop()

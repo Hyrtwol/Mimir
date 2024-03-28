@@ -108,25 +108,19 @@ setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.print("WM_CREATE\n")
 
+	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
+	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 50)
+
 	client_size := win32app.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
 	fmt.printf("bitmap_size=%v\n", bitmap_size)
 
 	hdc := win32.GetDC(hwnd)
-	// todo defer win32.ReleaseDC(hwnd, hdc)
+	defer win32.ReleaseDC(hwnd, hdc)
 
-	pels_per_meter :: 3780
-	ColorSizeInBytes :: 4
-	color_bit_count :: ColorSizeInBytes * 8
-
-	bmi_header := win32.BITMAPINFOHEADER {
-		biSize = size_of(win32.BITMAPINFOHEADER),
-		biWidth = bitmap_size.x,
-		biHeight = bitmap_size.y,
-		biPlanes = 1,
-		biBitCount = color_bit_count,
-		biCompression = win32.BI_RGB,
-	}
+	color_byte_count :: 4
+	color_bit_count :: color_byte_count * 8
+	bmi_header := win32app.create_bmi_header(bitmap_size, false, color_bit_count)
 
 	bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
 
@@ -138,38 +132,17 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		bitmap_count = 0
 	}
 
-	win32.ReleaseDC(hwnd, hdc)
-
-	timer1_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 1000, nil)
-	if timer1_id == 0 {win32app.show_error_and_panic("No timer 1")}
-
-	timer2_id = win32.SetTimer(hwnd, win32app.IDT_TIMER2, 50, nil)
-	if timer2_id == 0 {win32app.show_error_and_panic("No timer 2")}
-
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.print("WM_DESTROY\n")
-
-	if timer1_id != 0 {
-		if !win32.KillTimer(hwnd, timer1_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer1"), L("Error"), win32.MB_OK)
-		}
-	}
-	if timer2_id != 0 {
-		if !win32.KillTimer(hwnd, timer2_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer2"), L("Error"), win32.MB_OK)
-		}
-	}
-	if bitmap_handle != nil {
-		win32.DeleteObject(bitmap_handle)
-	}
-	bitmap_handle = nil
+	win32app.kill_timer(hwnd, &timer1_id)
+	win32app.kill_timer(hwnd, &timer2_id)
+	win32app.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-
 	win32.PostQuitMessage(0)
 	return 0
 }
@@ -197,10 +170,10 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-spect_size :: 64
-spec_left: [spect_size]f32
-spec_right: [spect_size]f32
-spectrum: [spect_size]f32
+spectrum_size :: 64
+spectrum_left: [spectrum_size]f32
+spectrum_right: [spectrum_size]f32
+spectrum: [spectrum_size]f32
 fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_TRIANGLE
 //fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_BLACKMAN
 
@@ -219,18 +192,18 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		}
 	case win32app.IDT_TIMER2:
 		{
-			fmod.FMOD_System_GetSpectrum(system, &spec_left[0], spect_size, 0, fft_window)
-			fmod.FMOD_System_GetSpectrum(system, &spec_right[0], spect_size, 1, fft_window)
+			fmod.FMOD_System_GetSpectrum(system, &spectrum_left[0], spectrum_size, 0, fft_window)
+			fmod.FMOD_System_GetSpectrum(system, &spectrum_right[0], spectrum_size, 1, fft_window)
 
-			scale : f32 = 0.25 //f32(bitmap_size.y)
-			for i in 0 ..< spect_size {
-				spectrum[i] = (80 + lin2dB((spec_left[i] + spec_right[i])*0.5)) * scale
+			scale: f32 = 0.25 //f32(bitmap_size.y)
+			for i in 0 ..< spectrum_size {
+				spectrum[i] = (80 + lin2dB((spectrum_left[i] + spectrum_right[i]) * 0.5)) * scale
 			}
 
 			col: canvas.byte4
-			for y in 0 ..< spect_size {
+			for y in 0 ..< spectrum_size {
 				i := i32(y) * bitmap_size.x
-				for x in 0 ..< spect_size {
+				for x in 0 ..< spectrum_size {
 					if f32(y) > spectrum[x] {col = clear_color} else {col = canvas.COLOR_GREEN}
 					//pvBits[i] = col
 					if i >= 0 && i < bitmap_count {pvBits[i] = col}
@@ -241,7 +214,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 			win32.InvalidateRect(hwnd, nil, false)
 			//win32.InvalidateRect(hwnd)
-			//win32app.RedrawWindowNow(hwnd)
+			win32app.redraw_window(hwnd)
 		}
 	}
 	return 0

@@ -119,7 +119,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		},
 	}
 
-	if palette_count > 0 {
+	if palette_count > 1 {
 		scale := 1 / f32(palette_count - 1);rbg: [3]f32;w: f32
 		for i in 0 ..< palette_count {
 			w = scale * f32(i)

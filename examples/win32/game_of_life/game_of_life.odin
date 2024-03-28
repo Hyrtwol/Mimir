@@ -196,8 +196,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if app == nil {show_error_and_panic("Missing app!")}
 	fmt.printf("WM_CREATE %v %v\n", hwnd, app)
 	set_app(hwnd, app)
-
-	app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
+	//app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
+	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
 	if app.timer_id == 0 {show_error_and_panic("No timer")}
 
 	hdc := win32.GetDC(hwnd)
@@ -247,7 +247,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		for i in 0 ..< cc {app.world.alive[i] = u8(rand.int31_max(2, &rng))}
 		for i in 0 ..< cc {app.next_world.alive[i] = u8(rand.int31_max(2, &rng))}
 	}
-	//app.pause = false
+	app.pause = false
 
 	return 0
 }
@@ -256,12 +256,13 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	fmt.printf("WM_DESTROY %v\n", hwnd)
 	if app == nil {show_error_and_panic("Missing app!")}
-	if app.timer_id != 0 {
+	/*if app.timer_id != 0 {
 		if !win32.KillTimer(hwnd, app.timer_id) {
 			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
 		}
 		app.timer_id = 0
-	}
+	}*/
+	win32app.kill_timer(hwnd, &app.timer_id)
 	if app.hbitmap != nil {
 		if !win32.DeleteObject(win32.HGDIOBJ(app.hbitmap)) {
 			win32.MessageBoxW(nil, L("Unable to delete hbitmap"), L("Error"), win32.MB_OK)

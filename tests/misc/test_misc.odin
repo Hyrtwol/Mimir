@@ -128,3 +128,26 @@ unroll_for_statement :: proc() {
 		scl.procedure = cvtFuncId.name
 	}
 */
+
+/*
+foo :: proc(a: $T, b: $T2) -> T2 {
+
+    when T == int && T2 == int {
+        c := a + b
+    } else when T == f64 && T2 == f64 {
+        c := a + b
+    } else when T == f64 && T2 == int {
+        c := a + f64(b)
+    } else when T == int && T2 == f64 {
+        c := f64(a) + b
+    }
+
+    return c
+}
+
+main :: proc() {
+    fmt.println( foo( 100, 10.5 ) )
+    fmt.println( foo( 1, 1 ) )
+    fmt.println( foo( 5.5, 6.4 ) )
+}
+*/

@@ -180,14 +180,13 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	new_title := fmt.tprintf("%s %v %v FPS: %d\n", settings.title, size, dib.size, FPS)
-	win32app.SetWindowText(hwnd, new_title)
+	win32app.set_window_textf(hwnd, "%s %v %v FPS: %d", settings.title, size, dib.size, FPS)
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	dib_update_func(&dib)
-	win32app.RedrawWindowNow(hwnd)
+	win32app.redraw_window(hwnd)
 	return 0
 }
 

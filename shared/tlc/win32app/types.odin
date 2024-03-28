@@ -66,3 +66,5 @@ WM_MSG :: enum win32.UINT {
 }
 
 WNDPROC :: #type proc "system" (HWND, WM_MSG, WPARAM, LPARAM) -> LRESULT
+
+default_pels_per_meter : int2 : {3780, 3780}

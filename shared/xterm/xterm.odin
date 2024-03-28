@@ -75,10 +75,15 @@ print_horizontal_border :: proc(Size: int2, fIsTop: bool) {
 	fmt.print(ESC + "(B") // exit line drawing mode
 }
 
-print :: proc(col: rgb, text: string) {
+print :: proc(col: rgb, args: ..any) {
 	set_foreground_color(col)
-	fmt.print(text)
+	fmt.print(args)
 	restore_color()
+}
+
+_print :: proc {
+	fmt.print,
+	print,
 }
 
 println :: proc(col: rgb, text: string) {

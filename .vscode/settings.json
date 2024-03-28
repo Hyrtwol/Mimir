@@ -20,6 +20,7 @@
 		"**/desktop.ini": true
 	},
 	"files.associations": {
+		"*.log": "plaintext",
 		"*.lst": "plaintext",
 		"*.fdp": "xml",
 		"*.recipe": "msbuild",
@@ -37,7 +38,7 @@
 	"git.enabled": false,
 	"xmlTools.splitXmlnsOnFormat": false,
 	// "ols.server.path": "D:\\dev\\odin\\ols\\ols.exe",
-	"cSpell.language": "en-GB",
+	"cSpell.language": "en",
     "cSpell.customDictionaries": {
         "custom-dictionary-user": {
             "name": "odin-dictionary",
