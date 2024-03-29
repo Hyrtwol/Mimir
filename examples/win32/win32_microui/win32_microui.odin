@@ -32,11 +32,13 @@ bitmap_size   : win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT
 bitmap_count  : i32
 pvBits        : screen_buffer
 
-bkgnd_brush: win32.HBRUSH
+bg_brush: win32.HBRUSH
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
+
+convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {return (transmute(win32.COLORREF)mu_color) & 0xFFFFFF}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
@@ -51,7 +53,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	//client_size := win32app.get_client_size(hwnd)
 	//bitmap_size = client_size / ZOOM
 
-	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
+	bg_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
 
 	{
 		hdc := win32.GetDC(hwnd)
@@ -112,14 +114,13 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		dc_brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
 
 		{
-			col := (transmute(win32.COLORREF)app.bg) & 0xFFFFFF
-			ocol := win32.SetDCBrushColor(ps.hdc, col)
+			ocol := win32.SetDCBrushColor(ps.hdc, convert_mu_color(app.bg))
 			//win32.Rectangle(hdc, &ps.rcPaint)
 			win32.FillRect(ps.hdc, &ps.rcPaint, dc_brush)
 			win32.SetDCBrushColor(ps.hdc, ocol)
 		}
 
-		//win32.FillRect(ps.hdc, &ps.rcPaint, bkgnd_brush)
+		//win32.FillRect(ps.hdc, &ps.rcPaint, bg_brush)
 
 		//win32.SelectObject(hdc_source, bitmap_handle)
 		//win32.BitBlt(ps.hdc, 0, 0, bitmap_size.x, bitmap_size.y, hdc_source, 0, 0, win32.SRCCOPY)
@@ -150,9 +151,9 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	//case win32.WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
+	//case win32.WM_SETFOCUS:	return WM_SETFOCUS(hwnd, wparam)
 	//case win32.WM_KILLFOCUS:	return WM_KILLFOCUS(hwnd, wparam)
-	//case win32.WM_SIZE:	return WM_SIZE(hwnd, wparam)
+	//case win32.WM_SIZE:		return WM_SIZE(hwnd, wparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	//case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
@@ -288,6 +289,11 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 	//brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
 	dc_brush := win32.GetStockObject(win32.DC_BRUSH)
 
+	// docs says width=0 should yield a 1 pixel line but so far i get 2, same for 1 :/
+	//hPen := win32.CreatePen(win32.PS_SOLID, 0, win32.RGB(0,0,0));
+	//defer win32.DeleteObject(win32.HGDIOBJ(hPen))
+
+
 	// {
 	// 	col := (transmute(win32.COLORREF)state.bg) & 0xFFFFFF
 	// 	ocol := win32.SetDCBrushColor(hdc, col)
@@ -312,19 +318,21 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 				pos.x += rect.w
 			}
 			*/
-			col := (transmute(win32.COLORREF)cmd.color) & 0xFFFFFF
-			win32.SetTextColor(hdc, col)
+			win32.SetTextColor(hdc, convert_mu_color(cmd.color))
 			win32.TextOutW(hdc, pos.x, pos.y, win32.utf8_to_wstring(cmd.str), i32(len(cmd.str)))
 
 		case ^mu.Command_Rect:
 			//rl.DrawRectangle(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h, transmute(rl.Color)cmd.color)
-			// https://learn.microsoft.com/en-us/windows/win32/gdi/using-pens
-            oldobj := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush));
-			col := (transmute(win32.COLORREF)cmd.color) & 0xFFFFFF
-			ocol := win32.SetDCBrushColor(hdc, col)
+
+            oldobj := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush))
+			ocol := win32.SetDCBrushColor(hdc, convert_mu_color(cmd.color))
+
+			//old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(hPen));
+			old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(uintptr(win32.PS_NULL)));
 			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
 			//win32.FillRect(hdc, &ps.rcPaint, win32.HBRUSH(brush))
 			win32.SetDCBrushColor(hdc, ocol)
+			win32.SelectObject(hdc, old_pen);
 			win32.SelectObject(hdc, oldobj);
 		case ^mu.Command_Icon:
 			rect := mu.default_atlas[cmd.id]
