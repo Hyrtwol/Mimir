@@ -81,7 +81,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		canvas.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
+		//canvas.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
+		canvas.fill_screen(pvBits, bitmap_count, {0, 0, 0, 0})
 	} else {
 		bitmap_size = {0, 0}
 		bitmap_count = 0
@@ -136,6 +137,13 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
+ftn := win32.BLENDFUNCTION {
+	BlendOp = win32.AC_SRC_OVER,
+	BlendFlags = 0,
+	SourceConstantAlpha = 128,
+	AlphaFormat= win32.AC_SRC_ALPHA,
+}
+
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
@@ -145,40 +153,44 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	defer win32.DeleteDC(hdc_source)
 
 	client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.SelectObject(hdc_source, bitmap_handle)
-	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
+	//win32.SelectObject(hdc_source, bitmap_handle)
+	//win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
+
+	brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
+
+	col, org_color: win32.COLORREF
+
+	col = win32.RGB(50, 100, 150)
+	org_color = win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))
+	win32.FillRect(ps.hdc, &ps.rcPaint, brush)
+	win32.SetDCBrushColor(ps.hdc, org_color)
 
 	//original := win32.SelectObject(ps.hdc, win32.GetStockObject(win32.DC_PEN))
 	//defer win32.SelectObject(ps.hdc, original)
 
-	col : u32 = 0xAA55CC
-
-	brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
-
-	//brush := win32.HBRUSH(win32.CreateSolidBrush(win32.COLORREF(col)))
-	//defer win32.DeleteObject(win32.HGDIOBJ(brush))
-
-	//boriginal := win32.SelectObject(ps.hdc, win32.GetStockObject(win32.DC_BRUSH))
-	//defer win32.SelectObject(ps.hdc, boriginal)
-
-	//win32.SelectObject(hdc, win32.GetStockObject(win32.DC_PEN));
-	//win32.SelectObject(ps.hdc, win32.GetStockObject(win32.GRAY_BRUSH))
-	//win32.SelectObject(hdc, win32.GetStockObject(win32.DC_BRUSH));
-
-	//win32.SetDCPenColor(hdc, transmute(win32.COLORREF)col)
-	//win32.SetDCPenColor(ps.hdc, transmute(win32.COLORREF)col)
-	//win32.SetDCBrushColor(ps.hdc, transmute(win32.COLORREF)col)
-
-	cref := win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))
-
+	col = win32.RGB(150, 100, 50)
+	org_color = win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))
 	rect := win32.RECT{40,40, 240,240}
 	win32.FillRect(ps.hdc, &rect, brush)
-	//win32.Rectangle(ps.hdc, 40,40, 240,240)
+	win32.SetDCBrushColor(ps.hdc, org_color)
 
-	win32.SetDCBrushColor(ps.hdc, cref)
+	verts := [?]win32.TRIVERTEX {
+		{300, 200, 0xff00, 0x8000, 0x0000, 0x0000},
+		{400, 100, 0x9000, 0x0000, 0x9000, 0x0000},
+		{500, 200, 0x0000, 0x8000, 0xff00, 0x0000},
+		{600, 100, 0x0000, 0xff00, 0x0000, 0x0000},
+	}
+	mesh := [?]win32.GRADIENT_TRIANGLE {
+		{0, 1, 2},
+		{1, 2, 3},
+	}
+	win32.GradientFill(ps.hdc, &verts[0], win32.ULONG(len(verts)), &mesh[0], win32.ULONG(len(mesh)), win32.GRADIENT_FILL_TRIANGLE)
 
 	txt := fmt.tprintf("Hello %#X", col)
-	win32.TextOutW(ps.hdc, 50,50, win32.utf8_to_wstring(txt), i32(len(txt)))
+	win32.TextOutW(ps.hdc, 50, 50, win32.utf8_to_wstring(txt), i32(len(txt)))
+
+	win32.SelectObject(hdc_source, bitmap_handle)
+	win32.AlphaBlend(ps.hdc, 0,0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, ftn)
 
 	return 0
 }
