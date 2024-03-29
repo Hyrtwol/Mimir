@@ -140,12 +140,45 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
+
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
 	defer win32.DeleteDC(hdc_source)
 
 	client_size := win32app.get_rect_size(&ps.rcPaint)
 	win32.SelectObject(hdc_source, bitmap_handle)
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
+
+	//original := win32.SelectObject(ps.hdc, win32.GetStockObject(win32.DC_PEN))
+	//defer win32.SelectObject(ps.hdc, original)
+
+	col : u32 = 0xAA55CC
+
+	brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
+
+	//brush := win32.HBRUSH(win32.CreateSolidBrush(win32.COLORREF(col)))
+	//defer win32.DeleteObject(win32.HGDIOBJ(brush))
+
+	//boriginal := win32.SelectObject(ps.hdc, win32.GetStockObject(win32.DC_BRUSH))
+	//defer win32.SelectObject(ps.hdc, boriginal)
+
+	//win32.SelectObject(hdc, win32.GetStockObject(win32.DC_PEN));
+	//win32.SelectObject(ps.hdc, win32.GetStockObject(win32.GRAY_BRUSH))
+	//win32.SelectObject(hdc, win32.GetStockObject(win32.DC_BRUSH));
+
+	//win32.SetDCPenColor(hdc, transmute(win32.COLORREF)col)
+	//win32.SetDCPenColor(ps.hdc, transmute(win32.COLORREF)col)
+	//win32.SetDCBrushColor(ps.hdc, transmute(win32.COLORREF)col)
+
+	cref := win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))
+
+	rect := win32.RECT{40,40, 240,240}
+	win32.FillRect(ps.hdc, &rect, brush)
+	//win32.Rectangle(ps.hdc, 40,40, 240,240)
+
+	win32.SetDCBrushColor(ps.hdc, cref)
+
+	txt := fmt.tprintf("Hello %#X", col)
+	win32.TextOutW(ps.hdc, 50,50, win32.utf8_to_wstring(txt), i32(len(txt)))
 
 	return 0
 }
