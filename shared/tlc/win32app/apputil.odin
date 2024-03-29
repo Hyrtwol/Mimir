@@ -291,13 +291,11 @@ run :: proc {
 }*/
 
 run :: proc(settings: ^window_settings) -> win32.HWND {
-	mh := get_module_handle()
-	fmt.println("title:", settings.title)
+	module_handle := get_module_handle()
 	if settings.title == "" {
-		settings.title = get_module_filename(mh)
-		fmt.println("title:", settings.title)
+		settings.title = get_module_filename(module_handle)
 	}
-	inst := win32.HINSTANCE(mh)
+	inst := win32.HINSTANCE(module_handle)
 	atom := register_window_class(inst, settings.wndproc)
 	hwnd := create_and_show_window(inst, atom, settings)
 	loop_messages()

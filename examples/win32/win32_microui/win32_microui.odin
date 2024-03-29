@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:unicode/utf8"
+import "core:runtime"
 import win32 "core:sys/windows"
 import mu "vendor:microui"
 import mud "shared:microui/demo"
@@ -20,20 +21,162 @@ application :: struct {
 state : application = {
 	bg = {90, 95, 100, 255},
 }
+papp :: ^application
+
+ZOOM :: 4
+
+screen_buffer  :: canvas.screen_buffer
+
+bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
+bitmap_size   : win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
+bitmap_count  : i32
+pvBits        : screen_buffer
+
+bkgnd_brush: win32.HBRUSH
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
+WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
+	settings := (win32app.psettings)(pcs.lpCreateParams)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+	win32app.set_settings(hwnd, settings)
+
+	app := (papp)(settings.app)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+
+	//client_size := win32app.get_client_size(hwnd)
+	//bitmap_size = client_size / ZOOM
+
+	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
+
+	{
+		hdc := win32.GetDC(hwnd)
+		defer win32.ReleaseDC(hwnd, hdc)
+		color_byte_count :: 4
+		color_bit_count :: color_byte_count * 8
+		bmi_header := win32app.create_bmi_header(bitmap_size, true, color_bit_count)
+		//fmt.printfln("bmi_header %v", bmi_header)
+		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
+	}
+
+	if pvBits != nil {
+		bitmap_count = bitmap_size.x * bitmap_size.y
+		//canvas.fill_screen(pvBits, bitmap_count, {100, 150, 50, 255})
+
+		//pixels = make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
+		for alpha, i in mu.default_atlas_alpha {
+			pvBits[i] = {alpha, alpha, alpha, alpha}
+		}
+
+	} else {
+		bitmap_size = {0, 0}
+		bitmap_count = 0
+	}
+	return 0
+}
+
+WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	settings := win32app.get_settings(hwnd)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+	// app := settings.app
+	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	// win32app.kill_timer(hwnd, &timer1_id)
+	win32app.delete_object(&bitmap_handle)
+	bitmap_size = {0, 0}
+	bitmap_count = 0
+	pvBits = nil
+	win32.PostQuitMessage(0)
+	return 0
+}
+
+WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	settings := win32app.get_settings(hwnd)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+
+	app := (papp)(settings.app)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+
+	ps: win32.PAINTSTRUCT
+	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	defer win32.EndPaint(hwnd, &ps)
+	hdc_source := win32.CreateCompatibleDC(ps.hdc)
+	defer win32.DeleteDC(hdc_source)
+
+	if bitmap_handle != nil {
+		client_size := win32app.get_rect_size(&ps.rcPaint)
+
+		dc_brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
+
+		{
+			col := (transmute(win32.COLORREF)app.bg) & 0xFFFFFF
+			ocol := win32.SetDCBrushColor(ps.hdc, col)
+			//win32.Rectangle(hdc, &ps.rcPaint)
+			win32.FillRect(ps.hdc, &ps.rcPaint, dc_brush)
+			win32.SetDCBrushColor(ps.hdc, ocol)
+		}
+
+		//win32.FillRect(ps.hdc, &ps.rcPaint, bkgnd_brush)
+
+		//win32.SelectObject(hdc_source, bitmap_handle)
+		//win32.BitBlt(ps.hdc, 0, 0, bitmap_size.x, bitmap_size.y, hdc_source, 0, 0, win32.SRCCOPY)
+
+		ctx := &app.mu_ctx
+		if ctx != nil {
+			mu.begin(ctx)
+			all_windows(ctx)
+			mu.end(ctx)
+
+			render(ctx, &ps, hdc_source)
+		}
+	}
+	return 0
+}
+
+WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	switch wparam {
+	case '\x1b':	win32app.close_application(hwnd)
+	case:			fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(lparam), win32.LOWORD(lparam))
+	}
+	return 0
+}
+
+wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	context = runtime.default_context()
+	switch msg {
+	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:	return 1
+	//case win32.WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
+	//case win32.WM_KILLFOCUS:	return WM_KILLFOCUS(hwnd, wparam)
+	//case win32.WM_SIZE:	return WM_SIZE(hwnd, wparam)
+	case win32.WM_PAINT:		return WM_PAINT(hwnd)
+	//case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
+	//case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
+	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	}
+}
+
+//pixels : [][4]u8
+
 main :: proc() {
 	//rl.InitWindow(960, 540, "microui-odin")
 	//defer rl.CloseWindow()
 
-	pixels := make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
-	for alpha, i in mu.default_atlas_alpha {
-		pixels[i] = {0xff, 0xff, 0xff, alpha}
-	}
-	defer delete(pixels)
+	ctx := &state.mu_ctx
+	mu.init(ctx)
+
+	ctx.text_width = mu.default_atlas_text_width
+	ctx.text_height = mu.default_atlas_text_height
+
+	settings := win32app.create_window_settings("", {800, 600}, wndproc)
+	settings.app = &state
+	win32app.run(&settings)
+
 
 	// image := rl.Image {
 	// 	data    = raw_data(pixels),
@@ -45,16 +188,9 @@ main :: proc() {
 	// state.atlas_texture = rl.LoadTextureFromImage(image)
 	// defer rl.UnloadTexture(state.atlas_texture)
 
-	ctx := &state.mu_ctx
-	mu.init(ctx)
-
-	ctx.text_width = mu.default_atlas_text_width
-	ctx.text_height = mu.default_atlas_text_height
-
 	//rl.SetTargetFPS(60)
-	//main_loop: for !rl.WindowShouldClose() {
-	main_loop: for false {
-		/*
+	/*
+	main_loop: for !rl.WindowShouldClose() {
 		{ 	// text input
 			text_input: [512]byte = ---
 			text_input_offset := 0
@@ -113,7 +249,7 @@ main :: proc() {
 				mu.input_key_up(ctx, key.mu_key)
 			}
 		}
-		*/
+
 		mu.begin(ctx)
 		all_windows(ctx)
 		mu.end(ctx)
@@ -121,19 +257,17 @@ main :: proc() {
 		hdc, hdc_source: win32.HDC
 		render(ctx, hdc, hdc_source)
 	}
+	*/
 }
 
-render :: proc(ctx: ^mu.Context, hdc, hdc_source: win32.HDC) {
+ftn := win32.BLENDFUNCTION {
+	BlendOp = win32.AC_SRC_OVER,
+	BlendFlags = 0,
+	SourceConstantAlpha = 255,
+	AlphaFormat= win32.AC_SRC_ALPHA,
+}
 
-	// render_texture :: proc(rect: mu.Rect, pos: [2]i32, color: mu.Color) {
-	// 	// source := rl.Rectangle{f32(rect.x), f32(rect.y), f32(rect.w), f32(rect.h)}
-	// 	// position := rl.Vector2{f32(pos.x), f32(pos.y)}
-	// 	// rl.DrawTextureRec(state.atlas_texture, source, position, transmute(rl.Color)color)
-	// 	win32.BitBlt(hdc, rect.x, rect.y, rect.w, rect.h, hdc_source, x, y, win32.SRCCOPY)
-	// }
-
-	//win32.BitBlt(ps.hdc, 0, 0, bwidth, bheight, hdc_source, 0, 0, win32.SRCCOPY)
-	//win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bwidth, bheight, win32.SRCCOPY)
+render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) {
 
 	// rl.ClearBackground(transmute(rl.Color)state.bg)
 
@@ -144,36 +278,67 @@ render :: proc(ctx: ^mu.Context, hdc, hdc_source: win32.HDC) {
 
 	// rl.BeginScissorMode(0, 0, rl.GetScreenWidth(), rl.GetScreenHeight())
 	// defer rl.EndScissorMode()
+
 	//todo win32.SelectClipRgn(hdc, nil)
+	hdc := ps.hdc
+
+	original := win32.SelectObject(hdc, win32.GetStockObject(win32.DC_PEN))
+	defer win32.SelectObject(hdc, original)
+
+	//brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
+	dc_brush := win32.GetStockObject(win32.DC_BRUSH)
+
+	// {
+	// 	col := (transmute(win32.COLORREF)state.bg) & 0xFFFFFF
+	// 	ocol := win32.SetDCBrushColor(hdc, col)
+	// 	//win32.Rectangle(hdc, &ps.rcPaint)
+	// 	win32.FillRect(hdc, &ps.rcPaint, brush)
+	// 	win32.SetDCBrushColor(hdc, ocol)
+	// }
+
+	win32.SetBkMode(hdc, .TRANSPARENT)
 
 	command_backing: ^mu.Command
 	for variant in mu.next_command_iterator(ctx, &command_backing) {
 		switch cmd in variant {
 		case ^mu.Command_Text:
 			pos := [2]i32{cmd.pos.x, cmd.pos.y}
+			/*
 			for ch in cmd.str do if ch & 0xc0 != 0x80 {
 				r := min(int(ch), 127)
 				rect := mu.default_atlas[mu.DEFAULT_ATLAS_FONT + r]
 				//render_texture(rect, pos, cmd.color)
-				win32.BitBlt(hdc, rect.x, rect.y, rect.w, rect.h, hdc_source, pos.x, pos.y, win32.SRCCOPY)
+				win32.AlphaBlend(hdc, pos.x, pos.y, rect.w, rect.h, hdc_source, rect.x, rect.y, rect.w, rect.h, ftn)
 				pos.x += rect.w
 			}
+			*/
+			col := (transmute(win32.COLORREF)cmd.color) & 0xFFFFFF
+			win32.SetTextColor(hdc, col)
+			win32.TextOutW(hdc, pos.x, pos.y, win32.utf8_to_wstring(cmd.str), i32(len(cmd.str)))
+
 		case ^mu.Command_Rect:
 			//rl.DrawRectangle(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h, transmute(rl.Color)cmd.color)
 			// https://learn.microsoft.com/en-us/windows/win32/gdi/using-pens
+            oldobj := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush));
+			col := (transmute(win32.COLORREF)cmd.color) & 0xFFFFFF
+			ocol := win32.SetDCBrushColor(hdc, col)
 			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
+			//win32.FillRect(hdc, &ps.rcPaint, win32.HBRUSH(brush))
+			win32.SetDCBrushColor(hdc, ocol)
+			win32.SelectObject(hdc, oldobj);
 		case ^mu.Command_Icon:
 			rect := mu.default_atlas[cmd.id]
 			x := cmd.rect.x + (cmd.rect.w - rect.w) / 2
 			y := cmd.rect.y + (cmd.rect.h - rect.h) / 2
 			//render_texture(rect, {x, y}, cmd.color)
-			win32.BitBlt(hdc, rect.x, rect.y, rect.w, rect.h, hdc_source, x, y, win32.SRCCOPY)
+			win32.AlphaBlend(hdc, x, y, rect.w, rect.h, hdc_source, rect.x, rect.y, rect.w, rect.h, ftn)
 
 		case ^mu.Command_Clip:
 			// rl.EndScissorMode()
 			// rl.BeginScissorMode(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h)
 			// https://learn.microsoft.com/en-us/windows/win32/gdi/clipping-output
 			// To remove a device-context's clipping region, specify a NULL region handle.
+			//fmt.printfln("clip: %v", cmd.rect)
 		case ^mu.Command_Jump:
 			unreachable()
 		}

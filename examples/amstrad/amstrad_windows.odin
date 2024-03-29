@@ -29,7 +29,7 @@ SOX, SOY: i32 = (WIDTH - SCREEN_WIDTH) / 2, (HEIGHT - SCREEN_HEIGHT)
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
-hbrGray: win32.HBRUSH
+bkgnd_brush: win32.HBRUSH
 
 BITMAPINFO :: struct {
 	bmiHeader: win32.BITMAPV5HEADER,
@@ -38,7 +38,11 @@ BITMAPINFO :: struct {
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {return (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
+get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
+	app := (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	return app
+}
 
 fill_screen_with_image :: proc(app: papp) {
 	pvBits := app.pvBits
@@ -56,12 +60,15 @@ amstrad_ink := canvas.AMSTRAD_INK
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	app := (papp)(pcs.lpCreateParams)
+	settings := (win32app.psettings)(pcs.lpCreateParams)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+
 	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, pcs, app)
 	set_app(hwnd, app)
 
-	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
+	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
 
 	bitmap_info := BITMAPINFO {
 		bmiHeader = win32.BITMAPV5HEADER {
@@ -94,11 +101,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		//update_screen(app)
 		//win32.FillRect(hdc)
 
-		// if hbrGray != nil {
+		// if bkgnd_brush != nil {
 		// 	rect: win32.RECT
 		// 	win32.GetClientRect(hwnd, &rect)
 		// 	fmt.printf("rect=%v\n", rect)
-		// 	win32.FillRect(hdc, &rect, hbrGray)
+		// 	win32.FillRect(hdc, &rect, bkgnd_brush)
 		// }
 	}
 
@@ -144,14 +151,36 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	//return 1 // paint should fill out the client area so no need to erase the background
-	if hbrGray != nil {
+	if bkgnd_brush != nil {
 		hdc := win32.GetDC(hwnd)
 		defer win32.ReleaseDC(hwnd, hdc)
 		rect: win32.RECT
 		win32.GetClientRect(hwnd, &rect)
-		//fmt.printf("rect=%v\n", rect)
-		win32.FillRect(hdc, &rect, hbrGray)
+		win32.FillRect(hdc, &rect, bkgnd_brush)
 	}
+	return 0
+}
+
+focused := false
+
+WM_SETFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	focused = true
+	//fmt.printfln("WM_SETFOCUS %v %v %v", hwnd, wparam, focused)
+	return 0
+}
+
+WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	focused = false
+	//fmt.printfln("WM_KILLFOCUS %v %v %v", hwnd, wparam, focused)
+	return 0
+}
+
+WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	settings := win32app.get_settings(hwnd)
+	if settings == nil {return 1}
+	type := win32app.WM_SIZE_WPARAM(wparam)
+	settings.window_size = win32app.decode_lparam(lparam)
+	win32app.set_window_textf(hwnd, "%s %v", settings.title, settings.window_size)
 	return 0
 }
 
@@ -247,16 +276,13 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 			z80.z80_instant_reset(app.cpu)
 			fmt.printfln("pc=%d", app.cpu.pc)
-			//running = true
 		}
 		case win32.VK_F4: {
 			app := get_app(hwnd)
 			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 			z80.z80_power(app.cpu, true)
 			fmt.printfln("pc=%d", app.cpu.pc)
-			//running = true
 		}
-
 		case win32.VK_F9: print_info()
 		//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vkCode, keyFlags, scanCode, isExtendedKey, wasKeyDown, isKeyReleased)
 		}
@@ -275,8 +301,10 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
+	case win32.WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
+	case win32.WM_KILLFOCUS:	return WM_KILLFOCUS(hwnd, wparam)
+	//case win32.WM_SIZE:	return WM_SIZE(hwnd, wparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd)
-	// WM_SETFOCUS WM_KILLFOCUS
 	//case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
 	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
 	//case win32.WM_SYSKEYDOWN:	return handle_sys_key_input(hwnd, wparam, lparam)
@@ -293,12 +321,11 @@ run_app :: proc(app: papp) {
 
 	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT * HEIGHT_SCALE, wndproc)
 	settings.app = app
-	//win32app.run(&settings)
 
 	inst := win32app.get_instance()
 	atom := win32app.register_window_class(inst, settings.wndproc)
 	hwnd := win32app.create_and_show_window(inst, atom, &settings)
-	//loop_messages()
+
 	for win32app.pull_messages() {
 		for running {
 			total += z80.z80_run(app.cpu, cycles_per_tick)

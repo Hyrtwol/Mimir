@@ -61,7 +61,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, pcs, app)
+	//fmt.printfln("WM_CREATE %v %v %v", hwnd, pcs, app)
 	win32app.set_settings(hwnd, settings)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
@@ -69,14 +69,15 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	client_size := win32app.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
 
-	hdc := win32.GetDC(hwnd)
-	defer win32.ReleaseDC(hwnd, hdc)
-
-	color_byte_count :: 4
-	color_bit_count :: color_byte_count * 8
-	bmi_header := win32app.create_bmi_header(bitmap_size, false, color_bit_count)
-	fmt.printf("bmi_header %v\n", bmi_header)
-	bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
+	{
+		hdc := win32.GetDC(hwnd)
+		defer win32.ReleaseDC(hwnd, hdc)
+		color_byte_count :: 4
+		color_bit_count :: color_byte_count * 8
+		bmi_header := win32app.create_bmi_header(bitmap_size, false, color_bit_count)
+		//fmt.printfln("bmi_header %v", bmi_header)
+		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
+	}
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
@@ -108,6 +109,16 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	return 1
 }
 
+WM_SETFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	fmt.printfln("WM_SETFOCUS %v %v", hwnd, wparam)
+	return 0
+}
+
+WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	fmt.printfln("WM_KILLFOCUS %v %v", hwnd, wparam)
+	return 0
+}
+
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
@@ -129,7 +140,6 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
 	defer win32.EndPaint(hwnd, &ps)
-
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
 	defer win32.DeleteDC(hdc_source)
 
@@ -176,6 +186,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.
 	case .WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case .WM_DESTROY:		return WM_DESTROY(hwnd)
 	case .WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
+	case .WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
+	case .WM_KILLFOCUS:		return WM_KILLFOCUS(hwnd, wparam)
 	case .WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	case .WM_PAINT:			return WM_PAINT(hwnd)
 	case .WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)

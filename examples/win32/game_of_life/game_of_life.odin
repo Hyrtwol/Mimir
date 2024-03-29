@@ -439,7 +439,6 @@ run :: proc() -> int {
 		pause     = true,
 		colors    = []color{BLACK, WHITE},
 		size      = {bwidth, bheight},
-		//window    = window,
 	}
 	world := World{game.size.x, game.size.y, make([]u8, game.size.x * game.size.y)}
 	next_world := World{game.size.x, game.size.y, make([]u8, game.size.x * game.size.y)}
@@ -447,8 +446,6 @@ run :: proc() -> int {
 	defer delete(next_world.alive)
 	game.world = &world
 	game.next_world = &next_world
-
-	//game.cell = Cell{width  = f32(window.size.x) / f32(game.world.width), height = f32(window.size.y) / f32(game.world.width)}
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {show_error_and_panic("No instance")}
@@ -467,7 +464,6 @@ run :: proc() -> int {
 	}
 	hwnd := create_window(atom, window.name, dwStyle, dwExStyle, position, size, instance, &game)
 	if hwnd == nil {show_error_and_panic("Failed to create window")}
-
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)

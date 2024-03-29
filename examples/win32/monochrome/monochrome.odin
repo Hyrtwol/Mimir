@@ -77,7 +77,6 @@ Game :: struct {
 	size:      int2,
 	timer_id:  win32.UINT_PTR,
 	tick:      u32,
-	//title:     wstring,
 	hbitmap:   win32.HBITMAP,
 	pvBits:    screen_buffer,
 }
