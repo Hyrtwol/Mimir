@@ -176,6 +176,7 @@ write_log :: proc(str: string) {
 read_log :: proc() -> string {
 	return string(state.log_buf[:state.log_buf_len])
 }
+
 reset_log :: proc() {
 	state.log_buf_updated = true
 	state.log_buf_len = 0

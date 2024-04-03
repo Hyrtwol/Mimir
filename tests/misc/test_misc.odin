@@ -64,20 +64,20 @@ when_to_use_defer :: proc(t: ^_t.T) {
 	{
 		res = 10
 		defer res = 20
-		_u.expect(t, res, 10)
+		_u.expect_value_int(t, res, 10)
 	}
-	_u.expect(t, res, 20)
+	_u.expect_value_int(t, res, 20)
 	{
 		defer res = 30;res = 40
-		_u.expect(t, res, 40)
+		_u.expect_value_int(t, res, 40)
 	}
-	_u.expect(t, res, 30)
+	_u.expect_value_int(t, res, 30)
 }
 
 @(test)
 some_slice :: proc(t: ^_t.T) {
 	slice := []int{1, 4, 9, 7}
-	_u.expect(t, slice[1], 4)
+	_u.expect_value_int(t, slice[1], 4)
 	fmt.printfln("%v", slice)
 	fmt.printfln("%v", slice[1:3])
 	fmt.printfln("%v", slice[1:])

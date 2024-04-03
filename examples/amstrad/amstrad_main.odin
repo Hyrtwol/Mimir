@@ -1,5 +1,5 @@
 // +vet
-package amstrad
+package main
 
 import "core:fmt"
 import "core:intrinsics"
@@ -147,6 +147,12 @@ reps := 0
 
 main :: proc() {
 	fmt.print("Amstrad\n")
+
+	sanpshot_path := filepath.clean("examples/amstrad/data/pinup.sna", context.temp_allocator)
+	fmt.printfln("reading %s", sanpshot_path)
+	ss: am.snapshot
+	ram: z80m.bank64kb
+	err := am.load_snapshot(sanpshot_path, &ss, ram[:])
 
 	rom_path :: "../data/z80/hello.rom"
 	load_rom(rom_path)

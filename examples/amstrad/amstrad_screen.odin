@@ -1,6 +1,8 @@
-package amstrad
+package main
 
 import "core:math/rand"
+import a "shared:amstrad"
+import z80m "shared:z80/amstrad"
 
 int2			:: [2]i32
 color			:: [4]u8
@@ -92,7 +94,7 @@ poke_char :: proc(pvBits: screen_buffer, char: u8) {
 	ch := i32(char) * 8
 	sy := cursor_x + cursor_y * (80 * 8)
 	#unroll for _ in 0 ..< 8 {
-		pvBits[sy] = amstrad_font[ch]
+		pvBits[sy] = a.amstrad_font[ch]
 		sy += 80
 		ch += 1
 	}
@@ -114,7 +116,7 @@ put_char :: proc(pvBits: screen_buffer, char: u8) {
 		ch := i32(char) * 8
 		sy := cursor_x + cursor_y * (80 * 8)
 		#unroll for _ in 0 ..< 8 {
-			pvBits[sy] = amstrad_font[ch]
+			pvBits[sy] = a.amstrad_font[ch]
 			sy += 80
 			ch += 1
 		}

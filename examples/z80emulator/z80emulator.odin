@@ -38,11 +38,9 @@ z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	case 1:
 		value = 1
 	case:
-		{
-			fmt.printf("in[0x%2X]=0x%2X", port, value)
-			if value >= 32 {fmt.printf(" '%v'", rune(value))}
-			fmt.println()
-		}
+		fmt.printf("in[0x%2X]=0x%2X", port, value)
+		if value >= 32 {fmt.printf(" '%v'", rune(value))}
+		fmt.println()
 	}
 	return value
 }
@@ -113,7 +111,7 @@ main :: proc() {
 
 	load_rom("../data/z80/hello.rom")
 
-	cpu: z80.TZ80 = {
+	cpu: z80.Z80 = {
 		fetch_opcode = z_fetch_opcode,
 		fetch        = z_fetch,
 		read         = z_read,

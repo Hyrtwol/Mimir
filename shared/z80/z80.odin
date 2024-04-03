@@ -1,6 +1,13 @@
+/*     ______  ______ ______
+      /\___  \/\  __ \\  __ \
+ ____ \/__/  /\_\  __ \\ \/\ \ ______________________________
+|        /\_____\\_____\\_____\                              |
+|  Zilog \/_____//_____//_____/ CPU Emulator - Odin Binding  |
+|                                                            |
+'===========================================================*/
 package z80
 
-foreign import "Z80.lib"
+foreign import z80lib "Z80.lib"
 
 zusize :: u64
 zuint8 :: u8
@@ -9,57 +16,100 @@ zuint32 :: u32
 zint16 :: i16
 zint32 :: i32
 zboolean :: bool
+zcontext :: rawptr
+
+/** @brief Maximum number of clock cycles that <tt>@ref z80_run</tt> and
+  * <tt>@ref z80_execute</tt> can emulate. */
 
 Z80_MAXIMUM_CYCLES :: max(zusize) - 30
-Z80_MAXIMUM_CYCLES_PER_STEP :: 23
+
+/** @brief Maximum number of clock cycles that <tt>@ref z80_run</tt> will
+  * emulate if instructed to execute 1 clock cycle.
+  *
+  * This is the number of clock cycles it takes to execute the longest
+  * instruction through interrupt mode 0, not counting the M-cycle used to fetch
+  * a @c 0xDD or @c 0xFD prefix. For <tt>@ref z80_execute</tt>, subtract 4 clock
+  * cycles from this value. */
+
+Z80_MAXIMUM_CYCLES_PER_STEP :: 25
+
+/** @brief Minimum number of clock cycles that <tt>@ref z80_run</tt> or
+  * <tt>@ref z80_execute</tt> will emulate if instructed to execute 1 clock
+  * cycle. */
+
+Z80_MINIMUM_CYCLES_PER_STEP :: 4
+
+/** @brief Opcode interpreted as a trap by the Z80 library. It corresponds to
+  * the <tt>ld h,h</tt> instruction in the Z80 ISA. */
 
 Z80_HOOK :: 0x64
 
-Z80_SF :: 128
-Z80_ZF :: 64
-Z80_YF :: 32
-Z80_HF :: 16
-Z80_XF :: 8
-Z80_PF :: 4
-Z80_NF :: 2
-Z80_CF :: 1
+Z80_SF :: 128 /**< @brief Bitmask of the Z80 S flag.   */
+Z80_ZF ::  64 /**< @brief Bitmask of the Z80 Z flag.   */
+Z80_YF ::  32 /**< @brief Bitmask of the Z80 Y flag.   */
+Z80_HF ::  16 /**< @brief Bitmask of the Z80 H flag.   */
+Z80_XF ::   8 /**< @brief Bitmask of the Z80 X flag.   */
+Z80_PF ::   4 /**< @brief Bitmask of the Z80 P/V flag. */
+Z80_NF ::   2 /**< @brief Bitmask of the Z80 N flag.   */
+Z80_CF ::   1 /**< @brief Bitmask of the Z80 C flag.   */
 
+/** @brief Defines a pointer to a <tt>@ref Z80</tt> callback function invoked to
+  * perform a read operation.
+  *
+  * @param context The <tt>@ref Z80::context</tt> of the calling object.
+  * @param address The memory address or I/O port to read from.
+  * @return The byte read. */
 
-Z80_OPTION_OUT_VC_255 :: 1
-Z80_OPTION_LD_A_IR_BUG :: 2
-Z80_OPTION_HALT_SKIP :: 4
-Z80_OPTION_XQ :: 8
-Z80_OPTION_IM0_RETX_NOTIFICATIONS :: 16
-Z80_OPTION_YQ :: 32
+Z80Read :: #type proc(zcontext: zcontext, address: zuint16) -> zuint8
 
-Z80_MODEL_ZILOG_NMOS :: (Z80_OPTION_LD_A_IR_BUG | Z80_OPTION_XQ | Z80_OPTION_YQ)
-Z80_MODEL_ZILOG_CMOS :: (Z80_OPTION_OUT_VC_255 | Z80_OPTION_XQ | Z80_OPTION_YQ)
-Z80_MODEL_NEC_NMOS :: Z80_OPTION_LD_A_IR_BUG
-Z80_MODEL_ST_CMOS :: (Z80_OPTION_OUT_VC_255 | Z80_OPTION_LD_A_IR_BUG | Z80_OPTION_YQ)
+/** @brief Defines a pointer to a <tt>@ref Z80</tt> callback function invoked to
+  * perform a write operation.
+  *
+  * @param context The <tt>@ref Z80::context</tt> of the calling object.
+  * @param address The memory address or I/O port to write to.
+  * @param value The byte to write. */
 
-Z80_REQUEST_REJECT_NMI :: 2
-Z80_REQUEST_NMI :: 4
-Z80_REQUEST_INT :: 8
-Z80_REQUEST_SPECIAL_RESET :: 16
+Z80Write :: #type proc(zcontext: zcontext, address: zuint16, value: zuint8)
 
-Z80_RESUME_HALT :: 1
-Z80_RESUME_XY :: 2
-Z80_RESUME_IM0_XY :: 3
+/** @brief Defines a pointer to a <tt>@ref Z80</tt> callback function invoked to
+  * notify a signal change on the HALT line.
+  *
+  * @param context The <tt>@ref Z80::context</tt> of the calling object.
+  * @param signal A code specifying the type of signal change. */
 
-Z80_HALT_EXIT :: 0
-Z80_HALT_ENTER :: 1
-Z80_HALT_EXIT_EARLY :: 2
-Z80_HALT_CANCEL :: 3
+Z80Halt :: #type proc(zcontext: zcontext, signal: zuint8)
 
-PZ80 :: ^TZ80
+/** @brief Defines a pointer to a <tt>@ref Z80</tt> callback function invoked to
+  * notify an event.
+  *
+  * @param context The <tt>@ref Z80::context</tt> of the calling object. */
 
-Z80Read :: #type proc(zcontext: rawptr, address: zuint16) -> zuint8
-Z80Write :: #type proc(zcontext: rawptr, address: zuint16, value: zuint8)
-Z80Halt :: #type proc(zcontext: rawptr, signal: zuint8)
-Z80Notify :: #type proc(zcontext: rawptr)
+Z80Notify :: #type proc(zcontext: zcontext)
+
+/** @brief Defines a pointer to a <tt>@ref Z80</tt> callback function invoked to
+  * delegate the emulation of an illegal instruction.
+  *
+  * @param cpu The calling object.
+  * @param opcode The illegal opcode.
+  * @return The number of clock cycles consumed by the instruction. */
+
 Z80Illegal :: #type proc(zcpu: PZ80, opcode: zuint8) -> zuint8
 
-TZ80 :: struct {
+/** @struct Z80 Z80.h
+  *
+  * @brief A Z80 CPU emulator.
+  *
+  * A @c Z80 object contains the state of an emulated Z80 CPU, pointers to
+  * callback functions that interconnect the emulator with the external logic
+  * and a context that is passed to these functions.
+  *
+  * Because no constructor function is provided, it is mandatory to directly
+  * initialize all callback pointers and <tt>@ref Z80::options</tt> before using
+  * an object of this type. Optional callbacks must be set to @c Z_NULL when not
+  * in use. */
+
+Z80 :: struct {
+
 	/** @brief Number of clock cycles already executed. */
 	cycles:       zusize,
 
@@ -72,7 +122,7 @@ TZ80 :: struct {
 	  * This member is intended to hold a reference to the context to which
 	  * the object belongs. It is safe not to initialize it when this is not
 	  * necessary. */
-	_context:     rawptr,
+	zcontext:     zcontext,
 
 	/** @brief Invoked to perform an opcode fetch.
 	  *
@@ -339,60 +389,353 @@ TZ80 :: struct {
 	  * <tt>@ref Z80::halt</tt>, not after. */
 	halt_line:    zuint8,
 }
+PZ80 :: ^Z80
 
-//@(default_calling_convention = "c", link_prefix = "Newton")
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables emulation of the
+  * <tt>out (c),255</tt> instruction, specific to the Zilog Z80 CMOS. */
+
+Z80_OPTION_OUT_VC_255 :: 1
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables emulation of the bug
+  * affecting the Zilog Z80 NMOS, which causes the P/V flag to be reset when a
+  * maskable interrupt is accepted during the execution of the
+  * <tt>ld a,{i|r}</tt> instructions. */
+
+Z80_OPTION_LD_A_IR_BUG :: 2
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables the HALTskip
+  * optimization. */
+
+Z80_OPTION_HALT_SKIP :: 4
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables the XQ factor in the
+  * emulation of the @c ccf and @c scf instructions. */
+
+Z80_OPTION_XQ :: 8
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables notifications for any
+  * @c reti or @c retn instruction executed during the interrupt mode 0
+  * response. */
+
+Z80_OPTION_IM0_RETX_NOTIFICATIONS :: 16
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables the YQ factor in the
+  * emulation of the @c ccf and @c scf instructions. */
+
+Z80_OPTION_YQ :: 32
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables full emulation of the
+  * Zilog NMOS models. */
+
+Z80_MODEL_ZILOG_NMOS :: (Z80_OPTION_LD_A_IR_BUG | Z80_OPTION_XQ | Z80_OPTION_YQ)
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables full emulation of the
+  * Zilog CMOS models. */
+
+Z80_MODEL_ZILOG_CMOS :: (Z80_OPTION_OUT_VC_255 | Z80_OPTION_XQ | Z80_OPTION_YQ)
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables full emulation of the
+  * NEC NMOS models. */
+
+Z80_MODEL_NEC_NMOS :: Z80_OPTION_LD_A_IR_BUG
+
+/** @brief <tt>@ref Z80::options</tt> bitmask that enables full emulation of the
+  * ST CMOS models. */
+
+Z80_MODEL_ST_CMOS :: (Z80_OPTION_OUT_VC_255 | Z80_OPTION_LD_A_IR_BUG | Z80_OPTION_YQ)
+
+/** @brief <tt>@ref Z80::request</tt> bitmask that prevents the NMI signal from
+  * being accepted. */
+
+Z80_REQUEST_REJECT_NMI :: 2
+
+/** @brief <tt>@ref Z80::request</tt> bitmask indicating that an NMI signal has
+  * been received. */
+
+Z80_REQUEST_NMI :: 4
+
+/** @brief <tt>@ref Z80::request</tt> bitmask indicating that the INT line is
+  * low and interrupts are enabled. */
+
+Z80_REQUEST_INT :: 8
+
+/** @brief <tt>@ref Z80::request</tt> bitmask indicating that a special RESET
+  * signal has been received. */
+
+Z80_REQUEST_SPECIAL_RESET :: 16
+
+/** @brief <tt>@ref Z80::resume</tt> value indicating that the emulator ran out
+  * of clock cycles during the HALT state. */
+
+Z80_RESUME_HALT :: 1
+
+/** @brief <tt>@ref Z80::resume</tt> value indicating that the emulator ran out
+  * of clock cycles by fetching a prefix @c 0xDD or @c 0xFD. */
+
+Z80_RESUME_XY :: 2
+
+/** @brief <tt>@ref Z80::resume</tt> value indicating that the emulator ran out
+  * of clock cycles by fetching a prefix @c 0xDD or @c 0xFD, during a maskable
+  * interrupt response in mode 0. */
+
+Z80_RESUME_IM0_XY :: 3
+
+/** @brief Value of the second parameter of <tt>@ref Z80::halt</tt> when the
+  * HALT line goes high due to a special RESET signal. */
+
+Z80_HALT_EXIT_EARLY :: 2
+
+/** @brief Value of the second paratemer of <tt>@ref Z80::halt</tt> when the
+  * HALT line goes low and then high due to a special RESET signal during the
+  * execution of a @c halt instruction. */
+
+Z80_HALT_CANCEL :: 3
+
+/** @brief Accesses the MEMPTR register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_MEMPTR :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.memptr}
+
+/** @brief Accesses the PC register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_PC :: #force_inline proc "contextless" (z80: PZ80) -> zuint16 {return z80.pc}
+
+/** @brief Accesses the SP register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_SP :: #force_inline proc "contextless" (z80: PZ80) -> zuint16 {return z80.sp}
+
+/** @brief Accesses the temporary index register of a <tt>@ref Z80</tt> @p
+  * object */
+
+Z80_XY :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.xy}
+
+/** @brief Accesses the IX register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_IX :: #force_inline proc "contextless" (z80: PZ80) -> zuint16 {return z80.ix_iy[0]}
+
+/** @brief Accesses the IY register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_IY :: #force_inline proc "contextless" (z80: PZ80) -> zuint16 {return z80.ix_iy[1]}
+
+/** @brief Accesses the AF register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_AF :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.af}
+
+/** @brief Accesses the BC register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_BC :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.bc}
+
+/** @brief Accesses the DE register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_DE :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.de}
+
+/** @brief Accesses the HL register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_HL :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.hl}
+
+/** @brief Accesses the AF' register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_AF_ :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.af_}
+
+/** @brief Accesses the BC' register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_BC_ :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.bc_}
+
+/** @brief Accesses the DE' register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_DE_ :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.de_}
+
+/** @brief Accesses the HL' register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_HL_ :: #force_inline proc "contextless" (z80: PZ80) -> zint16 {return z80.hl_}
+
+/*
+
+/** @brief Accesses the most significant byte of the MEMPTR register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_MEMPTRH :: #force_inline proc "contextless" (object) (object).memptr.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the MEMPTR register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_MEMPTRL :: #force_inline proc "contextless" (object) (object).memptr.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the PC register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_PCH :: #force_inline proc "contextless" (object) (object).pc.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the PC register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_PCL :: #force_inline proc "contextless" (object) (object).pc.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the SP register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_SPH :: #force_inline proc "contextless" (object) (object).sp.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the SP register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_SPL :: #force_inline proc "contextless" (object) (object).sp.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the temporary index register
+  * of a <tt>@ref Z80</tt> @p object. */
+
+Z80_XYH :: #force_inline proc "contextless" (object) (object).xy.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the temporary index register
+  * of a <tt>@ref Z80</tt> @p object. */
+
+Z80_XYL :: #force_inline proc "contextless" (object) (object).xy.uint8_values.at_0
+
+/** @brief Accesses the IXH register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_IXH :: #force_inline proc "contextless" (object) (object).ix_iy[0].uint8_values.at_1
+
+/** @brief Accesses the IXL register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_IXL :: #force_inline proc "contextless" (object) (object).ix_iy[0].uint8_values.at_0
+
+/** @brief Accesses the IYH register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_IYH :: #force_inline proc "contextless" (object) (object).ix_iy[1].uint8_values.at_1
+
+/** @brief Accesses the IYL register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_IYL :: #force_inline proc "contextless" (object) (object).ix_iy[1].uint8_values.at_0
+
+/** @brief Accesses the A register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_A :: #force_inline proc "contextless" (object) (object).af.uint8_values.at_1
+
+/** @brief Accesses the F register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_F :: #force_inline proc "contextless" (object) (object).af.uint8_values.at_0
+
+/** @brief Accesses the B register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_B :: #force_inline proc "contextless" (object) (object).bc.uint8_values.at_1
+
+/** @brief Accesses the C register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_C :: #force_inline proc "contextless" (object) (object).bc.uint8_values.at_0
+
+/** @brief Accesses the D register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_D :: #force_inline proc "contextless" (object) (object).de.uint8_values.at_1
+
+/** @brief Accesses the E register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_E :: #force_inline proc "contextless" (object) (object).de.uint8_values.at_0
+
+/** @brief Accesses the H register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_H :: #force_inline proc "contextless" (object) (object).hl.uint8_values.at_1
+
+/** @brief Accesses the L register of a <tt>@ref Z80</tt> @p object. */
+
+Z80_L :: #force_inline proc "contextless" (object) (object).hl.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the AF' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_A_ :: #force_inline proc "contextless" (object) (object).af_.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the AF' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_F_ :: #force_inline proc "contextless" (object) (object).af_.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the BC' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_B_ :: #force_inline proc "contextless" (object) (object).bc_.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the BC' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_C_ :: #force_inline proc "contextless" (object) (object).bc_.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the DE' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_D_ :: #force_inline proc "contextless" (object) (object).de_.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the DE' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_E_ :: #force_inline proc "contextless" (object) (object).de_.uint8_values.at_0
+
+/** @brief Accesses the most significant byte of the HL' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_H_ :: #force_inline proc "contextless" (object) (object).hl_.uint8_values.at_1
+
+/** @brief Accesses the least significant byte of the HL' register of a
+  * <tt>@ref Z80</tt> @p object. */
+
+Z80_L_ :: #force_inline proc "contextless" (object) (object).hl_.uint8_values.at_0
+
+*/
+
+Z80_WZ  :: Z80_MEMPTR  /**< @brief Same as <tt>@ref Z80_MEMPTR</tt>.  */
+//Z80_WZH :: Z80_MEMPTRH /**< @brief Same as <tt>@ref Z80_MEMPTRH</tt>. */
+//Z80_WZL :: Z80_MEMPTRL /**< @brief Same as <tt>@ref Z80_MEMPTRL</tt>. */
+
+//@(default_calling_convention = "c", link_prefix = "z80_")
 //@(default_calling_convention = "c")
-foreign Z80 {
+foreign z80lib {
+/** @brief Sets the power state of a <tt>@ref Z80</tt>.
+  *
+  * @param self Pointer to the object on which the function is called.
+  * @param state
+  *   @c Z_TRUE  = power on;
+  *   @c Z_FALSE = power off. */
+z80_power :: proc(self: PZ80, state: zboolean) ---
 
-	/** @brief Sets the power state of a <tt>@ref Z80</tt>.
-	*
-	* @param self Pointer to the object on which the function is called.
-	* @param state
-	*   @c Z_TRUE  = power on;
-	*   @c Z_FALSE = power off. */
-	z80_power :: proc(self: PZ80, state: zboolean) ---
+/** @brief Performs an instantaneous normal RESET on a <tt>@ref Z80</tt>.
+  *
+  * @param self Pointer to the object on which the function is called. */
+z80_instant_reset :: proc(self: PZ80) ---
 
-	/** @brief Performs an instantaneous normal RESET on a <tt>@ref Z80</tt>.
-	*
-	* @param self Pointer to the object on which the function is called. */
-	z80_instant_reset :: proc(self: PZ80) ---
+/** @brief Sends a special RESET signal to a <tt>@ref Z80</tt>.
+  *
+  * @sa
+  * - http://www.primrosebank.net/computers/z80/z80_special_reset.htm
+  * - US Patent 4486827
+  *
+  * @param self Pointer to the object on which the function is called. */
+z80_special_reset :: proc(self: PZ80) ---
 
-	/** @brief Sends a special RESET signal to a <tt>@ref Z80</tt>.
-	*
-	* @sa
-	* - http://www.primrosebank.net/computers/z80/z80_special_reset.htm
-	* - US Patent 4486827
-	*
-	* @param self Pointer to the object on which the function is called. */
-	z80_special_reset :: proc(self: PZ80) ---
+/** @brief Sets the state of the INT line of a <tt>@ref Z80</tt>.
+  *
+  * @param self Pointer to the object on which the function is called.
+  * @param state
+  *   @c Z_TRUE  = set line low;
+  *   @c Z_FALSE = set line high. */
+z80_int :: proc(self: PZ80, state: zboolean) ---
 
-	/** @brief Sets the state of the INT line of a <tt>@ref Z80</tt>.
-	*
-	* @param self Pointer to the object on which the function is called.
-	* @param state
-	*   @c Z_TRUE  = set line low;
-	*   @c Z_FALSE = set line high. */
-	z80_int :: proc(self: PZ80, state: zboolean) ---
+/** @brief Triggers the NMI line of a <tt>@ref Z80</tt>.
+  *
+  * @param self Pointer to the object on which the function is called. */
+z80_nmi :: proc(self: PZ80) ---
 
-	/** @brief Triggers the NMI line of a <tt>@ref Z80</tt>.
-	*
-	* @param self Pointer to the object on which the function is called. */
-	z80_nmi :: proc(self: PZ80) ---
+/** @brief Runs a <tt>@ref Z80</tt> for a given number of clock @p cycles,
+  * executing only instructions without responding to signals.
+  *
+  * @param self Pointer to the object on which the function is called.
+  * @param cycles Number of clock cycles to be emulated.
+  * @return The actual number of clock cycles emulated. */
+z80_execute :: proc(self: PZ80, cycles: zusize) -> zusize ---
 
-	/** @brief Runs a <tt>@ref Z80</tt> for a given number of clock @p cycles,
-	* executing only instructions without responding to signals.
-	*
-	* @param self Pointer to the object on which the function is called.
-	* @param cycles Number of clock cycles to be emulated.
-	* @return The actual number of clock cycles emulated. */
-	z80_execute :: proc(self: PZ80, cycles: zusize) -> zusize ---
-
-	/** @brief Runs a <tt>@ref Z80</tt> for a given number of clock @p cycles.
-	*
-	* @param self Pointer to the object on which the function is called.
-	* @param cycles Number of clock cycles to be emulated.
-	* @return The actual number of clock cycles emulated. */
-	z80_run :: proc(self: PZ80, cycles: zusize) -> zusize ---
+/** @brief Runs a <tt>@ref Z80</tt> for a given number of clock @p cycles.
+  *
+  * @param self Pointer to the object on which the function is called.
+  * @param cycles Number of clock cycles to be emulated.
+  * @return The actual number of clock cycles emulated. */
+z80_run :: proc(self: PZ80, cycles: zusize) -> zusize ---
 }
 
 /** @brief Ends the emulation loop of <tt>@ref z80_execute</tt> or

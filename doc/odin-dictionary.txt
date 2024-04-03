@@ -26,6 +26,7 @@ hlsl
 hresult
 hwnd
 imag
+killfocus
 libfmodex
 lightwave
 linalg
@@ -54,6 +55,7 @@ rect
 reloc
 rendertarget
 sandybridge
+setfocus
 shadowmap
 simd
 srgb

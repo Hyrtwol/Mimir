@@ -1,17 +1,26 @@
-package z80
+package test_z80
 
 import "core:bytes"
 import "core:fmt"
 import "core:runtime"
 import "core:testing"
 import o "shared:ounit"
-import a "amstrad"
+import z ".."
+import a "../amstrad"
+
+expectf :: testing.expectf
+expect_size :: o.expect_size
+expect_value :: o.expect_value
+expect_value_64 :: o.expect_value_64
+
+zuint32 :: z.zuint32
+zusize :: z.zusize
 
 @(test)
 verify_sizes :: proc(t: ^testing.T) {
 	act, exp: u32
 
-	act = size_of(TZ80)
+	act = size_of(z.Z80)
 	exp = 208
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 
@@ -24,7 +33,7 @@ verify_sizes :: proc(t: ^testing.T) {
 verify_flags :: proc(t: ^testing.T) {
 	act, exp: u32
 
-	act = Z80_SF | Z80_ZF | Z80_YF | Z80_HF | Z80_XF | Z80_PF | Z80_NF | Z80_CF
+	act = z.Z80_SF | z.Z80_ZF | z.Z80_YF | z.Z80_HF | z.Z80_XF | z.Z80_PF | z.Z80_NF | z.Z80_CF
 	exp = 255
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 }
@@ -33,38 +42,38 @@ verify_flags :: proc(t: ^testing.T) {
 verify_options :: proc(t: ^testing.T) {
 	act, exp: u32
 
-	act = Z80_OPTION_OUT_VC_255 | Z80_OPTION_LD_A_IR_BUG | Z80_OPTION_HALT_SKIP | Z80_OPTION_XQ | Z80_OPTION_IM0_RETX_NOTIFICATIONS | Z80_OPTION_YQ
+	act = z.Z80_OPTION_OUT_VC_255 | z.Z80_OPTION_LD_A_IR_BUG | z.Z80_OPTION_HALT_SKIP | z.Z80_OPTION_XQ | z.Z80_OPTION_IM0_RETX_NOTIFICATIONS | z.Z80_OPTION_YQ
 	exp = 63
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 
-	act = Z80_MODEL_ZILOG_NMOS
+	act = z.Z80_MODEL_ZILOG_NMOS
 	exp = 42
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 
-	act = Z80_MODEL_ZILOG_CMOS
+	act = z.Z80_MODEL_ZILOG_CMOS
 	exp = 41
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 
-	act = Z80_MODEL_NEC_NMOS
+	act = z.Z80_MODEL_NEC_NMOS
 	exp = 2
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 
-	act = Z80_MODEL_ST_CMOS
+	act = z.Z80_MODEL_ST_CMOS
 	exp = 35
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 }
 
 @(test)
 verify_consts_max_cycles :: proc(t: ^testing.T) {
-	act: zusize = Z80_MAXIMUM_CYCLES
+	act: zusize = z.Z80_MAXIMUM_CYCLES
 	exp: zusize = 18446744073709551585
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 }
 
 @(test)
 verify_consts_max_cycles_per_step :: proc(t: ^testing.T) {
-	act: zuint32 = Z80_MAXIMUM_CYCLES_PER_STEP
-	exp: zuint32 = 23
+	act: zuint32 = z.Z80_MAXIMUM_CYCLES_PER_STEP
+	exp: zuint32 = 25
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp)
 }
 
