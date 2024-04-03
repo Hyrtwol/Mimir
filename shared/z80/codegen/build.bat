@@ -10,7 +10,7 @@ set genexe=%gen_output_path%\%genname%.exe
 
 if exist "%genexe%" (del /f "%genexe%" > NUL 2> NUL)
 
-set includes=/I".." /I"..\..\..\tools\includes" /I"..\..\..\..\..\z80\zeta\API"
+set includes=/I"..\sources" /I"..\..\..\tools\includes" /I"..\..\..\..\..\z80\zeta\API"
 
 :compiling
 echo Compiling...

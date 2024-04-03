@@ -11,7 +11,7 @@ import win32 "core:sys/windows"
 import z80 "shared:z80"
 import z80m "shared:z80/amstrad"
 
-Z80 :: z80.TZ80
+Z80 :: z80.Z80
 
 cycles_per_tick :: 100
 mem_size :: 0x10000
@@ -157,7 +157,7 @@ main :: proc() {
 	rom_path :: "../data/z80/hello.rom"
 	load_rom(rom_path)
 
-	cpu: z80.TZ80 = {
+	cpu: z80.Z80 = {
 		fetch_opcode = z_fetch_opcode,
 		fetch        = z_fetch,
 		read         = z_read,
