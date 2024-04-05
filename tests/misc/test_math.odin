@@ -40,6 +40,13 @@ swapping :: proc(t: ^testing.T) {
 }
 
 @(test)
+min_max_uintptr :: proc(t: ^testing.T) {
+	act := u64(max(uintptr))
+	exp := max(u64)
+	testing.expect(t, exp == act)
+}
+
+@(test)
 min_max_consts :: proc(t: ^testing.T) {
 	act := max(f32) //      =  340282320000000000000000000000000000000.000
 	testing.expect(t, math.F32_MAX == act) // 3.402823466e+38 == 340282320000000000000000000000000000000.000

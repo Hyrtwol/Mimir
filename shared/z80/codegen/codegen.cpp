@@ -5,8 +5,6 @@
 #define zint16 ZInt16
 #define zint32 ZInt32
 #define zcontext void*
-//#define _Z80_MAXIMUM_CYCLES Z80_MAXIMUM_CYCLES
-//#define Z_
 
 void verify_type_sizes(ofstream& out) {
 	test_proc_begin();
@@ -20,11 +18,6 @@ void verify_type_sizes(ofstream& out) {
     expect_size(zboolean);
     expect_size(zcontext);
     test_proc_comment("Z80.h");
-    /*expect_value(Z80_LIBRARY_VERSION_MAJOR);
-    expect_value(Z80_LIBRARY_VERSION_MINOR);
-    expect_value(Z80_LIBRARY_VERSION_MICRO);
-    expect_value(Z80_LIBRARY_VERSION_STRING);*/
-    //expect_value(Z80_MAXIMUM_CYCLES);
     expect_value(Z80_MAXIMUM_CYCLES_PER_STEP);
     expect_value(Z80_MINIMUM_CYCLES_PER_STEP);
     expect_value(Z80_HOOK);

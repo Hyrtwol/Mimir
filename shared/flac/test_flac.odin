@@ -3,11 +3,11 @@ package flac
 //import "core:bytes"
 //import "core:fmt"
 //import "core:runtime"
-import "core:testing"
+import _t "core:testing"
 import _u "shared:ounit"
 
 @(test)
-verify_sizes :: proc(t: ^testing.T) {
+verify_sizes :: proc(t: ^_t.T) {
 	_u.expect_size(t, FLAC__int8, 1)
 	_u.expect_size(t, FLAC__int16, 2)
 	_u.expect_size(t, FLAC__int32, 4)
@@ -21,58 +21,58 @@ verify_sizes :: proc(t: ^testing.T) {
 }
 
 @(test)
-verify_struct_sizes :: proc(t: ^testing.T) {
+verify_struct_sizes :: proc(t: ^_t.T) {
 	_u.expect_size(t, FLAC__StreamMetadata_StreamInfo, 56)
 
 }
 
 @(test)
-const_strings :: proc(t: ^testing.T) {
-	testing.expectf(t, FLAC__VERSION_STRING == "git-7f7da558 20240226", "version=%s", FLAC__VERSION_STRING)
+const_strings :: proc(t: ^_t.T) {
+	_t.expectf(t, FLAC__VERSION_STRING == "git-7f7da558 20240226", "version=%s", FLAC__VERSION_STRING)
 }
 
 @(test)
-can_construct_decoder :: proc(t: ^testing.T) {
+can_construct_decoder :: proc(t: ^_t.T) {
 	decoder := FLAC__stream_decoder_new()
 	defer FLAC__stream_decoder_delete(decoder)
 
-	testing.expect(t, decoder != nil)
+	_t.expect(t, decoder != nil)
 }
 
 @(test)
-stream_decoder_get_state :: proc(t: ^testing.T) {
+stream_decoder_get_state :: proc(t: ^_t.T) {
 	decoder := FLAC__stream_decoder_new()
 	defer FLAC__stream_decoder_delete(decoder)
-	testing.expect(t, decoder != nil)
+	_t.expect(t, decoder != nil)
 	state := FLAC__stream_decoder_get_state(decoder)
 	//fmt.printf("%v\n", state)
-	testing.expect(t, state == .FLAC__STREAM_DECODER_UNINITIALIZED)
+	_t.expect(t, state == .FLAC__STREAM_DECODER_UNINITIALIZED)
 }
 
 @(test)
-stream_decoder_get_resolved_state_string :: proc(t: ^testing.T) {
+stream_decoder_get_resolved_state_string :: proc(t: ^_t.T) {
 	decoder := FLAC__stream_decoder_new()
 	defer FLAC__stream_decoder_delete(decoder)
-	testing.expect(t, decoder != nil)
+	_t.expect(t, decoder != nil)
 	state := FLAC__stream_decoder_get_resolved_state_string(decoder)
 	//fmt.printf("%v\n", state)
-	testing.expect(t, state == "FLAC__STREAM_DECODER_UNINITIALIZED")
+	_t.expect(t, state == "FLAC__STREAM_DECODER_UNINITIALIZED")
 }
 
 @(test)
-stream_decoder_get_md5_checking :: proc(t: ^testing.T) {
+stream_decoder_get_md5_checking :: proc(t: ^_t.T) {
 	decoder := FLAC__stream_decoder_new()
 	defer FLAC__stream_decoder_delete(decoder)
-	testing.expect(t, decoder != nil)
+	_t.expect(t, decoder != nil)
 	state := FLAC__stream_decoder_get_md5_checking(decoder)
 	//fmt.printf("%v\n", state)
-	testing.expect(t, state == false)
+	_t.expect(t, state == false)
 }
 
 @(test)
-can_construct_encoder :: proc(t: ^testing.T) {
+can_construct_encoder :: proc(t: ^_t.T) {
 	decoder := FLAC__stream_encoder_new()
 	defer FLAC__stream_encoder_delete(decoder)
 
-	testing.expect(t, decoder != nil)
+	_t.expect(t, decoder != nil)
 }
