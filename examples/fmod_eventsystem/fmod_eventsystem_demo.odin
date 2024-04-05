@@ -247,9 +247,9 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 		setdot(pos, canvas.COLOR_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
-		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
+		fmt.printfln("input %v %d", decode_scrpos(lparam), wparam)
 	case:
-	//fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
+	//fmt.printfln("input %v %d", decode_scrpos(lparam), wparam)
 	}
 	return 0
 }

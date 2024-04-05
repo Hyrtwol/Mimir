@@ -1,14 +1,10 @@
 package fmod
 
-when ODIN_ARCH == .amd64 {
-	foreign import fmodex_libs {"fmodex64_vc.lib", "fmod_event64.lib"}
-} else when ODIN_ARCH == .i386 {
+when ODIN_ARCH == .i386 {
 	foreign import fmodex_libs {"fmodex_vc.lib", "fmod_event.lib"}
 } else {
-	// todo
+	foreign import fmodex_libs {"fmodex64_vc.lib", "fmod_event64.lib"}
 }
-
-import _c "core:c"
 
 // FMOD_CAPS_NONE :: 0
 // FMOD_CAPS_HARDWARE :: 1
@@ -121,10 +117,11 @@ FMOD_TIMEUNIT_SENTENCE :: 524288
 FMOD_TIMEUNIT_SENTENCE_SUBSOUND :: 1048576
 FMOD_TIMEUNIT_BUFFERED :: 268435456
 
+FMOD_REVERB_FLAGS_DEFAULT :: 0
 FMOD_REVERB_FLAGS_HIGHQUALITYREVERB :: 1024
 FMOD_REVERB_FLAGS_HIGHQUALITYDPL2REVERB :: 2048
 FMOD_REVERB_FLAGS_HARDWAREONLY :: 4096
-FMOD_REVERB_FLAGS_DEFAULT :: 0
+
 FMOD_REVERB_CHANNELFLAGS_INSTANCE0 :: 16
 FMOD_REVERB_CHANNELFLAGS_INSTANCE1 :: 32
 FMOD_REVERB_CHANNELFLAGS_INSTANCE2 :: 64
@@ -167,50 +164,50 @@ FMOD_EVENT_NET_PORT :: 17997
 FMOD_SYSTEM_CALLBACK :: #type proc(system: ^FMOD_SYSTEM, type: FMOD_SYSTEM_CALLBACKTYPE, commanddata1: rawptr, commanddata2: rawptr) -> FMOD_RESULT
 FMOD_CHANNEL_CALLBACK :: #type proc(channel: ^FMOD_CHANNEL, type: FMOD_CHANNEL_CALLBACKTYPE, commanddata1: rawptr, commanddata2: rawptr) -> FMOD_RESULT
 FMOD_SOUND_NONBLOCKCALLBACK :: #type proc(sound: ^FMOD_SOUND, result: FMOD_RESULT) -> FMOD_RESULT
-FMOD_SOUND_PCMREADCALLBACK :: #type proc(sound: ^FMOD_SOUND, data: rawptr, datalen: _c.uint) -> FMOD_RESULT
-FMOD_SOUND_PCMSETPOSCALLBACK :: #type proc(sound: ^FMOD_SOUND, subsound: _c.int, position: _c.uint, postype: _c.uint) -> FMOD_RESULT
-FMOD_FILE_OPENCALLBACK :: #type proc(name: cstring, unicode: _c.int, filesize: ^_c.uint, handle: ^rawptr, userdata: ^rawptr) -> FMOD_RESULT
+FMOD_SOUND_PCMREADCALLBACK :: #type proc(sound: ^FMOD_SOUND, data: rawptr, datalen: u32) -> FMOD_RESULT
+FMOD_SOUND_PCMSETPOSCALLBACK :: #type proc(sound: ^FMOD_SOUND, subsound: i32, position: u32, postype: u32) -> FMOD_RESULT
+FMOD_FILE_OPENCALLBACK :: #type proc(name: cstring, unicode: i32, filesize: ^u32, handle: ^rawptr, userdata: ^rawptr) -> FMOD_RESULT
 FMOD_FILE_CLOSECALLBACK :: #type proc(handle: rawptr, userdata: rawptr) -> FMOD_RESULT
-FMOD_FILE_READCALLBACK :: #type proc(handle: rawptr, buffer: rawptr, sizebytes: _c.uint, bytesread: ^_c.uint, userdata: rawptr) -> FMOD_RESULT
-FMOD_FILE_SEEKCALLBACK :: #type proc(handle: rawptr, pos: _c.uint, userdata: rawptr) -> FMOD_RESULT
+FMOD_FILE_READCALLBACK :: #type proc(handle: rawptr, buffer: rawptr, sizebytes: u32, bytesread: ^u32, userdata: rawptr) -> FMOD_RESULT
+FMOD_FILE_SEEKCALLBACK :: #type proc(handle: rawptr, pos: u32, userdata: rawptr) -> FMOD_RESULT
 FMOD_FILE_ASYNCREADCALLBACK :: #type proc(info: ^FMOD_ASYNCREADINFO, userdata: rawptr) -> FMOD_RESULT
 FMOD_FILE_ASYNCCANCELCALLBACK :: #type proc(handle: rawptr, userdata: rawptr) -> FMOD_RESULT
-FMOD_MEMORY_ALLOCCALLBACK :: #type proc(size: _c.uint, type: _c.uint, sourcestr: cstring) -> rawptr
-FMOD_MEMORY_REALLOCCALLBACK :: #type proc(ptr: rawptr, size: _c.uint, type: _c.uint, sourcestr: cstring) -> rawptr
-FMOD_MEMORY_FREECALLBACK :: #type proc(ptr: rawptr, type: _c.uint, sourcestr: cstring)
-FMOD_3D_ROLLOFFCALLBACK :: #type proc(channel: ^FMOD_CHANNEL, distance: _c.float) -> _c.float
-FMOD_CODEC_OPENCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, usermode: _c.uint, userexinfo: ^FMOD_CREATESOUNDEXINFO) -> FMOD_RESULT
+FMOD_MEMORY_ALLOCCALLBACK :: #type proc(size: u32, type: u32, sourcestr: cstring) -> rawptr
+FMOD_MEMORY_REALLOCCALLBACK :: #type proc(ptr: rawptr, size: u32, type: u32, sourcestr: cstring) -> rawptr
+FMOD_MEMORY_FREECALLBACK :: #type proc(ptr: rawptr, type: u32, sourcestr: cstring)
+FMOD_3D_ROLLOFFCALLBACK :: #type proc(channel: ^FMOD_CHANNEL, distance: f32) -> f32
+FMOD_CODEC_OPENCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, usermode: u32, userexinfo: ^FMOD_CREATESOUNDEXINFO) -> FMOD_RESULT
 FMOD_CODEC_CLOSECALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE) -> FMOD_RESULT
-FMOD_CODEC_READCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, buffer: rawptr, sizebytes: _c.uint, bytesread: ^_c.uint) -> FMOD_RESULT
-FMOD_CODEC_GETLENGTHCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, length: ^_c.uint, lengthtype: _c.uint) -> FMOD_RESULT
-FMOD_CODEC_SETPOSITIONCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, subsound: _c.int, position: _c.uint, postype: _c.uint) -> FMOD_RESULT
-FMOD_CODEC_GETPOSITIONCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, position: ^_c.uint, postype: _c.uint) -> FMOD_RESULT
-FMOD_CODEC_SOUNDCREATECALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, subsound: _c.int, sound: ^FMOD_SOUND) -> FMOD_RESULT
-FMOD_CODEC_METADATACALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, tagtype: FMOD_TAGTYPE, name: cstring, data: rawptr, datalen: _c.uint, datatype: FMOD_TAGDATATYPE, unique: _c.int) -> FMOD_RESULT
-FMOD_CODEC_GETWAVEFORMAT :: #type proc(codec_state: ^FMOD_CODEC_STATE, index: _c.int, waveformat: ^FMOD_CODEC_WAVEFORMAT) -> FMOD_RESULT
+FMOD_CODEC_READCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, buffer: rawptr, sizebytes: u32, bytesread: ^u32) -> FMOD_RESULT
+FMOD_CODEC_GETLENGTHCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, length: ^u32, lengthtype: u32) -> FMOD_RESULT
+FMOD_CODEC_SETPOSITIONCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, subsound: i32, position: u32, postype: u32) -> FMOD_RESULT
+FMOD_CODEC_GETPOSITIONCALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, position: ^u32, postype: u32) -> FMOD_RESULT
+FMOD_CODEC_SOUNDCREATECALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, subsound: i32, sound: ^FMOD_SOUND) -> FMOD_RESULT
+FMOD_CODEC_METADATACALLBACK :: #type proc(codec_state: ^FMOD_CODEC_STATE, tagtype: FMOD_TAGTYPE, name: cstring, data: rawptr, datalen: u32, datatype: FMOD_TAGDATATYPE, unique: i32) -> FMOD_RESULT
+FMOD_CODEC_GETWAVEFORMAT :: #type proc(codec_state: ^FMOD_CODEC_STATE, index: i32, waveformat: ^FMOD_CODEC_WAVEFORMAT) -> FMOD_RESULT
 FMOD_DSP_CREATECALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE) -> FMOD_RESULT
 FMOD_DSP_RELEASECALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE) -> FMOD_RESULT
 FMOD_DSP_RESETCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE) -> FMOD_RESULT
-FMOD_DSP_READCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, inbuffer: ^_c.float, outbuffer: ^_c.float, length: _c.uint, inchannels: _c.int, outchannels: _c.int) -> FMOD_RESULT
-FMOD_DSP_SETPOSITIONCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, pos: _c.uint) -> FMOD_RESULT
-FMOD_DSP_SETPARAMCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, index: _c.int, value: _c.float) -> FMOD_RESULT
-FMOD_DSP_GETPARAMCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, index: _c.int, value: ^_c.float, valuestr: cstring) -> FMOD_RESULT
-FMOD_DSP_DIALOGCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, hwnd: rawptr, show: _c.int) -> FMOD_RESULT
+FMOD_DSP_READCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, inbuffer: ^f32, outbuffer: ^f32, length: u32, inchannels: i32, outchannels: i32) -> FMOD_RESULT
+FMOD_DSP_SETPOSITIONCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, pos: u32) -> FMOD_RESULT
+FMOD_DSP_SETPARAMCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, index: i32, value: f32) -> FMOD_RESULT
+FMOD_DSP_GETPARAMCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, index: i32, value: ^f32, valuestr: cstring) -> FMOD_RESULT
+FMOD_DSP_DIALOGCALLBACK :: #type proc(dsp_state: ^FMOD_DSP_STATE, hwnd: rawptr, show: i32) -> FMOD_RESULT
 
 FMOD_EVENT_CALLBACK :: #type proc(event: ^FMOD_EVENT, type: FMOD_EVENT_CALLBACKTYPE, param1: rawptr, param2: rawptr, userdata: rawptr) -> FMOD_RESULT
 FMOD_EVENTQUEUE_CALLBACK :: #type proc(type: FMOD_EVENTQUEUE_CALLBACKTYPE, queue: ^FMOD_EVENTQUEUE, entry: ^FMOD_EVENTQUEUEENTRY, callbackuserdata: rawptr) -> FMOD_RESULT
 FMOD_MUSIC_CALLBACK :: #type proc(type: FMOD_MUSIC_CALLBACKTYPE, param1: rawptr, param2: rawptr, userdata: rawptr) -> FMOD_RESULT
-FMOD_OUTPUT_GETNUMDRIVERSCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, numdrivers: ^_c.int) -> FMOD_RESULT
-FMOD_OUTPUT_GETDRIVERNAMECALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, id: _c.int, name: cstring, namelen: _c.int) -> FMOD_RESULT
-FMOD_OUTPUT_GETDRIVERCAPSCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, id: _c.int, caps: ^_c.uint) -> FMOD_RESULT
-FMOD_OUTPUT_INITCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, selecteddriver: _c.int, flags: _c.uint, outputrate: ^_c.int, outputchannels: _c.int, outputformat: ^FMOD_SOUND_FORMAT, dspbufferlength: _c.int, dspnumbuffers: _c.int, extradriverdata: rawptr) -> FMOD_RESULT
+FMOD_OUTPUT_GETNUMDRIVERSCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, numdrivers: ^i32) -> FMOD_RESULT
+FMOD_OUTPUT_GETDRIVERNAMECALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, id: i32, name: cstring, namelen: i32) -> FMOD_RESULT
+FMOD_OUTPUT_GETDRIVERCAPSCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, id: i32, caps: ^u32) -> FMOD_RESULT
+FMOD_OUTPUT_INITCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, selecteddriver: i32, flags: u32, outputrate: ^i32, outputchannels: i32, outputformat: ^FMOD_SOUND_FORMAT, dspbufferlength: i32, dspnumbuffers: i32, extradriverdata: rawptr) -> FMOD_RESULT
 FMOD_OUTPUT_CLOSECALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE) -> FMOD_RESULT
 FMOD_OUTPUT_UPDATECALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE) -> FMOD_RESULT
 FMOD_OUTPUT_GETHANDLECALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, handle: ^rawptr) -> FMOD_RESULT
-FMOD_OUTPUT_GETPOSITIONCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, pcm: ^_c.uint) -> FMOD_RESULT
-FMOD_OUTPUT_LOCKCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, offset: _c.uint, length: _c.uint, ptr1: ^rawptr, ptr2: ^rawptr, len1: ^_c.uint, len2: ^_c.uint) -> FMOD_RESULT
-FMOD_OUTPUT_UNLOCKCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, ptr1: rawptr, ptr2: rawptr, len1: _c.uint, len2: _c.uint) -> FMOD_RESULT
-FMOD_OUTPUT_READFROMMIXER :: #type proc(output_state: ^FMOD_OUTPUT_STATE, buffer: rawptr, length: _c.uint) -> FMOD_RESULT
+FMOD_OUTPUT_GETPOSITIONCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, pcm: ^u32) -> FMOD_RESULT
+FMOD_OUTPUT_LOCKCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, offset: u32, length: u32, ptr1: ^rawptr, ptr2: ^rawptr, len1: ^u32, len2: ^u32) -> FMOD_RESULT
+FMOD_OUTPUT_UNLOCKCALLBACK :: #type proc(output_state: ^FMOD_OUTPUT_STATE, ptr1: rawptr, ptr2: rawptr, len1: u32, len2: u32) -> FMOD_RESULT
+FMOD_OUTPUT_READFROMMIXER :: #type proc(output_state: ^FMOD_OUTPUT_STATE, buffer: rawptr, length: u32) -> FMOD_RESULT
 
 FMOD_RESULT :: enum i32 {
 	FMOD_OK,
@@ -841,26 +838,22 @@ FMOD_GEOMETRY :: struct {}
 
 FMOD_SYNCPOINT :: struct {}
 
-// FMOD_VECTOR :: struct {
-//     x : _c.float,
-//     y : _c.float,
-//     z : _c.float,
-// };
+FMOD_VECTOR :: [3]f32
 
 FMOD_GUID :: struct {
-	Data1: _c.uint,
-	Data2: _c.ushort,
-	Data3: _c.ushort,
-	Data4: [8]_c.uchar,
+	Data1: u32,
+	Data2: u16,
+	Data3: u16,
+	Data4: [8]u8,
 }
 
 FMOD_ASYNCREADINFO :: struct {
 	handle:    rawptr,
-	offset:    _c.uint,
-	sizebytes: _c.uint,
-	priority:  _c.int,
+	offset:    u32,
+	sizebytes: u32,
+	priority:  i32,
 	buffer:    rawptr,
-	bytesread: _c.uint,
+	bytesread: u32,
 	result:    FMOD_RESULT,
 	userdata:  rawptr,
 }
@@ -870,35 +863,35 @@ FMOD_TAG :: struct {
 	datatype: FMOD_TAGDATATYPE,
 	name:     cstring,
 	data:     rawptr,
-	datalen:  _c.uint,
+	datalen:  u32,
 	updated:  FMOD_BOOL,
 }
 
 FMOD_CDTOC :: struct {
-	numtracks: _c.int,
-	min:       [100]_c.int,
-	sec:       [100]_c.int,
-	frame:     [100]_c.int,
+	numtracks: i32,
+	min:       [100]i32,
+	sec:       [100]i32,
+	frame:     [100]i32,
 }
 
 FMOD_CREATESOUNDEXINFO :: struct {
-	cbsize:              _c.int,
-	length:              _c.uint,
-	fileoffset:          _c.uint,
-	numchannels:         _c.int,
-	defaultfrequency:    _c.int,
+	cbsize:              i32,
+	length:              u32,
+	fileoffset:          u32,
+	numchannels:         i32,
+	defaultfrequency:    i32,
 	format:              FMOD_SOUND_FORMAT,
-	decodebuffersize:    _c.uint,
-	initialsubsound:     _c.int,
-	numsubsounds:        _c.int,
-	inclusionlist:       ^_c.int,
-	inclusionlistnum:    _c.int,
+	decodebuffersize:    u32,
+	initialsubsound:     i32,
+	numsubsounds:        i32,
+	inclusionlist:       ^i32,
+	inclusionlistnum:    i32,
 	pcmreadcallback:     FMOD_SOUND_PCMREADCALLBACK,
 	pcmsetposcallback:   FMOD_SOUND_PCMSETPOSCALLBACK,
 	nonblockcallback:    FMOD_SOUND_NONBLOCKCALLBACK,
 	dlsname:             cstring,
 	encryptionkey:       cstring,
-	maxpolyphony:        _c.int,
+	maxpolyphony:        i32,
 	userdata:            rawptr,
 	suggestedsoundtype:  FMOD_SOUND_TYPE,
 	useropen:            FMOD_FILE_OPENCALLBACK,
@@ -909,105 +902,105 @@ FMOD_CREATESOUNDEXINFO :: struct {
 	userasynccancel:     FMOD_FILE_ASYNCCANCELCALLBACK,
 	speakermap:          FMOD_SPEAKERMAPTYPE,
 	initialsoundgroup:   ^FMOD_SOUNDGROUP,
-	initialseekposition: _c.uint,
-	initialseekpostype:  _c.uint,
-	ignoresetfilesystem: _c.int,
-	cddaforceaspi:       _c.int,
-	audioqueuepolicy:    _c.uint,
-	minmidigranularity:  _c.uint,
-	nonblockthreadid:    _c.int,
+	initialseekposition: u32,
+	initialseekpostype:  u32,
+	ignoresetfilesystem: i32,
+	cddaforceaspi:       i32,
+	audioqueuepolicy:    u32,
+	minmidigranularity:  u32,
+	nonblockthreadid:    i32,
 }
 
 FMOD_REVERB_PROPERTIES :: struct {
-	Instance:         _c.int,
-	Environment:      _c.int,
-	EnvDiffusion:     _c.float,
-	Room:             _c.int,
-	RoomHF:           _c.int,
-	RoomLF:           _c.int,
-	DecayTime:        _c.float,
-	DecayHFRatio:     _c.float,
-	DecayLFRatio:     _c.float,
-	Reflections:      _c.int,
-	ReflectionsDelay: _c.float,
-	Reverb:           _c.int,
-	ReverbDelay:      _c.float,
-	ModulationTime:   _c.float,
-	ModulationDepth:  _c.float,
-	HFReference:      _c.float,
-	LFReference:      _c.float,
-	Diffusion:        _c.float,
-	Density:          _c.float,
-	Flags:            _c.uint,
+	Instance:         i32,
+	Environment:      i32,
+	EnvDiffusion:     f32,
+	Room:             i32,
+	RoomHF:           i32,
+	RoomLF:           i32,
+	DecayTime:        f32,
+	DecayHFRatio:     f32,
+	DecayLFRatio:     f32,
+	Reflections:      i32,
+	ReflectionsDelay: f32,
+	Reverb:           i32,
+	ReverbDelay:      f32,
+	ModulationTime:   f32,
+	ModulationDepth:  f32,
+	HFReference:      f32,
+	LFReference:      f32,
+	Diffusion:        f32,
+	Density:          f32,
+	Flags:            u32,
 }
 
 FMOD_REVERB_CHANNELPROPERTIES :: struct {
-	Direct:          _c.int,
-	Room:            _c.int,
-	Flags:           _c.uint,
+	Direct:          i32,
+	Room:            i32,
+	Flags:           u32,
 	ConnectionPoint: ^FMOD_DSP,
 }
 
 FMOD_ADVANCEDSETTINGS :: struct {
-	cbsize:                     _c.int,
-	maxMPEGcodecs:              _c.int,
-	maxADPCMcodecs:             _c.int,
-	maxXMAcodecs:               _c.int,
-	maxCELTcodecs:              _c.int,
-	maxVORBIScodecs:            _c.int,
-	maxAT9Codecs:               _c.int,
-	maxPCMcodecs:               _c.int,
-	ASIONumChannels:            _c.int,
+	cbsize:                     i32,
+	maxMPEGcodecs:              i32,
+	maxADPCMcodecs:             i32,
+	maxXMAcodecs:               i32,
+	maxCELTcodecs:              i32,
+	maxVORBIScodecs:            i32,
+	maxAT9Codecs:               i32,
+	maxPCMcodecs:               i32,
+	ASIONumChannels:            i32,
 	ASIOChannelList:            ^cstring,
 	ASIOSpeakerList:            ^FMOD_SPEAKER,
-	max3DReverbDSPs:            _c.int,
-	HRTFMinAngle:               _c.float,
-	HRTFMaxAngle:               _c.float,
-	HRTFFreq:                   _c.float,
-	vol0virtualvol:             _c.float,
-	eventqueuesize:             _c.int,
-	defaultDecodeBufferSize:    _c.uint,
+	max3DReverbDSPs:            i32,
+	HRTFMinAngle:               f32,
+	HRTFMaxAngle:               f32,
+	HRTFFreq:                   f32,
+	vol0virtualvol:             f32,
+	eventqueuesize:             i32,
+	defaultDecodeBufferSize:    u32,
 	debugLogFilename:           cstring,
-	profileport:                _c.ushort,
-	geometryMaxFadeTime:        _c.uint,
-	maxSpectrumWaveDataBuffers: _c.uint,
-	musicSystemCacheDelay:      _c.uint,
-	distanceFilterCenterFreq:   _c.float,
-	stackSizeStream:            _c.uint,
-	stackSizeNonBlocking:       _c.uint,
-	stackSizeMixer:             _c.uint,
+	profileport:                u16,
+	geometryMaxFadeTime:        u32,
+	maxSpectrumWaveDataBuffers: u32,
+	musicSystemCacheDelay:      u32,
+	distanceFilterCenterFreq:   f32,
+	stackSizeStream:            u32,
+	stackSizeNonBlocking:       u32,
+	stackSizeMixer:             u32,
 }
 
 FMOD_CODEC_STATE :: struct {
-	numsubsounds: _c.int,
+	numsubsounds: i32,
 	waveformat:   ^FMOD_CODEC_WAVEFORMAT,
 	plugindata:   rawptr,
 	filehandle:   rawptr,
-	filesize:     _c.uint,
+	filesize:     u32,
 	fileread:     FMOD_FILE_READCALLBACK,
 	fileseek:     FMOD_FILE_SEEKCALLBACK,
 	metadata:     FMOD_CODEC_METADATACALLBACK,
 }
 
 FMOD_CODEC_WAVEFORMAT :: struct {
-	name:        [256]_c.char,
+	name:        [256]u8,
 	format:      FMOD_SOUND_FORMAT,
-	channels:    _c.int,
-	frequency:   _c.int,
-	lengthbytes: _c.uint,
-	lengthpcm:   _c.uint,
-	blockalign:  _c.int,
-	loopstart:   _c.int,
-	loopend:     _c.int,
-	mode:        _c.uint,
-	channelmask: _c.uint,
+	channels:    i32,
+	frequency:   i32,
+	lengthbytes: u32,
+	lengthpcm:   u32,
+	blockalign:  i32,
+	loopstart:   i32,
+	loopend:     i32,
+	mode:        u32,
+	channelmask: u32,
 }
 
 FMOD_CODEC_DESCRIPTION :: struct {
 	name:            cstring,
-	version:         _c.uint,
-	defaultasstream: _c.int,
-	timeunits:       _c.uint,
+	version:         u32,
+	defaultasstream: i32,
+	timeunits:       u32,
 	open:            FMOD_CODEC_OPENCALLBACK,
 	close:           FMOD_CODEC_CLOSECALLBACK,
 	read:            FMOD_CODEC_READCALLBACK,
@@ -1021,86 +1014,86 @@ FMOD_CODEC_DESCRIPTION :: struct {
 FMOD_DSP_STATE :: struct {
 	instance:    ^FMOD_DSP,
 	plugindata:  rawptr,
-	speakermask: _c.ushort,
+	speakermask: u16,
 }
 
 FMOD_DSP_PARAMETERDESC :: struct {
-	min:         _c.float,
-	max:         _c.float,
-	defaultval:  _c.float,
-	name:        [16]_c.char,
-	label:       [16]_c.char,
+	min:         f32,
+	max:         f32,
+	defaultval:  f32,
+	name:        [16]u8,
+	label:       [16]u8,
 	description: cstring,
 }
 
 FMOD_DSP_DESCRIPTION :: struct {
-	name:          [32]_c.char,
-	version:       _c.uint,
-	channels:      _c.int,
+	name:          [32]u8,
+	version:       u32,
+	channels:      i32,
 	create:        FMOD_DSP_CREATECALLBACK,
 	release:       FMOD_DSP_RELEASECALLBACK,
 	reset:         FMOD_DSP_RESETCALLBACK,
 	read:          FMOD_DSP_READCALLBACK,
 	setposition:   FMOD_DSP_SETPOSITIONCALLBACK,
-	numparameters: _c.int,
+	numparameters: i32,
 	paramdesc:     ^FMOD_DSP_PARAMETERDESC,
 	setparameter:  FMOD_DSP_SETPARAMCALLBACK,
 	getparameter:  FMOD_DSP_GETPARAMCALLBACK,
 	config:        FMOD_DSP_DIALOGCALLBACK,
-	configwidth:   _c.int,
-	configheight:  _c.int,
+	configwidth:   i32,
+	configheight:  i32,
 	userdata:      rawptr,
 }
 
 FMOD_MEMORY_USAGE_DETAILS :: struct {
-	other:                 _c.uint,
-	string:                _c.uint,
-	system:                _c.uint,
-	plugins:               _c.uint,
-	output:                _c.uint,
-	channel:               _c.uint,
-	channelgroup:          _c.uint,
-	codec:                 _c.uint,
-	file:                  _c.uint,
-	sound:                 _c.uint,
-	secondaryram:          _c.uint,
-	soundgroup:            _c.uint,
-	streambuffer:          _c.uint,
-	dspconnection:         _c.uint,
-	dsp:                   _c.uint,
-	dspcodec:              _c.uint,
-	profile:               _c.uint,
-	recordbuffer:          _c.uint,
-	reverb:                _c.uint,
-	reverbchannelprops:    _c.uint,
-	geometry:              _c.uint,
-	syncpoint:             _c.uint,
-	eventsystem:           _c.uint,
-	musicsystem:           _c.uint,
-	fev:                   _c.uint,
-	memoryfsb:             _c.uint,
-	eventproject:          _c.uint,
-	eventgroupi:           _c.uint,
-	soundbankclass:        _c.uint,
-	soundbanklist:         _c.uint,
-	streaminstance:        _c.uint,
-	sounddefclass:         _c.uint,
-	sounddefdefclass:      _c.uint,
-	sounddefpool:          _c.uint,
-	reverbdef:             _c.uint,
-	eventreverb:           _c.uint,
-	userproperty:          _c.uint,
-	eventinstance:         _c.uint,
-	eventinstance_complex: _c.uint,
-	eventinstance_simple:  _c.uint,
-	eventinstance_layer:   _c.uint,
-	eventinstance_sound:   _c.uint,
-	eventenvelope:         _c.uint,
-	eventenvelopedef:      _c.uint,
-	eventparameter:        _c.uint,
-	eventcategory:         _c.uint,
-	eventenvelopepoint:    _c.uint,
-	eventinstancepool:     _c.uint,
+	other:                 u32,
+	string:                u32,
+	system:                u32,
+	plugins:               u32,
+	output:                u32,
+	channel:               u32,
+	channelgroup:          u32,
+	codec:                 u32,
+	file:                  u32,
+	sound:                 u32,
+	secondaryram:          u32,
+	soundgroup:            u32,
+	streambuffer:          u32,
+	dspconnection:         u32,
+	dsp:                   u32,
+	dspcodec:              u32,
+	profile:               u32,
+	recordbuffer:          u32,
+	reverb:                u32,
+	reverbchannelprops:    u32,
+	geometry:              u32,
+	syncpoint:             u32,
+	eventsystem:           u32,
+	musicsystem:           u32,
+	fev:                   u32,
+	memoryfsb:             u32,
+	eventproject:          u32,
+	eventgroupi:           u32,
+	soundbankclass:        u32,
+	soundbanklist:         u32,
+	streaminstance:        u32,
+	sounddefclass:         u32,
+	sounddefdefclass:      u32,
+	sounddefpool:          u32,
+	reverbdef:             u32,
+	eventreverb:           u32,
+	userproperty:          u32,
+	eventinstance:         u32,
+	eventinstance_complex: u32,
+	eventinstance_simple:  u32,
+	eventinstance_layer:   u32,
+	eventinstance_sound:   u32,
+	eventenvelope:         u32,
+	eventenvelopedef:      u32,
+	eventparameter:        u32,
+	eventcategory:         u32,
+	eventenvelopepoint:    u32,
+	eventinstancepool:     u32,
 }
 
 FMOD_EVENTSYSTEM :: struct {}
@@ -1126,78 +1119,78 @@ FMOD_MUSICPROMPT :: struct {}
 FMOD_MUSICSYSTEM :: struct {}
 
 FMOD_EVENT_WAVEBANKINFO :: struct {
-	name:         [256]_c.char,
-	streamrefcnt: _c.int,
-	samplerefcnt: _c.int,
-	numstreams:   _c.int,
-	maxstreams:   _c.int,
-	streamsinuse: _c.int,
-	streammemory: _c.uint,
-	samplememory: _c.uint,
-	type:         _c.int,
+	name:         [256]u8,
+	streamrefcnt: i32,
+	samplerefcnt: i32,
+	numstreams:   i32,
+	maxstreams:   i32,
+	streamsinuse: i32,
+	streammemory: u32,
+	samplememory: u32,
+	type:         i32,
 }
 
 FMOD_EVENT_SYSTEMINFO :: struct {
-	numevents:        _c.int,
-	numinstances:     _c.int,
-	maxwavebanks:     _c.int,
+	numevents:        i32,
+	numinstances:     i32,
+	maxwavebanks:     i32,
 	wavebankinfo:     ^FMOD_EVENT_WAVEBANKINFO,
-	numplayingevents: _c.int,
+	numplayingevents: i32,
 	playingevents:    ^^FMOD_EVENT,
-	numloadsqueued:   [5]_c.int,
+	numloadsqueued:   [5]i32,
 }
 
 FMOD_EVENT_PROJECTINFO :: struct {
-	index:            _c.int,
-	name:             [256]_c.char,
-	numevents:        _c.int,
-	numinstances:     _c.int,
-	maxwavebanks:     _c.int,
+	index:            i32,
+	name:             [256]u8,
+	numevents:        i32,
+	numinstances:     i32,
+	maxwavebanks:     i32,
 	wavebankinfo:     ^FMOD_EVENT_WAVEBANKINFO,
-	numplayingevents: _c.int,
+	numplayingevents: i32,
 	playingevents:    ^^FMOD_EVENT,
 }
 
 FMOD_EVENT_INFO :: struct {
-	memoryused:      _c.int,
-	positionms:      _c.int,
-	lengthms:        _c.int,
-	channelsplaying: _c.int,
-	instancesactive: _c.int,
-	maxwavebanks:    _c.int,
+	memoryused:      i32,
+	positionms:      i32,
+	lengthms:        i32,
+	channelsplaying: i32,
+	instancesactive: i32,
+	maxwavebanks:    i32,
 	wavebankinfo:    ^FMOD_EVENT_WAVEBANKINFO,
-	projectid:       _c.uint,
-	systemid:        _c.uint,
-	audibility:      _c.float,
-	numinstances:    _c.int,
+	projectid:       u32,
+	systemid:        u32,
+	audibility:      f32,
+	numinstances:    i32,
 	instances:       ^^FMOD_EVENT,
 	guid:            ^FMOD_GUID,
 }
 
 FMOD_EVENT_SOUNDDEFINFO :: struct {
 	name:       cstring,
-	numentries: _c.int,
+	numentries: i32,
 	entrynames: ^cstring,
 	entrytypes: ^FMOD_EVENT_SOUNDDEF_ENTRYTYPE,
 }
 
 FMOD_EVENT_LOADINFO :: struct {
-	size:                       _c.uint,
+	size:                       u32,
 	encryptionkey:              cstring,
-	sounddefentrylimit:         _c.float,
-	loadfrommemory_length:      _c.uint,
-	override_category_vals:     _c.int,
-	sizeof_instancepool_simple: _c.uint,
+	sounddefentrylimit:         f32,
+	loadfrommemory_length:      u32,
+	override_category_vals:     i32,
+	sizeof_instancepool_simple: u32,
 }
 
 FMOD_MUSIC_INFO :: struct {
-	starving:           _c.int,
-	all_samples_loaded: _c.int,
+	starving:           i32,
+	all_samples_loaded: i32,
 }
 
 FMOD_MUSIC_ENTITY :: struct {
 	name: cstring,
-	id:   _c.uint,
+	id:   u32,
 }
 
 FMOD_MUSIC_ITERATOR :: struct {
@@ -1206,14 +1199,14 @@ FMOD_MUSIC_ITERATOR :: struct {
 }
 
 FMOD_MUSIC_SAMPLE_INFO :: struct {
-	segment_id: _c.uint,
-	index:      _c.uint,
+	segment_id: u32,
+	index:      u32,
 	filename:   cstring,
 }
 
 FMOD_MUSIC_SEGMENT_INFO :: struct {
-	segment_id: _c.uint,
-	theme_id:   _c.uint,
+	segment_id: u32,
+	theme_id:   u32,
 }
 
 FMOD_OUTPUT_STATE :: struct {
@@ -1223,8 +1216,8 @@ FMOD_OUTPUT_STATE :: struct {
 
 FMOD_OUTPUT_DESCRIPTION :: struct {
 	name:          cstring,
-	version:       _c.uint,
-	polling:       _c.int,
+	version:       u32,
+	polling:       i32,
 	getnumdrivers: FMOD_OUTPUT_GETNUMDRIVERSCALLBACK,
 	getdrivername: FMOD_OUTPUT_GETDRIVERNAMECALLBACK,
 	getdrivercaps: FMOD_OUTPUT_GETDRIVERCAPSCALLBACK,
@@ -1239,30 +1232,30 @@ FMOD_OUTPUT_DESCRIPTION :: struct {
 
 @(default_calling_convention = "c")
 foreign fmodex_libs {
-	FMOD_Memory_Initialize :: proc(poolmem: rawptr, poollen: _c.int, useralloc: FMOD_MEMORY_ALLOCCALLBACK, userrealloc: FMOD_MEMORY_REALLOCCALLBACK, userfree: FMOD_MEMORY_FREECALLBACK, memtypeflags: _c.uint) -> FMOD_RESULT ---
-	FMOD_Memory_GetStats :: proc(currentalloced: ^_c.int, maxalloced: ^_c.int, blocking: FMOD_BOOL) -> FMOD_RESULT ---
-	FMOD_Debug_SetLevel :: proc(level: _c.uint) -> FMOD_RESULT ---
-	FMOD_Debug_GetLevel :: proc(level: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_File_SetDiskBusy :: proc(busy: _c.int) -> FMOD_RESULT ---
-	FMOD_File_GetDiskBusy :: proc(busy: ^_c.int) -> FMOD_RESULT ---
+	FMOD_Memory_Initialize :: proc(poolmem: rawptr, poollen: i32, useralloc: FMOD_MEMORY_ALLOCCALLBACK, userrealloc: FMOD_MEMORY_REALLOCCALLBACK, userfree: FMOD_MEMORY_FREECALLBACK, memtypeflags: u32) -> FMOD_RESULT ---
+	FMOD_Memory_GetStats :: proc(currentalloced: ^i32, maxalloced: ^i32, blocking: FMOD_BOOL) -> FMOD_RESULT ---
+	FMOD_Debug_SetLevel :: proc(level: u32) -> FMOD_RESULT ---
+	FMOD_Debug_GetLevel :: proc(level: ^u32) -> FMOD_RESULT ---
+	FMOD_File_SetDiskBusy :: proc(busy: i32) -> FMOD_RESULT ---
+	FMOD_File_GetDiskBusy :: proc(busy: ^i32) -> FMOD_RESULT ---
 	FMOD_System_Create :: proc(system: ^^FMOD_SYSTEM) -> FMOD_RESULT ---
 	FMOD_System_Release :: proc(system: ^FMOD_SYSTEM) -> FMOD_RESULT ---
 	FMOD_System_SetOutput :: proc(system: ^FMOD_SYSTEM, output: FMOD_OUTPUTTYPE) -> FMOD_RESULT ---
 	FMOD_System_GetOutput :: proc(system: ^FMOD_SYSTEM, output: ^FMOD_OUTPUTTYPE) -> FMOD_RESULT ---
-	FMOD_System_GetNumDrivers :: proc(system: ^FMOD_SYSTEM, numdrivers: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetDriverInfo :: proc(system: ^FMOD_SYSTEM, id: _c.int, name: cstring, namelen: _c.int, guid: ^FMOD_GUID) -> FMOD_RESULT ---
-	FMOD_System_GetDriverInfoW :: proc(system: ^FMOD_SYSTEM, id: _c.int, name: ^_c.short, namelen: _c.int, guid: ^FMOD_GUID) -> FMOD_RESULT ---
-	FMOD_System_GetDriverCaps :: proc(system: ^FMOD_SYSTEM, id: _c.int, caps: ^FMOD_CAPS, controlpaneloutputrate: ^_c.int, controlpanelspeakermode: ^FMOD_SPEAKERMODE) -> FMOD_RESULT ---
-	FMOD_System_SetDriver :: proc(system: ^FMOD_SYSTEM, driver: _c.int) -> FMOD_RESULT ---
-	FMOD_System_GetDriver :: proc(system: ^FMOD_SYSTEM, driver: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_SetHardwareChannels :: proc(system: ^FMOD_SYSTEM, numhardwarechannels: _c.int) -> FMOD_RESULT ---
-	FMOD_System_SetSoftwareChannels :: proc(system: ^FMOD_SYSTEM, numsoftwarechannels: _c.int) -> FMOD_RESULT ---
-	FMOD_System_GetSoftwareChannels :: proc(system: ^FMOD_SYSTEM, numsoftwarechannels: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_SetSoftwareFormat :: proc(system: ^FMOD_SYSTEM, samplerate: _c.int, format: FMOD_SOUND_FORMAT, numoutputchannels: _c.int, maxinputchannels: _c.int, resamplemethod: FMOD_DSP_RESAMPLER) -> FMOD_RESULT ---
-	FMOD_System_GetSoftwareFormat :: proc(system: ^FMOD_SYSTEM, samplerate: ^_c.int, format: ^FMOD_SOUND_FORMAT, numoutputchannels: ^_c.int, maxinputchannels: ^_c.int, resamplemethod: ^FMOD_DSP_RESAMPLER, bits: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_SetDSPBufferSize :: proc(system: ^FMOD_SYSTEM, bufferlength: _c.uint, numbuffers: _c.int) -> FMOD_RESULT ---
-	FMOD_System_GetDSPBufferSize :: proc(system: ^FMOD_SYSTEM, bufferlength: ^_c.uint, numbuffers: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_SetFileSystem :: proc(system: ^FMOD_SYSTEM, useropen: FMOD_FILE_OPENCALLBACK, userclose: FMOD_FILE_CLOSECALLBACK, userread: FMOD_FILE_READCALLBACK, userseek: FMOD_FILE_SEEKCALLBACK, userasyncread: FMOD_FILE_ASYNCREADCALLBACK, userasynccancel: FMOD_FILE_ASYNCCANCELCALLBACK, blockalign: _c.int) -> FMOD_RESULT ---
+	FMOD_System_GetNumDrivers :: proc(system: ^FMOD_SYSTEM, numdrivers: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetDriverInfo :: proc(system: ^FMOD_SYSTEM, id: i32, name: cstring, namelen: i32, guid: ^FMOD_GUID) -> FMOD_RESULT ---
+	FMOD_System_GetDriverInfoW :: proc(system: ^FMOD_SYSTEM, id: i32, name: ^i16, namelen: i32, guid: ^FMOD_GUID) -> FMOD_RESULT ---
+	FMOD_System_GetDriverCaps :: proc(system: ^FMOD_SYSTEM, id: i32, caps: ^FMOD_CAPS, controlpaneloutputrate: ^i32, controlpanelspeakermode: ^FMOD_SPEAKERMODE) -> FMOD_RESULT ---
+	FMOD_System_SetDriver :: proc(system: ^FMOD_SYSTEM, driver: i32) -> FMOD_RESULT ---
+	FMOD_System_GetDriver :: proc(system: ^FMOD_SYSTEM, driver: ^i32) -> FMOD_RESULT ---
+	FMOD_System_SetHardwareChannels :: proc(system: ^FMOD_SYSTEM, numhardwarechannels: i32) -> FMOD_RESULT ---
+	FMOD_System_SetSoftwareChannels :: proc(system: ^FMOD_SYSTEM, numsoftwarechannels: i32) -> FMOD_RESULT ---
+	FMOD_System_GetSoftwareChannels :: proc(system: ^FMOD_SYSTEM, numsoftwarechannels: ^i32) -> FMOD_RESULT ---
+	FMOD_System_SetSoftwareFormat :: proc(system: ^FMOD_SYSTEM, samplerate: i32, format: FMOD_SOUND_FORMAT, numoutputchannels: i32, maxinputchannels: i32, resamplemethod: FMOD_DSP_RESAMPLER) -> FMOD_RESULT ---
+	FMOD_System_GetSoftwareFormat :: proc(system: ^FMOD_SYSTEM, samplerate: ^i32, format: ^FMOD_SOUND_FORMAT, numoutputchannels: ^i32, maxinputchannels: ^i32, resamplemethod: ^FMOD_DSP_RESAMPLER, bits: ^i32) -> FMOD_RESULT ---
+	FMOD_System_SetDSPBufferSize :: proc(system: ^FMOD_SYSTEM, bufferlength: u32, numbuffers: i32) -> FMOD_RESULT ---
+	FMOD_System_GetDSPBufferSize :: proc(system: ^FMOD_SYSTEM, bufferlength: ^u32, numbuffers: ^i32) -> FMOD_RESULT ---
+	FMOD_System_SetFileSystem :: proc(system: ^FMOD_SYSTEM, useropen: FMOD_FILE_OPENCALLBACK, userclose: FMOD_FILE_CLOSECALLBACK, userread: FMOD_FILE_READCALLBACK, userseek: FMOD_FILE_SEEKCALLBACK, userasyncread: FMOD_FILE_ASYNCREADCALLBACK, userasynccancel: FMOD_FILE_ASYNCCANCELCALLBACK, blockalign: i32) -> FMOD_RESULT ---
 	FMOD_System_AttachFileSystem :: proc(system: ^FMOD_SYSTEM, useropen: FMOD_FILE_OPENCALLBACK, userclose: FMOD_FILE_CLOSECALLBACK, userread: FMOD_FILE_READCALLBACK, userseek: FMOD_FILE_SEEKCALLBACK) -> FMOD_RESULT ---
 	FMOD_System_SetAdvancedSettings :: proc(system: ^FMOD_SYSTEM, settings: ^FMOD_ADVANCEDSETTINGS) -> FMOD_RESULT ---
 	FMOD_System_GetAdvancedSettings :: proc(system: ^FMOD_SYSTEM, settings: ^FMOD_ADVANCEDSETTINGS) -> FMOD_RESULT ---
@@ -1270,42 +1263,42 @@ foreign fmodex_libs {
 	FMOD_System_GetSpeakerMode :: proc(system: ^FMOD_SYSTEM, speakermode: ^FMOD_SPEAKERMODE) -> FMOD_RESULT ---
 	FMOD_System_SetCallback :: proc(system: ^FMOD_SYSTEM, callback: FMOD_SYSTEM_CALLBACK) -> FMOD_RESULT ---
 	FMOD_System_SetPluginPath :: proc(system: ^FMOD_SYSTEM, path: cstring) -> FMOD_RESULT ---
-	FMOD_System_LoadPlugin :: proc(system: ^FMOD_SYSTEM, filename: cstring, handle: ^_c.uint, priority: _c.uint) -> FMOD_RESULT ---
-	FMOD_System_UnloadPlugin :: proc(system: ^FMOD_SYSTEM, handle: _c.uint) -> FMOD_RESULT ---
-	FMOD_System_GetNumPlugins :: proc(system: ^FMOD_SYSTEM, plugintype: FMOD_PLUGINTYPE, numplugins: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetPluginHandle :: proc(system: ^FMOD_SYSTEM, plugintype: FMOD_PLUGINTYPE, index: _c.int, handle: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_System_GetPluginInfo :: proc(system: ^FMOD_SYSTEM, handle: _c.uint, plugintype: ^FMOD_PLUGINTYPE, name: cstring, namelen: _c.int, version: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_System_SetOutputByPlugin :: proc(system: ^FMOD_SYSTEM, handle: _c.uint) -> FMOD_RESULT ---
-	FMOD_System_GetOutputByPlugin :: proc(system: ^FMOD_SYSTEM, handle: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_System_CreateDSPByPlugin :: proc(system: ^FMOD_SYSTEM, handle: _c.uint, dsp: ^^FMOD_DSP) -> FMOD_RESULT ---
-	FMOD_System_RegisterCodec :: proc(system: ^FMOD_SYSTEM, description: ^FMOD_CODEC_DESCRIPTION, handle: ^_c.uint, priority: _c.uint) -> FMOD_RESULT ---
-	FMOD_System_RegisterDSP :: proc(system: ^FMOD_SYSTEM, description: ^FMOD_DSP_DESCRIPTION, handle: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_System_Init :: proc(system: ^FMOD_SYSTEM, maxchannels: _c.int, flags: _c.uint, extradriverdata: rawptr) -> FMOD_RESULT ---
+	FMOD_System_LoadPlugin :: proc(system: ^FMOD_SYSTEM, filename: cstring, handle: ^u32, priority: u32) -> FMOD_RESULT ---
+	FMOD_System_UnloadPlugin :: proc(system: ^FMOD_SYSTEM, handle: u32) -> FMOD_RESULT ---
+	FMOD_System_GetNumPlugins :: proc(system: ^FMOD_SYSTEM, plugintype: FMOD_PLUGINTYPE, numplugins: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetPluginHandle :: proc(system: ^FMOD_SYSTEM, plugintype: FMOD_PLUGINTYPE, index: i32, handle: ^u32) -> FMOD_RESULT ---
+	FMOD_System_GetPluginInfo :: proc(system: ^FMOD_SYSTEM, handle: u32, plugintype: ^FMOD_PLUGINTYPE, name: cstring, namelen: i32, version: ^u32) -> FMOD_RESULT ---
+	FMOD_System_SetOutputByPlugin :: proc(system: ^FMOD_SYSTEM, handle: u32) -> FMOD_RESULT ---
+	FMOD_System_GetOutputByPlugin :: proc(system: ^FMOD_SYSTEM, handle: ^u32) -> FMOD_RESULT ---
+	FMOD_System_CreateDSPByPlugin :: proc(system: ^FMOD_SYSTEM, handle: u32, dsp: ^^FMOD_DSP) -> FMOD_RESULT ---
+	FMOD_System_RegisterCodec :: proc(system: ^FMOD_SYSTEM, description: ^FMOD_CODEC_DESCRIPTION, handle: ^u32, priority: u32) -> FMOD_RESULT ---
+	FMOD_System_RegisterDSP :: proc(system: ^FMOD_SYSTEM, description: ^FMOD_DSP_DESCRIPTION, handle: ^u32) -> FMOD_RESULT ---
+	FMOD_System_Init :: proc(system: ^FMOD_SYSTEM, maxchannels: i32, flags: u32, extradriverdata: rawptr) -> FMOD_RESULT ---
 	FMOD_System_Close :: proc(system: ^FMOD_SYSTEM) -> FMOD_RESULT ---
 	FMOD_System_Update :: proc(system: ^FMOD_SYSTEM) -> FMOD_RESULT ---
-	FMOD_System_Set3DSettings :: proc(system: ^FMOD_SYSTEM, dopplerscale: _c.float, distancefactor: _c.float, rolloffscale: _c.float) -> FMOD_RESULT ---
-	FMOD_System_Get3DSettings :: proc(system: ^FMOD_SYSTEM, dopplerscale: ^_c.float, distancefactor: ^_c.float, rolloffscale: ^_c.float) -> FMOD_RESULT ---
-	FMOD_System_Set3DNumListeners :: proc(system: ^FMOD_SYSTEM, numlisteners: _c.int) -> FMOD_RESULT ---
-	FMOD_System_Get3DNumListeners :: proc(system: ^FMOD_SYSTEM, numlisteners: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_Set3DListenerAttributes :: proc(system: ^FMOD_SYSTEM, listener: _c.int, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_System_Get3DListenerAttributes :: proc(system: ^FMOD_SYSTEM, listener: _c.int, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
+	FMOD_System_Set3DSettings :: proc(system: ^FMOD_SYSTEM, dopplerscale: f32, distancefactor: f32, rolloffscale: f32) -> FMOD_RESULT ---
+	FMOD_System_Get3DSettings :: proc(system: ^FMOD_SYSTEM, dopplerscale: ^f32, distancefactor: ^f32, rolloffscale: ^f32) -> FMOD_RESULT ---
+	FMOD_System_Set3DNumListeners :: proc(system: ^FMOD_SYSTEM, numlisteners: i32) -> FMOD_RESULT ---
+	FMOD_System_Get3DNumListeners :: proc(system: ^FMOD_SYSTEM, numlisteners: ^i32) -> FMOD_RESULT ---
+	FMOD_System_Set3DListenerAttributes :: proc(system: ^FMOD_SYSTEM, listener: i32, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
+	FMOD_System_Get3DListenerAttributes :: proc(system: ^FMOD_SYSTEM, listener: i32, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_System_Set3DRolloffCallback :: proc(system: ^FMOD_SYSTEM, callback: FMOD_3D_ROLLOFFCALLBACK) -> FMOD_RESULT ---
-	FMOD_System_Set3DSpeakerPosition :: proc(system: ^FMOD_SYSTEM, speaker: FMOD_SPEAKER, x: _c.float, y: _c.float, active: FMOD_BOOL) -> FMOD_RESULT ---
-	FMOD_System_Get3DSpeakerPosition :: proc(system: ^FMOD_SYSTEM, speaker: FMOD_SPEAKER, x: ^_c.float, y: ^_c.float, active: ^FMOD_BOOL) -> FMOD_RESULT ---
-	FMOD_System_SetStreamBufferSize :: proc(system: ^FMOD_SYSTEM, filebuffersize: _c.uint, filebuffersizetype: _c.uint) -> FMOD_RESULT ---
-	FMOD_System_GetStreamBufferSize :: proc(system: ^FMOD_SYSTEM, filebuffersize: ^_c.uint, filebuffersizetype: ^_c.uint) -> FMOD_RESULT ---
+	FMOD_System_Set3DSpeakerPosition :: proc(system: ^FMOD_SYSTEM, speaker: FMOD_SPEAKER, x: f32, y: f32, active: FMOD_BOOL) -> FMOD_RESULT ---
+	FMOD_System_Get3DSpeakerPosition :: proc(system: ^FMOD_SYSTEM, speaker: FMOD_SPEAKER, x: ^f32, y: ^f32, active: ^FMOD_BOOL) -> FMOD_RESULT ---
+	FMOD_System_SetStreamBufferSize :: proc(system: ^FMOD_SYSTEM, filebuffersize: u32, filebuffersizetype: u32) -> FMOD_RESULT ---
+	FMOD_System_GetStreamBufferSize :: proc(system: ^FMOD_SYSTEM, filebuffersize: ^u32, filebuffersizetype: ^u32) -> FMOD_RESULT ---
 	FMOD_System_GetVersion :: proc(system: ^FMOD_SYSTEM, version: ^FMOD_VERSION) -> FMOD_RESULT ---
 	FMOD_System_GetOutputHandle :: proc(system: ^FMOD_SYSTEM, handle: ^rawptr) -> FMOD_RESULT ---
-	FMOD_System_GetChannelsPlaying :: proc(system: ^FMOD_SYSTEM, channels: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetHardwareChannels :: proc(system: ^FMOD_SYSTEM, numhardwarechannels: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetCPUUsage :: proc(system: ^FMOD_SYSTEM, dsp: ^_c.float, stream: ^_c.float, geometry: ^_c.float, update: ^_c.float, total: ^_c.float) -> FMOD_RESULT ---
-	FMOD_System_GetSoundRAM :: proc(system: ^FMOD_SYSTEM, currentalloced: ^_c.int, maxalloced: ^_c.int, total: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetNumCDROMDrives :: proc(system: ^FMOD_SYSTEM, numdrives: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetCDROMDriveName :: proc(system: ^FMOD_SYSTEM, drive: _c.int, drivename: cstring, drivenamelen: _c.int, scsiname: cstring, scsinamelen: _c.int, devicename: cstring, devicenamelen: _c.int) -> FMOD_RESULT ---
-	FMOD_System_GetSpectrum :: proc(system: ^FMOD_SYSTEM, spectrumarray: ^_c.float, numvalues: _c.int, channeloffset: _c.int, windowtype: FMOD_DSP_FFT_WINDOW) -> FMOD_RESULT ---
-	FMOD_System_GetWaveData :: proc(system: ^FMOD_SYSTEM, wavearray: ^_c.float, numvalues: _c.int, channeloffset: _c.int) -> FMOD_RESULT ---
-	FMOD_System_CreateSound :: proc(system: ^FMOD_SYSTEM, name_or_data: cstring, mode: _c.uint, exinfo: ^FMOD_CREATESOUNDEXINFO, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
-	FMOD_System_CreateStream :: proc(system: ^FMOD_SYSTEM, name_or_data: cstring, mode: _c.uint, exinfo: ^FMOD_CREATESOUNDEXINFO, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
+	FMOD_System_GetChannelsPlaying :: proc(system: ^FMOD_SYSTEM, channels: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetHardwareChannels :: proc(system: ^FMOD_SYSTEM, numhardwarechannels: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetCPUUsage :: proc(system: ^FMOD_SYSTEM, dsp: ^f32, stream: ^f32, geometry: ^f32, update: ^f32, total: ^f32) -> FMOD_RESULT ---
+	FMOD_System_GetSoundRAM :: proc(system: ^FMOD_SYSTEM, currentalloced: ^i32, maxalloced: ^i32, total: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetNumCDROMDrives :: proc(system: ^FMOD_SYSTEM, numdrives: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetCDROMDriveName :: proc(system: ^FMOD_SYSTEM, drive: i32, drivename: cstring, drivenamelen: i32, scsiname: cstring, scsinamelen: i32, devicename: cstring, devicenamelen: i32) -> FMOD_RESULT ---
+	FMOD_System_GetSpectrum :: proc(system: ^FMOD_SYSTEM, spectrumarray: ^f32, numvalues: i32, channeloffset: i32, windowtype: FMOD_DSP_FFT_WINDOW) -> FMOD_RESULT ---
+	FMOD_System_GetWaveData :: proc(system: ^FMOD_SYSTEM, wavearray: ^f32, numvalues: i32, channeloffset: i32) -> FMOD_RESULT ---
+	FMOD_System_CreateSound :: proc(system: ^FMOD_SYSTEM, name_or_data: cstring, mode: u32, exinfo: ^FMOD_CREATESOUNDEXINFO, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
+	FMOD_System_CreateStream :: proc(system: ^FMOD_SYSTEM, name_or_data: cstring, mode: u32, exinfo: ^FMOD_CREATESOUNDEXINFO, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
 	FMOD_System_CreateDSP :: proc(system: ^FMOD_SYSTEM, description: ^FMOD_DSP_DESCRIPTION, dsp: ^^FMOD_DSP) -> FMOD_RESULT ---
 	FMOD_System_CreateDSPByType :: proc(system: ^FMOD_SYSTEM, type: FMOD_DSP_TYPE, dsp: ^^FMOD_DSP) -> FMOD_RESULT ---
 	FMOD_System_CreateChannelGroup :: proc(system: ^FMOD_SYSTEM, name: cstring, channelgroup: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
@@ -1313,7 +1306,7 @@ foreign fmodex_libs {
 	FMOD_System_CreateReverb :: proc(system: ^FMOD_SYSTEM, reverb: ^^FMOD_REVERB) -> FMOD_RESULT ---
 	FMOD_System_PlaySound :: proc(system: ^FMOD_SYSTEM, channelid: FMOD_CHANNELINDEX, sound: ^FMOD_SOUND, paused: FMOD_BOOL, channel: ^^FMOD_CHANNEL) -> FMOD_RESULT ---
 	FMOD_System_PlayDSP :: proc(system: ^FMOD_SYSTEM, channelid: FMOD_CHANNELINDEX, dsp: ^FMOD_DSP, paused: FMOD_BOOL, channel: ^^FMOD_CHANNEL) -> FMOD_RESULT ---
-	FMOD_System_GetChannel :: proc(system: ^FMOD_SYSTEM, channelid: _c.int, channel: ^^FMOD_CHANNEL) -> FMOD_RESULT ---
+	FMOD_System_GetChannel :: proc(system: ^FMOD_SYSTEM, channelid: i32, channel: ^^FMOD_CHANNEL) -> FMOD_RESULT ---
 	FMOD_System_GetMasterChannelGroup :: proc(system: ^FMOD_SYSTEM, channelgroup: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_System_GetMasterSoundGroup :: proc(system: ^FMOD_SYSTEM, soundgroup: ^^FMOD_SOUNDGROUP) -> FMOD_RESULT ---
 	FMOD_System_SetReverbProperties :: proc(system: ^FMOD_SYSTEM, prop: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
@@ -1324,265 +1317,265 @@ foreign fmodex_libs {
 	FMOD_System_AddDSP :: proc(system: ^FMOD_SYSTEM, dsp: ^FMOD_DSP, connection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
 	FMOD_System_LockDSP :: proc(system: ^FMOD_SYSTEM) -> FMOD_RESULT ---
 	FMOD_System_UnlockDSP :: proc(system: ^FMOD_SYSTEM) -> FMOD_RESULT ---
-	FMOD_System_GetDSPClock :: proc(system: ^FMOD_SYSTEM, hi: ^_c.uint, lo: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_System_GetRecordNumDrivers :: proc(system: ^FMOD_SYSTEM, numdrivers: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetRecordDriverInfo :: proc(system: ^FMOD_SYSTEM, id: _c.int, name: cstring, namelen: _c.int, guid: ^FMOD_GUID) -> FMOD_RESULT ---
-	FMOD_System_GetRecordDriverInfoW :: proc(system: ^FMOD_SYSTEM, id: _c.int, name: ^_c.short, namelen: _c.int, guid: ^FMOD_GUID) -> FMOD_RESULT ---
-	FMOD_System_GetRecordDriverCaps :: proc(system: ^FMOD_SYSTEM, id: _c.int, caps: ^_c.uint, minfrequency: ^_c.int, maxfrequency: ^_c.int) -> FMOD_RESULT ---
-	FMOD_System_GetRecordPosition :: proc(system: ^FMOD_SYSTEM, id: _c.int, position: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_System_RecordStart :: proc(system: ^FMOD_SYSTEM, id: _c.int, sound: ^FMOD_SOUND, loop: FMOD_BOOL) -> FMOD_RESULT ---
-	FMOD_System_RecordStop :: proc(system: ^FMOD_SYSTEM, id: _c.int) -> FMOD_RESULT ---
-	FMOD_System_IsRecording :: proc(system: ^FMOD_SYSTEM, id: _c.int, recording: ^FMOD_BOOL) -> FMOD_RESULT ---
-	FMOD_System_CreateGeometry :: proc(system: ^FMOD_SYSTEM, maxpolygons: _c.int, maxvertices: _c.int, geometry: ^^FMOD_GEOMETRY) -> FMOD_RESULT ---
-	FMOD_System_SetGeometrySettings :: proc(system: ^FMOD_SYSTEM, maxworldsize: _c.float) -> FMOD_RESULT ---
-	FMOD_System_GetGeometrySettings :: proc(system: ^FMOD_SYSTEM, maxworldsize: ^_c.float) -> FMOD_RESULT ---
-	FMOD_System_LoadGeometry :: proc(system: ^FMOD_SYSTEM, data: rawptr, datasize: _c.int, geometry: ^^FMOD_GEOMETRY) -> FMOD_RESULT ---
-	FMOD_System_GetGeometryOcclusion :: proc(system: ^FMOD_SYSTEM, listener: ^FMOD_VECTOR, source: ^FMOD_VECTOR, direct: ^_c.float, reverb: ^_c.float) -> FMOD_RESULT ---
+	FMOD_System_GetDSPClock :: proc(system: ^FMOD_SYSTEM, hi: ^u32, lo: ^u32) -> FMOD_RESULT ---
+	FMOD_System_GetRecordNumDrivers :: proc(system: ^FMOD_SYSTEM, numdrivers: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetRecordDriverInfo :: proc(system: ^FMOD_SYSTEM, id: i32, name: cstring, namelen: i32, guid: ^FMOD_GUID) -> FMOD_RESULT ---
+	FMOD_System_GetRecordDriverInfoW :: proc(system: ^FMOD_SYSTEM, id: i32, name: ^i16, namelen: i32, guid: ^FMOD_GUID) -> FMOD_RESULT ---
+	FMOD_System_GetRecordDriverCaps :: proc(system: ^FMOD_SYSTEM, id: i32, caps: ^u32, minfrequency: ^i32, maxfrequency: ^i32) -> FMOD_RESULT ---
+	FMOD_System_GetRecordPosition :: proc(system: ^FMOD_SYSTEM, id: i32, position: ^u32) -> FMOD_RESULT ---
+	FMOD_System_RecordStart :: proc(system: ^FMOD_SYSTEM, id: i32, sound: ^FMOD_SOUND, loop: FMOD_BOOL) -> FMOD_RESULT ---
+	FMOD_System_RecordStop :: proc(system: ^FMOD_SYSTEM, id: i32) -> FMOD_RESULT ---
+	FMOD_System_IsRecording :: proc(system: ^FMOD_SYSTEM, id: i32, recording: ^FMOD_BOOL) -> FMOD_RESULT ---
+	FMOD_System_CreateGeometry :: proc(system: ^FMOD_SYSTEM, maxpolygons: i32, maxvertices: i32, geometry: ^^FMOD_GEOMETRY) -> FMOD_RESULT ---
+	FMOD_System_SetGeometrySettings :: proc(system: ^FMOD_SYSTEM, maxworldsize: f32) -> FMOD_RESULT ---
+	FMOD_System_GetGeometrySettings :: proc(system: ^FMOD_SYSTEM, maxworldsize: ^f32) -> FMOD_RESULT ---
+	FMOD_System_LoadGeometry :: proc(system: ^FMOD_SYSTEM, data: rawptr, datasize: i32, geometry: ^^FMOD_GEOMETRY) -> FMOD_RESULT ---
+	FMOD_System_GetGeometryOcclusion :: proc(system: ^FMOD_SYSTEM, listener: ^FMOD_VECTOR, source: ^FMOD_VECTOR, direct: ^f32, reverb: ^f32) -> FMOD_RESULT ---
 	FMOD_System_SetNetworkProxy :: proc(system: ^FMOD_SYSTEM, proxy: cstring) -> FMOD_RESULT ---
-	FMOD_System_GetNetworkProxy :: proc(system: ^FMOD_SYSTEM, proxy: cstring, proxylen: _c.int) -> FMOD_RESULT ---
-	FMOD_System_SetNetworkTimeout :: proc(system: ^FMOD_SYSTEM, timeout: _c.int) -> FMOD_RESULT ---
-	FMOD_System_GetNetworkTimeout :: proc(system: ^FMOD_SYSTEM, timeout: ^_c.int) -> FMOD_RESULT ---
+	FMOD_System_GetNetworkProxy :: proc(system: ^FMOD_SYSTEM, proxy: cstring, proxylen: i32) -> FMOD_RESULT ---
+	FMOD_System_SetNetworkTimeout :: proc(system: ^FMOD_SYSTEM, timeout: i32) -> FMOD_RESULT ---
+	FMOD_System_GetNetworkTimeout :: proc(system: ^FMOD_SYSTEM, timeout: ^i32) -> FMOD_RESULT ---
 	FMOD_System_SetUserData :: proc(system: ^FMOD_SYSTEM, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_System_GetUserData :: proc(system: ^FMOD_SYSTEM, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_System_GetMemoryInfo :: proc(system: ^FMOD_SYSTEM, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_System_GetMemoryInfo :: proc(system: ^FMOD_SYSTEM, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_Sound_Release :: proc(sound: ^FMOD_SOUND) -> FMOD_RESULT ---
 	FMOD_Sound_GetSystemObject :: proc(sound: ^FMOD_SOUND, system: ^^FMOD_SYSTEM) -> FMOD_RESULT ---
-	FMOD_Sound_Lock :: proc(sound: ^FMOD_SOUND, offset: _c.uint, length: _c.uint, ptr1: ^rawptr, ptr2: ^rawptr, len1: ^_c.uint, len2: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_Unlock :: proc(sound: ^FMOD_SOUND, ptr1: rawptr, ptr2: rawptr, len1: _c.uint, len2: _c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_SetDefaults :: proc(sound: ^FMOD_SOUND, frequency: _c.float, volume: _c.float, pan: _c.float, priority: _c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetDefaults :: proc(sound: ^FMOD_SOUND, frequency: ^_c.float, volume: ^_c.float, pan: ^_c.float, priority: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_SetVariations :: proc(sound: ^FMOD_SOUND, frequencyvar: _c.float, volumevar: _c.float, panvar: _c.float) -> FMOD_RESULT ---
-	FMOD_Sound_GetVariations :: proc(sound: ^FMOD_SOUND, frequencyvar: ^_c.float, volumevar: ^_c.float, panvar: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Sound_Set3DMinMaxDistance :: proc(sound: ^FMOD_SOUND, min: _c.float, max: _c.float) -> FMOD_RESULT ---
-	FMOD_Sound_Get3DMinMaxDistance :: proc(sound: ^FMOD_SOUND, min: ^_c.float, max: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Sound_Set3DConeSettings :: proc(sound: ^FMOD_SOUND, insideconeangle: _c.float, outsideconeangle: _c.float, outsidevolume: _c.float) -> FMOD_RESULT ---
-	FMOD_Sound_Get3DConeSettings :: proc(sound: ^FMOD_SOUND, insideconeangle: ^_c.float, outsideconeangle: ^_c.float, outsidevolume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Sound_Set3DCustomRolloff :: proc(sound: ^FMOD_SOUND, points: ^FMOD_VECTOR, numpoints: _c.int) -> FMOD_RESULT ---
-	FMOD_Sound_Get3DCustomRolloff :: proc(sound: ^FMOD_SOUND, points: ^^FMOD_VECTOR, numpoints: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_SetSubSound :: proc(sound: ^FMOD_SOUND, index: _c.int, subsound: ^FMOD_SOUND) -> FMOD_RESULT ---
-	FMOD_Sound_GetSubSound :: proc(sound: ^FMOD_SOUND, index: _c.int, subsound: ^^FMOD_SOUND) -> FMOD_RESULT ---
-	FMOD_Sound_SetSubSoundSentence :: proc(sound: ^FMOD_SOUND, subsoundlist: ^_c.int, numsubsounds: _c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetName :: proc(sound: ^FMOD_SOUND, name: cstring, namelen: _c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetLength :: proc(sound: ^FMOD_SOUND, length: ^_c.uint, lengthtype: _c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_GetFormat :: proc(sound: ^FMOD_SOUND, type: ^FMOD_SOUND_TYPE, format: ^FMOD_SOUND_FORMAT, channels: ^_c.int, bits: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetNumSubSounds :: proc(sound: ^FMOD_SOUND, numsubsounds: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetNumTags :: proc(sound: ^FMOD_SOUND, numtags: ^_c.int, numtagsupdated: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetTag :: proc(sound: ^FMOD_SOUND, name: cstring, index: _c.int, tag: ^FMOD_TAG) -> FMOD_RESULT ---
-	FMOD_Sound_GetOpenState :: proc(sound: ^FMOD_SOUND, openstate: ^FMOD_OPENSTATE, percentbuffered: ^_c.uint, starving: ^FMOD_BOOL, diskbusy: ^FMOD_BOOL) -> FMOD_RESULT ---
-	FMOD_Sound_ReadData :: proc(sound: ^FMOD_SOUND, buffer: rawptr, lenbytes: _c.uint, read: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_SeekData :: proc(sound: ^FMOD_SOUND, pcm: _c.uint) -> FMOD_RESULT ---
+	FMOD_Sound_Lock :: proc(sound: ^FMOD_SOUND, offset: u32, length: u32, ptr1: ^rawptr, ptr2: ^rawptr, len1: ^u32, len2: ^u32) -> FMOD_RESULT ---
+	FMOD_Sound_Unlock :: proc(sound: ^FMOD_SOUND, ptr1: rawptr, ptr2: rawptr, len1: u32, len2: u32) -> FMOD_RESULT ---
+	FMOD_Sound_SetDefaults :: proc(sound: ^FMOD_SOUND, frequency: f32, volume: f32, pan: f32, priority: i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetDefaults :: proc(sound: ^FMOD_SOUND, frequency: ^f32, volume: ^f32, pan: ^f32, priority: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_SetVariations :: proc(sound: ^FMOD_SOUND, frequencyvar: f32, volumevar: f32, panvar: f32) -> FMOD_RESULT ---
+	FMOD_Sound_GetVariations :: proc(sound: ^FMOD_SOUND, frequencyvar: ^f32, volumevar: ^f32, panvar: ^f32) -> FMOD_RESULT ---
+	FMOD_Sound_Set3DMinMaxDistance :: proc(sound: ^FMOD_SOUND, min: f32, max: f32) -> FMOD_RESULT ---
+	FMOD_Sound_Get3DMinMaxDistance :: proc(sound: ^FMOD_SOUND, min: ^f32, max: ^f32) -> FMOD_RESULT ---
+	FMOD_Sound_Set3DConeSettings :: proc(sound: ^FMOD_SOUND, insideconeangle: f32, outsideconeangle: f32, outsidevolume: f32) -> FMOD_RESULT ---
+	FMOD_Sound_Get3DConeSettings :: proc(sound: ^FMOD_SOUND, insideconeangle: ^f32, outsideconeangle: ^f32, outsidevolume: ^f32) -> FMOD_RESULT ---
+	FMOD_Sound_Set3DCustomRolloff :: proc(sound: ^FMOD_SOUND, points: ^FMOD_VECTOR, numpoints: i32) -> FMOD_RESULT ---
+	FMOD_Sound_Get3DCustomRolloff :: proc(sound: ^FMOD_SOUND, points: ^^FMOD_VECTOR, numpoints: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_SetSubSound :: proc(sound: ^FMOD_SOUND, index: i32, subsound: ^FMOD_SOUND) -> FMOD_RESULT ---
+	FMOD_Sound_GetSubSound :: proc(sound: ^FMOD_SOUND, index: i32, subsound: ^^FMOD_SOUND) -> FMOD_RESULT ---
+	FMOD_Sound_SetSubSoundSentence :: proc(sound: ^FMOD_SOUND, subsoundlist: ^i32, numsubsounds: i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetName :: proc(sound: ^FMOD_SOUND, name: cstring, namelen: i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetLength :: proc(sound: ^FMOD_SOUND, length: ^u32, lengthtype: u32) -> FMOD_RESULT ---
+	FMOD_Sound_GetFormat :: proc(sound: ^FMOD_SOUND, type: ^FMOD_SOUND_TYPE, format: ^FMOD_SOUND_FORMAT, channels: ^i32, bits: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetNumSubSounds :: proc(sound: ^FMOD_SOUND, numsubsounds: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetNumTags :: proc(sound: ^FMOD_SOUND, numtags: ^i32, numtagsupdated: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetTag :: proc(sound: ^FMOD_SOUND, name: cstring, index: i32, tag: ^FMOD_TAG) -> FMOD_RESULT ---
+	FMOD_Sound_GetOpenState :: proc(sound: ^FMOD_SOUND, openstate: ^FMOD_OPENSTATE, percentbuffered: ^u32, starving: ^FMOD_BOOL, diskbusy: ^FMOD_BOOL) -> FMOD_RESULT ---
+	FMOD_Sound_ReadData :: proc(sound: ^FMOD_SOUND, buffer: rawptr, lenbytes: u32, read: ^u32) -> FMOD_RESULT ---
+	FMOD_Sound_SeekData :: proc(sound: ^FMOD_SOUND, pcm: u32) -> FMOD_RESULT ---
 	FMOD_Sound_SetSoundGroup :: proc(sound: ^FMOD_SOUND, soundgroup: ^FMOD_SOUNDGROUP) -> FMOD_RESULT ---
 	FMOD_Sound_GetSoundGroup :: proc(sound: ^FMOD_SOUND, soundgroup: ^^FMOD_SOUNDGROUP) -> FMOD_RESULT ---
-	FMOD_Sound_GetNumSyncPoints :: proc(sound: ^FMOD_SOUND, numsyncpoints: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetSyncPoint :: proc(sound: ^FMOD_SOUND, index: _c.int, point: ^^FMOD_SYNCPOINT) -> FMOD_RESULT ---
-	FMOD_Sound_GetSyncPointInfo :: proc(sound: ^FMOD_SOUND, point: ^FMOD_SYNCPOINT, name: cstring, namelen: _c.int, offset: ^_c.uint, offsettype: _c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_AddSyncPoint :: proc(sound: ^FMOD_SOUND, offset: _c.uint, offsettype: _c.uint, name: cstring, point: ^^FMOD_SYNCPOINT) -> FMOD_RESULT ---
+	FMOD_Sound_GetNumSyncPoints :: proc(sound: ^FMOD_SOUND, numsyncpoints: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetSyncPoint :: proc(sound: ^FMOD_SOUND, index: i32, point: ^^FMOD_SYNCPOINT) -> FMOD_RESULT ---
+	FMOD_Sound_GetSyncPointInfo :: proc(sound: ^FMOD_SOUND, point: ^FMOD_SYNCPOINT, name: cstring, namelen: i32, offset: ^u32, offsettype: u32) -> FMOD_RESULT ---
+	FMOD_Sound_AddSyncPoint :: proc(sound: ^FMOD_SOUND, offset: u32, offsettype: u32, name: cstring, point: ^^FMOD_SYNCPOINT) -> FMOD_RESULT ---
 	FMOD_Sound_DeleteSyncPoint :: proc(sound: ^FMOD_SOUND, point: ^FMOD_SYNCPOINT) -> FMOD_RESULT ---
-	FMOD_Sound_SetMode :: proc(sound: ^FMOD_SOUND, mode: _c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_GetMode :: proc(sound: ^FMOD_SOUND, mode: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_SetLoopCount :: proc(sound: ^FMOD_SOUND, loopcount: _c.int) -> FMOD_RESULT ---
-	FMOD_Sound_GetLoopCount :: proc(sound: ^FMOD_SOUND, loopcount: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_SetLoopPoints :: proc(sound: ^FMOD_SOUND, loopstart: _c.uint, loopstarttype: _c.uint, loopend: _c.uint, loopendtype: _c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_GetLoopPoints :: proc(sound: ^FMOD_SOUND, loopstart: ^_c.uint, loopstarttype: _c.uint, loopend: ^_c.uint, loopendtype: _c.uint) -> FMOD_RESULT ---
-	FMOD_Sound_GetMusicNumChannels :: proc(sound: ^FMOD_SOUND, numchannels: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Sound_SetMusicChannelVolume :: proc(sound: ^FMOD_SOUND, channel: _c.int, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_Sound_GetMusicChannelVolume :: proc(sound: ^FMOD_SOUND, channel: _c.int, volume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Sound_SetMusicSpeed :: proc(sound: ^FMOD_SOUND, speed: _c.float) -> FMOD_RESULT ---
-	FMOD_Sound_GetMusicSpeed :: proc(sound: ^FMOD_SOUND, speed: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Sound_SetMode :: proc(sound: ^FMOD_SOUND, mode: u32) -> FMOD_RESULT ---
+	FMOD_Sound_GetMode :: proc(sound: ^FMOD_SOUND, mode: ^u32) -> FMOD_RESULT ---
+	FMOD_Sound_SetLoopCount :: proc(sound: ^FMOD_SOUND, loopcount: i32) -> FMOD_RESULT ---
+	FMOD_Sound_GetLoopCount :: proc(sound: ^FMOD_SOUND, loopcount: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_SetLoopPoints :: proc(sound: ^FMOD_SOUND, loopstart: u32, loopstarttype: u32, loopend: u32, loopendtype: u32) -> FMOD_RESULT ---
+	FMOD_Sound_GetLoopPoints :: proc(sound: ^FMOD_SOUND, loopstart: ^u32, loopstarttype: u32, loopend: ^u32, loopendtype: u32) -> FMOD_RESULT ---
+	FMOD_Sound_GetMusicNumChannels :: proc(sound: ^FMOD_SOUND, numchannels: ^i32) -> FMOD_RESULT ---
+	FMOD_Sound_SetMusicChannelVolume :: proc(sound: ^FMOD_SOUND, channel: i32, volume: f32) -> FMOD_RESULT ---
+	FMOD_Sound_GetMusicChannelVolume :: proc(sound: ^FMOD_SOUND, channel: i32, volume: ^f32) -> FMOD_RESULT ---
+	FMOD_Sound_SetMusicSpeed :: proc(sound: ^FMOD_SOUND, speed: f32) -> FMOD_RESULT ---
+	FMOD_Sound_GetMusicSpeed :: proc(sound: ^FMOD_SOUND, speed: ^f32) -> FMOD_RESULT ---
 	FMOD_Sound_SetUserData :: proc(sound: ^FMOD_SOUND, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_Sound_GetUserData :: proc(sound: ^FMOD_SOUND, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_Sound_GetMemoryInfo :: proc(sound: ^FMOD_SOUND, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_Sound_GetMemoryInfo :: proc(sound: ^FMOD_SOUND, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_Channel_GetSystemObject :: proc(channel: ^FMOD_CHANNEL, system: ^^FMOD_SYSTEM) -> FMOD_RESULT ---
 	FMOD_Channel_Stop :: proc(channel: ^FMOD_CHANNEL) -> FMOD_RESULT ---
-	FMOD_Channel_SetPaused :: proc(channel: ^FMOD_CHANNEL, paused: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetPaused :: proc(channel: ^FMOD_CHANNEL, paused: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetVolume :: proc(channel: ^FMOD_CHANNEL, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_GetVolume :: proc(channel: ^FMOD_CHANNEL, volume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_SetFrequency :: proc(channel: ^FMOD_CHANNEL, frequency: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_GetFrequency :: proc(channel: ^FMOD_CHANNEL, frequency: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_SetPan :: proc(channel: ^FMOD_CHANNEL, pan: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_GetPan :: proc(channel: ^FMOD_CHANNEL, pan: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_SetDelay :: proc(channel: ^FMOD_CHANNEL, delaytype: FMOD_DELAYTYPE, delayhi: _c.uint, delaylo: _c.uint) -> FMOD_RESULT ---
-	FMOD_Channel_GetDelay :: proc(channel: ^FMOD_CHANNEL, delaytype: FMOD_DELAYTYPE, delayhi: ^_c.uint, delaylo: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_Channel_SetSpeakerMix :: proc(channel: ^FMOD_CHANNEL, frontleft: _c.float, frontright: _c.float, center: _c.float, lfe: _c.float, backleft: _c.float, backright: _c.float, sideleft: _c.float, sideright: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_GetSpeakerMix :: proc(channel: ^FMOD_CHANNEL, frontleft: ^_c.float, frontright: ^_c.float, center: ^_c.float, lfe: ^_c.float, backleft: ^_c.float, backright: ^_c.float, sideleft: ^_c.float, sideright: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_SetSpeakerLevels :: proc(channel: ^FMOD_CHANNEL, speaker: FMOD_SPEAKER, levels: ^_c.float, numlevels: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetSpeakerLevels :: proc(channel: ^FMOD_CHANNEL, speaker: FMOD_SPEAKER, levels: ^_c.float, numlevels: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetInputChannelMix :: proc(channel: ^FMOD_CHANNEL, levels: ^_c.float, numlevels: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetInputChannelMix :: proc(channel: ^FMOD_CHANNEL, levels: ^_c.float, numlevels: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetMute :: proc(channel: ^FMOD_CHANNEL, mute: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetMute :: proc(channel: ^FMOD_CHANNEL, mute: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetPriority :: proc(channel: ^FMOD_CHANNEL, priority: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetPriority :: proc(channel: ^FMOD_CHANNEL, priority: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetPosition :: proc(channel: ^FMOD_CHANNEL, position: _c.uint, postype: _c.uint) -> FMOD_RESULT ---
-	FMOD_Channel_GetPosition :: proc(channel: ^FMOD_CHANNEL, position: ^_c.uint, postype: _c.uint) -> FMOD_RESULT ---
+	FMOD_Channel_SetPaused :: proc(channel: ^FMOD_CHANNEL, paused: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetPaused :: proc(channel: ^FMOD_CHANNEL, paused: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetVolume :: proc(channel: ^FMOD_CHANNEL, volume: f32) -> FMOD_RESULT ---
+	FMOD_Channel_GetVolume :: proc(channel: ^FMOD_CHANNEL, volume: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_SetFrequency :: proc(channel: ^FMOD_CHANNEL, frequency: f32) -> FMOD_RESULT ---
+	FMOD_Channel_GetFrequency :: proc(channel: ^FMOD_CHANNEL, frequency: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_SetPan :: proc(channel: ^FMOD_CHANNEL, pan: f32) -> FMOD_RESULT ---
+	FMOD_Channel_GetPan :: proc(channel: ^FMOD_CHANNEL, pan: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_SetDelay :: proc(channel: ^FMOD_CHANNEL, delaytype: FMOD_DELAYTYPE, delayhi: u32, delaylo: u32) -> FMOD_RESULT ---
+	FMOD_Channel_GetDelay :: proc(channel: ^FMOD_CHANNEL, delaytype: FMOD_DELAYTYPE, delayhi: ^u32, delaylo: ^u32) -> FMOD_RESULT ---
+	FMOD_Channel_SetSpeakerMix :: proc(channel: ^FMOD_CHANNEL, frontleft: f32, frontright: f32, center: f32, lfe: f32, backleft: f32, backright: f32, sideleft: f32, sideright: f32) -> FMOD_RESULT ---
+	FMOD_Channel_GetSpeakerMix :: proc(channel: ^FMOD_CHANNEL, frontleft: ^f32, frontright: ^f32, center: ^f32, lfe: ^f32, backleft: ^f32, backright: ^f32, sideleft: ^f32, sideright: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_SetSpeakerLevels :: proc(channel: ^FMOD_CHANNEL, speaker: FMOD_SPEAKER, levels: ^f32, numlevels: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetSpeakerLevels :: proc(channel: ^FMOD_CHANNEL, speaker: FMOD_SPEAKER, levels: ^f32, numlevels: i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetInputChannelMix :: proc(channel: ^FMOD_CHANNEL, levels: ^f32, numlevels: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetInputChannelMix :: proc(channel: ^FMOD_CHANNEL, levels: ^f32, numlevels: i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetMute :: proc(channel: ^FMOD_CHANNEL, mute: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetMute :: proc(channel: ^FMOD_CHANNEL, mute: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetPriority :: proc(channel: ^FMOD_CHANNEL, priority: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetPriority :: proc(channel: ^FMOD_CHANNEL, priority: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetPosition :: proc(channel: ^FMOD_CHANNEL, position: u32, postype: u32) -> FMOD_RESULT ---
+	FMOD_Channel_GetPosition :: proc(channel: ^FMOD_CHANNEL, position: ^u32, postype: u32) -> FMOD_RESULT ---
 	FMOD_Channel_SetReverbProperties :: proc(channel: ^FMOD_CHANNEL, prop: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
 	FMOD_Channel_GetReverbProperties :: proc(channel: ^FMOD_CHANNEL, prop: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
-	FMOD_Channel_SetLowPassGain :: proc(channel: ^FMOD_CHANNEL, gain: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_GetLowPassGain :: proc(channel: ^FMOD_CHANNEL, gain: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Channel_SetLowPassGain :: proc(channel: ^FMOD_CHANNEL, gain: f32) -> FMOD_RESULT ---
+	FMOD_Channel_GetLowPassGain :: proc(channel: ^FMOD_CHANNEL, gain: ^f32) -> FMOD_RESULT ---
 	FMOD_Channel_SetChannelGroup :: proc(channel: ^FMOD_CHANNEL, channelgroup: ^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_Channel_GetChannelGroup :: proc(channel: ^FMOD_CHANNEL, channelgroup: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_Channel_SetCallback :: proc(channel: ^FMOD_CHANNEL, callback: FMOD_CHANNEL_CALLBACK) -> FMOD_RESULT ---
 	FMOD_Channel_Set3DAttributes :: proc(channel: ^FMOD_CHANNEL, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Channel_Get3DAttributes :: proc(channel: ^FMOD_CHANNEL, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DMinMaxDistance :: proc(channel: ^FMOD_CHANNEL, mindistance: _c.float, maxdistance: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DMinMaxDistance :: proc(channel: ^FMOD_CHANNEL, mindistance: ^_c.float, maxdistance: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DConeSettings :: proc(channel: ^FMOD_CHANNEL, insideconeangle: _c.float, outsideconeangle: _c.float, outsidevolume: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DConeSettings :: proc(channel: ^FMOD_CHANNEL, insideconeangle: ^_c.float, outsideconeangle: ^_c.float, outsidevolume: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DMinMaxDistance :: proc(channel: ^FMOD_CHANNEL, mindistance: f32, maxdistance: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DMinMaxDistance :: proc(channel: ^FMOD_CHANNEL, mindistance: ^f32, maxdistance: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DConeSettings :: proc(channel: ^FMOD_CHANNEL, insideconeangle: f32, outsideconeangle: f32, outsidevolume: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DConeSettings :: proc(channel: ^FMOD_CHANNEL, insideconeangle: ^f32, outsideconeangle: ^f32, outsidevolume: ^f32) -> FMOD_RESULT ---
 	FMOD_Channel_Set3DConeOrientation :: proc(channel: ^FMOD_CHANNEL, orientation: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Channel_Get3DConeOrientation :: proc(channel: ^FMOD_CHANNEL, orientation: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DCustomRolloff :: proc(channel: ^FMOD_CHANNEL, points: ^FMOD_VECTOR, numpoints: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DCustomRolloff :: proc(channel: ^FMOD_CHANNEL, points: ^^FMOD_VECTOR, numpoints: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DOcclusion :: proc(channel: ^FMOD_CHANNEL, directocclusion: _c.float, reverbocclusion: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DOcclusion :: proc(channel: ^FMOD_CHANNEL, directocclusion: ^_c.float, reverbocclusion: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DSpread :: proc(channel: ^FMOD_CHANNEL, angle: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DSpread :: proc(channel: ^FMOD_CHANNEL, angle: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DPanLevel :: proc(channel: ^FMOD_CHANNEL, level: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DPanLevel :: proc(channel: ^FMOD_CHANNEL, level: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DDopplerLevel :: proc(channel: ^FMOD_CHANNEL, level: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DDopplerLevel :: proc(channel: ^FMOD_CHANNEL, level: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Set3DDistanceFilter :: proc(channel: ^FMOD_CHANNEL, custom: _c.int, customLevel: _c.float, centerFreq: _c.float) -> FMOD_RESULT ---
-	FMOD_Channel_Get3DDistanceFilter :: proc(channel: ^FMOD_CHANNEL, custom: ^_c.int, customLevel: ^_c.float, centerFreq: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DCustomRolloff :: proc(channel: ^FMOD_CHANNEL, points: ^FMOD_VECTOR, numpoints: i32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DCustomRolloff :: proc(channel: ^FMOD_CHANNEL, points: ^^FMOD_VECTOR, numpoints: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DOcclusion :: proc(channel: ^FMOD_CHANNEL, directocclusion: f32, reverbocclusion: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DOcclusion :: proc(channel: ^FMOD_CHANNEL, directocclusion: ^f32, reverbocclusion: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DSpread :: proc(channel: ^FMOD_CHANNEL, angle: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DSpread :: proc(channel: ^FMOD_CHANNEL, angle: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DPanLevel :: proc(channel: ^FMOD_CHANNEL, level: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DPanLevel :: proc(channel: ^FMOD_CHANNEL, level: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DDopplerLevel :: proc(channel: ^FMOD_CHANNEL, level: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DDopplerLevel :: proc(channel: ^FMOD_CHANNEL, level: ^f32) -> FMOD_RESULT ---
+	FMOD_Channel_Set3DDistanceFilter :: proc(channel: ^FMOD_CHANNEL, custom: i32, customLevel: f32, centerFreq: f32) -> FMOD_RESULT ---
+	FMOD_Channel_Get3DDistanceFilter :: proc(channel: ^FMOD_CHANNEL, custom: ^i32, customLevel: ^f32, centerFreq: ^f32) -> FMOD_RESULT ---
 	FMOD_Channel_GetDSPHead :: proc(channel: ^FMOD_CHANNEL, dsp: ^^FMOD_DSP) -> FMOD_RESULT ---
 	FMOD_Channel_AddDSP :: proc(channel: ^FMOD_CHANNEL, dsp: ^FMOD_DSP, connection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
-	FMOD_Channel_IsPlaying :: proc(channel: ^FMOD_CHANNEL, isplaying: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_IsVirtual :: proc(channel: ^FMOD_CHANNEL, isvirtual: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetAudibility :: proc(channel: ^FMOD_CHANNEL, audibility: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Channel_IsPlaying :: proc(channel: ^FMOD_CHANNEL, isplaying: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_IsVirtual :: proc(channel: ^FMOD_CHANNEL, isvirtual: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetAudibility :: proc(channel: ^FMOD_CHANNEL, audibility: ^f32) -> FMOD_RESULT ---
 	FMOD_Channel_GetCurrentSound :: proc(channel: ^FMOD_CHANNEL, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
-	FMOD_Channel_GetSpectrum :: proc(channel: ^FMOD_CHANNEL, spectrumarray: ^_c.float, numvalues: _c.int, channeloffset: _c.int, windowtype: FMOD_DSP_FFT_WINDOW) -> FMOD_RESULT ---
-	FMOD_Channel_GetWaveData :: proc(channel: ^FMOD_CHANNEL, wavearray: ^_c.float, numvalues: _c.int, channeloffset: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetIndex :: proc(channel: ^FMOD_CHANNEL, index: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetMode :: proc(channel: ^FMOD_CHANNEL, mode: _c.uint) -> FMOD_RESULT ---
-	FMOD_Channel_GetMode :: proc(channel: ^FMOD_CHANNEL, mode: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_Channel_SetLoopCount :: proc(channel: ^FMOD_CHANNEL, loopcount: _c.int) -> FMOD_RESULT ---
-	FMOD_Channel_GetLoopCount :: proc(channel: ^FMOD_CHANNEL, loopcount: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Channel_SetLoopPoints :: proc(channel: ^FMOD_CHANNEL, loopstart: _c.uint, loopstarttype: _c.uint, loopend: _c.uint, loopendtype: _c.uint) -> FMOD_RESULT ---
-	FMOD_Channel_GetLoopPoints :: proc(channel: ^FMOD_CHANNEL, loopstart: ^_c.uint, loopstarttype: _c.uint, loopend: ^_c.uint, loopendtype: _c.uint) -> FMOD_RESULT ---
+	FMOD_Channel_GetSpectrum :: proc(channel: ^FMOD_CHANNEL, spectrumarray: ^f32, numvalues: i32, channeloffset: i32, windowtype: FMOD_DSP_FFT_WINDOW) -> FMOD_RESULT ---
+	FMOD_Channel_GetWaveData :: proc(channel: ^FMOD_CHANNEL, wavearray: ^f32, numvalues: i32, channeloffset: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetIndex :: proc(channel: ^FMOD_CHANNEL, index: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetMode :: proc(channel: ^FMOD_CHANNEL, mode: u32) -> FMOD_RESULT ---
+	FMOD_Channel_GetMode :: proc(channel: ^FMOD_CHANNEL, mode: ^u32) -> FMOD_RESULT ---
+	FMOD_Channel_SetLoopCount :: proc(channel: ^FMOD_CHANNEL, loopcount: i32) -> FMOD_RESULT ---
+	FMOD_Channel_GetLoopCount :: proc(channel: ^FMOD_CHANNEL, loopcount: ^i32) -> FMOD_RESULT ---
+	FMOD_Channel_SetLoopPoints :: proc(channel: ^FMOD_CHANNEL, loopstart: u32, loopstarttype: u32, loopend: u32, loopendtype: u32) -> FMOD_RESULT ---
+	FMOD_Channel_GetLoopPoints :: proc(channel: ^FMOD_CHANNEL, loopstart: ^u32, loopstarttype: u32, loopend: ^u32, loopendtype: u32) -> FMOD_RESULT ---
 	FMOD_Channel_SetUserData :: proc(channel: ^FMOD_CHANNEL, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_Channel_GetUserData :: proc(channel: ^FMOD_CHANNEL, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_Channel_GetMemoryInfo :: proc(channel: ^FMOD_CHANNEL, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_Channel_GetMemoryInfo :: proc(channel: ^FMOD_CHANNEL, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_Release :: proc(channelgroup: ^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_GetSystemObject :: proc(channelgroup: ^FMOD_CHANNELGROUP, system: ^^FMOD_SYSTEM) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_SetVolume :: proc(channelgroup: ^FMOD_CHANNELGROUP, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetVolume :: proc(channelgroup: ^FMOD_CHANNELGROUP, volume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_SetPitch :: proc(channelgroup: ^FMOD_CHANNELGROUP, pitch: _c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetPitch :: proc(channelgroup: ^FMOD_CHANNELGROUP, pitch: ^_c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_Set3DOcclusion :: proc(channelgroup: ^FMOD_CHANNELGROUP, directocclusion: _c.float, reverbocclusion: _c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_Get3DOcclusion :: proc(channelgroup: ^FMOD_CHANNELGROUP, directocclusion: ^_c.float, reverbocclusion: ^_c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_SetPaused :: proc(channelgroup: ^FMOD_CHANNELGROUP, paused: _c.int) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetPaused :: proc(channelgroup: ^FMOD_CHANNELGROUP, paused: ^_c.int) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_SetMute :: proc(channelgroup: ^FMOD_CHANNELGROUP, mute: _c.int) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetMute :: proc(channelgroup: ^FMOD_CHANNELGROUP, mute: ^_c.int) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_SetVolume :: proc(channelgroup: ^FMOD_CHANNELGROUP, volume: f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetVolume :: proc(channelgroup: ^FMOD_CHANNELGROUP, volume: ^f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_SetPitch :: proc(channelgroup: ^FMOD_CHANNELGROUP, pitch: f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetPitch :: proc(channelgroup: ^FMOD_CHANNELGROUP, pitch: ^f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_Set3DOcclusion :: proc(channelgroup: ^FMOD_CHANNELGROUP, directocclusion: f32, reverbocclusion: f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_Get3DOcclusion :: proc(channelgroup: ^FMOD_CHANNELGROUP, directocclusion: ^f32, reverbocclusion: ^f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_SetPaused :: proc(channelgroup: ^FMOD_CHANNELGROUP, paused: i32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetPaused :: proc(channelgroup: ^FMOD_CHANNELGROUP, paused: ^i32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_SetMute :: proc(channelgroup: ^FMOD_CHANNELGROUP, mute: i32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetMute :: proc(channelgroup: ^FMOD_CHANNELGROUP, mute: ^i32) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_Stop :: proc(channelgroup: ^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_OverrideVolume :: proc(channelgroup: ^FMOD_CHANNELGROUP, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_OverrideFrequency :: proc(channelgroup: ^FMOD_CHANNELGROUP, frequency: _c.float) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_OverridePan :: proc(channelgroup: ^FMOD_CHANNELGROUP, pan: _c.float) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_OverrideVolume :: proc(channelgroup: ^FMOD_CHANNELGROUP, volume: f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_OverrideFrequency :: proc(channelgroup: ^FMOD_CHANNELGROUP, frequency: f32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_OverridePan :: proc(channelgroup: ^FMOD_CHANNELGROUP, pan: f32) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_OverrideReverbProperties :: proc(channelgroup: ^FMOD_CHANNELGROUP, prop: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_Override3DAttributes :: proc(channelgroup: ^FMOD_CHANNELGROUP, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_OverrideSpeakerMix :: proc(channelgroup: ^FMOD_CHANNELGROUP, frontleft: _c.float, frontright: _c.float, center: _c.float, lfe: _c.float, backleft: _c.float, backright: _c.float, sideleft: _c.float, sideright: _c.float) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_OverrideSpeakerMix :: proc(channelgroup: ^FMOD_CHANNELGROUP, frontleft: f32, frontright: f32, center: f32, lfe: f32, backleft: f32, backright: f32, sideleft: f32, sideright: f32) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_AddGroup :: proc(channelgroup: ^FMOD_CHANNELGROUP, group: ^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetNumGroups :: proc(channelgroup: ^FMOD_CHANNELGROUP, numgroups: ^_c.int) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetGroup :: proc(channelgroup: ^FMOD_CHANNELGROUP, index: _c.int, group: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetNumGroups :: proc(channelgroup: ^FMOD_CHANNELGROUP, numgroups: ^i32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetGroup :: proc(channelgroup: ^FMOD_CHANNELGROUP, index: i32, group: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_GetParentGroup :: proc(channelgroup: ^FMOD_CHANNELGROUP, group: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_GetDSPHead :: proc(channelgroup: ^FMOD_CHANNELGROUP, dsp: ^^FMOD_DSP) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_AddDSP :: proc(channelgroup: ^FMOD_CHANNELGROUP, dsp: ^FMOD_DSP, connection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetName :: proc(channelgroup: ^FMOD_CHANNELGROUP, name: cstring, namelen: _c.int) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetNumChannels :: proc(channelgroup: ^FMOD_CHANNELGROUP, numchannels: ^_c.int) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetChannel :: proc(channelgroup: ^FMOD_CHANNELGROUP, index: _c.int, channel: ^^FMOD_CHANNEL) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetSpectrum :: proc(channelgroup: ^FMOD_CHANNELGROUP, spectrumarray: ^_c.float, numvalues: _c.int, channeloffset: _c.int, windowtype: FMOD_DSP_FFT_WINDOW) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetWaveData :: proc(channelgroup: ^FMOD_CHANNELGROUP, wavearray: ^_c.float, numvalues: _c.int, channeloffset: _c.int) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetName :: proc(channelgroup: ^FMOD_CHANNELGROUP, name: cstring, namelen: i32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetNumChannels :: proc(channelgroup: ^FMOD_CHANNELGROUP, numchannels: ^i32) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetChannel :: proc(channelgroup: ^FMOD_CHANNELGROUP, index: i32, channel: ^^FMOD_CHANNEL) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetSpectrum :: proc(channelgroup: ^FMOD_CHANNELGROUP, spectrumarray: ^f32, numvalues: i32, channeloffset: i32, windowtype: FMOD_DSP_FFT_WINDOW) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetWaveData :: proc(channelgroup: ^FMOD_CHANNELGROUP, wavearray: ^f32, numvalues: i32, channeloffset: i32) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_SetUserData :: proc(channelgroup: ^FMOD_CHANNELGROUP, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_ChannelGroup_GetUserData :: proc(channelgroup: ^FMOD_CHANNELGROUP, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_ChannelGroup_GetMemoryInfo :: proc(channelgroup: ^FMOD_CHANNELGROUP, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_ChannelGroup_GetMemoryInfo :: proc(channelgroup: ^FMOD_CHANNELGROUP, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_SoundGroup_Release :: proc(soundgroup: ^FMOD_SOUNDGROUP) -> FMOD_RESULT ---
 	FMOD_SoundGroup_GetSystemObject :: proc(soundgroup: ^FMOD_SOUNDGROUP, system: ^^FMOD_SYSTEM) -> FMOD_RESULT ---
-	FMOD_SoundGroup_SetMaxAudible :: proc(soundgroup: ^FMOD_SOUNDGROUP, maxaudible: _c.int) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetMaxAudible :: proc(soundgroup: ^FMOD_SOUNDGROUP, maxaudible: ^_c.int) -> FMOD_RESULT ---
+	FMOD_SoundGroup_SetMaxAudible :: proc(soundgroup: ^FMOD_SOUNDGROUP, maxaudible: i32) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetMaxAudible :: proc(soundgroup: ^FMOD_SOUNDGROUP, maxaudible: ^i32) -> FMOD_RESULT ---
 	FMOD_SoundGroup_SetMaxAudibleBehavior :: proc(soundgroup: ^FMOD_SOUNDGROUP, behavior: FMOD_SOUNDGROUP_BEHAVIOR) -> FMOD_RESULT ---
 	FMOD_SoundGroup_GetMaxAudibleBehavior :: proc(soundgroup: ^FMOD_SOUNDGROUP, behavior: ^FMOD_SOUNDGROUP_BEHAVIOR) -> FMOD_RESULT ---
-	FMOD_SoundGroup_SetMuteFadeSpeed :: proc(soundgroup: ^FMOD_SOUNDGROUP, speed: _c.float) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetMuteFadeSpeed :: proc(soundgroup: ^FMOD_SOUNDGROUP, speed: ^_c.float) -> FMOD_RESULT ---
-	FMOD_SoundGroup_SetVolume :: proc(soundgroup: ^FMOD_SOUNDGROUP, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetVolume :: proc(soundgroup: ^FMOD_SOUNDGROUP, volume: ^_c.float) -> FMOD_RESULT ---
+	FMOD_SoundGroup_SetMuteFadeSpeed :: proc(soundgroup: ^FMOD_SOUNDGROUP, speed: f32) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetMuteFadeSpeed :: proc(soundgroup: ^FMOD_SOUNDGROUP, speed: ^f32) -> FMOD_RESULT ---
+	FMOD_SoundGroup_SetVolume :: proc(soundgroup: ^FMOD_SOUNDGROUP, volume: f32) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetVolume :: proc(soundgroup: ^FMOD_SOUNDGROUP, volume: ^f32) -> FMOD_RESULT ---
 	FMOD_SoundGroup_Stop :: proc(soundgroup: ^FMOD_SOUNDGROUP) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetName :: proc(soundgroup: ^FMOD_SOUNDGROUP, name: cstring, namelen: _c.int) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetNumSounds :: proc(soundgroup: ^FMOD_SOUNDGROUP, numsounds: ^_c.int) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetSound :: proc(soundgroup: ^FMOD_SOUNDGROUP, index: _c.int, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetNumPlaying :: proc(soundgroup: ^FMOD_SOUNDGROUP, numplaying: ^_c.int) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetName :: proc(soundgroup: ^FMOD_SOUNDGROUP, name: cstring, namelen: i32) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetNumSounds :: proc(soundgroup: ^FMOD_SOUNDGROUP, numsounds: ^i32) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetSound :: proc(soundgroup: ^FMOD_SOUNDGROUP, index: i32, sound: ^^FMOD_SOUND) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetNumPlaying :: proc(soundgroup: ^FMOD_SOUNDGROUP, numplaying: ^i32) -> FMOD_RESULT ---
 	FMOD_SoundGroup_SetUserData :: proc(soundgroup: ^FMOD_SOUNDGROUP, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_SoundGroup_GetUserData :: proc(soundgroup: ^FMOD_SOUNDGROUP, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_SoundGroup_GetMemoryInfo :: proc(soundgroup: ^FMOD_SOUNDGROUP, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_SoundGroup_GetMemoryInfo :: proc(soundgroup: ^FMOD_SOUNDGROUP, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_DSP_Release :: proc(dsp: ^FMOD_DSP) -> FMOD_RESULT ---
 	FMOD_DSP_GetSystemObject :: proc(dsp: ^FMOD_DSP, system: ^^FMOD_SYSTEM) -> FMOD_RESULT ---
 	FMOD_DSP_AddInput :: proc(dsp: ^FMOD_DSP, target: ^FMOD_DSP, connection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
 	FMOD_DSP_DisconnectFrom :: proc(dsp: ^FMOD_DSP, target: ^FMOD_DSP) -> FMOD_RESULT ---
-	FMOD_DSP_DisconnectAll :: proc(dsp: ^FMOD_DSP, inputs: _c.int, outputs: _c.int) -> FMOD_RESULT ---
+	FMOD_DSP_DisconnectAll :: proc(dsp: ^FMOD_DSP, inputs: i32, outputs: i32) -> FMOD_RESULT ---
 	FMOD_DSP_Remove :: proc(dsp: ^FMOD_DSP) -> FMOD_RESULT ---
-	FMOD_DSP_GetNumInputs :: proc(dsp: ^FMOD_DSP, numinputs: ^_c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetNumOutputs :: proc(dsp: ^FMOD_DSP, numoutputs: ^_c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetInput :: proc(dsp: ^FMOD_DSP, index: _c.int, input: ^^FMOD_DSP, inputconnection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
-	FMOD_DSP_GetOutput :: proc(dsp: ^FMOD_DSP, index: _c.int, output: ^^FMOD_DSP, outputconnection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
-	FMOD_DSP_SetActive :: proc(dsp: ^FMOD_DSP, active: _c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetActive :: proc(dsp: ^FMOD_DSP, active: ^_c.int) -> FMOD_RESULT ---
-	FMOD_DSP_SetBypass :: proc(dsp: ^FMOD_DSP, bypass: _c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetBypass :: proc(dsp: ^FMOD_DSP, bypass: ^_c.int) -> FMOD_RESULT ---
-	FMOD_DSP_SetSpeakerActive :: proc(dsp: ^FMOD_DSP, speaker: FMOD_SPEAKER, active: _c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetSpeakerActive :: proc(dsp: ^FMOD_DSP, speaker: FMOD_SPEAKER, active: ^_c.int) -> FMOD_RESULT ---
+	FMOD_DSP_GetNumInputs :: proc(dsp: ^FMOD_DSP, numinputs: ^i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetNumOutputs :: proc(dsp: ^FMOD_DSP, numoutputs: ^i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetInput :: proc(dsp: ^FMOD_DSP, index: i32, input: ^^FMOD_DSP, inputconnection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
+	FMOD_DSP_GetOutput :: proc(dsp: ^FMOD_DSP, index: i32, output: ^^FMOD_DSP, outputconnection: ^^FMOD_DSPCONNECTION) -> FMOD_RESULT ---
+	FMOD_DSP_SetActive :: proc(dsp: ^FMOD_DSP, active: i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetActive :: proc(dsp: ^FMOD_DSP, active: ^i32) -> FMOD_RESULT ---
+	FMOD_DSP_SetBypass :: proc(dsp: ^FMOD_DSP, bypass: i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetBypass :: proc(dsp: ^FMOD_DSP, bypass: ^i32) -> FMOD_RESULT ---
+	FMOD_DSP_SetSpeakerActive :: proc(dsp: ^FMOD_DSP, speaker: FMOD_SPEAKER, active: i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetSpeakerActive :: proc(dsp: ^FMOD_DSP, speaker: FMOD_SPEAKER, active: ^i32) -> FMOD_RESULT ---
 	FMOD_DSP_Reset :: proc(dsp: ^FMOD_DSP) -> FMOD_RESULT ---
-	FMOD_DSP_SetParameter :: proc(dsp: ^FMOD_DSP, index: _c.int, value: _c.float) -> FMOD_RESULT ---
-	FMOD_DSP_GetParameter :: proc(dsp: ^FMOD_DSP, index: _c.int, value: ^_c.float, valuestr: cstring, valuestrlen: _c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetNumParameters :: proc(dsp: ^FMOD_DSP, numparams: ^_c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetParameterInfo :: proc(dsp: ^FMOD_DSP, index: _c.int, name: cstring, label: cstring, description: cstring, descriptionlen: _c.int, min: ^_c.float, max: ^_c.float) -> FMOD_RESULT ---
-	FMOD_DSP_ShowConfigDialog :: proc(dsp: ^FMOD_DSP, hwnd: rawptr, show: _c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetInfo :: proc(dsp: ^FMOD_DSP, name: cstring, version: ^_c.uint, channels: ^_c.int, configwidth: ^_c.int, configheight: ^_c.int) -> FMOD_RESULT ---
+	FMOD_DSP_SetParameter :: proc(dsp: ^FMOD_DSP, index: i32, value: f32) -> FMOD_RESULT ---
+	FMOD_DSP_GetParameter :: proc(dsp: ^FMOD_DSP, index: i32, value: ^f32, valuestr: cstring, valuestrlen: i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetNumParameters :: proc(dsp: ^FMOD_DSP, numparams: ^i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetParameterInfo :: proc(dsp: ^FMOD_DSP, index: i32, name: cstring, label: cstring, description: cstring, descriptionlen: i32, min: ^f32, max: ^f32) -> FMOD_RESULT ---
+	FMOD_DSP_ShowConfigDialog :: proc(dsp: ^FMOD_DSP, hwnd: rawptr, show: i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetInfo :: proc(dsp: ^FMOD_DSP, name: cstring, version: ^u32, channels: ^i32, configwidth: ^i32, configheight: ^i32) -> FMOD_RESULT ---
 	FMOD_DSP_GetType :: proc(dsp: ^FMOD_DSP, type: ^FMOD_DSP_TYPE) -> FMOD_RESULT ---
-	FMOD_DSP_SetDefaults :: proc(dsp: ^FMOD_DSP, frequency: _c.float, volume: _c.float, pan: _c.float, priority: _c.int) -> FMOD_RESULT ---
-	FMOD_DSP_GetDefaults :: proc(dsp: ^FMOD_DSP, frequency: ^_c.float, volume: ^_c.float, pan: ^_c.float, priority: ^_c.int) -> FMOD_RESULT ---
+	FMOD_DSP_SetDefaults :: proc(dsp: ^FMOD_DSP, frequency: f32, volume: f32, pan: f32, priority: i32) -> FMOD_RESULT ---
+	FMOD_DSP_GetDefaults :: proc(dsp: ^FMOD_DSP, frequency: ^f32, volume: ^f32, pan: ^f32, priority: ^i32) -> FMOD_RESULT ---
 	FMOD_DSP_SetUserData :: proc(dsp: ^FMOD_DSP, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_DSP_GetUserData :: proc(dsp: ^FMOD_DSP, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_DSP_GetMemoryInfo :: proc(dsp: ^FMOD_DSP, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_DSP_GetMemoryInfo :: proc(dsp: ^FMOD_DSP, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_DSPConnection_GetInput :: proc(dspconnection: ^FMOD_DSPCONNECTION, input: ^^FMOD_DSP) -> FMOD_RESULT ---
 	FMOD_DSPConnection_GetOutput :: proc(dspconnection: ^FMOD_DSPCONNECTION, output: ^^FMOD_DSP) -> FMOD_RESULT ---
-	FMOD_DSPConnection_SetMix :: proc(dspconnection: ^FMOD_DSPCONNECTION, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_DSPConnection_GetMix :: proc(dspconnection: ^FMOD_DSPCONNECTION, volume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_DSPConnection_SetLevels :: proc(dspconnection: ^FMOD_DSPCONNECTION, speaker: FMOD_SPEAKER, levels: ^_c.float, numlevels: _c.int) -> FMOD_RESULT ---
-	FMOD_DSPConnection_GetLevels :: proc(dspconnection: ^FMOD_DSPCONNECTION, speaker: FMOD_SPEAKER, levels: ^_c.float, numlevels: _c.int) -> FMOD_RESULT ---
+	FMOD_DSPConnection_SetMix :: proc(dspconnection: ^FMOD_DSPCONNECTION, volume: f32) -> FMOD_RESULT ---
+	FMOD_DSPConnection_GetMix :: proc(dspconnection: ^FMOD_DSPCONNECTION, volume: ^f32) -> FMOD_RESULT ---
+	FMOD_DSPConnection_SetLevels :: proc(dspconnection: ^FMOD_DSPCONNECTION, speaker: FMOD_SPEAKER, levels: ^f32, numlevels: i32) -> FMOD_RESULT ---
+	FMOD_DSPConnection_GetLevels :: proc(dspconnection: ^FMOD_DSPCONNECTION, speaker: FMOD_SPEAKER, levels: ^f32, numlevels: i32) -> FMOD_RESULT ---
 	FMOD_DSPConnection_SetUserData :: proc(dspconnection: ^FMOD_DSPCONNECTION, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_DSPConnection_GetUserData :: proc(dspconnection: ^FMOD_DSPCONNECTION, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_DSPConnection_GetMemoryInfo :: proc(dspconnection: ^FMOD_DSPCONNECTION, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_DSPConnection_GetMemoryInfo :: proc(dspconnection: ^FMOD_DSPCONNECTION, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_Geometry_Release :: proc(geometry: ^FMOD_GEOMETRY) -> FMOD_RESULT ---
-	FMOD_Geometry_AddPolygon :: proc(geometry: ^FMOD_GEOMETRY, directocclusion: _c.float, reverbocclusion: _c.float, doublesided: _c.int, numvertices: _c.int, vertices: ^FMOD_VECTOR, polygonindex: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_GetNumPolygons :: proc(geometry: ^FMOD_GEOMETRY, numpolygons: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_GetMaxPolygons :: proc(geometry: ^FMOD_GEOMETRY, maxpolygons: ^_c.int, maxvertices: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_GetPolygonNumVertices :: proc(geometry: ^FMOD_GEOMETRY, index: _c.int, numvertices: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_SetPolygonVertex :: proc(geometry: ^FMOD_GEOMETRY, index: _c.int, vertexindex: _c.int, vertex: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_Geometry_GetPolygonVertex :: proc(geometry: ^FMOD_GEOMETRY, index: _c.int, vertexindex: _c.int, vertex: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_Geometry_SetPolygonAttributes :: proc(geometry: ^FMOD_GEOMETRY, index: _c.int, directocclusion: _c.float, reverbocclusion: _c.float, doublesided: _c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_GetPolygonAttributes :: proc(geometry: ^FMOD_GEOMETRY, index: _c.int, directocclusion: ^_c.float, reverbocclusion: ^_c.float, doublesided: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_SetActive :: proc(geometry: ^FMOD_GEOMETRY, active: _c.int) -> FMOD_RESULT ---
-	FMOD_Geometry_GetActive :: proc(geometry: ^FMOD_GEOMETRY, active: ^_c.int) -> FMOD_RESULT ---
+	FMOD_Geometry_AddPolygon :: proc(geometry: ^FMOD_GEOMETRY, directocclusion: f32, reverbocclusion: f32, doublesided: i32, numvertices: i32, vertices: ^FMOD_VECTOR, polygonindex: ^i32) -> FMOD_RESULT ---
+	FMOD_Geometry_GetNumPolygons :: proc(geometry: ^FMOD_GEOMETRY, numpolygons: ^i32) -> FMOD_RESULT ---
+	FMOD_Geometry_GetMaxPolygons :: proc(geometry: ^FMOD_GEOMETRY, maxpolygons: ^i32, maxvertices: ^i32) -> FMOD_RESULT ---
+	FMOD_Geometry_GetPolygonNumVertices :: proc(geometry: ^FMOD_GEOMETRY, index: i32, numvertices: ^i32) -> FMOD_RESULT ---
+	FMOD_Geometry_SetPolygonVertex :: proc(geometry: ^FMOD_GEOMETRY, index: i32, vertexindex: i32, vertex: ^FMOD_VECTOR) -> FMOD_RESULT ---
+	FMOD_Geometry_GetPolygonVertex :: proc(geometry: ^FMOD_GEOMETRY, index: i32, vertexindex: i32, vertex: ^FMOD_VECTOR) -> FMOD_RESULT ---
+	FMOD_Geometry_SetPolygonAttributes :: proc(geometry: ^FMOD_GEOMETRY, index: i32, directocclusion: f32, reverbocclusion: f32, doublesided: i32) -> FMOD_RESULT ---
+	FMOD_Geometry_GetPolygonAttributes :: proc(geometry: ^FMOD_GEOMETRY, index: i32, directocclusion: ^f32, reverbocclusion: ^f32, doublesided: ^i32) -> FMOD_RESULT ---
+	FMOD_Geometry_SetActive :: proc(geometry: ^FMOD_GEOMETRY, active: i32) -> FMOD_RESULT ---
+	FMOD_Geometry_GetActive :: proc(geometry: ^FMOD_GEOMETRY, active: ^i32) -> FMOD_RESULT ---
 	FMOD_Geometry_SetRotation :: proc(geometry: ^FMOD_GEOMETRY, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Geometry_GetRotation :: proc(geometry: ^FMOD_GEOMETRY, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Geometry_SetPosition :: proc(geometry: ^FMOD_GEOMETRY, position: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Geometry_GetPosition :: proc(geometry: ^FMOD_GEOMETRY, position: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Geometry_SetScale :: proc(geometry: ^FMOD_GEOMETRY, scale: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Geometry_GetScale :: proc(geometry: ^FMOD_GEOMETRY, scale: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_Geometry_Save :: proc(geometry: ^FMOD_GEOMETRY, data: rawptr, datasize: ^_c.int) -> FMOD_RESULT ---
+	FMOD_Geometry_Save :: proc(geometry: ^FMOD_GEOMETRY, data: rawptr, datasize: ^i32) -> FMOD_RESULT ---
 	FMOD_Geometry_SetUserData :: proc(geometry: ^FMOD_GEOMETRY, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_Geometry_GetUserData :: proc(geometry: ^FMOD_GEOMETRY, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_Geometry_GetMemoryInfo :: proc(geometry: ^FMOD_GEOMETRY, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_Geometry_GetMemoryInfo :: proc(geometry: ^FMOD_GEOMETRY, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_Reverb_Release :: proc(reverb: ^FMOD_REVERB) -> FMOD_RESULT ---
-	FMOD_Reverb_Set3DAttributes :: proc(reverb: ^FMOD_REVERB, position: ^FMOD_VECTOR, mindistance: _c.float, maxdistance: _c.float) -> FMOD_RESULT ---
-	FMOD_Reverb_Get3DAttributes :: proc(reverb: ^FMOD_REVERB, position: ^FMOD_VECTOR, mindistance: ^_c.float, maxdistance: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Reverb_Set3DAttributes :: proc(reverb: ^FMOD_REVERB, position: ^FMOD_VECTOR, mindistance: f32, maxdistance: f32) -> FMOD_RESULT ---
+	FMOD_Reverb_Get3DAttributes :: proc(reverb: ^FMOD_REVERB, position: ^FMOD_VECTOR, mindistance: ^f32, maxdistance: ^f32) -> FMOD_RESULT ---
 	FMOD_Reverb_SetProperties :: proc(reverb: ^FMOD_REVERB, properties: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
 	FMOD_Reverb_GetProperties :: proc(reverb: ^FMOD_REVERB, properties: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
-	FMOD_Reverb_SetActive :: proc(reverb: ^FMOD_REVERB, active: _c.int) -> FMOD_RESULT ---
-	FMOD_Reverb_GetActive :: proc(reverb: ^FMOD_REVERB, active: ^_c.int) -> FMOD_RESULT ---
+	FMOD_Reverb_SetActive :: proc(reverb: ^FMOD_REVERB, active: i32) -> FMOD_RESULT ---
+	FMOD_Reverb_GetActive :: proc(reverb: ^FMOD_REVERB, active: ^i32) -> FMOD_RESULT ---
 	FMOD_Reverb_SetUserData :: proc(reverb: ^FMOD_REVERB, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_Reverb_GetUserData :: proc(reverb: ^FMOD_REVERB, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_Reverb_GetMemoryInfo :: proc(reverb: ^FMOD_REVERB, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_Reverb_GetMemoryInfo :: proc(reverb: ^FMOD_REVERB, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_EventSystem_Create :: proc(eventsystem: ^^FMOD_EVENTSYSTEM) -> FMOD_RESULT ---
-	FMOD_EventSystem_Init :: proc(eventsystem: ^FMOD_EVENTSYSTEM, maxchannels: _c.int, flags: _c.uint, extradriverdata: rawptr, eventflags: _c.uint) -> FMOD_RESULT ---
+	FMOD_EventSystem_Init :: proc(eventsystem: ^FMOD_EVENTSYSTEM, maxchannels: i32, flags: u32, extradriverdata: rawptr, eventflags: u32) -> FMOD_RESULT ---
 	FMOD_EventSystem_Release :: proc(eventsystem: ^FMOD_EVENTSYSTEM) -> FMOD_RESULT ---
 	FMOD_EventSystem_Update :: proc(eventsystem: ^FMOD_EVENTSYSTEM) -> FMOD_RESULT ---
 	FMOD_EventSystem_SetMediaPath :: proc(eventsystem: ^FMOD_EVENTSYSTEM, path: cstring) -> FMOD_RESULT ---
@@ -1593,213 +1586,213 @@ foreign fmodex_libs {
 	FMOD_EventSystem_GetMusicSystem :: proc(eventsystem: ^FMOD_EVENTSYSTEM, musicsystem: ^^FMOD_MUSICSYSTEM) -> FMOD_RESULT ---
 	FMOD_EventSystem_SetLanguage :: proc(eventsystem: ^FMOD_EVENTSYSTEM, language: cstring) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetLanguage :: proc(eventsystem: ^FMOD_EVENTSYSTEM, language: cstring) -> FMOD_RESULT ---
-	FMOD_EventSystem_RegisterDSP :: proc(eventsystem: ^FMOD_EVENTSYSTEM, description: ^FMOD_DSP_DESCRIPTION, handle: ^_c.uint) -> FMOD_RESULT ---
+	FMOD_EventSystem_RegisterDSP :: proc(eventsystem: ^FMOD_EVENTSYSTEM, description: ^FMOD_DSP_DESCRIPTION, handle: ^u32) -> FMOD_RESULT ---
 	FMOD_EventSystem_Load :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name_or_data: cstring, loadinfo: ^FMOD_EVENT_LOADINFO, project: ^^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
 	FMOD_EventSystem_Unload :: proc(eventsystem: ^FMOD_EVENTSYSTEM) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetProject :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, project: ^^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetProjectByIndex :: proc(eventsystem: ^FMOD_EVENTSYSTEM, index: _c.int, project: ^^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetNumProjects :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numprojects: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetProjectByIndex :: proc(eventsystem: ^FMOD_EVENTSYSTEM, index: i32, project: ^^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetNumProjects :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numprojects: ^i32) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetCategory :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetCategoryByIndex :: proc(eventsystem: ^FMOD_EVENTSYSTEM, index: _c.int, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetCategoryByIndex :: proc(eventsystem: ^FMOD_EVENTSYSTEM, index: i32, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetMusicCategory :: proc(eventsystem: ^FMOD_EVENTSYSTEM, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetNumCategories :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numcategories: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetGroup :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, cacheevents: _c.int, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetEvent :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetEventBySystemID :: proc(eventsystem: ^FMOD_EVENTSYSTEM, systemid: _c.uint, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetEventByGUID :: proc(eventsystem: ^FMOD_EVENTSYSTEM, guid: ^FMOD_GUID, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetEventByGUIDString :: proc(eventsystem: ^FMOD_EVENTSYSTEM, guid: cstring, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetNumEvents :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numevents: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetNumCategories :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numcategories: ^i32) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetGroup :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, cacheevents: i32, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetEvent :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetEventBySystemID :: proc(eventsystem: ^FMOD_EVENTSYSTEM, systemid: u32, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetEventByGUID :: proc(eventsystem: ^FMOD_EVENTSYSTEM, guid: ^FMOD_GUID, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetEventByGUIDString :: proc(eventsystem: ^FMOD_EVENTSYSTEM, guid: cstring, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetNumEvents :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numevents: ^i32) -> FMOD_RESULT ---
 	FMOD_EventSystem_SetReverbProperties :: proc(eventsystem: ^FMOD_EVENTSYSTEM, props: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetReverbProperties :: proc(eventsystem: ^FMOD_EVENTSYSTEM, props: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetReverbPreset :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, props: ^FMOD_REVERB_PROPERTIES, index: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetReverbPresetByIndex :: proc(eventsystem: ^FMOD_EVENTSYSTEM, index: _c.int, props: ^FMOD_REVERB_PROPERTIES, name: ^cstring) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetNumReverbPresets :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numpresets: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetReverbPreset :: proc(eventsystem: ^FMOD_EVENTSYSTEM, name: cstring, props: ^FMOD_REVERB_PROPERTIES, index: ^i32) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetReverbPresetByIndex :: proc(eventsystem: ^FMOD_EVENTSYSTEM, index: i32, props: ^FMOD_REVERB_PROPERTIES, name: ^cstring) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetNumReverbPresets :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numpresets: ^i32) -> FMOD_RESULT ---
 	FMOD_EventSystem_CreateReverb :: proc(eventsystem: ^FMOD_EVENTSYSTEM, reverb: ^^FMOD_EVENTREVERB) -> FMOD_RESULT ---
 	FMOD_EventSystem_SetReverbAmbientProperties :: proc(eventsystem: ^FMOD_EVENTSYSTEM, props: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetReverbAmbientProperties :: proc(eventsystem: ^FMOD_EVENTSYSTEM, props: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
 	FMOD_EventSystem_CreateEventQueue :: proc(eventsystem: ^FMOD_EVENTSYSTEM, queue: ^^FMOD_EVENTQUEUE) -> FMOD_RESULT ---
 	FMOD_EventSystem_CreateEventQueueEntry :: proc(eventsystem: ^FMOD_EVENTSYSTEM, event: ^FMOD_EVENT, entry: ^^FMOD_EVENTQUEUEENTRY) -> FMOD_RESULT ---
-	FMOD_EventSystem_Set3DNumListeners :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numlisteners: _c.int) -> FMOD_RESULT ---
-	FMOD_EventSystem_Get3DNumListeners :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numlisteners: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventSystem_Set3DListenerAttributes :: proc(eventsystem: ^FMOD_EVENTSYSTEM, listener: _c.int, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_EventSystem_Get3DListenerAttributes :: proc(eventsystem: ^FMOD_EVENTSYSTEM, listener: _c.int, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
+	FMOD_EventSystem_Set3DNumListeners :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numlisteners: i32) -> FMOD_RESULT ---
+	FMOD_EventSystem_Get3DNumListeners :: proc(eventsystem: ^FMOD_EVENTSYSTEM, numlisteners: ^i32) -> FMOD_RESULT ---
+	FMOD_EventSystem_Set3DListenerAttributes :: proc(eventsystem: ^FMOD_EVENTSYSTEM, listener: i32, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
+	FMOD_EventSystem_Get3DListenerAttributes :: proc(eventsystem: ^FMOD_EVENTSYSTEM, listener: i32, pos: ^FMOD_VECTOR, vel: ^FMOD_VECTOR, forward: ^FMOD_VECTOR, up: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_EventSystem_SetUserData :: proc(eventsystem: ^FMOD_EVENTSYSTEM, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventSystem_GetUserData :: proc(eventsystem: ^FMOD_EVENTSYSTEM, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_EventSystem_PreloadFSB :: proc(eventsystem: ^FMOD_EVENTSYSTEM, filename: cstring, streaminstance: _c.int, sound: ^FMOD_SOUND, unloadprevious: _c.int) -> FMOD_RESULT ---
-	FMOD_EventSystem_UnloadFSB :: proc(eventsystem: ^FMOD_EVENTSYSTEM, filename: cstring, streaminstance: _c.int) -> FMOD_RESULT ---
-	FMOD_EventSystem_GetMemoryInfo :: proc(eventsystem: ^FMOD_EVENTSYSTEM, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventSystem_PreloadFSB :: proc(eventsystem: ^FMOD_EVENTSYSTEM, filename: cstring, streaminstance: i32, sound: ^FMOD_SOUND, unloadprevious: i32) -> FMOD_RESULT ---
+	FMOD_EventSystem_UnloadFSB :: proc(eventsystem: ^FMOD_EVENTSYSTEM, filename: cstring, streaminstance: i32) -> FMOD_RESULT ---
+	FMOD_EventSystem_GetMemoryInfo :: proc(eventsystem: ^FMOD_EVENTSYSTEM, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_EventProject_Release :: proc(eventproject: ^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
 	FMOD_EventProject_GetInfo :: proc(eventproject: ^FMOD_EVENTPROJECT, info: ^FMOD_EVENT_PROJECTINFO) -> FMOD_RESULT ---
-	FMOD_EventProject_GetGroup :: proc(eventproject: ^FMOD_EVENTPROJECT, name: cstring, cacheevents: _c.int, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
-	FMOD_EventProject_GetGroupByIndex :: proc(eventproject: ^FMOD_EVENTPROJECT, index: _c.int, cacheevents: _c.int, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
-	FMOD_EventProject_GetNumGroups :: proc(eventproject: ^FMOD_EVENTPROJECT, numgroups: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventProject_GetEvent :: proc(eventproject: ^FMOD_EVENTPROJECT, name: cstring, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventProject_GetEventByProjectID :: proc(eventproject: ^FMOD_EVENTPROJECT, projectid: _c.uint, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventProject_GetNumEvents :: proc(eventproject: ^FMOD_EVENTPROJECT, numevents: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventProject_LoadSampleData :: proc(eventproject: ^FMOD_EVENTPROJECT, eventid_array: ^_c.int, sizeof_eventid_array: _c.int, groupname_array: ^cstring, sizeof_groupname_array: _c.int, eventmode: _c.uint) -> FMOD_RESULT ---
-	FMOD_EventProject_StopAllEvents :: proc(eventproject: ^FMOD_EVENTPROJECT, immediate: _c.int) -> FMOD_RESULT ---
+	FMOD_EventProject_GetGroup :: proc(eventproject: ^FMOD_EVENTPROJECT, name: cstring, cacheevents: i32, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
+	FMOD_EventProject_GetGroupByIndex :: proc(eventproject: ^FMOD_EVENTPROJECT, index: i32, cacheevents: i32, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
+	FMOD_EventProject_GetNumGroups :: proc(eventproject: ^FMOD_EVENTPROJECT, numgroups: ^i32) -> FMOD_RESULT ---
+	FMOD_EventProject_GetEvent :: proc(eventproject: ^FMOD_EVENTPROJECT, name: cstring, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventProject_GetEventByProjectID :: proc(eventproject: ^FMOD_EVENTPROJECT, projectid: u32, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventProject_GetNumEvents :: proc(eventproject: ^FMOD_EVENTPROJECT, numevents: ^i32) -> FMOD_RESULT ---
+	FMOD_EventProject_LoadSampleData :: proc(eventproject: ^FMOD_EVENTPROJECT, eventid_array: ^i32, sizeof_eventid_array: i32, groupname_array: ^cstring, sizeof_groupname_array: i32, eventmode: u32) -> FMOD_RESULT ---
+	FMOD_EventProject_StopAllEvents :: proc(eventproject: ^FMOD_EVENTPROJECT, immediate: i32) -> FMOD_RESULT ---
 	FMOD_EventProject_CancelAllLoads :: proc(eventproject: ^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
 	FMOD_EventProject_SetUserData :: proc(eventproject: ^FMOD_EVENTPROJECT, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventProject_GetUserData :: proc(eventproject: ^FMOD_EVENTPROJECT, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_EventProject_GetMemoryInfo :: proc(eventproject: ^FMOD_EVENTPROJECT, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetInfo :: proc(eventgroup: ^FMOD_EVENTGROUP, index: ^_c.int, name: ^cstring) -> FMOD_RESULT ---
-	FMOD_EventGroup_LoadEventData :: proc(eventgroup: ^FMOD_EVENTGROUP, resource: FMOD_EVENT_RESOURCE, mode: _c.uint) -> FMOD_RESULT ---
-	FMOD_EventGroup_FreeEventData :: proc(eventgroup: ^FMOD_EVENTGROUP, event: ^FMOD_EVENT, waituntilready: _c.int) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetGroup :: proc(eventgroup: ^FMOD_EVENTGROUP, name: cstring, cacheevents: _c.int, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetGroupByIndex :: proc(eventgroup: ^FMOD_EVENTGROUP, index: _c.int, cacheevents: _c.int, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
+	FMOD_EventProject_GetMemoryInfo :: proc(eventproject: ^FMOD_EVENTPROJECT, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetInfo :: proc(eventgroup: ^FMOD_EVENTGROUP, index: ^i32, name: ^cstring) -> FMOD_RESULT ---
+	FMOD_EventGroup_LoadEventData :: proc(eventgroup: ^FMOD_EVENTGROUP, resource: FMOD_EVENT_RESOURCE, mode: u32) -> FMOD_RESULT ---
+	FMOD_EventGroup_FreeEventData :: proc(eventgroup: ^FMOD_EVENTGROUP, event: ^FMOD_EVENT, waituntilready: i32) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetGroup :: proc(eventgroup: ^FMOD_EVENTGROUP, name: cstring, cacheevents: i32, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetGroupByIndex :: proc(eventgroup: ^FMOD_EVENTGROUP, index: i32, cacheevents: i32, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
 	FMOD_EventGroup_GetParentGroup :: proc(eventgroup: ^FMOD_EVENTGROUP, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
 	FMOD_EventGroup_GetParentProject :: proc(eventgroup: ^FMOD_EVENTGROUP, project: ^^FMOD_EVENTPROJECT) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetNumGroups :: proc(eventgroup: ^FMOD_EVENTGROUP, numgroups: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetEvent :: proc(eventgroup: ^FMOD_EVENTGROUP, name: cstring, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetEventByIndex :: proc(eventgroup: ^FMOD_EVENTGROUP, index: _c.int, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetNumEvents :: proc(eventgroup: ^FMOD_EVENTGROUP, numevents: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetNumGroups :: proc(eventgroup: ^FMOD_EVENTGROUP, numgroups: ^i32) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetEvent :: proc(eventgroup: ^FMOD_EVENTGROUP, name: cstring, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetEventByIndex :: proc(eventgroup: ^FMOD_EVENTGROUP, index: i32, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetNumEvents :: proc(eventgroup: ^FMOD_EVENTGROUP, numevents: ^i32) -> FMOD_RESULT ---
 	FMOD_EventGroup_GetProperty :: proc(eventgroup: ^FMOD_EVENTGROUP, propertyname: cstring, value: rawptr) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetPropertyByIndex :: proc(eventgroup: ^FMOD_EVENTGROUP, propertyindex: _c.int, value: rawptr) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetNumProperties :: proc(eventgroup: ^FMOD_EVENTGROUP, numproperties: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetState :: proc(eventgroup: ^FMOD_EVENTGROUP, state: ^_c.uint) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetPropertyByIndex :: proc(eventgroup: ^FMOD_EVENTGROUP, propertyindex: i32, value: rawptr) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetNumProperties :: proc(eventgroup: ^FMOD_EVENTGROUP, numproperties: ^i32) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetState :: proc(eventgroup: ^FMOD_EVENTGROUP, state: ^u32) -> FMOD_RESULT ---
 	FMOD_EventGroup_SetUserData :: proc(eventgroup: ^FMOD_EVENTGROUP, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventGroup_GetUserData :: proc(eventgroup: ^FMOD_EVENTGROUP, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_EventGroup_GetMemoryInfo :: proc(eventgroup: ^FMOD_EVENTGROUP, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetInfo :: proc(eventcategory: ^FMOD_EVENTCATEGORY, index: ^_c.int, name: ^cstring) -> FMOD_RESULT ---
+	FMOD_EventGroup_GetMemoryInfo :: proc(eventgroup: ^FMOD_EVENTGROUP, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetInfo :: proc(eventcategory: ^FMOD_EVENTCATEGORY, index: ^i32, name: ^cstring) -> FMOD_RESULT ---
 	FMOD_EventCategory_GetCategory :: proc(eventcategory: ^FMOD_EVENTCATEGORY, name: cstring, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetCategoryByIndex :: proc(eventcategory: ^FMOD_EVENTCATEGORY, index: _c.int, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetNumCategories :: proc(eventcategory: ^FMOD_EVENTCATEGORY, numcategories: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetEventByIndex :: proc(eventcategory: ^FMOD_EVENTCATEGORY, index: _c.int, mode: _c.uint, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetNumEvents :: proc(eventcategory: ^FMOD_EVENTCATEGORY, numevents: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetCategoryByIndex :: proc(eventcategory: ^FMOD_EVENTCATEGORY, index: i32, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetNumCategories :: proc(eventcategory: ^FMOD_EVENTCATEGORY, numcategories: ^i32) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetEventByIndex :: proc(eventcategory: ^FMOD_EVENTCATEGORY, index: i32, mode: u32, event: ^^FMOD_EVENT) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetNumEvents :: proc(eventcategory: ^FMOD_EVENTCATEGORY, numevents: ^i32) -> FMOD_RESULT ---
 	FMOD_EventCategory_GetParentCategory :: proc(eventcategory: ^FMOD_EVENTCATEGORY, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
 	FMOD_EventCategory_StopAllEvents :: proc(eventcategory: ^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
-	FMOD_EventCategory_SetVolume :: proc(eventcategory: ^FMOD_EVENTCATEGORY, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetVolume :: proc(eventcategory: ^FMOD_EVENTCATEGORY, volume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_EventCategory_SetPitch :: proc(eventcategory: ^FMOD_EVENTCATEGORY, pitch: _c.float, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetPitch :: proc(eventcategory: ^FMOD_EVENTCATEGORY, pitch: ^_c.float, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
-	FMOD_EventCategory_SetPaused :: proc(eventcategory: ^FMOD_EVENTCATEGORY, paused: _c.int) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetPaused :: proc(eventcategory: ^FMOD_EVENTCATEGORY, paused: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventCategory_SetMute :: proc(eventcategory: ^FMOD_EVENTCATEGORY, mute: _c.int) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetMute :: proc(eventcategory: ^FMOD_EVENTCATEGORY, mute: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventCategory_SetVolume :: proc(eventcategory: ^FMOD_EVENTCATEGORY, volume: f32) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetVolume :: proc(eventcategory: ^FMOD_EVENTCATEGORY, volume: ^f32) -> FMOD_RESULT ---
+	FMOD_EventCategory_SetPitch :: proc(eventcategory: ^FMOD_EVENTCATEGORY, pitch: f32, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetPitch :: proc(eventcategory: ^FMOD_EVENTCATEGORY, pitch: ^f32, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
+	FMOD_EventCategory_SetPaused :: proc(eventcategory: ^FMOD_EVENTCATEGORY, paused: i32) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetPaused :: proc(eventcategory: ^FMOD_EVENTCATEGORY, paused: ^i32) -> FMOD_RESULT ---
+	FMOD_EventCategory_SetMute :: proc(eventcategory: ^FMOD_EVENTCATEGORY, mute: i32) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetMute :: proc(eventcategory: ^FMOD_EVENTCATEGORY, mute: ^i32) -> FMOD_RESULT ---
 	FMOD_EventCategory_GetChannelGroup :: proc(eventcategory: ^FMOD_EVENTCATEGORY, channelgroup: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_EventCategory_SetUserData :: proc(eventcategory: ^FMOD_EVENTCATEGORY, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventCategory_GetUserData :: proc(eventcategory: ^FMOD_EVENTCATEGORY, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_EventCategory_GetMemoryInfo :: proc(eventcategory: ^FMOD_EVENTCATEGORY, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
-	FMOD_Event_Release :: proc(event: ^FMOD_EVENT, freeeventdata: _c.int, waituntilready: _c.int) -> FMOD_RESULT ---
+	FMOD_EventCategory_GetMemoryInfo :: proc(eventcategory: ^FMOD_EVENTCATEGORY, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_Event_Release :: proc(event: ^FMOD_EVENT, freeeventdata: i32, waituntilready: i32) -> FMOD_RESULT ---
 	FMOD_Event_Start :: proc(event: ^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_Event_Stop :: proc(event: ^FMOD_EVENT, immediate: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetInfo :: proc(event: ^FMOD_EVENT, index: ^_c.int, name: ^cstring, info: ^FMOD_EVENT_INFO) -> FMOD_RESULT ---
-	FMOD_Event_GetState :: proc(event: ^FMOD_EVENT, state: ^_c.uint) -> FMOD_RESULT ---
+	FMOD_Event_Stop :: proc(event: ^FMOD_EVENT, immediate: i32) -> FMOD_RESULT ---
+	FMOD_Event_GetInfo :: proc(event: ^FMOD_EVENT, index: ^i32, name: ^cstring, info: ^FMOD_EVENT_INFO) -> FMOD_RESULT ---
+	FMOD_Event_GetState :: proc(event: ^FMOD_EVENT, state: ^u32) -> FMOD_RESULT ---
 	FMOD_Event_GetParentGroup :: proc(event: ^FMOD_EVENT, group: ^^FMOD_EVENTGROUP) -> FMOD_RESULT ---
 	FMOD_Event_GetChannelGroup :: proc(event: ^FMOD_EVENT, channelgroup: ^^FMOD_CHANNELGROUP) -> FMOD_RESULT ---
 	FMOD_Event_SetCallback :: proc(event: ^FMOD_EVENT, callback: FMOD_EVENT_CALLBACK, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_Event_GetParameter :: proc(event: ^FMOD_EVENT, name: cstring, parameter: ^^FMOD_EVENTPARAMETER) -> FMOD_RESULT ---
-	FMOD_Event_GetParameterByIndex :: proc(event: ^FMOD_EVENT, index: _c.int, parameter: ^^FMOD_EVENTPARAMETER) -> FMOD_RESULT ---
-	FMOD_Event_GetNumParameters :: proc(event: ^FMOD_EVENT, numparameters: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetProperty :: proc(event: ^FMOD_EVENT, propertyname: cstring, value: rawptr, this_instance: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetPropertyByIndex :: proc(event: ^FMOD_EVENT, propertyindex: _c.int, value: rawptr, this_instance: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_SetProperty :: proc(event: ^FMOD_EVENT, propertyname: cstring, value: rawptr, this_instance: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_SetPropertyByIndex :: proc(event: ^FMOD_EVENT, propertyindex: _c.int, value: rawptr, this_instance: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetNumProperties :: proc(event: ^FMOD_EVENT, numproperties: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetPropertyInfo :: proc(event: ^FMOD_EVENT, propertyindex: ^_c.int, propertyname: ^cstring, type: ^FMOD_EVENTPROPERTY_TYPE) -> FMOD_RESULT ---
+	FMOD_Event_GetParameterByIndex :: proc(event: ^FMOD_EVENT, index: i32, parameter: ^^FMOD_EVENTPARAMETER) -> FMOD_RESULT ---
+	FMOD_Event_GetNumParameters :: proc(event: ^FMOD_EVENT, numparameters: ^i32) -> FMOD_RESULT ---
+	FMOD_Event_GetProperty :: proc(event: ^FMOD_EVENT, propertyname: cstring, value: rawptr, this_instance: i32) -> FMOD_RESULT ---
+	FMOD_Event_GetPropertyByIndex :: proc(event: ^FMOD_EVENT, propertyindex: i32, value: rawptr, this_instance: i32) -> FMOD_RESULT ---
+	FMOD_Event_SetProperty :: proc(event: ^FMOD_EVENT, propertyname: cstring, value: rawptr, this_instance: i32) -> FMOD_RESULT ---
+	FMOD_Event_SetPropertyByIndex :: proc(event: ^FMOD_EVENT, propertyindex: i32, value: rawptr, this_instance: i32) -> FMOD_RESULT ---
+	FMOD_Event_GetNumProperties :: proc(event: ^FMOD_EVENT, numproperties: ^i32) -> FMOD_RESULT ---
+	FMOD_Event_GetPropertyInfo :: proc(event: ^FMOD_EVENT, propertyindex: ^i32, propertyname: ^cstring, type: ^FMOD_EVENTPROPERTY_TYPE) -> FMOD_RESULT ---
 	FMOD_Event_GetCategory :: proc(event: ^FMOD_EVENT, category: ^^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
-	FMOD_Event_SetVolume :: proc(event: ^FMOD_EVENT, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_Event_GetVolume :: proc(event: ^FMOD_EVENT, volume: ^_c.float) -> FMOD_RESULT ---
-	FMOD_Event_SetPitch :: proc(event: ^FMOD_EVENT, pitch: _c.float, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
-	FMOD_Event_GetPitch :: proc(event: ^FMOD_EVENT, pitch: ^_c.float, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
-	FMOD_Event_SetPaused :: proc(event: ^FMOD_EVENT, paused: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetPaused :: proc(event: ^FMOD_EVENT, paused: ^_c.int) -> FMOD_RESULT ---
-	FMOD_Event_SetMute :: proc(event: ^FMOD_EVENT, mute: _c.int) -> FMOD_RESULT ---
-	FMOD_Event_GetMute :: proc(event: ^FMOD_EVENT, mute: ^_c.int) -> FMOD_RESULT ---
+	FMOD_Event_SetVolume :: proc(event: ^FMOD_EVENT, volume: f32) -> FMOD_RESULT ---
+	FMOD_Event_GetVolume :: proc(event: ^FMOD_EVENT, volume: ^f32) -> FMOD_RESULT ---
+	FMOD_Event_SetPitch :: proc(event: ^FMOD_EVENT, pitch: f32, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
+	FMOD_Event_GetPitch :: proc(event: ^FMOD_EVENT, pitch: ^f32, units: FMOD_EVENT_PITCHUNITS) -> FMOD_RESULT ---
+	FMOD_Event_SetPaused :: proc(event: ^FMOD_EVENT, paused: i32) -> FMOD_RESULT ---
+	FMOD_Event_GetPaused :: proc(event: ^FMOD_EVENT, paused: ^i32) -> FMOD_RESULT ---
+	FMOD_Event_SetMute :: proc(event: ^FMOD_EVENT, mute: i32) -> FMOD_RESULT ---
+	FMOD_Event_GetMute :: proc(event: ^FMOD_EVENT, mute: ^i32) -> FMOD_RESULT ---
 	FMOD_Event_Set3DAttributes :: proc(event: ^FMOD_EVENT, position: ^FMOD_VECTOR, velocity: ^FMOD_VECTOR, orientation: ^FMOD_VECTOR) -> FMOD_RESULT ---
 	FMOD_Event_Get3DAttributes :: proc(event: ^FMOD_EVENT, position: ^FMOD_VECTOR, velocity: ^FMOD_VECTOR, orientation: ^FMOD_VECTOR) -> FMOD_RESULT ---
-	FMOD_Event_Set3DOcclusion :: proc(event: ^FMOD_EVENT, directocclusion: _c.float, reverbocclusion: _c.float) -> FMOD_RESULT ---
-	FMOD_Event_Get3DOcclusion :: proc(event: ^FMOD_EVENT, directocclusion: ^_c.float, reverbocclusion: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Event_Set3DOcclusion :: proc(event: ^FMOD_EVENT, directocclusion: f32, reverbocclusion: f32) -> FMOD_RESULT ---
+	FMOD_Event_Get3DOcclusion :: proc(event: ^FMOD_EVENT, directocclusion: ^f32, reverbocclusion: ^f32) -> FMOD_RESULT ---
 	FMOD_Event_SetReverbProperties :: proc(event: ^FMOD_EVENT, props: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
 	FMOD_Event_GetReverbProperties :: proc(event: ^FMOD_EVENT, props: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
 	FMOD_Event_SetUserData :: proc(event: ^FMOD_EVENT, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_Event_GetUserData :: proc(event: ^FMOD_EVENT, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_Event_GetMemoryInfo :: proc(event: ^FMOD_EVENT, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
-	FMOD_EventParameter_GetInfo :: proc(eventparameter: ^FMOD_EVENTPARAMETER, index: ^_c.int, name: ^cstring) -> FMOD_RESULT ---
-	FMOD_EventParameter_GetRange :: proc(eventparameter: ^FMOD_EVENTPARAMETER, rangemin: ^_c.float, rangemax: ^_c.float) -> FMOD_RESULT ---
-	FMOD_EventParameter_SetValue :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: _c.float) -> FMOD_RESULT ---
-	FMOD_EventParameter_GetValue :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: ^_c.float) -> FMOD_RESULT ---
-	FMOD_EventParameter_SetVelocity :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: _c.float) -> FMOD_RESULT ---
-	FMOD_EventParameter_GetVelocity :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: ^_c.float) -> FMOD_RESULT ---
-	FMOD_EventParameter_SetSeekSpeed :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: _c.float) -> FMOD_RESULT ---
-	FMOD_EventParameter_GetSeekSpeed :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: ^_c.float) -> FMOD_RESULT ---
+	FMOD_Event_GetMemoryInfo :: proc(event: ^FMOD_EVENT, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventParameter_GetInfo :: proc(eventparameter: ^FMOD_EVENTPARAMETER, index: ^i32, name: ^cstring) -> FMOD_RESULT ---
+	FMOD_EventParameter_GetRange :: proc(eventparameter: ^FMOD_EVENTPARAMETER, rangemin: ^f32, rangemax: ^f32) -> FMOD_RESULT ---
+	FMOD_EventParameter_SetValue :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: f32) -> FMOD_RESULT ---
+	FMOD_EventParameter_GetValue :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: ^f32) -> FMOD_RESULT ---
+	FMOD_EventParameter_SetVelocity :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: f32) -> FMOD_RESULT ---
+	FMOD_EventParameter_GetVelocity :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: ^f32) -> FMOD_RESULT ---
+	FMOD_EventParameter_SetSeekSpeed :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: f32) -> FMOD_RESULT ---
+	FMOD_EventParameter_GetSeekSpeed :: proc(eventparameter: ^FMOD_EVENTPARAMETER, value: ^f32) -> FMOD_RESULT ---
 	FMOD_EventParameter_SetUserData :: proc(eventparameter: ^FMOD_EVENTPARAMETER, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventParameter_GetUserData :: proc(eventparameter: ^FMOD_EVENTPARAMETER, userdata: ^rawptr) -> FMOD_RESULT ---
 	FMOD_EventParameter_KeyOff :: proc(eventparameter: ^FMOD_EVENTPARAMETER) -> FMOD_RESULT ---
-	FMOD_EventParameter_DisableAutomation :: proc(eventparameter: ^FMOD_EVENTPARAMETER, disable: _c.int) -> FMOD_RESULT ---
-	FMOD_EventParameter_GetMemoryInfo :: proc(eventparameter: ^FMOD_EVENTPARAMETER, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventParameter_DisableAutomation :: proc(eventparameter: ^FMOD_EVENTPARAMETER, disable: i32) -> FMOD_RESULT ---
+	FMOD_EventParameter_GetMemoryInfo :: proc(eventparameter: ^FMOD_EVENTPARAMETER, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_EventReverb_Release :: proc(eventreverb: ^FMOD_EVENTREVERB) -> FMOD_RESULT ---
-	FMOD_EventReverb_Set3DAttributes :: proc(eventreverb: ^FMOD_EVENTREVERB, position: ^FMOD_VECTOR, mindistance: _c.float, maxdistance: _c.float) -> FMOD_RESULT ---
-	FMOD_EventReverb_Get3DAttributes :: proc(eventreverb: ^FMOD_EVENTREVERB, position: ^FMOD_VECTOR, mindistance: ^_c.float, maxdistance: ^_c.float) -> FMOD_RESULT ---
+	FMOD_EventReverb_Set3DAttributes :: proc(eventreverb: ^FMOD_EVENTREVERB, position: ^FMOD_VECTOR, mindistance: f32, maxdistance: f32) -> FMOD_RESULT ---
+	FMOD_EventReverb_Get3DAttributes :: proc(eventreverb: ^FMOD_EVENTREVERB, position: ^FMOD_VECTOR, mindistance: ^f32, maxdistance: ^f32) -> FMOD_RESULT ---
 	FMOD_EventReverb_SetProperties :: proc(eventreverb: ^FMOD_EVENTREVERB, props: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
 	FMOD_EventReverb_GetProperties :: proc(eventreverb: ^FMOD_EVENTREVERB, props: ^FMOD_REVERB_PROPERTIES) -> FMOD_RESULT ---
-	FMOD_EventReverb_SetActive :: proc(eventreverb: ^FMOD_EVENTREVERB, active: _c.int) -> FMOD_RESULT ---
-	FMOD_EventReverb_GetActive :: proc(eventreverb: ^FMOD_EVENTREVERB, active: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventReverb_SetActive :: proc(eventreverb: ^FMOD_EVENTREVERB, active: i32) -> FMOD_RESULT ---
+	FMOD_EventReverb_GetActive :: proc(eventreverb: ^FMOD_EVENTREVERB, active: ^i32) -> FMOD_RESULT ---
 	FMOD_EventReverb_SetUserData :: proc(eventreverb: ^FMOD_EVENTREVERB, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventReverb_GetUserData :: proc(eventreverb: ^FMOD_EVENTREVERB, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_EventReverb_GetMemoryInfo :: proc(eventreverb: ^FMOD_EVENTREVERB, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventReverb_GetMemoryInfo :: proc(eventreverb: ^FMOD_EVENTREVERB, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_EventQueue_Release :: proc(eventqueue: ^FMOD_EVENTQUEUE) -> FMOD_RESULT ---
-	FMOD_EventQueue_Add :: proc(eventqueue: ^FMOD_EVENTQUEUE, entry: ^FMOD_EVENTQUEUEENTRY, allow_duplicates: _c.int) -> FMOD_RESULT ---
+	FMOD_EventQueue_Add :: proc(eventqueue: ^FMOD_EVENTQUEUE, entry: ^FMOD_EVENTQUEUEENTRY, allow_duplicates: i32) -> FMOD_RESULT ---
 	FMOD_EventQueue_Remove :: proc(eventqueue: ^FMOD_EVENTQUEUE, entry: ^FMOD_EVENTQUEUEENTRY) -> FMOD_RESULT ---
 	FMOD_EventQueue_RemoveHead :: proc(eventqueue: ^FMOD_EVENTQUEUE) -> FMOD_RESULT ---
-	FMOD_EventQueue_Clear :: proc(eventqueue: ^FMOD_EVENTQUEUE, stopallevents: _c.int) -> FMOD_RESULT ---
+	FMOD_EventQueue_Clear :: proc(eventqueue: ^FMOD_EVENTQUEUE, stopallevents: i32) -> FMOD_RESULT ---
 	FMOD_EventQueue_FindFirstEntry :: proc(eventqueue: ^FMOD_EVENTQUEUE, entry: ^^FMOD_EVENTQUEUEENTRY) -> FMOD_RESULT ---
 	FMOD_EventQueue_FindNextEntry :: proc(eventqueue: ^FMOD_EVENTQUEUE, entry: ^^FMOD_EVENTQUEUEENTRY) -> FMOD_RESULT ---
-	FMOD_EventQueue_SetPaused :: proc(eventqueue: ^FMOD_EVENTQUEUE, paused: _c.int) -> FMOD_RESULT ---
-	FMOD_EventQueue_GetPaused :: proc(eventqueue: ^FMOD_EVENTQUEUE, paused: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventQueue_IncludeDuckingCategory :: proc(eventqueue: ^FMOD_EVENTQUEUE, category: ^FMOD_EVENTCATEGORY, ducked_volume: _c.float, unducked_volume: _c.float, duck_time: _c.uint, unduck_time: _c.uint) -> FMOD_RESULT ---
+	FMOD_EventQueue_SetPaused :: proc(eventqueue: ^FMOD_EVENTQUEUE, paused: i32) -> FMOD_RESULT ---
+	FMOD_EventQueue_GetPaused :: proc(eventqueue: ^FMOD_EVENTQUEUE, paused: ^i32) -> FMOD_RESULT ---
+	FMOD_EventQueue_IncludeDuckingCategory :: proc(eventqueue: ^FMOD_EVENTQUEUE, category: ^FMOD_EVENTCATEGORY, ducked_volume: f32, unducked_volume: f32, duck_time: u32, unduck_time: u32) -> FMOD_RESULT ---
 	FMOD_EventQueue_ExcludeDuckingCategory :: proc(eventqueue: ^FMOD_EVENTQUEUE, category: ^FMOD_EVENTCATEGORY) -> FMOD_RESULT ---
 	FMOD_EventQueue_SetCallback :: proc(eventqueue: ^FMOD_EVENTQUEUE, callback: FMOD_EVENTQUEUE_CALLBACK, callbackuserdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventQueue_SetUserData :: proc(eventqueue: ^FMOD_EVENTQUEUE, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventQueue_GetUserData :: proc(eventqueue: ^FMOD_EVENTQUEUE, userdata: ^rawptr) -> FMOD_RESULT ---
 	FMOD_EventQueue_Dump :: proc(eventqueue: ^FMOD_EVENTQUEUE) -> FMOD_RESULT ---
-	FMOD_EventQueue_GetMemoryInfo :: proc(eventqueue: ^FMOD_EVENTQUEUE, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventQueue_GetMemoryInfo :: proc(eventqueue: ^FMOD_EVENTQUEUE, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_EventQueueEntry_Release :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY) -> FMOD_RESULT ---
 	FMOD_EventQueueEntry_GetInfoOnlyEvent :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, infoonlyevent: ^^FMOD_EVENT) -> FMOD_RESULT ---
 	FMOD_EventQueueEntry_GetRealEvent :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, realevent: ^^FMOD_EVENT) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_SetPriority :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, priority: _c.uchar) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_GetPriority :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, priority: ^_c.uchar) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_SetExpiryTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, expirytime: _c.uint) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_GetExpiryTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, expirytime: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_SetDelayTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, delay: _c.uint) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_GetDelayTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, delay: ^_c.uint) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_SetInterrupt :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, interrupt: _c.int) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_GetInterrupt :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, interrupt: ^_c.int) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_SetCrossfadeTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, crossfade: _c.int) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_GetCrossfadeTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, crossfade: ^_c.int) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_SetPriority :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, priority: u8) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_GetPriority :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, priority: ^u8) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_SetExpiryTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, expirytime: u32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_GetExpiryTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, expirytime: ^u32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_SetDelayTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, delay: u32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_GetDelayTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, delay: ^u32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_SetInterrupt :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, interrupt: i32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_GetInterrupt :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, interrupt: ^i32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_SetCrossfadeTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, crossfade: i32) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_GetCrossfadeTime :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, crossfade: ^i32) -> FMOD_RESULT ---
 	FMOD_EventQueueEntry_SetUserData :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, userdata: rawptr) -> FMOD_RESULT ---
 	FMOD_EventQueueEntry_GetUserData :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, userdata: ^rawptr) -> FMOD_RESULT ---
-	FMOD_EventQueueEntry_GetMemoryInfo :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_EventQueueEntry_GetMemoryInfo :: proc(eventqueueentry: ^FMOD_EVENTQUEUEENTRY, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_MusicSystem_Reset :: proc(musicsystem: ^FMOD_MUSICSYSTEM) -> FMOD_RESULT ---
-	FMOD_MusicSystem_SetVolume :: proc(musicsystem: ^FMOD_MUSICSYSTEM, volume: _c.float) -> FMOD_RESULT ---
-	FMOD_MusicSystem_GetVolume :: proc(musicsystem: ^FMOD_MUSICSYSTEM, volume: ^_c.float) -> FMOD_RESULT ---
+	FMOD_MusicSystem_SetVolume :: proc(musicsystem: ^FMOD_MUSICSYSTEM, volume: f32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_GetVolume :: proc(musicsystem: ^FMOD_MUSICSYSTEM, volume: ^f32) -> FMOD_RESULT ---
 	FMOD_MusicSystem_SetReverbProperties :: proc(musicsystem: ^FMOD_MUSICSYSTEM, props: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
 	FMOD_MusicSystem_GetReverbProperties :: proc(musicsystem: ^FMOD_MUSICSYSTEM, props: ^FMOD_REVERB_CHANNELPROPERTIES) -> FMOD_RESULT ---
-	FMOD_MusicSystem_SetPaused :: proc(musicsystem: ^FMOD_MUSICSYSTEM, paused: _c.int) -> FMOD_RESULT ---
-	FMOD_MusicSystem_GetPaused :: proc(musicsystem: ^FMOD_MUSICSYSTEM, paused: ^_c.int) -> FMOD_RESULT ---
-	FMOD_MusicSystem_SetMute :: proc(musicsystem: ^FMOD_MUSICSYSTEM, mute: _c.int) -> FMOD_RESULT ---
-	FMOD_MusicSystem_GetMute :: proc(musicsystem: ^FMOD_MUSICSYSTEM, mute: ^_c.int) -> FMOD_RESULT ---
+	FMOD_MusicSystem_SetPaused :: proc(musicsystem: ^FMOD_MUSICSYSTEM, paused: i32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_GetPaused :: proc(musicsystem: ^FMOD_MUSICSYSTEM, paused: ^i32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_SetMute :: proc(musicsystem: ^FMOD_MUSICSYSTEM, mute: i32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_GetMute :: proc(musicsystem: ^FMOD_MUSICSYSTEM, mute: ^i32) -> FMOD_RESULT ---
 	FMOD_MusicSystem_GetInfo :: proc(musicsystem: ^FMOD_MUSICSYSTEM, info: ^FMOD_MUSIC_INFO) -> FMOD_RESULT ---
-	FMOD_MusicSystem_PromptCue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: _c.uint) -> FMOD_RESULT ---
-	FMOD_MusicSystem_PrepareCue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: _c.uint, prompt: ^^FMOD_MUSICPROMPT) -> FMOD_RESULT ---
-	FMOD_MusicSystem_GetParameterValue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: _c.uint, parameter: ^_c.float) -> FMOD_RESULT ---
-	FMOD_MusicSystem_SetParameterValue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: _c.uint, parameter: _c.float) -> FMOD_RESULT ---
+	FMOD_MusicSystem_PromptCue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: u32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_PrepareCue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: u32, prompt: ^^FMOD_MUSICPROMPT) -> FMOD_RESULT ---
+	FMOD_MusicSystem_GetParameterValue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: u32, parameter: ^f32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_SetParameterValue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, id: u32, parameter: f32) -> FMOD_RESULT ---
 	FMOD_MusicSystem_GetCues :: proc(musicsystem: ^FMOD_MUSICSYSTEM, it: ^FMOD_MUSIC_ITERATOR, filter: cstring) -> FMOD_RESULT ---
 	FMOD_MusicSystem_GetNextCue :: proc(musicsystem: ^FMOD_MUSICSYSTEM, it: ^FMOD_MUSIC_ITERATOR) -> FMOD_RESULT ---
 	FMOD_MusicSystem_GetParameters :: proc(musicsystem: ^FMOD_MUSICSYSTEM, it: ^FMOD_MUSIC_ITERATOR, filter: cstring) -> FMOD_RESULT ---
 	FMOD_MusicSystem_GetNextParameter :: proc(musicsystem: ^FMOD_MUSICSYSTEM, it: ^FMOD_MUSIC_ITERATOR) -> FMOD_RESULT ---
-	FMOD_MusicSystem_LoadSoundData :: proc(musicsystem: ^FMOD_MUSICSYSTEM, resource: FMOD_EVENT_RESOURCE, mode: _c.uint) -> FMOD_RESULT ---
-	FMOD_MusicSystem_FreeSoundData :: proc(musicsystem: ^FMOD_MUSICSYSTEM, waituntilready: _c.int) -> FMOD_RESULT ---
+	FMOD_MusicSystem_LoadSoundData :: proc(musicsystem: ^FMOD_MUSICSYSTEM, resource: FMOD_EVENT_RESOURCE, mode: u32) -> FMOD_RESULT ---
+	FMOD_MusicSystem_FreeSoundData :: proc(musicsystem: ^FMOD_MUSICSYSTEM, waituntilready: i32) -> FMOD_RESULT ---
 	FMOD_MusicSystem_SetCallback :: proc(musicsystem: ^FMOD_MUSICSYSTEM, callback: FMOD_MUSIC_CALLBACK, userdata: rawptr) -> FMOD_RESULT ---
-	FMOD_MusicSystem_GetMemoryInfo :: proc(musicsystem: ^FMOD_MUSICSYSTEM, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_MusicSystem_GetMemoryInfo :: proc(musicsystem: ^FMOD_MUSICSYSTEM, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
 	FMOD_MusicPrompt_Release :: proc(musicprompt: ^FMOD_MUSICPROMPT) -> FMOD_RESULT ---
 	FMOD_MusicPrompt_Begin :: proc(musicprompt: ^FMOD_MUSICPROMPT) -> FMOD_RESULT ---
 	FMOD_MusicPrompt_End :: proc(musicprompt: ^FMOD_MUSICPROMPT) -> FMOD_RESULT ---
-	FMOD_MusicPrompt_IsActive :: proc(musicprompt: ^FMOD_MUSICPROMPT, active: ^_c.int) -> FMOD_RESULT ---
-	FMOD_MusicPrompt_GetMemoryInfo :: proc(musicprompt: ^FMOD_MUSICPROMPT, memorybits: _c.uint, event_memorybits: _c.uint, memoryused: ^_c.uint, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
-	FMOD_NetEventSystem_Init :: proc(eventsystem: ^FMOD_EVENTSYSTEM, port: _c.ushort) -> FMOD_RESULT ---
+	FMOD_MusicPrompt_IsActive :: proc(musicprompt: ^FMOD_MUSICPROMPT, active: ^i32) -> FMOD_RESULT ---
+	FMOD_MusicPrompt_GetMemoryInfo :: proc(musicprompt: ^FMOD_MUSICPROMPT, memorybits: u32, event_memorybits: u32, memoryused: ^u32, memoryused_details: ^FMOD_MEMORY_USAGE_DETAILS) -> FMOD_RESULT ---
+	FMOD_NetEventSystem_Init :: proc(eventsystem: ^FMOD_EVENTSYSTEM, port: u16) -> FMOD_RESULT ---
 	FMOD_NetEventSystem_Update :: proc() -> FMOD_RESULT ---
 	FMOD_NetEventSystem_Shutdown :: proc() -> FMOD_RESULT ---
-	FMOD_NetEventSystem_GetVersion :: proc(version: ^_c.uint) -> FMOD_RESULT ---
+	FMOD_NetEventSystem_GetVersion :: proc(version: ^u32) -> FMOD_RESULT ---
 	FMOD_ErrorString :: proc(errcode: FMOD_RESULT) -> cstring ---
 }

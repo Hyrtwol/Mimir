@@ -1,43 +1,31 @@
 package fmod
 
-import _c "core:c"
+FMOD_BOOL :: i32
+FMOD_MODE :: u32
+FMOD_TIMEUNIT :: u32
+FMOD_INITFLAGS :: u32
+FMOD_DEBUGLEVEL :: u32
+FMOD_MEMORY_TYPE :: u32
 
-int :: _c.int // i32
-uint :: _c.uint // u32
-ushort :: _c.ushort // u16
-uchar :: _c.uchar // u8
-float :: _c.float // f32
-
-FMOD_BOOL :: _c.int
-FMOD_MODE :: _c.uint
-FMOD_TIMEUNIT :: _c.uint
-FMOD_INITFLAGS :: _c.uint
-//FMOD_CAPS :: _c.uint
-FMOD_DEBUGLEVEL :: _c.uint
-FMOD_MEMORY_TYPE :: _c.uint
-
-FMOD_EVENT_INITFLAGS :: _c.uint
-FMOD_EVENT_MODE :: _c.uint
-FMOD_EVENT_STATE :: _c.uint
-FMOD_MUSIC_ID :: _c.uint
-FMOD_MUSIC_CUE_ID :: _c.uint
-FMOD_MUSIC_PARAM_ID :: _c.uint
-
-FMOD_VECTOR :: [3]f32
-FMOD_VECTOR_ZERO :: FMOD_VECTOR{0, 0, 0}
+FMOD_EVENT_INITFLAGS :: u32
+FMOD_EVENT_MODE :: u32
+FMOD_EVENT_STATE :: u32
+FMOD_MUSIC_ID :: u32
+FMOD_MUSIC_CUE_ID :: u32
+FMOD_MUSIC_PARAM_ID :: u32
 
 /*
     FMOD version number.  Check this against FMOD::System::getVersion.
     0xaaaabbcc -> aaaa = major version number.  bb = minor version number.  cc = development version number.
 */
 FMOD_VERSION :: struct {
-	Development: _c.uchar,
-	Minor:       _c.uchar,
-	Major:       _c.ushort,
+	Development: u8,
+	Minor:       u8,
+	Major:       u16,
 }
 
 FMOD_CAPS :: distinct bit_set[FMOD_CAPS_FLAG;u32]
-FMOD_CAPS_FLAG :: enum _c.uint {
+FMOD_CAPS_FLAG :: enum u32 {
 	// Device supports hardware mixing.
 	HARDWARE               = 0,
 	// User has device set to 'Hardware acceleration = off' in control panel, and now extra 200ms latency is incurred.
