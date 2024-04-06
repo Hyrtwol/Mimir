@@ -1,11 +1,11 @@
-package example_coreclr
+package coreclr_example_gateway
 
 import "core:fmt"
 import "core:os"
 import "core:path/filepath"
 import "core:runtime"
 import "core:strings"
-import clr "vendor:coreclr"
+import clr "shared:coreclr"
 
 CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2"
 
@@ -69,46 +69,10 @@ execute_clr_host :: proc(tpa: string) -> clr.error {
 	return .ok
 }
 
-asm_scan :: proc(totmatches: ^[dynamic]string, path: string, pattern: string = "*.dll") {
-	pkg_path, pkg_path_ok := filepath.abs(path)
-	if !pkg_path_ok {return}
-	path_pattern := filepath.join({pkg_path, pattern}, context.temp_allocator)
-	matches, err := filepath.glob(path_pattern, context.temp_allocator)
-	if err != .None {return}
-	append_elems(totmatches, ..matches)
-}
-
-get_list_separator :: proc() -> string {
-	b, n := runtime.encode_rune(filepath.LIST_SEPARATOR)
-	return string(b[:n])
-}
-
-write_tpa :: proc(tpa_path: string, assemblies: []string) {
-	path, ok := filepath.abs(tpa_path)
-	if !ok {return}
-	fmt.printfln("tpa_path: %s", path)
-	fd, err := os.open(path, os.O_CREATE | os.O_WRONLY)
-	if err != 0 {return}
-	defer os.close(fd)
-	for assembly in assemblies {
-		os.write_string(fd, assembly)
-		os.write_string(fd, "\n")
-	}
-}
-
-create_trusted_platform_assemblies :: proc(paths: ..string) -> string {
-	assemblies := make([dynamic]string, 0, 200)
-	defer delete(assemblies)
-	for path in paths {
-		asm_scan(&assemblies, path)
-	}
-	write_tpa("tpa.log", assemblies[:])
-	return strings.join(assemblies[:], get_list_separator())
-}
-
 main :: proc() {
 	fmt.println(" -=< CoreCLR Host Demo >=- ")
-	tpa := create_trusted_platform_assemblies(CORECLR_DIR, "../examples/coreclr")
+	tpa := clr.create_trusted_platform_assemblies(CORECLR_DIR, "../examples/coreclr")
+	clr.write_tpa("tpa.log", tpa)
 	hr := execute_clr_host(tpa)
 	fmt.printfln("exit %v\n", hr)
 	os.exit(int(hr))

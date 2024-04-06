@@ -1,4 +1,4 @@
-package example_coreclr
+package coreclr_example_gateway
 
 // Types from gateway.cs
 
