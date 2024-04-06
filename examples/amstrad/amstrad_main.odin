@@ -2,26 +2,29 @@
 package main
 
 import "core:fmt"
+import "core:path/filepath"
 import "core:intrinsics"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
 // import canvas "shared:tlc/canvas"
 // import win32app "shared:tlc/win32app"
-import z80 "shared:z80"
-import z80m "shared:z80/amstrad"
+import z "shared:z80"
+import am "shared:amstrad"
 
-Z80 :: z80.Z80
+Z80 :: z.Z80
 
 cycles_per_tick :: 100
 mem_size :: 0x10000
-memory: [mem_size]u8
+memory64kb :: [mem_size]u8
+
+memory : memory64kb
 running: bool = false
 put_chars: bool = false
 
-size_16kb :: z80m.size_16kb
-mask_16kb :: z80m.mask_16kb
-size_64kb :: z80m.size_64kb
+size_16kb :: z.size_16kb
+mask_16kb :: z.mask_16kb
+size_64kb :: z.size_64kb
 
 //p_image := #load("data/mode2.raw")
 p_image := #load("data/pinup.raw")
@@ -50,29 +53,29 @@ https://www.chibiakumas.com/z80/AmstradCPC.php
 https://neuro-sys.github.io/2019/10/01/amstrad-cpc-crtc.html
 */
 
-z_fetch_opcode :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
+z_fetch_opcode :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	//fmt.printf("fetch_opcode[%d]=0x%2X\n", address, memory[address])
 	return memory[address]
 }
 
-z_fetch :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
+z_fetch :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	//fmt.printf("fetch[%d]=0x%2X\n", address, memory[address])
 	return memory[address]
 }
 
-z_read :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
+z_read :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	//fmt.printf("read[%d]=0x%2X\n", address, memory[address])
 	return memory[address]
 }
 
-z_write :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
+z_write :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
 	//fmt.printf("write[0x%4X]=0x%2X\n", address, value)
 	memory[address] = value
 }
 
-z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
+z_in :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	port := address & 0xFF
-	value: z80.zuint8 = 0
+	value: z.zuint8 = 0
 	switch port {
 	case 1:
 		value = 1
@@ -84,7 +87,7 @@ z_in :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
 	return value
 }
 
-z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
+z_out :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
 	app := papp(zcontext)
 	port := address & 0xFF
 	switch port {
@@ -103,7 +106,7 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 	}
 }
 
-z_halt :: proc(zcontext: rawptr, signal: z80.zuint8) {
+z_halt :: proc(zcontext: rawptr, signal: z.zuint8) {
 	app := papp(zcontext)
 	fmt.printf("\nhalt %d pc=%d\n", signal, app.cpu.pc)
 	running = signal == 0
@@ -142,22 +145,23 @@ print_info :: proc() {
 	fmt.printfln("screen_byte_count      =%v", screen_byte_count)
 }
 
-total: z80.zusize = 0
+total: z.zusize = 0
 reps := 0
 
 main :: proc() {
 	fmt.print("Amstrad\n")
 
-	sanpshot_path := filepath.clean("examples/amstrad/data/pinup.sna", context.temp_allocator)
+	sanpshot_path := filepath.clean("../examples/amstrad/data/pinup.sna", context.temp_allocator)
 	fmt.printfln("reading %s", sanpshot_path)
 	ss: am.snapshot
 	ram: z80m.bank64kb
 	err := am.load_snapshot(sanpshot_path, &ss, ram[:])
+	assert(err == 0)
 
-	rom_path :: "../data/z80/hello.rom"
+	rom_path := filepath.clean("../data/z80/hello.rom")
 	load_rom(rom_path)
 
-	cpu: z80.Z80 = {
+	cpu: z.Z80 = {
 		fetch_opcode = z_fetch_opcode,
 		fetch        = z_fetch,
 		read         = z_read,
@@ -171,17 +175,17 @@ main :: proc() {
 		size = {WIDTH, HEIGHT * HEIGHT_SCALE},
 		cpu = &cpu,
 	}
-	cpu._context = &app
+	cpu.zcontext = &app
 
 
-	//z80.z80_power(&cpu, true)
+	//z.z80_power(&cpu, true)
 	//fmt.printf("CPU %v\n", cpu)
 
 	running = true
-	// total: z80.zusize = 0
+	// total: z.zusize = 0
 	// reps := 0
 	// for running {
-	// 	total += z80.z80_run(&cpu, cycles_per_tick)
+	// 	total += z.z80_run(&cpu, cycles_per_tick)
 	// 	reps += 1
 	// }
 	// fmt.printf("total %v (%v)\n", total, reps)
