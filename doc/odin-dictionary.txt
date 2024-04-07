@@ -5,6 +5,7 @@ codepage
 coreclr
 createstructw
 cstring
+ctprintf
 directx
 dword
 dxgi
@@ -75,9 +76,13 @@ unorm
 userdata
 ushort
 viewports
+waprintf
+waprintfln
 wndclassexw
 wndproc
 wolfenstein
 wparam
 wstring
+wtprintf
+wtprintfln
 xterm

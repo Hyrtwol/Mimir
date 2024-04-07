@@ -10,7 +10,7 @@
 	"enable_references": false,
 	"collections": [
 		{
-			"name": "shared",
+			"name": "libs",
 			"path": "shared"
 		}
 	],

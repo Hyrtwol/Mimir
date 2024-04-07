@@ -13,8 +13,8 @@ import "core:simd"
 import "core:strings"
 import win32 "core:sys/windows"
 import "core:time"
-import canvas "shared:tlc/canvas"
-import win32app "shared:tlc/win32app"
+import canvas "libs:tlc/canvas"
+import win32app "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 

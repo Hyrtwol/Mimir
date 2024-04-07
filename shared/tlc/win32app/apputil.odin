@@ -308,7 +308,7 @@ WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARA
 }
 
 @(private)
-RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL{
+RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL {
 	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 }
 
@@ -318,11 +318,11 @@ redraw_window :: proc {
 }
 
 @(private)
-SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL{
+SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL {
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }
 
-set_window_textf :: #force_inline proc(hwnd: HWND, format: string, args: ..any) -> BOOL{
+set_window_textf :: #force_inline proc(hwnd: HWND, format: string, args: ..any) -> BOOL {
 	return SetWindowText(hwnd, fmt.tprintf(format, ..args))
 }
 
@@ -392,11 +392,3 @@ delete_object :: proc(bitmap_handle: ^win32.HGDIOBJ) {
 
 /*key_input :: struct {
 }*/
-
-// https://cplusplus.com/reference/cwchar/wprintf/
-// int wprintf (const wchar_t* format, ...);
-// wtprintf :: proc(format: string, args: ..any) -> win32.wstring {
-// 	str := fmt.tprintf(format, ..args)
-// 	return utf8_to_wstring(str)
-// }
-// int fwprintf (FILE* stream, const wchar_t* format, ...);

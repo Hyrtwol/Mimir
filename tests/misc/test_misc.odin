@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:os"
 import _t "core:testing"
 import "core:strings"
-import _u "shared:ounit"
+import _u "libs:ounit"
 
 //TODO investigate #config
 

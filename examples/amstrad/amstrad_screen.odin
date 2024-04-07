@@ -1,8 +1,8 @@
+// +vet
 package main
 
 import "core:math/rand"
-import a "shared:amstrad"
-import z80m "shared:z80/amstrad"
+import a "libs:amstrad"
 
 int2			:: [2]i32
 color			:: [4]u8

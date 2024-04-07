@@ -119,7 +119,7 @@ main :: proc() {
 		_in          = z_in,
 		out          = z_out,
 		halt         = z_halt,
-		_context     = nil,
+		zcontext     = nil,
 		nop          = nil,
 		nmia         = nil,
 		inta         = nil,

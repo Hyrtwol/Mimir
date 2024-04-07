@@ -5,9 +5,9 @@ import "core:unicode/utf8"
 import "core:runtime"
 import win32 "core:sys/windows"
 import mu "vendor:microui"
-import mud "shared:microui/demo"
-import win32app "shared:tlc/win32app"
-import canvas "shared:tlc/canvas"
+import mud "libs:microui/demo"
+import win32app "libs:tlc/win32app"
+import canvas "libs:tlc/canvas"
 
 application :: struct {
 	mu_ctx:          mu.Context,

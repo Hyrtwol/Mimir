@@ -5,7 +5,7 @@ import "core:fmt"
 import "core:math"
 import "core:runtime"
 import "core:testing"
-import o "shared:ounit"
+import o "libs:ounit"
 
 vec2 :: [2]i32
 

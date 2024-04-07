@@ -2,7 +2,7 @@ package canvas
 
 import "core:intrinsics"
 import win32 "core:sys/windows"
-import win32app "shared:tlc/win32app"
+import win32app "libs:tlc/win32app"
 
 default_pels_per_meter : int2 : {3780, 3780}
 

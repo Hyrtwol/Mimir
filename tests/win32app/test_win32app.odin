@@ -4,13 +4,15 @@ import "core:bytes"
 import "core:fmt"
 import "core:intrinsics"
 import "core:runtime"
+import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"
-import o "shared:ounit"
-import win32ex "shared:sys/windows"
-import win32app "shared:tlc/win32app"
+import o "libs:ounit"
+import win32ex "libs:sys/windows"
+import win32app "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
+wstring :: win32.wstring
 utf8_to_wstring :: win32.utf8_to_wstring
 
 @(test)
@@ -30,7 +32,7 @@ make_lresult_from_true :: proc(t: ^testing.T) {
 @(test)
 min_max_msg :: proc(t: ^testing.T) {
 
-	p := wstring_convert
+	p := min_max_msg
 	o.expect_value(t, min(win32app.WM_MSG), 0x0001)
 	o.expect_value(t, max(win32app.WM_MSG), 0x0204)
 	o.expect_value(t, max(win32app.WM_MSG), 516)
@@ -75,4 +77,31 @@ verify_bitmap_headers :: proc(t: ^testing.T) {
 	o.expect_value(t, pbmp5.bV5YPelsPerMeter, pbmp.biYPelsPerMeter )
 	o.expect_value(t, pbmp5.bV5ClrUsed, pbmp.biClrUsed )
 	o.expect_value(t, pbmp5.bV5ClrImportant, pbmp.biClrImportant )
+}
+
+@(test)
+wstring_print :: proc(t: ^testing.T) {
+	msg := "Hello!"
+	f :: "tprintf %s"
+
+	smsg : string = msg
+	cmsg : cstring = cstring("Hello!")
+	wmsg : wstring = L("Hello!")
+
+	cmsg = fmt.ctprintf(f, msg)
+	wmsg = win32app.wtprintf(f, msg)
+	smsg = fmt.tprintf(f, msg)
+
+	fmt.printfln("smsg \"%s\"", smsg)
+	fmt.printfln("cmsg \"%s\"", cmsg)
+	fmt.printfln("wmsg \"%s\"", wmsg)
+
+	// fmt.wprintf()
+
+	str: strings.Builder
+	strings.builder_init(&str, context.temp_allocator)
+	fmt.sbprintf(&str, f, msg)
+	wmsg = win32app.to_wstring(str)
+
+	fmt.printfln("wmsg \"%s\"", wmsg)
 }

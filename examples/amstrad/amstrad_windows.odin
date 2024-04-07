@@ -7,9 +7,9 @@ import "core:math/rand"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
-import canvas "shared:tlc/canvas"
-import win32app "shared:tlc/win32app"
-import z80 "shared:z80"
+import canvas "libs:tlc/canvas"
+import win32app "libs:tlc/win32app"
+import z "shared:z80"
 
 // aliases
 L				:: intrinsics.constant_utf16_cstring
@@ -122,7 +122,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if app.timer_id == 0 {win32app.show_error_and_panic("No timer")}
 
 	if app.cpu != nil {
-		z80.z80_power(app.cpu, true)
+		z.z80_power(app.cpu, true)
 	}
 
 	return 0
@@ -274,13 +274,13 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 		case win32.VK_F3: {
 			app := get_app(hwnd)
 			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-			z80.z80_instant_reset(app.cpu)
+			z.z80_instant_reset(app.cpu)
 			fmt.printfln("pc=%d", app.cpu.pc)
 		}
 		case win32.VK_F4: {
 			app := get_app(hwnd)
 			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-			z80.z80_power(app.cpu, true)
+			z.z80_power(app.cpu, true)
 			fmt.printfln("pc=%d", app.cpu.pc)
 		}
 		case win32.VK_F9: print_info()
@@ -328,7 +328,7 @@ run_app :: proc(app: papp) {
 
 	for win32app.pull_messages() {
 		for running {
-			total += z80.z80_run(app.cpu, cycles_per_tick)
+			total += z.z80_run(app.cpu, cycles_per_tick)
 			reps += 1
 		}
 	}

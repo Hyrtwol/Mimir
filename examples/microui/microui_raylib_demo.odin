@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
 import mu "vendor:microui"
-import mud "shared:microui/demo"
+import mud "libs:microui/demo"
 
 state := struct {
 	mu_ctx:          mu.Context,

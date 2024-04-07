@@ -6,10 +6,10 @@ import          "core:math"
 import          "core:math/noise"
 import          "core:runtime"
 import win32	"core:sys/windows"
-import			"shared:tlc/win32app"
-import			"shared:tlc/canvas"
-import			"shared:fmod"
-import			"shared:tlc/wolf"
+import			"libs:tlc/win32app"
+import			"libs:tlc/canvas"
+import fmod		"shared:fmodex"
+import			"libs:tlc/wolf"
 
 L :: intrinsics.constant_utf16_cstring
 

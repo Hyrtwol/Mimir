@@ -7,10 +7,8 @@ import "core:intrinsics"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
-// import canvas "shared:tlc/canvas"
-// import win32app "shared:tlc/win32app"
 import z "shared:z80"
-import am "shared:amstrad"
+import a "libs:amstrad"
 
 Z80 :: z.Z80
 
@@ -153,9 +151,9 @@ main :: proc() {
 
 	sanpshot_path := filepath.clean("../examples/amstrad/data/pinup.sna", context.temp_allocator)
 	fmt.printfln("reading %s", sanpshot_path)
-	ss: am.snapshot
-	ram: z80m.bank64kb
-	err := am.load_snapshot(sanpshot_path, &ss, ram[:])
+	ss: a.snapshot
+	ram: z.bank64kb
+	err := a.load_snapshot(sanpshot_path, &ss, ram[:])
 	assert(err == 0)
 
 	rom_path := filepath.clean("../data/z80/hello.rom")

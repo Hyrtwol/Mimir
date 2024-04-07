@@ -4,8 +4,8 @@ import "core:fmt"
 import "core:os"
 import "core:runtime"
 import "core:strings"
-import "shared:fmod"
-import "shared:tlc/wolf"
+import fmod "shared:fmodex"
+import "libs:tlc/wolf"
 
 system: ^fmod.FMOD_SYSTEM = nil
 eventsys: ^fmod.FMOD_EVENTSYSTEM = nil

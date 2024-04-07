@@ -10,8 +10,8 @@ import "core:math"
 //import "core:simd"
 //import "core:time"
 import win32 "core:sys/windows"
-import canvas "shared:tlc/canvas"
-import win32app "shared:tlc/win32app"
+import canvas "libs:tlc/canvas"
+import win32app "libs:tlc/win32app"
 
 // https://learn.microsoft.com/en-us/windows/win32/multimedia/example-of-writing-waveform-data
 // https://github.com/cornyum/Windows-programming-5th/blob/master/Chap22/SineWave/SineWave.c

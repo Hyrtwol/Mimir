@@ -3,6 +3,8 @@
 		"editorconfig.editorconfig",
 		"danielgavin.ols",
 		"streetsidesoftware.code-spell-checker",
-		"davidanson.vscode-markdownlint"
+		"davidanson.vscode-markdownlint",
+        "dtsvet.vscode-wasm",
+        "wasm-fmt.wasm-fmt"
 	]
 }

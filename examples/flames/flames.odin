@@ -7,8 +7,8 @@ import "core:math/rand"
 import "core:math/noise"
 import "core:runtime"
 import win32 "core:sys/windows"
-import canvas "shared:tlc/canvas"
-import win32app "shared:tlc/win32app"
+import canvas "libs:tlc/canvas"
+import win32app "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: canvas.byte4
