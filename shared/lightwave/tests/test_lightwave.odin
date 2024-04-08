@@ -1,10 +1,11 @@
-package lightwave
+package test_lightwave
 
 //import "core:bytes"
 //import "core:fmt"
 //import "core:runtime"
 import "core:testing"
 //import "shared:ounit"
+import lw ".."
 
 box :: "../data/models/box.lwo"
 
@@ -24,18 +25,18 @@ expect_it :: proc {
 
 @(test)
 verify_lwids :: proc(t: ^testing.T) {
-	expect_it(t, ID_FORM, LWID_('F', 'O', 'R', 'M'))
-	expect_it(t, ID_LWO2, LWID_('L', 'W', 'O', '2'))
-	expect_it(t, ID_LWOB, LWID_('L', 'W', 'O', 'B'))
-	expect_it(t, ID_LAYR, LWID_('L', 'A', 'Y', 'R'))
+	expect_it(t, lw.ID_FORM, lw.LWID_('F', 'O', 'R', 'M'))
+	expect_it(t, lw.ID_LWO2, lw.LWID_('L', 'W', 'O', '2'))
+	expect_it(t, lw.ID_LWOB, lw.LWID_('L', 'W', 'O', 'B'))
+	expect_it(t, lw.ID_LAYR, lw.LWID_('L', 'A', 'Y', 'R'))
 }
 
 @(test)
 can_construct :: proc(t: ^testing.T) {
 	fail_id: u32 = 0
 	fail_pos: i32 = 0
-	obj := lwGetObject(box, &fail_id, &fail_pos)
-	defer if obj != nil {lwFreeObject(obj)}
+	obj := lw.lwGetObject(box, &fail_id, &fail_pos)
+	defer if obj != nil {lw.lwFreeObject(obj)}
 
 	testing.expectf(t, obj != nil, "obj is nil: %v # %v", fail_id, fail_pos)
 	expect_it(t, fail_id, 0)
@@ -51,8 +52,8 @@ load_box :: proc(t: ^testing.T) {
 
 	fail_id: u32 = 0
 	fail_pos: i32 = 0
-	obj := lwGetObject(box, &fail_id, &fail_pos)
-	defer if obj != nil {lwFreeObject(obj)}
+	obj := lw.lwGetObject(box, &fail_id, &fail_pos)
+	defer if obj != nil {lw.lwFreeObject(obj)}
 
 	testing.expectf(t, obj != nil, "obj is nil: %v # %v", fail_id, fail_pos)
 	expect_it(t, fail_id, 0)
