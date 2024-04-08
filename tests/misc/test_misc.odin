@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:os"
 import _t "core:testing"
 import "core:strings"
-import _u "libs:ounit"
+import _u "shared:ounit"
 
 //TODO investigate #config
 
@@ -151,3 +151,30 @@ main :: proc() {
     fmt.println( foo( 5.5, 6.4 ) )
 }
 */
+
+pow :: proc(x: i32) -> i32 {
+	return x * x
+}
+
+sign :: proc(x: i32) -> i32 {
+	return -1 if x < 0 else 1
+}
+
+callback :: #type proc(i32) -> i32
+
+@(test)
+array_of_procs :: proc(t: ^_t.T) {
+	callbacks := make([dynamic]callback, 0, 0)
+	defer delete(callbacks)
+
+	append(&callbacks, callback(pow))
+	append(&callbacks, callback(pow))
+	append(&callbacks, callback(pow))
+	append(&callbacks, callback(sign))
+
+	for p, i in callbacks {
+		if (p != nil) {
+			fmt.printfln("Result: %d", p(i32(i)))
+		}
+	}
+}

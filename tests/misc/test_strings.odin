@@ -6,7 +6,7 @@ import "core:bytes"
 import "core:testing"
 import "core:unicode/utf16"
 import "libs:ascii"
-import "libs:ounit"
+import "shared:ounit"
 
 @(test)
 verify_ascii :: proc(t: ^testing.T) {

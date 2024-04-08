@@ -6,7 +6,7 @@ import "core:os"
 import "core:strings"
 import "core:slice"
 import "core:testing"
-import "libs:ounit"
+import "shared:ounit"
 
 @(test)
 write_hello_txt :: proc(t: ^testing.T) {
