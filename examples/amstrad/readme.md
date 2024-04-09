@@ -8,5 +8,3 @@ SAVE "pinup.dat",b,&A500,&100
 LOAD "pinup.dat",b,&A500
 CALL &A500
 ```
-
-

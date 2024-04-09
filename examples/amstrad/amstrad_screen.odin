@@ -1,6 +1,7 @@
 // +vet
 package main
 
+import "core:fmt"
 import "core:math/rand"
 import a "libs:amstrad"
 
@@ -16,6 +17,16 @@ screen_pixel_count :: SCREEN_WIDTH * SCREEN_HEIGHT
 screen_byte_count :: screen_pixel_count * color_bits / 8
 
 screen_buffer :: [^]u8
+
+print_info :: proc() {
+	fmt.printfln("color_bits             =%v", color_bits)
+	fmt.printfln("palette_count          =%v", palette_count)
+	fmt.printfln("len(color_palette)     =%v", len(color_palette))
+	fmt.printfln("size_of(color)         =%v", size_of(color))
+	fmt.printfln("size_of(color_palette) =%v", size_of(color_palette))
+	fmt.printfln("screen_pixel_count     =%v", screen_pixel_count)
+	fmt.printfln("screen_byte_count      =%v", screen_byte_count)
+}
 
 /*
 #define MODE_1_P0(c) (((c & 2) >> 1) << 3) | ((c & 1) << 7)

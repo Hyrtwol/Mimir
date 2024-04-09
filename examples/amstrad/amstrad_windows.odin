@@ -96,33 +96,15 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		defer win32.ReleaseDC(hwnd, hdc)
 
 		app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
-
-		//fmt.printf("app.hbitmap=%v %v\n", app.hbitmap, app.pvBits)
-		//update_screen(app)
-		//win32.FillRect(hdc)
-
-		// if bkgnd_brush != nil {
-		// 	rect: win32.RECT
-		// 	win32.GetClientRect(hwnd, &rect)
-		// 	fmt.printf("rect=%v\n", rect)
-		// 	win32.FillRect(hdc, &rect, bkgnd_brush)
-		// }
 	}
 
-	// pvBits := app.pvBits
-	// if pvBits != nil {
-	// 	cc := min(screen_byte_count, len(p_image))
-	// 	for i in 0 ..< cc {
-	// 		pvBits[i] = p_image[i]
-	// 	}
-	// }
-	fill_screen_with_image(app)
+	//fill_screen_with_image(app)
 
-	app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
-	if app.timer_id == 0 {win32app.show_error_and_panic("No timer")}
+	app.timer_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
 
 	if app.cpu != nil {
 		z.z80_power(app.cpu, true)
+		//fmt.printf("CPU %v\n", app.cpu)
 	}
 
 	return 0
@@ -132,18 +114,9 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	//fmt.printf("WM_DESTROY %v\n%v\n", hwnd, app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	/*if app.timer_id != 0 {
-		if !win32.KillTimer(hwnd, app.timer_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
-		}
-		app.timer_id = 0
-	}*/
 	win32app.kill_timer(hwnd, &app.timer_id)
-	if app.hbitmap != nil {
-		if !win32.DeleteObject(win32.HGDIOBJ(app.hbitmap)) {
-			win32.MessageBoxW(nil, L("Unable to delete hbitmap"), L("Error"), win32.MB_OK)
-		}
-		app.hbitmap = nil
+	if !win32app.delete_object(&app.hbitmap) {
+		win32app.show_messagebox("Unable to delete hbitmap", "Error")
 	}
 	win32.PostQuitMessage(0) // exit code
 	return 0
@@ -316,6 +289,9 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 }
 
 // odinfmt: enable
+
+total: z.zusize = 0
+reps := 0
 
 run_app :: proc(app: papp) {
 

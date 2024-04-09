@@ -16,15 +16,15 @@ decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2
 	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
 }
 
-show_messagebox :: proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
+show_messagebox :: #force_inline proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
 	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), type)
 }
 
-show_messageboxf :: proc(caption: string, format: string, args: ..any) {
+show_messageboxf :: #force_inline proc(caption: string, format: string, args: ..any) {
 	show_messagebox(caption, fmt.tprintf(format, ..args))
 }
 
-show_error :: proc(msg: string, loc := #caller_location) {
+show_error :: #force_inline proc(msg: string, loc := #caller_location) {
 	show_messageboxf("Panic", "%s\nLast error: %x\n%v\n", msg, win32.GetLastError(), loc)
 }
 
@@ -34,11 +34,9 @@ show_error_and_panic :: proc(msg: string, loc := #caller_location) {
 }
 
 show_last_error :: proc(caption: string, loc := #caller_location) {
-	error_text: [512]win32.WCHAR
-
 	fmt.eprintln(caption)
 	last_error := win32.GetLastError()
-
+	error_text: [512]win32.WCHAR
 	error_wstring := wstring(&error_text)
 	cch := win32.FormatMessageW(win32.FORMAT_MESSAGE_FROM_SYSTEM | win32.FORMAT_MESSAGE_IGNORE_INSERTS, nil, last_error, win32.LANGID_NEUTRAL, error_wstring, len(error_text) - 1, nil)
 	if (cch != 0) {return}
@@ -50,10 +48,9 @@ show_last_error :: proc(caption: string, loc := #caller_location) {
 	}
 }
 
-show_last_errorf :: proc(format: string, args: ..any, loc := #caller_location) {
+show_last_errorf :: #force_inline proc(format: string, args: ..any, loc := #caller_location) {
 	show_last_error(fmt.tprintf(format, ..args), loc = loc)
 }
-
 
 get_rect_size :: #force_inline proc(rect: ^RECT) -> int2 {
 	return {(rect.right - rect.left), (rect.bottom - rect.top)}
@@ -303,7 +300,7 @@ run :: proc(settings: ^window_settings) -> win32.HWND {
 }
 
 // default no draw background erase
-WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM/*A handle to the device context.*/) -> win32.LRESULT {
+WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM) ->  /*A handle to the device context.*/win32.LRESULT {
 	return 1
 }
 
@@ -382,12 +379,29 @@ create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WOR
 	return bmp_header
 }
 
-delete_object :: proc(bitmap_handle: ^win32.HGDIOBJ) {
-	if bitmap_handle^ != nil {
-		if win32.DeleteObject(bitmap_handle^) {
-			bitmap_handle^ = nil
+create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: UINT, ppvBits: win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
+	return win32.CreateDIBSection(hdc, pbmi, usage, ppvBits, hSection, offset)
+}
+
+@(private)
+delete_object_hgdiobj :: #force_inline proc "contextless" (hgdiobj: ^HGDIOBJ) -> bool {
+	if hgdiobj^ != nil {
+		if win32.DeleteObject(hgdiobj^) {
+			hgdiobj^ = nil
+			return true
 		}
 	}
+	return false
+}
+
+@(private)
+delete_object_hbitmap :: #force_inline proc "contextless" (hbitmap: ^HBITMAP) -> bool {
+	return delete_object_hgdiobj((^HGDIOBJ)(hbitmap))
+}
+
+delete_object :: proc {
+	delete_object_hgdiobj,
+	delete_object_hbitmap,
 }
 
 /*key_input :: struct {
