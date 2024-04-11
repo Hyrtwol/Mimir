@@ -6,7 +6,7 @@ import          "core:math/rand"
 import          "core:runtime"
 import win32    "core:sys/windows"
 import win32app "libs:tlc/win32app"
-import canvas   "libs:tlc/canvas"
+import cv		"libs:tlc/canvas"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -16,7 +16,7 @@ HEIGHT 	:: WIDTH * 9 / 16
 CENTER  :: true
 ZOOM  	:: 8
 
-screen_buffer  :: canvas.screen_buffer
+screen_buffer  :: cv.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2
@@ -24,7 +24,7 @@ bitmap_count  : i32
 pvBits        : screen_buffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
-dib           : canvas.DIB
+dib           : cv.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
@@ -47,7 +47,7 @@ random_scrpos :: proc() -> win32app.int2 {
 	return {rand.int31_max(bitmap_size.x, &rng), rand.int31_max(bitmap_size.y, &rng)}
 }
 
-setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
+setdot :: proc(pos: win32app.int2, col: cv.byte4) {
 	i := pos.y * bitmap_size.x + pos.x
 	if i >= 0 && i < bitmap_count {
 		pvBits[i] = col
@@ -81,8 +81,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		//canvas.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
-		canvas.fill_screen(pvBits, bitmap_count, {0, 0, 0, 0})
+		//cv.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
+		cv.fill_screen(pvBits, bitmap_count, {0, 0, 0, 0})
 	} else {
 		bitmap_size = {0, 0}
 		bitmap_count = 0
@@ -198,18 +198,18 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch (wparam)
 	{
-		case win32app.IDT_TIMER1: setdot_invalidate(hwnd, random_scrpos(), canvas.COLOR_CYAN)
-		case win32app.IDT_TIMER2: setdot_invalidate(hwnd, random_scrpos(), canvas.COLOR_YELLOW)
+		case win32app.IDT_TIMER1: setdot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
+		case win32app.IDT_TIMER2: setdot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
 	}
 	return 0
 }
 
-setdot_invalidate :: proc(hwnd: win32.HWND, pos: win32app.int2, col: canvas.byte4) {
+setdot_invalidate :: proc(hwnd: win32.HWND, pos: win32app.int2, col: cv.byte4) {
 	setdot(pos, col)
 	win32.InvalidateRect(hwnd, nil, false)
 }
 
-decode_setdot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: canvas.byte4) {
+decode_setdot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
 	setdot_invalidate(hwnd, decode_scrpos(lparam), col)
 }
 
@@ -217,9 +217,9 @@ decode_setdot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: canvas.byte4)
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case 1: decode_setdot(hwnd, lparam, canvas.COLOR_RED)
-	case 2: decode_setdot(hwnd, lparam, canvas.COLOR_BLUE)
-	case 3: decode_setdot(hwnd, lparam, canvas.COLOR_GREEN)
+	case 1: decode_setdot(hwnd, lparam, cv.COLOR_RED)
+	case 2: decode_setdot(hwnd, lparam, cv.COLOR_BLUE)
+	case 3: decode_setdot(hwnd, lparam, cv.COLOR_GREEN)
 	case: //fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	}
 	return 0

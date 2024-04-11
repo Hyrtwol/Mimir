@@ -13,7 +13,7 @@ import "core:simd"
 import "core:strings"
 import win32 "core:sys/windows"
 import "core:time"
-import canvas "libs:tlc/canvas"
+import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
@@ -26,9 +26,9 @@ ZOOM :: 8
 
 settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
 
-dib: canvas.DIB
+dib: cv.DIB
 colidx := 1
-cols := canvas.C64_COLORS
+cols := cv.C64_COLORS
 
 icon: win32.HICON
 
@@ -40,7 +40,7 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
+setdot :: proc(pos: win32app.int2, col: cv.byte4) {
 	i := pos.y * dib.size.x + pos.x
 	if i >= 0 && i < dib.pixel_count {
 		dib.pvBits[i] = col
@@ -58,9 +58,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = canvas.dib_create_v5(hdc, client_size / ZOOM)
+	dib = cv.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.pvBits != nil {
-		canvas.dib_clear(&dib, {50, 100, 150, 255})
+		cv.dib_clear(&dib, {50, 100, 150, 255})
 	}
 
 	return 0
@@ -68,7 +68,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.print("WM_DESTROY\n")
-	canvas.dib_free_section(&dib)
+	cv.dib_free_section(&dib)
 	//win32.ShowCursor(true)
 	win32.PostQuitMessage(0)
 	return 0

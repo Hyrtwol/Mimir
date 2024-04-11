@@ -1,4 +1,5 @@
 // +build windows
+// +vet
 package win32app
 
 import "core:intrinsics"

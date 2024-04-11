@@ -7,16 +7,17 @@ import "core:math/rand"
 import "core:math/noise"
 import "core:runtime"
 import win32 "core:sys/windows"
-import canvas "libs:tlc/canvas"
+import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
-byte4 :: canvas.byte4
-int2 :: canvas.int2
+byte4 :: cv.byte4
+int2 :: cv.int2
 double2 :: [2]f64
 double3 :: [3]f64
 
-DIB :: canvas.DIB
+DIB :: cv.DIB
+canvas	:: cv.canvas
 
 TITLE :: "Flames"
 WIDTH: i32 : 160
@@ -39,7 +40,7 @@ npos2: double2 = {0, 0}
 ndir2: double2 = {0.007, 0.003}
 nseed: i64 = 12345
 
-dib_update_func: proc(dib: ^DIB) = dib_flames
+dib_update_func: proc(dib: ^canvas) = dib_flames
 
 setdot :: proc(x, y: i32, col: u8) {
 	i := y * WIDTH + x
@@ -68,9 +69,8 @@ getdot :: proc(x, y: i32) -> i32 {
 	return 0
 }
 
-dib_flames :: proc(dib: ^DIB) {
-	w := dib.size.x
-	h := dib.size.y
+dib_flames :: proc(dib: ^canvas) {
+	w, h := i32(dib.size.x), i32(dib.size.y)
 
 	for y in 0 ..< h {
 		for x in 0 ..< w {
@@ -105,9 +105,8 @@ cnp :=   noise.Vec3{0,0,0}
 //n_scale := 0.01 // nice
 n_scale := 0.03
 
-dib_flames_2 :: proc(dib: ^DIB) {
-	w := dib.size.x
-	h := dib.size.y
+dib_flames_2 :: proc(dib: ^canvas) {
+	w, h := i32(dib.size.x), i32(dib.size.y)
 
 	for y in 0 ..< h {
 		for x in 0 ..< w {
@@ -148,9 +147,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = canvas.dib_create_v5(hdc, {WIDTH, HEIGHT})
-	if dib.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
-	canvas.dib_clear(&dib, {0, 0, 0, 255})
+	dib = cv.dib_create_v5(hdc, {WIDTH, HEIGHT})
+	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
+	cv.dib_clear(&dib, {0, 0, 0, 255})
 
 	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
 	assert(timer_id != 0)
@@ -159,7 +158,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	canvas.dib_free_section(&dib)
+	cv.dib_free_section(&dib)
 	win32app.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
 	win32.PostQuitMessage(0)
@@ -180,12 +179,12 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %d", settings.title, size, dib.size, FPS)
+	win32app.set_window_textf(hwnd, "%s %v %v FPS: %d", settings.title, size, dib.canvas.size, FPS)
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	dib_update_func(&dib)
+	dib_update_func(&dib.canvas)
 	win32app.redraw_window(hwnd)
 	return 0
 }
@@ -214,7 +213,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:      return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:   return 1
 	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:        return canvas.wm_paint_dib(hwnd, dib.hbitmap, dib.size) // &dib->dib_paint(hwnd) maybe?
+	case win32.WM_PAINT:        return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size) // &dib->dib_paint(hwnd) maybe?
 	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)

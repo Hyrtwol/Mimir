@@ -178,3 +178,18 @@ array_of_procs :: proc(t: ^_t.T) {
 		}
 	}
 }
+
+a :: struct  {
+	aa : int,
+}
+b :: struct  {
+	#subtype a: a,
+	bb : int,
+}
+
+@(test)
+subtypes :: proc(t: ^_t.T) {
+	sut := b{bb = 2, a = { aa = 3}}
+	_u.expect_value_int(t, sut.bb, 2)
+	_u.expect_value_int(t, a(sut).aa, 3)
+}

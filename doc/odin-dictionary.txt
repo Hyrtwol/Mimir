@@ -37,6 +37,7 @@ lparam
 lpctstr
 lresult
 lwid
+memset
 metaprogramming
 microarch
 microui

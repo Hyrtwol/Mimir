@@ -1,9 +1,6 @@
 package main
 
-import "core:bytes"
 import "core:fmt"
-import "core:runtime"
-import "core:os"
 import vt "shared:xterm"
 
 main :: proc() {

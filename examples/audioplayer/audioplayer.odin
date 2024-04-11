@@ -10,7 +10,7 @@ import "core:math"
 //import "core:simd"
 //import "core:time"
 import win32 "core:sys/windows"
-import canvas "libs:tlc/canvas"
+import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
 // https://learn.microsoft.com/en-us/windows/win32/multimedia/example-of-writing-waveform-data
@@ -66,9 +66,9 @@ PNoiseDisplay :: ^TNoiseDisplay
 
 TDoBuffer :: proc(Buf: rawptr)
 
-dib: canvas.DIB
+dib: cv.DIB
 colidx := 1
-cols := canvas.C64_COLORS
+cols := cv.C64_COLORS
 
 Headers: [NUM_BUFFERS]win32.WAVEHDR
 BufferLength: u32
@@ -220,11 +220,8 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
-	i := pos.y * dib.size.x + pos.x
-	if i >= 0 && i < dib.pixel_count {
-		dib.pvBits[i] = col
-	}
+setdot :: proc(pos: win32app.int2, col: cv.byte4) {
+	cv.canvas_setdot(&dib.canvas, pos, col)
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -235,9 +232,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = canvas.dib_create_v5(hdc, client_size / ZOOM)
-	if dib.pvBits != nil {
-		canvas.dib_clear(&dib, {50, 100, 150, 255})
+	dib = cv.dib_create_v5(hdc, client_size / ZOOM)
+	if dib.canvas.pvBits != nil {
+		cv.dib_clear(&dib, {50, 100, 150, 255})
 	}
 
 	OpenFile(hwnd)
@@ -248,7 +245,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.printf("WM_DESTROY %v\n", hwnd)
 
-	canvas.dib_free_section(&dib)
+	cv.dib_free_section(&dib)
 
 	//CloseFile()
 
@@ -264,15 +261,15 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\r':	 fmt.print("return\n")
 	case '1':	 if colidx > 0 {colidx -= 1}
 	case '2':	 if colidx < 15 {colidx += 1}
-	case '3':	 cols = canvas.C64_COLORS
-	case '4':	 cols = canvas.W95_COLORS
+	case '3':	 cols = cv.C64_COLORS
+	case '4':	 cols = cv.W95_COLORS
 	}
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, dib.size)
+	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, dib.canvas.size)
 	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 	return 0
 }
@@ -312,11 +309,11 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 		win32.InvalidateRect(hwnd, nil, false)
 	case 2:
 		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.C64_BLUE)
+		setdot(pos, cv.C64_BLUE)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 3:
 		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.C64_GREEN)
+		setdot(pos, cv.C64_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
 		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
@@ -374,7 +371,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:	return 1
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	//case win32.WM_PAINT:		return WM_PAINT(hwnd)
-	case win32.WM_PAINT:        return canvas.wm_paint_dib(hwnd, dib.hbitmap, dib.size)
+	case win32.WM_PAINT:        return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)

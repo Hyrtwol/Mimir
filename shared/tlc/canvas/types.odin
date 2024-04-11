@@ -9,6 +9,8 @@ uint	:: u32
 byte4	:: [4]byte
 int2	:: [2]int
 int3	:: [3]int
+uint2	:: [2]uint
+uint3	:: [3]uint
 float2	:: [2]float
 float3	:: [3]float
 double2	:: [2]double

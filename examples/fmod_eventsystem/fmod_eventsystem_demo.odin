@@ -7,7 +7,7 @@ import          "core:math/noise"
 import          "core:runtime"
 import win32	"core:sys/windows"
 import			"libs:tlc/win32app"
-import			"libs:tlc/canvas"
+import cv		"libs:tlc/canvas"
 import fmod		"shared:fmodex"
 import			"libs:tlc/wolf"
 
@@ -22,7 +22,7 @@ max_channels :: 32
 init_flags :: fmod.FMOD_INIT_3D_RIGHTHANDED
 DistanceFactor :: 1.0
 
-screen_buffer  :: canvas.screen_buffer
+screen_buffer  :: cv.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2
@@ -30,7 +30,7 @@ bitmap_count  : i32
 pvBits        : screen_buffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
-//dib           : canvas.DIB
+//dib           : cv.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
@@ -44,7 +44,7 @@ title: string
 dsp, stream, geometry, update, total: f32
 channels_playing: i32
 
-clear_color: canvas.byte4 : {150, 100, 50, 255}
+clear_color: cv.byte4 : {150, 100, 50, 255}
 
 play_event :: proc(event_id: i32) {
 	event: ^fmod.FMOD_EVENT = events[event_id]
@@ -98,7 +98,7 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-setdot :: proc(pos: win32app.int2, col: canvas.byte4) {
+setdot :: proc(pos: win32app.int2, col: cv.byte4) {
 	i := pos.y * bitmap_size.x + pos.x
 	if i >= 0 && i < bitmap_count {
 		pvBits[i] = col
@@ -126,7 +126,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		canvas.fill_screen(pvBits, bitmap_count, clear_color)
+		cv.fill_screen(pvBits, bitmap_count, clear_color)
 	} else {
 		bitmap_size = {0, 0}
 		bitmap_count = 0
@@ -200,11 +200,11 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 				spectrum[i] = (80 + lin2dB((spectrum_left[i] + spectrum_right[i]) * 0.5)) * scale
 			}
 
-			col: canvas.byte4
+			col: cv.byte4
 			for y in 0 ..< spectrum_size {
 				i := i32(y) * bitmap_size.x
 				for x in 0 ..< spectrum_size {
-					if f32(y) > spectrum[x] {col = clear_color} else {col = canvas.COLOR_GREEN}
+					if f32(y) > spectrum[x] {col = clear_color} else {col = cv.COLOR_GREEN}
 					//pvBits[i] = col
 					if i >= 0 && i < bitmap_count {pvBits[i] = col}
 					i += 1
@@ -236,15 +236,15 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	switch wparam {
 	case 1:
 		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.COLOR_RED)
+		setdot(pos, cv.COLOR_RED)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 2:
 		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.COLOR_BLUE)
+		setdot(pos, cv.COLOR_BLUE)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 3:
 		pos := decode_scrpos(lparam)
-		setdot(pos, canvas.COLOR_GREEN)
+		setdot(pos, cv.COLOR_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
 		fmt.printfln("input %v %d", decode_scrpos(lparam), wparam)
@@ -261,7 +261,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_PAINT:		return canvas.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
+	case win32.WM_PAINT:		return cv.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)

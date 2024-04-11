@@ -1,10 +1,9 @@
 // +build windows
+// +vet
 package win32app
 
 import "core:fmt"
-import "core:math/rand"
 import "core:strings"
-import win32 "core:sys/windows"
 
 // similar to strings.to_string
 to_wstring :: proc(b: strings.Builder, allocator := context.temp_allocator) -> (res: wstring) {

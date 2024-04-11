@@ -1,8 +1,8 @@
 // +build windows
+// +vet
 package win32app
 
 import "core:fmt"
-import "core:math/rand"
 import win32 "core:sys/windows"
 
 int2 :: [2]i32

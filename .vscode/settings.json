@@ -32,13 +32,13 @@
 		"*.res": "hexEditor.hexedit",
 		"*.rom": "hexEditor.hexedit"
 	},
-	"cSpell.enableFiletypes": [
-		"odin"
-	],
 	"git.enabled": false,
 	"xmlTools.splitXmlnsOnFormat": false,
 	// "ols.server.path": "D:\\dev\\odin\\ols\\ols.exe",
 	"cSpell.language": "en",
+	"cSpell.enableFiletypes": [
+		"odin"
+	],
     "cSpell.customDictionaries": {
         "custom-dictionary-user": {
             "name": "odin-dictionary",

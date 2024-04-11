@@ -4,20 +4,17 @@ import "core:intrinsics"
 import win32 "core:sys/windows"
 import win32app "libs:tlc/win32app"
 
-default_pels_per_meter : int2 : {3780, 3780}
+default_pels_per_meter: int2 : {3780, 3780}
 
 DIB :: struct {
-	hbitmap:     win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
-	pvBits:      screen_buffer,
-	size:        int2,
-	pixel_count: i32,
+	#subtype canvas: canvas,
+	hbitmap: win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
 }
 
 dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
-	dib.hbitmap = win32.CreateDIBSection(hdc, pbmi, win32.DIB_RGB_COLORS, &dib.pvBits, nil, 0)
-	if dib.pvBits == nil {
-		dib.size = {0, 0}
-		dib.pixel_count = 0
+	dib.hbitmap = win32.CreateDIBSection(hdc, pbmi, win32.DIB_RGB_COLORS, &dib.canvas.pvBits, nil, 0)
+	if dib.hbitmap == nil || dib.canvas.pvBits == nil {
+		canvas_zero(&dib.canvas)
 	}
 }
 
@@ -40,9 +37,7 @@ dib_free_section :: proc(dib: ^DIB) {
 		win32.DeleteObject(win32.HGDIOBJ(dib.hbitmap))
 	}
 	dib.hbitmap = nil
-	dib.pvBits = nil
-	dib.size = {0, 0}
-	dib.pixel_count = 0
+	canvas_zero(&dib.canvas)
 }
 
 dib_create :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pels_per_meter) -> DIB {
@@ -60,8 +55,7 @@ dib_create :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pe
 		biClrUsed       = 0,
 	}
 	dib := DIB {
-		size        = size,
-		pixel_count = size.x * size.y,
+		canvas = {size = transmute(uint2)size, pixel_count = size.x * size.y},
 	}
 	dib_create_section(&dib, hdc, &bmp_header)
 	return dib
@@ -83,22 +77,18 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default
 		bV5AlphaMask     = 0xFF000000,
 	}
 	dib := DIB {
-		size        = size,
-		pixel_count = size.x * size.y,
+		canvas = {size = transmute(uint2)size, pixel_count = size.x * size.y},
 	}
 	dib_create_section(&dib, hdc, &bmp_v5_header)
 	return dib
 }
 
 dib_clear :: proc(dib: ^DIB, col: byte4) {
-	fill_screen(dib.pvBits, dib.pixel_count, col)
+	canvas_clear(&dib.canvas, col)
 }
 
 dib_setdot :: proc(dib: ^DIB, pos: int2, col: byte4) {
-	i := pos.y * dib.size.x + pos.x
-	if i >= 0 && i < dib.pixel_count {
-		dib.pvBits[i] = col
-	}
+	canvas_setdot(&dib.canvas, pos, col)
 }
 
 @(private)

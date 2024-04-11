@@ -7,7 +7,10 @@ import win32 "core:sys/windows"
 import mu "vendor:microui"
 import mud "libs:microui/demo"
 import win32app "libs:tlc/win32app"
-import canvas "libs:tlc/canvas"
+import cv "libs:tlc/canvas"
+
+DIB     :: cv.DIB
+canvas	:: cv.canvas
 
 application :: struct {
 	mu_ctx:          mu.Context,
@@ -15,7 +18,7 @@ application :: struct {
 	log_buf_len:     int,
 	log_buf_updated: bool,
 	bg:              mu.Color,
-	atlas_texture:   canvas.DIB,
+	atlas_texture:   cv.DIB,
 }
 
 state : application = {
@@ -25,7 +28,7 @@ papp :: ^application
 
 ZOOM :: 4
 
-screen_buffer  :: canvas.screen_buffer
+screen_buffer  :: cv.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
@@ -67,7 +70,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		//canvas.fill_screen(pvBits, bitmap_count, {100, 150, 50, 255})
+		//cv.fill_screen(pvBits, bitmap_count, {100, 150, 50, 255})
 
 		//pixels = make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
 		for alpha, i in mu.default_atlas_alpha {

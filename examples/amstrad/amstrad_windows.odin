@@ -7,7 +7,7 @@ import "core:math/rand"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
-import canvas "libs:tlc/canvas"
+import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 import z "shared:z80"
 
@@ -54,8 +54,8 @@ fill_screen_with_image :: proc(app: papp) {
 	}
 }
 
-amstrad_colors := canvas.AMSTRAD_COLORS
-amstrad_ink := canvas.AMSTRAD_INK
+amstrad_colors := cv.AMSTRAD_COLORS
+amstrad_ink := cv.AMSTRAD_INK
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
