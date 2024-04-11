@@ -1,13 +1,17 @@
 // +build windows
-package sys_windows
+package owin
 
-// Windows.Win32.UI.WindowsAndMessaging (Public, SequentialLayout, Sealed, BeforeFieldInit) TypeReference ValueType
+// 1 / 33972
+
+// WNDCLASSEXW TypeDefinition
+// TypeReference ; Windows.Win32.UI.WindowsAndMessaging ; Public, SequentialLayout, Sealed, BeforeFieldInit
+// ValueType
 WNDCLASSEXW :: struct {
-	cbSize: u32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	cbSize: UInt32, // OdinWin32.PrimitiveTypeHandleInfo Public
 	style: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public
 	lpfnWndProc: WNDPROC, // OdinWin32.HandleTypeHandleInfo Public
-	cbClsExtra: i32, // OdinWin32.PrimitiveTypeHandleInfo Public
-	cbWndExtra: i32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	cbClsExtra: Int32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	cbWndExtra: Int32, // OdinWin32.PrimitiveTypeHandleInfo Public
 	hInstance: HINSTANCE, // OdinWin32.HandleTypeHandleInfo Public
 	hIcon: HICON, // OdinWin32.HandleTypeHandleInfo Public
 	hCursor: HCURSOR, // OdinWin32.HandleTypeHandleInfo Public
@@ -17,48 +21,61 @@ WNDCLASSEXW :: struct {
 	hIconSm: HICON, // OdinWin32.HandleTypeHandleInfo Public
 }
 
-// Windows.Win32.UI.WindowsAndMessaging (Public, Sealed) TypeReference Enum
-WNDCLASS_STYLES :: enum {
-	CS_VREDRAW: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_HREDRAW: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_DBLCLKS: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_OWNDC: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_CLASSDC: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_PARENTDC: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_NOCLOSE: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_SAVEBITS: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_BYTEALIGNCLIENT: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_BYTEALIGNWINDOW: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_GLOBALCLASS: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_IME: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
-	CS_DROPSHADOW: WNDCLASS_STYLES, // OdinWin32.HandleTypeHandleInfo Public, Static, Literal, HasDefault
+// WNDCLASS_STYLES TypeDefinition
+// TypeReference ; Windows.Win32.UI.WindowsAndMessaging ; Public, Sealed
+// Enum
+WNDCLASS_STYLES :: enum UInt32 {
+	CS_VREDRAW = 1,
+	CS_HREDRAW = 2,
+	CS_DBLCLKS = 8,
+	CS_OWNDC = 32,
+	CS_CLASSDC = 64,
+	CS_PARENTDC = 128,
+	CS_NOCLOSE = 512,
+	CS_SAVEBITS = 2048,
+	CS_BYTEALIGNCLIENT = 4096,
+	CS_BYTEALIGNWINDOW = 8192,
+	CS_GLOBALCLASS = 16384,
+	CS_IME = 65536,
+	CS_DROPSHADOW = 131072,
 }
 
-// Windows.Win32.UI.WindowsAndMessaging (Public, Sealed, AutoClass, BeforeFieldInit) TypeReference MulticastDelegate
-WNDPROC :: struct {
-}
+// WNDPROC TypeDefinition
+// TypeReference ; Windows.Win32.UI.WindowsAndMessaging ; Public, Sealed, AutoClass, BeforeFieldInit
+// MulticastDelegate
+// WNDPROC :: #type proc "system" () -> LRESULT
 
-// Windows.Win32.Foundation (Public, SequentialLayout, Sealed, BeforeFieldInit) TypeReference ValueType
+// HINSTANCE TypeDefinition
+// TypeReference ; Windows.Win32.Foundation ; Public, SequentialLayout, Sealed, BeforeFieldInit
+// ValueType
 HINSTANCE :: struct {
-	Value: ^i32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	Value: IntPtr, // OdinWin32.PrimitiveTypeHandleInfo Public
 }
 
-// Windows.Win32.UI.WindowsAndMessaging (Public, SequentialLayout, Sealed, BeforeFieldInit) TypeReference ValueType
+// HICON TypeDefinition
+// TypeReference ; Windows.Win32.UI.WindowsAndMessaging ; Public, SequentialLayout, Sealed, BeforeFieldInit
+// ValueType
 HICON :: struct {
-	Value: ^i32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	Value: IntPtr, // OdinWin32.PrimitiveTypeHandleInfo Public
 }
 
-// Windows.Win32.UI.WindowsAndMessaging (Public, SequentialLayout, Sealed, BeforeFieldInit) TypeReference ValueType
+// HCURSOR TypeDefinition
+// TypeReference ; Windows.Win32.UI.WindowsAndMessaging ; Public, SequentialLayout, Sealed, BeforeFieldInit
+// ValueType
 HCURSOR :: struct {
-	Value: ^i32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	Value: IntPtr, // OdinWin32.PrimitiveTypeHandleInfo Public
 }
 
-// Windows.Win32.Graphics.Gdi (Public, SequentialLayout, Sealed, BeforeFieldInit) TypeReference ValueType
+// HBRUSH TypeDefinition
+// TypeReference ; Windows.Win32.Graphics.Gdi ; Public, SequentialLayout, Sealed, BeforeFieldInit
+// ValueType
 HBRUSH :: struct {
-	Value: ^i32, // OdinWin32.PrimitiveTypeHandleInfo Public
+	Value: IntPtr, // OdinWin32.PrimitiveTypeHandleInfo Public
 }
 
-// Windows.Win32.Foundation (Public, SequentialLayout, Sealed, BeforeFieldInit) TypeReference ValueType
+// PWSTR TypeDefinition
+// TypeReference ; Windows.Win32.Foundation ; Public, SequentialLayout, Sealed, BeforeFieldInit
+// ValueType
 PWSTR :: struct {
-	Value: ^u8, // OdinWin32.PointerTypeHandleInfo Public
+	Value: ^Char, // OdinWin32.PointerTypeHandleInfo Public
 }
