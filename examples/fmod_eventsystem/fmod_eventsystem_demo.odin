@@ -106,7 +106,7 @@ setdot :: proc(pos: win32app.int2, col: cv.byte4) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_CREATE\n")
+	fmt.printfln("WM_CREATE %v", hwnd)
 
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 50)
@@ -136,7 +136,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.print("WM_DESTROY\n")
+	fmt.printfln("WM_DESTROY %v", hwnd)
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
 	win32app.delete_object(&bitmap_handle)

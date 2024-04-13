@@ -44,6 +44,14 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 	return app
 }
 
+get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
+	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
+	settings := (win32app.psettings)(pcs.lpCreateParams)
+	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
+	return settings
+}
+
 fill_screen_with_image :: proc(app: papp) {
 	pvBits := app.pvBits
 	if pvBits != nil {

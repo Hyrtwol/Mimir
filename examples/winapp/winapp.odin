@@ -47,7 +47,7 @@ random_scrpos :: proc() -> win32app.int2 {
 	return {rand.int31_max(bitmap_size.x, &rng), rand.int31_max(bitmap_size.y, &rng)}
 }
 
-setdot :: proc(pos: win32app.int2, col: cv.byte4) {
+set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 	i := pos.y * bitmap_size.x + pos.x
 	if i >= 0 && i < bitmap_count {
 		pvBits[i] = col
@@ -55,6 +55,7 @@ setdot :: proc(pos: win32app.int2, col: cv.byte4) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.printfln("WM_CREATE %v", hwnd)
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
 	settings := (win32app.psettings)(pcs.lpCreateParams)
@@ -62,6 +63,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	//fmt.printfln("WM_CREATE %v %v %v", hwnd, pcs, app)
+	fmt.printfln("%v", app)
 	win32app.set_settings(hwnd, settings)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
@@ -92,6 +94,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	fmt.printfln("WM_DESTROY %v", hwnd)
 	settings := win32app.get_settings(hwnd)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	app := settings.app
@@ -198,28 +201,28 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch (wparam)
 	{
-		case win32app.IDT_TIMER1: setdot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
-		case win32app.IDT_TIMER2: setdot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
+		case win32app.IDT_TIMER1: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
+		case win32app.IDT_TIMER2: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
 	}
 	return 0
 }
 
-setdot_invalidate :: proc(hwnd: win32.HWND, pos: win32app.int2, col: cv.byte4) {
-	setdot(pos, col)
-	win32.InvalidateRect(hwnd, nil, false)
+set_dot_invalidate :: proc(hwnd: win32.HWND, pos: win32app.int2, col: cv.byte4) {
+	set_dot(pos, col)
+	win32app.invalidate(hwnd)
 }
 
-decode_setdot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
-	setdot_invalidate(hwnd, decode_scrpos(lparam), col)
+decode_set_dot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
+	set_dot_invalidate(hwnd, decode_scrpos(lparam), col)
 }
 
 // odinfmt: disable
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case 1: decode_setdot(hwnd, lparam, cv.COLOR_RED)
-	case 2: decode_setdot(hwnd, lparam, cv.COLOR_BLUE)
-	case 3: decode_setdot(hwnd, lparam, cv.COLOR_GREEN)
+	case 1: decode_set_dot(hwnd, lparam, cv.COLOR_RED)
+	case 2: decode_set_dot(hwnd, lparam, cv.COLOR_BLUE)
+	case 3: decode_set_dot(hwnd, lparam, cv.COLOR_GREEN)
 	case: //fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
 	}
 	return 0

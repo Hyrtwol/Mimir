@@ -1,3 +1,4 @@
+// +vet
 package game_of_life
 
 /*********************************************************************
@@ -32,6 +33,8 @@ wstring			:: win32.wstring
 utf8_to_wstring	:: win32.utf8_to_wstring
 color			:: [4]u8
 int2			:: [2]i32
+
+show_error_and_panic :: win32app.show_error_and_panic
 
 // constants
 COLOR_MODE :: 1
@@ -178,12 +181,6 @@ draw_world :: #force_inline proc(pvBits: screen_buffer, world: ^World) {
 	runtime.mem_copy(pvBits, &world.alive[0], int(world.width * world.height))
 }
 
-show_error_and_panic :: proc(msg: string, loc := #caller_location) {
-	text := win32.utf8_to_wstring(fmt.tprintf("%s\nLast error: %x\n", msg, win32.GetLastError()))
-	win32.MessageBoxW(nil, text, L("Panic"), win32.MB_ICONSTOP | win32.MB_OK)
-	panic(msg, loc = loc)
-}
-
 get_rect_size :: #force_inline proc(rect: ^win32.RECT) -> int2 {return {(rect.right - rect.left), (rect.bottom - rect.top)}}
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: ^Game) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
@@ -194,9 +191,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	app := (^Game)(pcs.lpCreateParams)
 	if app == nil {show_error_and_panic("Missing app!")}
-	fmt.printf("WM_CREATE %v %v\n", hwnd, app)
+	//fmt.printf("WM_CREATE %v %v\n", hwnd, app)
 	set_app(hwnd, app)
-	//app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
 	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
 	if app.timer_id == 0 {show_error_and_panic("No timer")}
 
@@ -254,22 +250,13 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
-	fmt.printf("WM_DESTROY %v\n", hwnd)
+	//fmt.printf("WM_DESTROY %v\n", hwnd)
 	if app == nil {show_error_and_panic("Missing app!")}
-	/*if app.timer_id != 0 {
-		if !win32.KillTimer(hwnd, app.timer_id) {
-			win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)
-		}
-		app.timer_id = 0
-	}*/
 	win32app.kill_timer(hwnd, &app.timer_id)
-	if app.hbitmap != nil {
-		if !win32.DeleteObject(win32.HGDIOBJ(app.hbitmap)) {
-			win32.MessageBoxW(nil, L("Unable to delete hbitmap"), L("Error"), win32.MB_OK)
-		}
-		app.hbitmap = nil
+	if !win32app.delete_object(&app.hbitmap) {
+		win32app.show_messagebox("Unable to delete hbitmap", "Error")
 	}
-	win32.PostQuitMessage(0) // exit code
+	win32app.post_quit_message(0)
 	return 0
 }
 
@@ -313,7 +300,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 				draw_world(app.pvBits, app.world)
 			}
-			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+			win32app.redraw_window(hwnd)
 		}
 	case:
 		fmt.printf("WM_TIMER %v %v %v\n", hwnd, wparam, lparam)
@@ -384,17 +371,17 @@ register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
 	return win32.RegisterClassExW(&wcx)
 }
 
-unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
-	if atom == 0 {show_error_and_panic("atom is zero")}
-	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
-}
+// unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
+// 	if atom == 0 {show_error_and_panic("atom is zero")}
+// 	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
+// }
 
-adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
-	rect := win32.RECT{0, 0, size.x, size.y}
-	if win32.AdjustWindowRect(&rect, dwStyle, false) {
-		size^ = {i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
-	}
-}
+// adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
+// 	rect := win32.RECT{0, 0, size.x, size.y}
+// 	if win32.AdjustWindowRect(&rect, dwStyle, false) {
+// 		size^ = win32app.get_rect_size(&rect)
+// 	}
+// }
 
 center_window :: proc(position: ^int2, size: int2) {
 	if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
@@ -432,7 +419,7 @@ run :: proc() -> int {
 		fps           = 10,
 		control_flags = {.CENTER},
 	}
-	fmt.printf("window=%p\n%v\n", &window, window)
+	//fmt.printf("window=%p\n%v\n", &window, window)
 	game := Game {
 		tick_rate = 300 * time.Millisecond,
 		last_tick = time.now(),
@@ -451,14 +438,14 @@ run :: proc() -> int {
 	if (instance == nil) {show_error_and_panic("No instance")}
 	atom := register_class(instance)
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
-	defer unregister_class(atom, instance)
+	defer win32app.unregister_window_class(atom, instance)
 
 	dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
 	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
 
 	size := window.size
 	position := int2{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
-	adjust_size_for_style(&size, dwStyle)
+	win32app.adjust_size_for_style(&size, dwStyle)
 	if .CENTER in window.control_flags {
 		center_window(&position, size)
 	}

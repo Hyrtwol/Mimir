@@ -243,7 +243,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.printf("WM_DESTROY %v\n", hwnd)
+	fmt.printfln("WM_DESTROY %v", hwnd)
 
 	cv.dib_free_section(&dib)
 

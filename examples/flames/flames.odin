@@ -89,8 +89,7 @@ dib_flames :: proc(dib: ^canvas) {
 	// set a new bottom line
 	i := w * (h - 1)
 	for _ in 0 ..< w {
-		c := u8(rand.int31_max(256, &rng))
-		flamebuffer[i] = c
+		flamebuffer[i] = u8(rand.int31_max(256, &rng))
 		i += 1
 	}
 
@@ -189,7 +188,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
-decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
+decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
 	return win32app.decode_lparam(lparam) / ZOOM
 }
 
@@ -213,7 +212,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:      return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:   return 1
 	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:        return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size) // &dib->dib_paint(hwnd) maybe?
+	case win32.WM_PAINT:        return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
 	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)
@@ -225,10 +224,10 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 }
 
 main :: proc() {
-	calcol :: proc(n: f64) -> u8 {return u8(n * 255.999)}
+	calc_col :: proc(n: f64) -> u8 {return u8(n * (256-(1 / 255)))}
 	for i in 0 ..< 256 {
-		f := f64(i) / 255
-		palette[i] = {calcol(math.pow(f, 0.5)), calcol(math.pow(f, 1.25)), calcol(math.pow(f, 3.0)), 255}
+		f := (f64(i) / 255)
+		palette[i] = {calc_col(math.pow(f, 0.5)), calc_col(math.pow(f, 1.25)), calc_col(math.pow(f, 3.0)), 255}
 	}
 	win32app.run(&settings)
 }

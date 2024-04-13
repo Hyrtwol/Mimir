@@ -41,10 +41,7 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 }
 
 setdot :: proc(pos: win32app.int2, col: cv.byte4) {
-	i := pos.y * dib.size.x + pos.x
-	if i >= 0 && i < dib.pixel_count {
-		dib.pvBits[i] = col
-	}
+	cv.canvas_setdot(&dib.canvas, pos, col)
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -59,7 +56,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	defer win32.ReleaseDC(hwnd, hdc)
 
 	dib = cv.dib_create_v5(hdc, client_size / ZOOM)
-	if dib.pvBits != nil {
+	if dib.canvas.pvBits != nil {
 		cv.dib_clear(&dib, {50, 100, 150, 255})
 	}
 
@@ -70,14 +67,13 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.print("WM_DESTROY\n")
 	cv.dib_free_section(&dib)
 	//win32.ShowCursor(true)
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message()
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, dib.size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
+	win32app.set_window_textf(hwnd, "%s %v %v\n", TITLE, size, dib.canvas.size)
 	return 0
 }
 
@@ -91,7 +87,8 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
 	client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
+	dib_size := transmute(cv.int2)dib.canvas.size
+	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib_size.x, dib_size.y, win32.SRCCOPY)
 
 	win32.DrawIcon(ps.hdc, mouse_pos.x, mouse_pos.y, icon)
 

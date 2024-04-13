@@ -3,6 +3,7 @@ amstrad
 bitmapinfo
 codepage
 coreclr
+createstruct
 createstructw
 cstring
 ctprintf
@@ -19,6 +20,7 @@ fmod
 fmodex
 glsl
 hbitmap
+hbrush
 hcursor
 hgdiobj
 hicon

@@ -167,3 +167,22 @@ find_epsilon_for_f16 :: proc(t: ^testing.T) {
 	//testing.expect(t, math.F16_EPSILON == epsilon) // fails as F16_EPSILON=0.00097656
 	testing.expect(t, math.F16_EPSILON == epsilon * 2)
 }
+
+@(test)
+float_01_to_byte :: proc(t: ^testing.T) {
+	C :: 8
+	M :: 256 * C
+	S :: 256 - (1 / 255)
+	b: [256]i32
+	f: f32
+	y: u8
+	for i in 0 ..< M {
+		f = f32(i) / M
+		y = u8(f * S)
+		b[y] += 1
+	}
+
+	for i in 0 ..< 256 {
+		testing.expect(t, b[i] == C)
+	}
+}

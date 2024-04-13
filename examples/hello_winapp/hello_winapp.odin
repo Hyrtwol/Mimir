@@ -1,3 +1,4 @@
+// +vet
 package main
 
 import "core:fmt"
@@ -5,7 +6,6 @@ import "core:intrinsics"
 import "core:os"
 import "core:runtime"
 import win32 "core:sys/windows"
-import win32app "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -16,15 +16,21 @@ CENTER :: true
 
 hbrGray: win32.HBRUSH
 
+show_error_and_panic :: proc(msg: string, type: win32.UINT = win32.MB_ICONSTOP | win32.MB_OK, loc := #caller_location) {
+	win32.MessageBoxW(nil, win32.utf8_to_wstring(msg), L("Panic"), type)
+	fmt.panicf("%s (Last error: %x)", msg, win32.GetLastError(), loc = loc)
+}
+
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
-	fmt.printf("WM_CREATE %v %v\n", hwnd, pcs)
+	fmt.printfln("WM_CREATE %v", hwnd)
+	fmt.printfln("%v", pcs)
 	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.printf("WM_DESTROY %v\n", hwnd)
+	fmt.printfln("WM_DESTROY %v", hwnd)
 	hbrGray = nil
 	win32.PostQuitMessage(666) // exit code
 	return 0
@@ -37,7 +43,7 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	size := [2]i32{win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
-	fmt.printf("WM_SIZE %v\n", size)
+	fmt.printfln("WM_SIZE %v", size)
 	return 0
 }
 
@@ -56,6 +62,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 
+
 // odinfmt: disable
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -65,7 +72,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\t':		fmt.print("tab\n")
 	case '\r':		fmt.print("return\n")
 	case 'm':		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
-	case 'p':		win32app.show_error_and_panic("Don't worry it's just a test!")
+	case 'p':		show_error_and_panic("Don't worry it's just a test!")
 	}
 	return 0
 }
@@ -88,13 +95,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 main :: proc() {
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
-	if (instance == nil) {win32app.show_error_and_panic("No instance")}
+	if (instance == nil) {show_error_and_panic("No instance")}
 
 	icon := win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
-	if (icon == nil) {win32app.show_error_and_panic("Missing icon")}
+	if (icon == nil) {show_error_and_panic("Missing icon")}
 
 	cursor := win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
-	if (cursor == nil) {win32app.show_error_and_panic("Missing cursor")}
+	if (cursor == nil) {show_error_and_panic("Missing cursor")}
 
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),
@@ -112,9 +119,7 @@ main :: proc() {
 	}
 
 	atom := win32.RegisterClassExW(&wcx)
-	if atom == 0 {
-		win32app.show_error_and_panic("Failed to register window class")
-	}
+	if atom == 0 {show_error_and_panic("Failed to register window class")}
 
 	dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
 	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
@@ -132,16 +137,14 @@ main :: proc() {
 	position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
 	if CENTER {
 		if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
-			dmsize := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)}
-			position = (dmsize - size) / 2
+			dm_size := [2]i32{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)}
+			position = (dm_size - size) / 2
 		}
 	}
 	fmt.printf("position %v\n", position)
 
 	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
-	if hwnd == nil {
-		win32app.show_error_and_panic("CreateWindowEx failed")
-	}
+	if hwnd == nil {show_error_and_panic("CreateWindowEx failed")}
 	fmt.printf("hwnd %d\n", hwnd)
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)

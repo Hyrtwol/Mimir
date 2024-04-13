@@ -85,6 +85,7 @@ dib_noise2 :: proc(dib: ^canvas) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.printfln("WM_CREATE %v", hwnd)
 	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 50, nil)
 	if timer_id == 0 {
 		win32app.show_error_and_panic("No timer")
@@ -101,11 +102,12 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.printfln("WM_DESTROY %v", hwnd)
 	if timer_id != 0 {
 		if !win32.KillTimer(hwnd, timer_id) {win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)}
 	}
 	cv.dib_free_section(&dib)
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message(0)
 	return 0
 }
 
@@ -135,7 +137,7 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	noise_func(&dib.canvas)
-	win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	win32app.redraw_window(hwnd)
 	return 0
 }
 
@@ -143,7 +145,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b':	win32.DestroyWindow(hwnd)
+	case '\x1b':	win32app.close_application(hwnd) // win32.DestroyWindow(hwnd)
 	case '1':	    noise_func = dib_noise1
 	case '2':	    noise_func = dib_noise2
 	}

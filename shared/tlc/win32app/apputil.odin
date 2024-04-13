@@ -70,6 +70,13 @@ adjust_window_size :: proc(size: int2, dwStyle, dwExStyle: u32) -> int2 {
 	return size
 }
 
+adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
+	rect := win32.RECT{0, 0, size.x, size.y}
+	if win32.AdjustWindowRect(&rect, dwStyle, false) {
+		size^ = get_rect_size(&rect)
+	}
+}
+
 get_window_position :: proc(size: int2, center: bool) -> int2 {
 	if center {
 		if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
@@ -82,17 +89,13 @@ get_window_position :: proc(size: int2, center: bool) -> int2 {
 
 get_module_handle :: proc(lpModuleName: wstring = nil) -> HMODULE {
 	module_handle := win32.GetModuleHandleW(lpModuleName)
-	if (module_handle == nil) {
-		show_error_and_panic("No Module Handle")
-	}
+	if (module_handle == nil) {show_error_and_panic("No Module Handle")}
 	return module_handle
 }
 
 get_instance :: proc() -> HINSTANCE {
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
-	if (instance == nil) {
-		show_error_and_panic("No instance")
-	}
+	if (instance == nil) {show_error_and_panic("No instance")}
 	return instance
 }
 
@@ -111,20 +114,12 @@ get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_all
 register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
 
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
-	if icon == nil {
-		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))
-	}
-	if icon == nil {
-		icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
-	}
-	if (icon == nil) {
-		show_error_and_panic("Missing icon")
-	}
+	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
+	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))}
+	if icon == nil {show_error_and_panic("Missing icon")}
 
 	cursor: win32.HCURSOR = win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
-	if (cursor == nil) {
-		show_error_and_panic("Missing cursor")
-	}
+	if (cursor == nil) {show_error_and_panic("Missing cursor")}
 
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),
@@ -142,10 +137,13 @@ register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> wi
 	}
 
 	atom: win32.ATOM = win32.RegisterClassExW(&wcx)
-	if atom == 0 {
-		show_error_and_panic("Failed to register window class")
-	}
+	if atom == 0 {show_error_and_panic("Failed to register window class")}
 	return atom
+}
+
+unregister_window_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
+	if atom == 0 {show_error_and_panic("atom is zero")}
+	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
 }
 
 create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwExStyle: u32, settings: ^window_settings) -> win32.HWND {
@@ -153,18 +151,7 @@ create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwEx
 	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
 	position := get_window_position(size, settings.center)
 
-	hwnd: win32.HWND = win32.CreateWindowExW(
-		dwExStyle,
-		win32.LPCWSTR(uintptr(atom)),
-		utf8_to_wstring(settings.title),
-		dwStyle,
-		position.x, position.y,
-		size.x, size.y,
-		nil, nil,
-		instance,
-		//settings.app,
-		settings,
-	)
+	hwnd: win32.HWND = win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
 
 	return hwnd
 }
@@ -187,7 +174,6 @@ psettings :: ^window_settings
 set_settings :: #force_inline proc(hwnd: win32.HWND, settings: psettings) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(settings)))}
 get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {return (psettings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
-
 @(private = "file")
 create_window_settings_1 :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
 	settings: window_settings = {
@@ -203,12 +189,12 @@ create_window_settings_1 :: proc(title: string, size: int2, wndproc: win32.WNDPR
 }
 
 @(private = "file")
-create_window_settings_2 :: proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
+create_window_settings_2 :: #force_inline proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
 	return create_window_settings_1(title, {width, height}, wndproc)
 }
 
 @(private = "file")
-create_window_settings_3 :: proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
+create_window_settings_3 :: #force_inline proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
 	return create_window_settings_1(title, size, win32.WNDPROC(wndproc))
 }
 
@@ -300,7 +286,7 @@ run :: proc(settings: ^window_settings) -> win32.HWND {
 }
 
 // default no draw background erase
-WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM) ->  /*A handle to the device context.*/win32.LRESULT {
+WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND,  /*A handle to the device context.*/wparam: win32.WPARAM) -> win32.LRESULT {
 	return 1
 }
 
@@ -314,12 +300,16 @@ redraw_window :: proc {
 	RedrawWindowNow,
 }
 
+invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
+	win32.InvalidateRect(hwnd, nil, false)
+}
+
 @(private)
-SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL {
+SetWindowText :: #force_inline proc "contextless" (hwnd: HWND, text: string) -> BOOL {
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }
 
-set_window_textf :: #force_inline proc(hwnd: HWND, format: string, args: ..any) -> BOOL {
+set_window_textf :: #force_inline proc "contextless" (hwnd: HWND, format: string, args: ..any) -> BOOL {
 	return SetWindowText(hwnd, fmt.tprintf(format, ..args))
 }
 
@@ -346,6 +336,10 @@ kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR, loc := #caller_l
 
 close_application :: #force_inline proc "contextless" (hwnd: win32.HWND) {
 	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
+}
+
+post_quit_message :: #force_inline proc "contextless" (exit_code: INT = 0) {
+	win32.PostQuitMessage(exit_code)
 }
 
 is_user_interactive :: proc() -> bool {
