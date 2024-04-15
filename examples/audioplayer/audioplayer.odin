@@ -220,8 +220,8 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-setdot :: proc(pos: win32app.int2, col: cv.byte4) {
-	cv.canvas_setdot(&dib.canvas, pos, col)
+set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
+	cv.canvas_set_dot(&dib.canvas, pos, col)
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -305,15 +305,15 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	switch wparam {
 	case 1:
 		pos := decode_scrpos(lparam)
-		setdot(pos, cols[colidx])
+		set_dot(pos, cols[colidx])
 		win32.InvalidateRect(hwnd, nil, false)
 	case 2:
 		pos := decode_scrpos(lparam)
-		setdot(pos, cv.C64_BLUE)
+		set_dot(pos, cv.C64_BLUE)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 3:
 		pos := decode_scrpos(lparam)
-		setdot(pos, cv.C64_GREEN)
+		set_dot(pos, cv.C64_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
 		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)

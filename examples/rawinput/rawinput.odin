@@ -40,8 +40,8 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-setdot :: proc(pos: win32app.int2, col: cv.byte4) {
-	cv.canvas_setdot(&dib.canvas, pos, col)
+set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
+	cv.canvas_set_dot(&dib.canvas, pos, col)
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {

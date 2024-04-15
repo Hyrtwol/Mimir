@@ -66,10 +66,13 @@ amstrad_colors := cv.AMSTRAD_COLORS
 amstrad_ink := cv.AMSTRAD_INK
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	/*
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
 	settings := (win32app.psettings)(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
+	*/
+	settings := get_settings(lparam)
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 

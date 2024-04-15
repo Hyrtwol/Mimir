@@ -42,7 +42,7 @@ nseed: i64 = 12345
 
 dib_update_func: proc(dib: ^canvas) = dib_flames
 
-setdot :: proc(x, y: i32, col: u8) {
+set_dot :: proc(x, y: i32, col: u8) {
 	i := y * WIDTH + x
 	if i >= 0 && i < PXLCNT {
 		flamebuffer[i] = col
@@ -55,13 +55,13 @@ setbigdot :: proc(x, y: i32, col: u8, r: i32) {
 		for ix in -r ..= r {
 			d := ix * ix + iy * iy
 			if d <= rr {
-				setdot(x + ix, y + iy, col)
+				set_dot(x + ix, y + iy, col)
 			}
 		}
 	}
 }
 
-getdot :: proc(x, y: i32) -> i32 {
+get_dot :: proc(x, y: i32) -> i32 {
 	i := y * WIDTH + x
 	if i >= 0 && i < PXLCNT {
 		return i32(flamebuffer[i])
@@ -75,14 +75,14 @@ dib_flames :: proc(dib: ^canvas) {
 	for y in 0 ..< h {
 		for x in 0 ..< w {
 			// add the values of the surrounding pixels
-			c: i32 = getdot(x, y + 1) + getdot(x - 1, y + 1) + getdot(x + 1, y + 1) + getdot(x, y)
+			c: i32 = get_dot(x, y + 1) + get_dot(x - 1, y + 1) + get_dot(x + 1, y + 1) + get_dot(x, y)
 			// divide by the number of pixels added up
 			c /= 4
 			// decrement by the decay value
 			if c > 0 {
 				c -= 1
 			}
-			setdot(x, y, u8(c))
+			set_dot(x, y, u8(c))
 		}
 	}
 
@@ -110,7 +110,7 @@ dib_flames_2 :: proc(dib: ^canvas) {
 	for y in 0 ..< h {
 		for x in 0 ..< w {
 			// add the values of the surrounding pixels
-			c: i32 = getdot(x, y + 1) + getdot(x - 1, y + 1) + getdot(x + 1, y + 1) + getdot(x, y)
+			c: i32 = get_dot(x, y + 1) + get_dot(x - 1, y + 1) + get_dot(x + 1, y + 1) + get_dot(x, y)
 			// divide by the number of pixels added up
 			//c /= 4
 			c >>= 2
@@ -118,7 +118,7 @@ dib_flames_2 :: proc(dib: ^canvas) {
 			if c > 0 {
 				c -= 1
 			}
-			setdot(x, y, u8(c))
+			set_dot(x, y, u8(c))
 		}
 	}
 
@@ -196,7 +196,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	switch wparam {
 	case 1:
 		pos := decode_scrpos(lparam)
-		setdot(pos.x, pos.y, 255)
+		set_dot(pos.x, pos.y, 255)
 	case 2:
 		pos := decode_scrpos(lparam)
 		setbigdot(pos.x, pos.y, 255, 5)

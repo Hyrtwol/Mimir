@@ -53,6 +53,7 @@ println
 proc
 rasterizer
 rawptr
+raycaster
 raylib
 real
 rect

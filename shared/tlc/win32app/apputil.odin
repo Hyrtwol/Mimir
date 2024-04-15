@@ -52,17 +52,17 @@ show_last_errorf :: #force_inline proc(format: string, args: ..any, loc := #call
 	show_last_error(fmt.tprintf(format, ..args), loc = loc)
 }
 
-get_rect_size :: #force_inline proc(rect: ^RECT) -> int2 {
+get_rect_size :: #force_inline proc "contextless" (rect: ^RECT) -> int2 {
 	return {(rect.right - rect.left), (rect.bottom - rect.top)}
 }
 
-get_client_size :: proc(hwnd: HWND) -> int2 {
+get_client_size :: proc "contextless" (hwnd: HWND) -> int2 {
 	rect: RECT
 	win32.GetClientRect(hwnd, &rect)
 	return get_rect_size(&rect)
 }
 
-adjust_window_size :: proc(size: int2, dwStyle, dwExStyle: u32) -> int2 {
+adjust_window_size :: proc "contextless" (size: int2, dwStyle, dwExStyle: u32) -> int2 {
 	rect := RECT{0, 0, size.x, size.y}
 	if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle) {
 		return get_rect_size(&rect)
@@ -273,7 +273,19 @@ run :: proc {
 	run_wndproc,
 }*/
 
+prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
+	module_handle := get_module_handle()
+	if settings.title == "" {
+		settings.title = get_module_filename(module_handle)
+	}
+	inst = win32.HINSTANCE(module_handle)
+	atom = register_window_class(inst, settings.wndproc)
+	hwnd = create_and_show_window(inst, atom, settings)
+	return
+}
+
 run :: proc(settings: ^window_settings) -> win32.HWND {
+	/*
 	module_handle := get_module_handle()
 	if settings.title == "" {
 		settings.title = get_module_filename(module_handle)
@@ -281,6 +293,8 @@ run :: proc(settings: ^window_settings) -> win32.HWND {
 	inst := win32.HINSTANCE(module_handle)
 	atom := register_window_class(inst, settings.wndproc)
 	hwnd := create_and_show_window(inst, atom, settings)
+	*/
+	_, _, hwnd := prepare_run(settings)
 	loop_messages()
 	return hwnd
 }
@@ -292,7 +306,7 @@ WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND,  /*A handle to the 
 
 @(private)
 RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL {
-	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW | . RDW_NOCHILDREN)
 }
 
 redraw_window :: proc {
@@ -305,11 +319,11 @@ invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
 }
 
 @(private)
-SetWindowText :: #force_inline proc "contextless" (hwnd: HWND, text: string) -> BOOL {
+SetWindowText :: #force_inline proc (hwnd: HWND, text: string) -> BOOL {
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }
 
-set_window_textf :: #force_inline proc "contextless" (hwnd: HWND, format: string, args: ..any) -> BOOL {
+set_window_textf :: #force_inline proc (hwnd: HWND, format: string, args: ..any) -> BOOL {
 	return SetWindowText(hwnd, fmt.tprintf(format, ..args))
 }
 

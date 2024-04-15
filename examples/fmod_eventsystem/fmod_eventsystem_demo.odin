@@ -98,7 +98,7 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-setdot :: proc(pos: win32app.int2, col: cv.byte4) {
+set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 	i := pos.y * bitmap_size.x + pos.x
 	if i >= 0 && i < bitmap_count {
 		pvBits[i] = col
@@ -236,15 +236,15 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	switch wparam {
 	case 1:
 		pos := decode_scrpos(lparam)
-		setdot(pos, cv.COLOR_RED)
+		set_dot(pos, cv.COLOR_RED)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 2:
 		pos := decode_scrpos(lparam)
-		setdot(pos, cv.COLOR_BLUE)
+		set_dot(pos, cv.COLOR_BLUE)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 3:
 		pos := decode_scrpos(lparam)
-		setdot(pos, cv.COLOR_GREEN)
+		set_dot(pos, cv.COLOR_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
 		fmt.printfln("input %v %d", decode_scrpos(lparam), wparam)

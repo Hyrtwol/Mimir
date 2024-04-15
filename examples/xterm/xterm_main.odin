@@ -1,23 +1,30 @@
 package main
 
-import "core:fmt"
-import vt "shared:xterm"
+import "core:intrinsics"
+import "core:math/rand"
+import "shared:xterm"
 
 main :: proc() {
-	size := vt.int2{10,10}
-	vt.set_cursor_position_home()
-	vt.print_horizontal_border(size, true)
-	fmt.println()
-	vt.print_vertical_border(size, "Hello")
-	fmt.println()
-	vt.print_horizontal_border(size, false)
-	fmt.println()
+	using xterm
 
-	vt.set_cursor_position({2,2})
-	fmt.print("Benny")
+	rng := rand.create(u64(intrinsics.read_cycle_counter()))
+	size := int2{10, 10}
+	set_cursor_position_home()
+	print_horizontal_border(size, true)
+	println()
+	print_vertical_border(size, "Hello")
+	println()
+	print_horizontal_border(size, false)
+	println()
 
-	vt.set_cursor_position({4,1})
+	set_cursor_position({2, 2})
+	print("Benny")
 
-	// ch: [1]byte
-	// os.read(os.stdin, ch[:])
+	set_cursor_position({4, 1})
+
+	for _ in 0 ..< 4 {
+		printfln(rgb{u8(rand.int31_max(255, &rng)), u8(rand.int31_max(255, &rng)), u8(rand.int31_max(255, &rng))}, "hello")
+	}
+
+	println("bye", "bye")
 }
