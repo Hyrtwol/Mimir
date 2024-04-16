@@ -1,12 +1,16 @@
+// +vet
 package main
 
 import "core:fmt"
 import "core:image"
 import "core:image/png"
 import "core:image/tga"
-import "core:path/filepath"
 import "core:os"
+import "core:path/filepath"
 import xt "shared:xterm"
+
+_ :: png
+_ :: tga
 
 dot_alpha: bool = false
 
@@ -31,8 +35,6 @@ main :: proc() {
 		pattern = os.args[1]
 	}
 
-	//pattern :: "ba*.png"
-
 	pics_path, ok := filepath.abs(filepath.join({"..", "examples", "raycaster", "pics"}))
 	if ok {
 		path_pattern := filepath.join({pics_path, pattern}, context.temp_allocator)
@@ -44,5 +46,6 @@ main :: proc() {
 			}
 		}
 	}
+
 	fmt.println("Done.")
 }

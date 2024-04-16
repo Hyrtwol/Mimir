@@ -43,7 +43,6 @@ BITMAPINFO :: struct {
 screen_buffer :: [^]u8
 bwidth :: WIDTH / ZOOM
 bheight :: HEIGHT / ZOOM
-pxlcnt :: bwidth * bheight
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
@@ -144,8 +143,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.printf("app.hbitmap=%v %v\n", app.hbitmap, app.pvBits)
 	pvBits := app.pvBits
 	if pvBits != nil {
-		for i in 0 ..< pxlcnt / 8 {
-			//pvBits[i] = u8(i & 255)
+		for i in 0 ..< bwidth * bheight / 8 {
 			pvBits[i] = u8(rand.int31_max(255, &rng))
 		}
 	}

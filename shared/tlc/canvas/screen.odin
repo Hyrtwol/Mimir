@@ -1,3 +1,4 @@
+// +vet
 package canvas
 
 screen_buffer :: [^]color
@@ -36,7 +37,31 @@ canvas_set_dot_int2 :: #force_inline proc "contextless" (c: ^canvas, pos: int2, 
 	canvas_set_dot_uint2(c, transmute(uint2)pos, col)
 }
 
-canvas_set_dot :: proc  {
+canvas_set_dot :: proc {
 	canvas_set_dot_uint2,
 	canvas_set_dot_int2,
+}
+
+@(private)
+color_fade_to_black :: #force_inline proc "contextless" (cp: ^color) {
+	if transmute(u32)(cp^) > 0 {
+		if cp.r > 0 {cp.r -= 1}
+		if cp.g > 0 {cp.g -= 1}
+		if cp.b > 0 {cp.b -= 1}
+		if cp.a > 0 {cp.a -= 1}
+	}
+}
+
+@(private)
+canvas_fade_to_black :: proc(c: ^canvas) {
+	cc := c.pixel_count
+	bp := c.pvBits
+	for i in 0 ..< cc {
+		color_fade_to_black(&bp[i])
+	}
+}
+
+fade_to_black :: proc {
+	color_fade_to_black,
+	canvas_fade_to_black,
 }

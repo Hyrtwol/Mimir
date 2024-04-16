@@ -1,16 +1,17 @@
+// +build windows
+// +vet
 package canvas
 
 import "core:intrinsics"
 import win32 "core:sys/windows"
 import win32app "libs:tlc/win32app"
 
-default_pels_per_meter: int2 : {3780, 3780}
-
 DIB :: struct {
 	#subtype canvas: canvas,
 	hbitmap: win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
 }
 
+@(private)
 dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
 	dib.hbitmap = win32.CreateDIBSection(hdc, pbmi, win32.DIB_RGB_COLORS, &dib.canvas.pvBits, nil, 0)
 	if dib.hbitmap == nil || dib.canvas.pvBits == nil {
@@ -18,10 +19,12 @@ dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.B
 	}
 }
 
+@(private)
 dib_create_section_bitmap_info_header :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFOHEADER) {
 	dib_create_section_bitmap_info(dib, hdc, cast(^win32.BITMAPINFO)pbmi)
 }
 
+@(private)
 dib_create_section_bitmap_info_header_v5 :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPV5HEADER) {
 	dib_create_section_bitmap_info(dib, hdc, cast(^win32.BITMAPINFO)pbmi)
 }
@@ -40,7 +43,7 @@ dib_free_section :: proc(dib: ^DIB) {
 	canvas_zero(&dib.canvas)
 }
 
-dib_create :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pels_per_meter) -> DIB {
+dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	bmp_header := win32.BITMAPINFOHEADER {
 		biSize          = size_of(win32.BITMAPINFOHEADER),
 		biWidth         = size.x,
@@ -49,8 +52,6 @@ dib_create :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pe
 		biBitCount      = color_bit_count,
 		biCompression   = win32.BI_RGB,
 		biSizeImage     = 0,
-		biXPelsPerMeter = pels_per_meter.x,
-		biYPelsPerMeter = pels_per_meter.y,
 		biClrImportant  = 0,
 		biClrUsed       = 0,
 	}
@@ -61,7 +62,7 @@ dib_create :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pe
 	return dib
 }
 
-dib_create_v5 :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default_pels_per_meter) -> DIB {
+dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	bmp_v5_header := win32.BITMAPV5HEADER {
 		bV5Size          = size_of(win32.BITMAPV5HEADER),
 		bV5Width         = size.x,
@@ -69,8 +70,6 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2, pels_per_meter: int2 = default
 		bV5Planes        = 1,
 		bV5BitCount      = color_bit_count,
 		bV5Compression   = win32.BI_BITFIELDS,
-		bV5XPelsPerMeter = pels_per_meter.x,
-		bV5YPelsPerMeter = pels_per_meter.y,
 		bV5RedMask       = 0x000000FF,
 		bV5GreenMask     = 0x0000FF00,
 		bV5BlueMask      = 0x00FF0000,
@@ -105,8 +104,6 @@ wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ
 	win32.SelectObject(hdc_source, hgdiobj)
 	client_size := win32app.get_rect_size(&ps.rcPaint)
 	ok := win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, size.x, size.y, win32.SRCCOPY)
-
-	//old_obj := win32.SelectObject(hdc_source, old_obj)
 
 	return ok ? 0 : 3
 }

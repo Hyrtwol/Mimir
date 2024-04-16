@@ -24,10 +24,8 @@ settings: win32app.window_settings = {
 }
 
 app_action :: #type proc(app: papp) -> int
-on_idle :: proc(app: papp) -> int {
-	fmt.println("on_idle:", app)
-	return 0
-}
+
+on_idle :: proc(app: papp) -> int {return 0}
 
 application :: struct {
 	pause:                   bool,
@@ -35,9 +33,7 @@ application :: struct {
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
 	tick:                    u32,
-	//title:     wstring,
 	hbitmap:                 win32.HBITMAP,
-	// pvBits:   screen_buffer,
 	create, update, destroy: app_action,
 }
 papp :: ^application
@@ -52,7 +48,9 @@ app: application = {
 stopwatch := win32app.create_stopwatch()
 fps: f64 = 0
 
-set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
+set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
+	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
+}
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 	app := (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
@@ -61,7 +59,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 }
 
 get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	pcs := win32app.get_createstruct_from_lparam(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
 	settings := (win32app.psettings)(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
@@ -72,7 +70,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	settings := get_settings(lparam)
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, pcs, app)
+	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, app)
 	set_app(hwnd, app)
 
 	hdc := win32.GetDC(hwnd)
@@ -83,14 +81,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	cv.dib_clear(&dib, cv.COLOR_BLACK)
 
 	app.create(app)
-
-	/*
-	cc := dib.canvas.pixel_count
-	pp := dib.canvas.pvBits
-	for i in 0..<cc {
-		pp[i] = {u8(rand.int31_max(255, &rng)),u8(rand.int31_max(255, &rng)),u8(rand.int31_max(255, &rng)),0}
-	}
-	*/
 
 	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
 	assert(app.timer_id != 0)
@@ -106,7 +96,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	cv.dib_free_section(&dib)
 	win32app.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message(0)
 	stopwatch->stop()
 	return 0
 }

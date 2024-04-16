@@ -3,6 +3,7 @@
 package win32app
 
 import "core:fmt"
+import "core:path/filepath"
 import win32 "core:sys/windows"
 
 int2 :: [2]i32
@@ -16,16 +17,16 @@ decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2
 	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
 }
 
-show_messagebox :: #force_inline proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
+show_message_box :: #force_inline proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
 	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), type)
 }
 
-show_messageboxf :: #force_inline proc(caption: string, format: string, args: ..any) {
-	show_messagebox(caption, fmt.tprintf(format, ..args))
+show_message_boxf :: #force_inline proc(caption: string, format: string, args: ..any) {
+	show_message_box(caption, fmt.tprintf(format, ..args))
 }
 
 show_error :: #force_inline proc(msg: string, loc := #caller_location) {
-	show_messageboxf("Panic", "%s\nLast error: %x\n%v\n", msg, win32.GetLastError(), loc)
+	show_message_boxf("Panic", "%s\nLast error: %x\n%v\n", msg, win32.GetLastError(), loc)
 }
 
 show_error_and_panic :: proc(msg: string, loc := #caller_location) {
@@ -276,7 +277,7 @@ run :: proc {
 prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
 	module_handle := get_module_handle()
 	if settings.title == "" {
-		settings.title = get_module_filename(module_handle)
+		settings.title = filepath.stem(get_module_filename(module_handle))
 	}
 	inst = win32.HINSTANCE(module_handle)
 	atom = register_window_class(inst, settings.wndproc)
@@ -285,28 +286,19 @@ prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom:
 }
 
 run :: proc(settings: ^window_settings) -> win32.HWND {
-	/*
-	module_handle := get_module_handle()
-	if settings.title == "" {
-		settings.title = get_module_filename(module_handle)
-	}
-	inst := win32.HINSTANCE(module_handle)
-	atom := register_window_class(inst, settings.wndproc)
-	hwnd := create_and_show_window(inst, atom, settings)
-	*/
 	_, _, hwnd := prepare_run(settings)
 	loop_messages()
 	return hwnd
 }
 
 // default no draw background erase
-WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND,  /*A handle to the device context.*/wparam: win32.WPARAM) -> win32.LRESULT {
+WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	return 1
 }
 
 @(private)
 RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL {
-	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW | . RDW_NOCHILDREN)
+	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW | .RDW_NOCHILDREN)
 }
 
 redraw_window :: proc {
@@ -319,11 +311,11 @@ invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
 }
 
 @(private)
-SetWindowText :: #force_inline proc (hwnd: HWND, text: string) -> BOOL {
+SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL {
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }
 
-set_window_textf :: #force_inline proc (hwnd: HWND, format: string, args: ..any) -> BOOL {
+set_window_textf :: #force_inline proc(hwnd: HWND, format: string, args: ..any) -> BOOL {
 	return SetWindowText(hwnd, fmt.tprintf(format, ..args))
 }
 
@@ -343,7 +335,7 @@ kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR, loc := #caller_l
 		if win32.KillTimer(hwnd, timer_id^) {
 			timer_id^ = 0
 		} else {
-			show_messageboxf("Error", "Unable to kill timer %X\n%v", timer_id^, loc)
+			show_message_boxf("Error", "Unable to kill timer %X\n%v", timer_id^, loc)
 		}
 	}
 }
@@ -352,7 +344,7 @@ close_application :: #force_inline proc "contextless" (hwnd: win32.HWND) {
 	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
 }
 
-post_quit_message :: #force_inline proc "contextless" (exit_code: INT = 0) {
+post_quit_message :: #force_inline proc "contextless" (#any_int exit_code: INT = 0) {
 	win32.PostQuitMessage(exit_code)
 }
 
@@ -370,7 +362,7 @@ is_user_interactive :: proc() -> bool {
 	return !is_user_non_interactive
 }
 
-create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WORD, pels_per_meter: int2 = default_pels_per_meter) -> win32.BITMAPINFOHEADER {
+create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WORD) -> win32.BITMAPINFOHEADER {
 	bmp_header := win32.BITMAPINFOHEADER {
 		biSize          = size_of(win32.BITMAPINFOHEADER),
 		biWidth         = size.x,
@@ -378,11 +370,6 @@ create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WOR
 		biPlanes        = 1,
 		biBitCount      = color_bit_count,
 		biCompression   = win32.BI_RGB,
-		biSizeImage     = 0,
-		biXPelsPerMeter = pels_per_meter.x,
-		biYPelsPerMeter = pels_per_meter.y,
-		biClrUsed       = 0,
-		biClrImportant  = 0,
 	}
 	return bmp_header
 }
@@ -414,3 +401,7 @@ delete_object :: proc {
 
 /*key_input :: struct {
 }*/
+
+get_createstruct_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> ^CREATESTRUCTW {
+	return (^CREATESTRUCTW)(rawptr(uintptr(lparam)))
+}

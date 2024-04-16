@@ -127,7 +127,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.kill_timer(hwnd, &app.timer_id)
 	if !win32app.delete_object(&app.hbitmap) {
-		win32app.show_messagebox("Unable to delete hbitmap", "Error")
+		win32app.show_message_box("Unable to delete hbitmap", "Error")
 	}
 	win32.PostQuitMessage(0) // exit code
 	return 0

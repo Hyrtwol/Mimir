@@ -70,7 +70,6 @@ BITMAPINFO :: struct {
 screen_buffer :: [^]u8
 bwidth :: WIDTH / ZOOM
 bheight :: HEIGHT / ZOOM
-pxlcnt :: bwidth * bheight
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
@@ -191,7 +190,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	app := (^Game)(pcs.lpCreateParams)
 	if app == nil {show_error_and_panic("Missing app!")}
-	//fmt.printf("WM_CREATE %v %v\n", hwnd, app)
 	set_app(hwnd, app)
 	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
 	if app.timer_id == 0 {show_error_and_panic("No timer")}
@@ -227,17 +225,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	}
 	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
 
-	/*
-	fmt.printf("app.hbitmap=%v %v\n", app.hbitmap, app.pvBits)
-	pvBits := app.pvBits
-	if pvBits != nil {
-		for i in 0 ..< pxlcnt {
-			pvBits[i] = u8(i % palette_count)
-			//pvBits[i] = u8(rand.int31_max(palette_count, &rng))
-		}
-	}
-	*/
-
 	if app.world != nil {
 		cc := app.world.width * app.world.height
 		for i in 0 ..< cc {app.world.alive[i] = u8(rand.int31_max(2, &rng))}
@@ -250,11 +237,10 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
-	//fmt.printf("WM_DESTROY %v\n", hwnd)
 	if app == nil {show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &app.timer_id)
 	if !win32app.delete_object(&app.hbitmap) {
-		win32app.show_messagebox("Unable to delete hbitmap", "Error")
+		win32app.show_message_box("Unable to delete hbitmap", "Error")
 	}
 	win32app.post_quit_message(0)
 	return 0

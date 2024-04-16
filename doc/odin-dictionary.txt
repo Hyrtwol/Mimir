@@ -59,6 +59,7 @@ real
 rect
 reloc
 rendertarget
+rgba
 sandybridge
 setfocus
 shadowmap

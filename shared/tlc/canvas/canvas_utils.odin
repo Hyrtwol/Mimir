@@ -16,3 +16,7 @@ random_position :: proc  {
 	random_position_int2,
 	random_position_uint2,
 }
+
+random_color :: #force_inline proc (r: ^rand.Rand) -> byte4 {
+	return {u8(rand.int31_max(255, r)), u8(rand.int31_max(255, r)),u8(rand.int31_max(255, r)), 0xFF}
+}
