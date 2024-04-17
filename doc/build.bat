@@ -99,7 +99,7 @@ rem -doc-format
 
 @set OUTF=doc.txt
 @echo Generating %OUTF%
-set doc_opt=-collection:shared=..\\shared
+set doc_opt=-collection:libs=..\\shared
 set doc_opt=%doc_opt% -all-packages
 set doc_opt=%doc_opt% -doc-format
 odin doc . %doc_opt%> %OUTF%

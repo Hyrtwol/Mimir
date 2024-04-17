@@ -1,6 +1,6 @@
 # Odin
 
-odin version dev-2024-03:033a564db
+odin version dev-2024-04:37084a82e
 
 ## Commands
 
@@ -18,6 +18,7 @@ Commands:
 	doc               Generates documentation on a directory of .odin files.
 	version           Prints version.
 	report            Prints information useful to reporting a bug.
+	root              Prints the root path where Odin looks for the builtin collections.
 
 For further details on a command, invoke command help:
 	e.g. `odin build -help` or `odin help build`
@@ -143,11 +144,19 @@ Usage:
 		Does extra checks on the code.
 		Extra checks include:
 			-vet-unused
+			-vet-unused-variables
+			-vet-unused-imports
 			-vet-shadowing
 			-vet-using-stmt
 
 	-vet-unused
 		Checks for unused declarations.
+
+	-vet-unused-variables
+		Checks for unused variable declarations.
+
+	-vet-unused-imports
+		Checks for unused import declarations.
 
 	-vet-shadowing
 		Checks for variable shadowing within procedures.
@@ -177,8 +186,8 @@ Usage:
 
 	-minimum-os-version:<string>
 		Sets the minimum OS version targeted by the application.
-		Example: -minimum-os-version:12.0.0
-		(Only used when target is Darwin.)
+		Default: -minimum-os-version:11.0.0
+		Only used when target is Darwin, if given, linking mismatched versions will emit a warning.
 
 	-extra-linker-flags:<string>
 		Adds extra linker specific flags in a string.
@@ -227,6 +236,9 @@ Usage:
 	-terse-errors
 		Prints a terse error message without showing the code on that line and the location in that line.
 
+	-json-errors
+		Prints the error messages as json to stderr.
+
 	-error-pos-style:<string>
 		Available options:
 			-error-pos-style:unix      file/path:45:3:
@@ -237,6 +249,10 @@ Usage:
 		Sets the maximum number of errors that can be displayed before the compiler terminates.
 		Must be an integer >0.
 		If not set, the default max error count is 36.
+
+	-min-link-libs
+		If set, the number of linked libraries will be minimized to prevent duplications.
+		This is useful for so called "dumb" linkers compared to "smart" linkers.
 
 	-foreign-error-procedures
 		States that the error procedures used in the runtime are defined in a separate translation unit.

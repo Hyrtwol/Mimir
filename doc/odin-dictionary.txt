@@ -44,6 +44,7 @@ metaprogramming
 microarch
 microui
 mipmaps
+newtek
 odinfmt
 ounit
 panicf
@@ -90,4 +91,5 @@ wparam
 wstring
 wtprintf
 wtprintfln
+xatlas
 xterm
