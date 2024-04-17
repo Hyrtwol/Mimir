@@ -160,19 +160,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	cv.dib_free_section(&dib)
 	win32app.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
-	win32.PostQuitMessage(0)
-	return 0
-}
-
-WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	switch wparam {
-		case '\x1b':
-			win32app.close_application(hwnd)
-		case '1':
-			dib_update_func = dib_flames
-		case '2':
-			dib_update_func = dib_flames_2
-	}
+	win32app.post_quit_message(0)
 	return 0
 }
 
@@ -204,24 +192,35 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
+// odinfmt: disable
+
+WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	switch wparam {
+		case '\x1b': win32app.close_application(hwnd)
+		case '1':    dib_update_func = dib_flames
+		case '2':    dib_update_func = dib_flames_2
+	}
+	return 0
+}
+
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
-	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE:       return WM_CREATE(hwnd, lparam)
-	case win32.WM_DESTROY:      return WM_DESTROY(hwnd)
-	case win32.WM_ERASEBKGND:   return 1
-	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:        return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
-	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam)
-	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)
-	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
-	case:                       return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	case win32.WM_CREATE:      return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:     return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:  return 1
+	case win32.WM_SIZE:        return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_PAINT:       return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
+	case win32.WM_CHAR:        return WM_CHAR(hwnd, wparam, lparam)
+	case win32.WM_TIMER:       return WM_TIMER(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:   return handle_input(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN: return handle_input(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN: return handle_input(hwnd, wparam, lparam)
+	case:                      return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
-	// odinfmt: enable
 }
+
+// odinfmt: enable
 
 main :: proc() {
 	calc_col :: proc(n: f64) -> u8 {return u8(n * (256-(1 / 255)))}

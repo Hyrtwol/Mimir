@@ -32,7 +32,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		{win32.PostQuitMessage(0);return 0}
+		{win32app.post_quit_message(0);return 0}
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:

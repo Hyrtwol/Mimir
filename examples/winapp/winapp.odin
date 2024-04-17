@@ -1,3 +1,4 @@
+// +vet
 package main
 
 import          "core:fmt"
@@ -56,14 +57,13 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.printfln("WM_CREATE %v", hwnd)
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	pcs := win32app.get_createstruct_from_lparam(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := (win32app.psettings)(pcs.lpCreateParams)
+	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	app := (papp)(settings.app)
+	app := papp(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	//fmt.printfln("WM_CREATE %v %v %v", hwnd, pcs, app)
-	fmt.printfln("%v", app)
 	win32app.set_settings(hwnd, settings)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
@@ -83,7 +83,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		//cv.fill_screen(pvBits, bitmap_count, {150, 100, 50, 255})
 		cv.fill_screen(pvBits, bitmap_count, {0, 0, 0, 0})
 	} else {
 		bitmap_size = {0, 0}
@@ -105,7 +104,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message(0)
 	return 0
 }
 
@@ -135,6 +134,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	settings := win32app.get_settings(hwnd)
 	if settings == nil {return 1}
 	type := win32app.WM_SIZE_WPARAM(wparam)
+	fmt.println("type:", type)
 	settings.window_size = win32app.decode_lparam(lparam)
 	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, bitmap_size)
 	return 0

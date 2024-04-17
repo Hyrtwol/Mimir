@@ -2,7 +2,7 @@ package test_amstrad
 
 import "core:fmt"
 import "core:os"
-import "core:path/filepath"
+import fp "core:path/filepath"
 //import "core:bytes"
 import am ".."
 import "core:testing"
@@ -28,7 +28,7 @@ size_up :: proc(t: ^testing.T) {
 
 @(test)
 load_disk_image :: proc(t: ^testing.T) {
-	path := filepath.clean("examples/amstrad/data/pinup.dsk", context.temp_allocator)
+	path := fp.clean("examples/amstrad/data/pinup.dsk", context.temp_allocator)
 	fmt.printfln("reading %s", path)
 	fd, err := os.open(path)
 	testing.expect(t, err == 0)
@@ -107,7 +107,7 @@ load_disk_image :: proc(t: ^testing.T) {
 
 @(test)
 load_snapshot :: proc(t: ^testing.T) {
-	path := filepath.clean("examples/amstrad/data/pinup.sna", context.temp_allocator)
+	path := fp.clean("examples/amstrad/data/pinup.sna", context.temp_allocator)
 	fmt.printfln("reading %s", path)
 
 	ss: am.snapshot

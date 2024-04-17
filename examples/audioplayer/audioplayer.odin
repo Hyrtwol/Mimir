@@ -225,7 +225,7 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printf("WM_CREATE %v %v\n", hwnd, (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam))))
+	fmt.printf("WM_CREATE %v %v\n", hwnd, win32app.get_createstruct_from_lparam(lparam))
 
 	client_size := win32app.get_client_size(hwnd)
 
@@ -249,7 +249,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 	//CloseFile()
 
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message(0)
 	return 0
 }
 

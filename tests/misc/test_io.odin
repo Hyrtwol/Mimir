@@ -1,7 +1,7 @@
 package test_misc
 
 import "core:fmt"
-import "core:path/filepath"
+import fp "core:path/filepath"
 import "core:os"
 import "core:strings"
 import "core:slice"
@@ -25,7 +25,7 @@ EXPECTED_FILE_SIZE :: 2893
 
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
-	path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	path := fp.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 	fmt.printf("reading %s\n", path)
 
 	data, ok := os.read_entire_file_from_filename(path)
@@ -40,7 +40,7 @@ read_some_bytes :: proc(t: ^testing.T) {
 
 @(test)
 file_io :: proc(t: ^testing.T) {
-	path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	path := fp.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 
 	fd: os.Handle
 	err: os.Errno
@@ -89,8 +89,8 @@ file_io :: proc(t: ^testing.T) {
 
 @(test)
 lowercase_dictionary :: proc(t: ^testing.T) {
-	path := filepath.join({"..", "doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
-	//path := filepath.join({"doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
+	path := fp.join({"..", "doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
+	//path := fp.join({"doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
 	fmt.printfln("reading %s", path)
 
 	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)

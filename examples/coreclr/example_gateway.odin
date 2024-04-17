@@ -2,7 +2,7 @@ package coreclr_example_gateway
 
 import "core:fmt"
 import "core:os"
-import "core:path/filepath"
+import fp "core:path/filepath"
 import "core:runtime"
 import "core:strings"
 import clr "shared:coreclr"

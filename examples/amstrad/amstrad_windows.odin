@@ -36,7 +36,9 @@ BITMAPINFO :: struct {
 	bmiColors: color_palette,
 }
 
-set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
+set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
+	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
+}
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 	app := (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
@@ -45,11 +47,8 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 }
 
 get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
-	settings := (win32app.psettings)(pcs.lpCreateParams)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
-	return settings
+	pcs := win32app.get_createstruct_from_lparam(lparam)
+	return win32app.psettings(pcs.lpCreateParams) if pcs != nil else nil
 }
 
 fill_screen_with_image :: proc(app: papp) {
@@ -67,12 +66,13 @@ amstrad_ink := cv.AMSTRAD_INK
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	/*
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	pcs := win32app.get_createstruct_from_lparam(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := (win32app.psettings)(pcs.lpCreateParams)
+	settings := get_settings(pcs)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	*/
 	settings := get_settings(lparam)
+	if settings == nil {win32app.show_error_and_panic("Missing settings");return 1}
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 
@@ -129,7 +129,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if !win32app.delete_object(&app.hbitmap) {
 		win32app.show_message_box("Unable to delete hbitmap", "Error")
 	}
-	win32.PostQuitMessage(0) // exit code
+	win32app.post_quit_message(0) // exit code
 	return 0
 }
 

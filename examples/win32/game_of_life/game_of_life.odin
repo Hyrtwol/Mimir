@@ -187,7 +187,7 @@ set_app :: #force_inline proc(hwnd: win32.HWND, app: ^Game) {win32.SetWindowLong
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Game {return (^Game)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	pcs := win32app.get_createstruct_from_lparam(lparam)
 	app := (^Game)(pcs.lpCreateParams)
 	if app == nil {show_error_and_panic("Missing app!")}
 	set_app(hwnd, app)

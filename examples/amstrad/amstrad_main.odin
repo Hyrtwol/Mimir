@@ -2,13 +2,13 @@
 package main
 
 import "core:fmt"
-import "core:path/filepath"
+import fp "core:path/filepath"
 import "core:intrinsics"
 import a "libs:amstrad"
 import win32 "core:sys/windows"
 
-ROM_PATH := filepath.clean("../data/z80/")
-AMSTRAD_PATH := filepath.clean("../examples/amstrad/data/")
+ROM_PATH := fp.clean("../data/z80/")
+AMSTRAD_PATH := fp.clean("../examples/amstrad/data/")
 
 application :: struct {
 	pause:    bool,
@@ -26,14 +26,14 @@ papp :: ^application
 main :: proc() {
 	fmt.print("Amstrad\n")
 
-	snapshot_path := filepath.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
+	snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
 	fmt.printfln("reading %s", snapshot_path)
 	ss: snapshot
 	//ram: bank64kb
 	err := a.load_snapshot(snapshot_path, &ss, memory[:])
 	assert(err == 0)
 
-	rom_path := filepath.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
+	rom_path := fp.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
 	load_rom(rom_path)
 
 	cpu: Z80

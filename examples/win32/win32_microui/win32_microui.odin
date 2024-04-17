@@ -1,16 +1,20 @@
+// +vet
 package main
 
 import "core:fmt"
-import "core:unicode/utf8"
 import "core:runtime"
 import win32 "core:sys/windows"
-import mu "vendor:microui"
 import mud "libs:microui/demo"
-import win32app "libs:tlc/win32app"
 import cv "libs:tlc/canvas"
+import win32app "libs:tlc/win32app"
+import mu "vendor:microui"
 
-DIB     :: cv.DIB
-canvas	:: cv.canvas
+_ :: mud
+
+ZOOM :: 4
+
+DIB :: cv.DIB
+canvas :: cv.canvas
 
 application :: struct {
 	mu_ctx:          mu.Context,
@@ -20,15 +24,13 @@ application :: struct {
 	bg:              mu.Color,
 	atlas_texture:   cv.DIB,
 }
-
-state : application = {
-	bg = {90, 95, 100, 255},
-}
 papp :: ^application
 
-ZOOM :: 4
+state: application = {
+	bg = {90, 95, 100, 255},
+}
 
-screen_buffer  :: cv.screen_buffer
+screen_buffer :: cv.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
@@ -44,9 +46,9 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^applic
 convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {return (transmute(win32.COLORREF)mu_color) & 0xFFFFFF}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	pcs := win32app.get_createstruct_from_lparam(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := (win32app.psettings)(pcs.lpCreateParams)
+	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	win32app.set_settings(hwnd, settings)
 
@@ -64,19 +66,14 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		color_byte_count :: 4
 		color_bit_count :: color_byte_count * 8
 		bmi_header := win32app.create_bmi_header(bitmap_size, true, color_bit_count)
-		//fmt.printfln("bmi_header %v", bmi_header)
 		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
 	}
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
-		//cv.fill_screen(pvBits, bitmap_count, {100, 150, 50, 255})
-
-		//pixels = make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
 		for alpha, i in mu.default_atlas_alpha {
 			pvBits[i] = {alpha, alpha, alpha, alpha}
 		}
-
 	} else {
 		bitmap_size = {0, 0}
 		bitmap_count = 0
@@ -94,7 +91,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message(0)
 	return 0
 }
 
@@ -112,7 +109,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	defer win32.DeleteDC(hdc_source)
 
 	if bitmap_handle != nil {
-		client_size := win32app.get_rect_size(&ps.rcPaint)
+		//client_size := win32app.get_rect_size(&ps.rcPaint)
 
 		dc_brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
 
@@ -265,10 +262,10 @@ main :: proc() {
 }
 
 ftn := win32.BLENDFUNCTION {
-	BlendOp = win32.AC_SRC_OVER,
-	BlendFlags = 0,
+	BlendOp             = win32.AC_SRC_OVER,
+	BlendFlags          = 0,
 	SourceConstantAlpha = 255,
-	AlphaFormat= win32.AC_SRC_ALPHA,
+	AlphaFormat         = win32.AC_SRC_ALPHA,
 }
 
 render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) {
@@ -326,17 +323,16 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 
 		case ^mu.Command_Rect:
 			//rl.DrawRectangle(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h, transmute(rl.Color)cmd.color)
-
-            oldobj := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush))
-			ocol := win32.SetDCBrushColor(hdc, convert_mu_color(cmd.color))
-
+			old_brush := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush))
+			old_color := win32.SetDCBrushColor(hdc, convert_mu_color(cmd.color))
 			//old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(hPen));
-			old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(uintptr(win32.PS_NULL)));
+			old_pen := win32.SelectObject(hdc, win32app.HGDIOBJ_PS_NULL)
 			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
-			//win32.FillRect(hdc, &ps.rcPaint, win32.HBRUSH(brush))
-			win32.SetDCBrushColor(hdc, ocol)
-			win32.SelectObject(hdc, old_pen);
-			win32.SelectObject(hdc, oldobj);
+			//win32.FillRect(hdc, &cmd.rect, win32.HBRUSH(dc_brush))
+			win32.SetDCBrushColor(hdc, old_color)
+			win32.SelectObject(hdc, old_pen)
+			win32.SelectObject(hdc, old_brush)
+
 		case ^mu.Command_Icon:
 			rect := mu.default_atlas[cmd.id]
 			x := cmd.rect.x + (cmd.rect.w - rect.w) / 2
@@ -350,6 +346,7 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 			// https://learn.microsoft.com/en-us/windows/win32/gdi/clipping-output
 			// To remove a device-context's clipping region, specify a NULL region handle.
 			//fmt.printfln("clip: %v", cmd.rect)
+
 		case ^mu.Command_Jump:
 			unreachable()
 		}

@@ -61,7 +61,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
 	pcs := win32app.get_createstruct_from_lparam(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
-	settings := (win32app.psettings)(pcs.lpCreateParams)
+	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
 	return settings
 }

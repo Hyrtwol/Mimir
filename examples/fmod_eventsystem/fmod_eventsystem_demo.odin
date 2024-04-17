@@ -143,7 +143,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-	win32.PostQuitMessage(0)
+	win32app.post_quit_message(0)
 	return 0
 }
 

@@ -45,7 +45,7 @@ dude :: struct {
 }
 dudes: [dude_count]dude
 
-// U {0,1} L {1,0} D {0,-1} R {-1,0}
+// U {0,1} R {1,0} D {0,-1} L {-1,0}
 dude_moves: [5]i32 = {0, 1, 0, -1, 0}
 
 get_dude_move :: #force_inline proc "contextless" (dir: i32) -> int2 {

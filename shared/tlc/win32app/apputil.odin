@@ -3,7 +3,7 @@
 package win32app
 
 import "core:fmt"
-import "core:path/filepath"
+import fp "core:path/filepath"
 import win32 "core:sys/windows"
 
 int2 :: [2]i32
@@ -32,6 +32,10 @@ show_error :: #force_inline proc(msg: string, loc := #caller_location) {
 show_error_and_panic :: proc(msg: string, loc := #caller_location) {
 	show_error(msg, loc = loc)
 	fmt.panicf("%s (Last error: %x)", msg, win32.GetLastError(), loc = loc)
+}
+
+show_error_and_panicf :: proc(format: string, args: ..any, loc := #caller_location) {
+	show_error_and_panic(fmt.tprintf(format, ..args), loc = loc)
 }
 
 show_last_error :: proc(caption: string, loc := #caller_location) {
@@ -277,7 +281,7 @@ run :: proc {
 prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
 	module_handle := get_module_handle()
 	if settings.title == "" {
-		settings.title = filepath.stem(get_module_filename(module_handle))
+		settings.title = fp.stem(get_module_filename(module_handle))
 	}
 	inst = win32.HINSTANCE(module_handle)
 	atom = register_window_class(inst, settings.wndproc)
@@ -404,4 +408,8 @@ delete_object :: proc {
 
 get_createstruct_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> ^CREATESTRUCTW {
 	return (^CREATESTRUCTW)(rawptr(uintptr(lparam)))
+}
+
+get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> psettings {
+	return psettings(pcs.lpCreateParams)
 }
