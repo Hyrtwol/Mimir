@@ -6,14 +6,16 @@ import fp "core:path/filepath"
 import "core:intrinsics"
 import a "libs:amstrad"
 import win32 "core:sys/windows"
+import win32app "libs:tlc/win32app"
 
 ROM_PATH := fp.clean("../data/z80/")
 AMSTRAD_PATH := fp.clean("../examples/amstrad/data/")
 
 application :: struct {
+	#subtype settings: win32app.window_settings,
 	pause:    bool,
 	//colors:    []color,
-	size:     int2,
+	//screen_size:     int2,
 	timer_id: win32.UINT_PTR,
 	tick:     u32,
 	//title:     wstring,
@@ -39,7 +41,7 @@ main :: proc() {
 	cpu: Z80
 	init_cpu(&cpu)
 	app: application = {
-		size = {WIDTH, HEIGHT * HEIGHT_SCALE},
+		//screen_size = {WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE},
 		cpu = &cpu,
 	}
 	cpu.context_ = &app
@@ -52,6 +54,7 @@ main :: proc() {
 
 	running = true
 	run_app(&app)
+	fmt.printfln("app %#v", app)
 
 	fmt.printf("total %v (%v)\n", total, reps)
 	//print_info()

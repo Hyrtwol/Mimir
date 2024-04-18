@@ -5,7 +5,7 @@ import "core:os"
 import "core:bytes"
 import "core:testing"
 import "core:unicode/utf16"
-import "libs:ascii"
+import ascii "shared:xterm"
 import "shared:ounit"
 
 @(test)

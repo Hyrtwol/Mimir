@@ -16,11 +16,9 @@ rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
 on_update :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
-	pos : cv.int2
-	col : cv.byte4
 	for _ in 0..<1000 {
-		pos = {rand.int31_max(i32(pc.size.x), &rng), rand.int31_max(i32(pc.size.y), &rng)}
-		col = {u8(rand.int31_max(255, &rng)), u8(rand.int31_max(255, &rng)), u8(rand.int31_max(255, &rng)), 0}
+		pos := cv.random_position(pc.size, &rng)
+		col := cv.random_color(&rng)
 		cv.canvas_set_dot(pc, pos, col)
 	}
 

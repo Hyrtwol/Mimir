@@ -290,3 +290,29 @@ Usage:
 			-subsystem:windows
 
 ```
+
+## Doc
+
+```txt
+odin is a tool for managing Odin source code.
+Usage:
+	odin doc [arguments]
+
+	doc     Generates documentation from a directory of .odin files.
+		Examples:
+			odin doc .                     Generates documentation on package in current directory.
+			odin doc <dir>                 Generates documentation on package in <dir>.
+			odin doc filename.odin -file   Generates documentation on single-file package.
+
+	Flags
+
+	-short
+		Shows shortened documentation for the packages.
+
+	-all-packages
+		Generates documentation for all packages used in the current project.
+
+	-doc-format
+		Generates documentation as the .odin-doc format (useful for external tooling).
+
+```

@@ -78,7 +78,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	dib = cv.dib_create_v5(hdc, app.size)
 	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
-	cv.dib_clear(&dib, cv.COLOR_BLACK)
+	cv.canvas_clear(&dib, cv.COLOR_BLACK)
 
 	app.create(app)
 

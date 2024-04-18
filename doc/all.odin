@@ -21,4 +21,5 @@ import win32app        "libs:tlc/win32app"
 
 main :: proc(){}
 
+_ :: coreclr
 _ :: csharp

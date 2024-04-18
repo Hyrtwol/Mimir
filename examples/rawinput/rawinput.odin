@@ -1,18 +1,10 @@
+// +vet
 package main
 
 import "core:fmt"
 import "core:intrinsics"
-import "core:math"
-import "core:math/linalg"
-import hlm "core:math/linalg/hlsl"
-import "core:math/noise"
-import "core:math/rand"
-import "core:mem"
 import "core:runtime"
-import "core:simd"
-import "core:strings"
 import win32 "core:sys/windows"
-import "core:time"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
@@ -57,7 +49,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	dib = cv.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
-		cv.dib_clear(&dib, {50, 100, 150, 255})
+		cv.canvas_clear(&dib, {50, 100, 150, 255})
 	}
 
 	return 0
@@ -79,7 +71,8 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	hdc := win32.BeginPaint(hwnd, &ps)
+	if hdc == nil {return 1}
 	defer win32.EndPaint(hwnd, &ps)
 
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
@@ -90,8 +83,9 @@ WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	dib_size := transmute(cv.int2)dib.canvas.size
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib_size.x, dib_size.y, win32.SRCCOPY)
 
-	win32.DrawIcon(ps.hdc, mouse_pos.x, mouse_pos.y, icon)
-
+	if icon != nil {
+		win32.DrawIcon(ps.hdc, mouse_pos.x, mouse_pos.y, icon)
+	}
 	return 0
 }
 
@@ -106,6 +100,20 @@ WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 	} else {
 
 	}
+	return 0
+}
+
+focused := false
+
+WM_SETFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	focused = true
+	fmt.printfln("WM_SETFOCUS %v %v %v", hwnd, wparam, focused)
+	return 0
+}
+
+WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	focused = false
+	fmt.printfln("WM_KILLFOCUS %v %v %v", hwnd, wparam, focused)
 	return 0
 }
 
@@ -169,6 +177,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
 	case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
 	//case win32.WM_ACTIVATE: return WM_ACTIVATE(hwnd, wparam, lparam)
+	case win32.WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
+	case win32.WM_KILLFOCUS:	return WM_KILLFOCUS(hwnd, wparam)
 	case win32.WM_INPUT:		return WM_INPUT(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}

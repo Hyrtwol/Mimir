@@ -82,14 +82,6 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	return dib
 }
 
-dib_clear :: proc(dib: ^DIB, col: byte4) {
-	canvas_clear(&dib.canvas, col)
-}
-
-dib_set_dot :: proc(dib: ^DIB, pos: int2, col: byte4) {
-	canvas_set_dot(&dib.canvas, pos, col)
-}
-
 @(private)
 wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT

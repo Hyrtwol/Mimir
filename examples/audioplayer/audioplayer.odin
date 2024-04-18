@@ -1,10 +1,11 @@
+// +vet
 package audioplayer
 
 import "core:fmt"
 import "core:intrinsics"
+import "core:math"
 import "core:math/rand"
 import "core:runtime"
-import "core:math"
 //import "core:math/noise"
 //import "core:mem"
 //import "core:simd"
@@ -19,7 +20,7 @@ import win32app "libs:tlc/win32app"
 // https://www.codeproject.com/articles/6543/playing-wav-files-using-the-windows-multi-media-li
 // https://www.markheath.net/post/waveoutopen-callbacks-in-naudio
 
-// defines
+// aliases
 L				:: intrinsics.constant_utf16_cstring
 wstring			:: win32.wstring
 utf8_to_wstring	:: win32.utf8_to_wstring
@@ -93,6 +94,10 @@ rng := rand.create(1)
 
 DoBuffer := DoBuffer3
 
+set_dot :: #force_inline proc "contextless" (pos: win32app.int2, col: cv.byte4) {
+	cv.canvas_set_dot(&dib, pos, col)
+}
+
 DoBuffer1 :: proc(header: ^win32.WAVEHDR) {
 	data := ([^]sample)(header.lpData)
 	cnt := BufferLength / CHANNELS
@@ -109,8 +114,8 @@ DoBuffer2 :: proc(header: ^win32.WAVEHDR) {
 	}
 }
 
-time : f64 = 0
-freq : f64 = 2000
+time: f64 = 0
+freq: f64 = 2000
 
 scale := SAMPLES_PER_SEC
 
@@ -164,7 +169,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 		header.dwBufferLength = win32.DWORD(BufferLength)
 		header.dwFlags = win32.WHDR_DONE
 
-		hr := win32.waveOutPrepareHeader(waveout, header, size_of(win32.WAVEHDR))
+		hr = win32.waveOutPrepareHeader(waveout, header, size_of(win32.WAVEHDR))
 		if hr != 0 {
 			win32app.show_last_errorf("header[%d]=%v\n", i, header)
 			return
@@ -220,10 +225,6 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	return scrpos
 }
 
-set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
-	cv.canvas_set_dot(&dib.canvas, pos, col)
-}
-
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.printf("WM_CREATE %v %v\n", hwnd, win32app.get_createstruct_from_lparam(lparam))
 
@@ -234,7 +235,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	dib = cv.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
-		cv.dib_clear(&dib, {50, 100, 150, 255})
+		cv.canvas_clear(&dib, {50, 100, 150, 255})
 	}
 
 	OpenFile(hwnd)
@@ -244,17 +245,15 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.printfln("WM_DESTROY %v", hwnd)
-
 	cv.dib_free_section(&dib)
-
 	//CloseFile()
-
 	win32app.post_quit_message(0)
 	return 0
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	// odinfmt: disable
 	switch wparam {
 	case '\x1b': CloseFile()
 	case '\t':	 fmt.print("tab\n")
@@ -264,6 +263,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '3':	 cols = cv.C64_COLORS
 	case '4':	 cols = cv.W95_COLORS
 	}
+	// odinfmt: enable
 	return 0
 }
 
@@ -322,14 +322,18 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
+get_waveout :: #force_inline proc "contextless" (wparam: win32.WPARAM) -> win32.HWAVEOUT {
+	return win32.HWAVEOUT(uintptr(wparam))
+}
+
 MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	wo:= win32.HWAVEOUT(uintptr(wparam))
+	wo := get_waveout(wparam)
 	fmt.printf("MM_WOM_OPEN waveout=%v\n", wo)
 	return 0
 }
 
 MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	wo: = win32.HWAVEOUT(uintptr(wparam))
+	wo := get_waveout(wparam)
 	fmt.printf("MM_WOM_CLOSE waveout=%v\n", wo)
 	win32app.close_application(hwnd)
 	return 0
@@ -338,7 +342,7 @@ MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 n_done := 0
 
 MM_WOM_DONE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	wo:= win32.HWAVEOUT(uintptr(wparam))
+	//wo := get_waveout(wparam)
 	//fmt.printf("MM_WOM_DONE waveout=%v\n", wo)
 	WriteBuffer()
 	n_done += 1
@@ -360,28 +364,27 @@ PrepareNext :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM
 	return 0
 }
 
-
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
-	//case win32.WM_CLOSE:		return WM_CLOSE(hwnd, wparam, lparam)
-	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	//case win32.WM_PAINT:		return WM_PAINT(hwnd)
-	case win32.WM_PAINT:        return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
-	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
-	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:	return WM_RBUTTONDOWN(hwnd, wparam, lparam)
-	case win32.MM_WOM_OPEN:	    return MM_WOM_OPEN(hwnd, wparam, lparam)
-	case win32.MM_WOM_CLOSE:	return MM_WOM_CLOSE(hwnd, wparam, lparam)
-	case win32.MM_WOM_DONE:	    return MM_WOM_DONE(hwnd, wparam, lparam)
-	case WM_STOP_PLAY:	        return StopPlay(hwnd, wparam, lparam)
+	case win32.WM_CREATE:        return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:       return WM_DESTROY(hwnd)
+	//case win32.WM_CLOSE:       return WM_CLOSE(hwnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:    return 1
+	case win32.WM_SIZE:          return WM_SIZE(hwnd, wparam, lparam)
+	//case win32.WM_PAINT:       return WM_PAINT(hwnd)
+	case win32.WM_PAINT:         return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
+	case win32.WM_CHAR:          return WM_CHAR(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:     return WM_MOUSEMOVE(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN:   return WM_LBUTTONDOWN(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN:   return WM_RBUTTONDOWN(hwnd, wparam, lparam)
+	case win32.MM_WOM_OPEN:      return MM_WOM_OPEN(hwnd, wparam, lparam)
+	case win32.MM_WOM_CLOSE:     return MM_WOM_CLOSE(hwnd, wparam, lparam)
+	case win32.MM_WOM_DONE:      return MM_WOM_DONE(hwnd, wparam, lparam)
+	case WM_STOP_PLAY:           return StopPlay(hwnd, wparam, lparam)
 	case WM_PREPARE_NEXT_BUFFER: return PrepareNext(hwnd, wparam, lparam)
-	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	case:                        return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable
 }

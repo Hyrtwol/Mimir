@@ -84,6 +84,7 @@ ushort
 viewports
 waprintf
 waprintfln
+wasmtime
 wndclassexw
 wndproc
 wolfenstein

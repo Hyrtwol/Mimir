@@ -14,7 +14,7 @@ _ :: tga
 
 dot_alpha: bool = false
 
-load_image :: proc(image_path: string) {
+print_image :: proc(image_path: string) {
 	path := fp.clean(image_path)
 	img, err := image.load_from_file(path)
 	if err != nil || img == nil {
@@ -43,7 +43,7 @@ main :: proc() {
 		if err == nil {
 			for path in matches {
 				fmt.println(path)
-				load_image(path)
+				print_image(path)
 			}
 		}
 	}

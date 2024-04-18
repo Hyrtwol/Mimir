@@ -411,5 +411,15 @@ get_createstruct_from_lparam :: #force_inline proc "contextless" (lparam: win32.
 }
 
 get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> psettings {
-	return psettings(pcs.lpCreateParams)
+	return psettings(pcs.lpCreateParams) if pcs != nil else nil
 }
+
+get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psettings {
+	pcs := get_createstruct_from_lparam(lparam)
+	return get_settings_from_createstruct(pcs)
+}
+
+// application :: struct {
+// 	pause:                   bool,
+// 	size:                    int2,
+// }

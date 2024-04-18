@@ -95,7 +95,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	defer win32.ReleaseDC(hwnd, hdc)
 	dib = cv.dib_create_v5(hdc, win32app.get_client_size(hwnd) / ZOOM)
 	if dib.canvas.pvBits != nil {
-		cv.dib_clear(&dib, {50, 150, 100, 255})
+		cv.canvas_clear(&dib, {50, 150, 100, 255})
 	} else {
 		win32app.show_error_and_panic("No DIB")
 	}
@@ -143,15 +143,18 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	// odinfmt: disable
 	switch wparam {
 	case '\x1b':	win32app.close_application(hwnd) // win32.DestroyWindow(hwnd)
 	case '1':	    noise_func = dib_noise1
 	case '2':	    noise_func = dib_noise2
 	}
+	// odinfmt: enable
 	return 0
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	// odinfmt: disable
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:     return WM_CREATE(hwnd, lparam)
@@ -163,6 +166,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CHAR:       return WM_CHAR(hwnd, wparam, lparam)
 	case:                     return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
 
 main :: proc() {

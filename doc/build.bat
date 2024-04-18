@@ -3,6 +3,9 @@
 rem Title Visual Studio 2022 Command Prompt - %~n1
 rem if "%VSCMD_ARG_TGT_ARCH%"=="" call "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
 if "%VSCMD_ARG_TGT_ARCH%"=="" call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+pushd %~dp0
+
 rem cd /d %1
 @prompt "$P"$_$G
 
@@ -30,6 +33,13 @@ rem Odin
 @echo.>> %OUTF%
 @echo ```txt>> %OUTF%
 @odin help build>> %OUTF%
+@echo ```>> %OUTF%
+@echo.>> %OUTF%
+
+@echo ## Doc>> %OUTF%
+@echo.>> %OUTF%
+@echo ```txt>> %OUTF%
+@odin help doc>> %OUTF%
 @echo ```>> %OUTF%
 
 rem C/C++ Compiler
@@ -100,8 +110,9 @@ rem -doc-format
 @set OUTF=doc.txt
 @echo Generating %OUTF%
 set doc_opt=-collection:libs=..\\shared
-set doc_opt=%doc_opt% -all-packages
-set doc_opt=%doc_opt% -doc-format
+rem set doc_opt=%doc_opt% -all-packages
+rem set doc_opt=%doc_opt% -doc-format
 odin doc . %doc_opt%> %OUTF%
 
+popd
 @echo Done.

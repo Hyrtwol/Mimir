@@ -187,9 +187,14 @@ b :: struct  {
 	bb : int,
 }
 
+do_a :: proc(v: ^a) {
+	fmt.println(v)
+}
+
 @(test)
 subtypes :: proc(t: ^_t.T) {
 	sut := b{bb = 2, a = { aa = 3}}
 	_u.expect_value_int(t, sut.bb, 2)
 	_u.expect_value_int(t, a(sut).aa, 3)
+	do_a(&sut)
 }

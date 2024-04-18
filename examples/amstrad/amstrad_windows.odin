@@ -12,19 +12,22 @@ import win32app "libs:tlc/win32app"
 import z "shared:z80"
 
 // aliases
-L				:: intrinsics.constant_utf16_cstring
-wstring			:: win32.wstring
-utf8_to_wstring	:: win32.utf8_to_wstring
-UINT_PTR        :: win32.UINT_PTR
+L :: intrinsics.constant_utf16_cstring
+wstring :: win32.wstring
+utf8_to_wstring :: win32.utf8_to_wstring
+UINT_PTR :: win32.UINT_PTR
 
+// constants
 IDT_TIMER1: win32.UINT_PTR : 10001
 
 TITLE :: "Amstrad"
 WIDTH :: 768
 HEIGHT :: 272
-HEIGHT_SCALE :: 2
+SCREEN_HEIGHT_SCALE :: 2
+SCREEN_SIZE :: screen_sizes_overscan[2]
 FPS :: 10
 
+// globals
 SOX, SOY: i32 = (WIDTH - SCREEN_WIDTH) / 2, (HEIGHT - SCREEN_HEIGHT)
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
@@ -46,11 +49,6 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 	return app
 }
 
-get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
-	pcs := win32app.get_createstruct_from_lparam(lparam)
-	return win32app.psettings(pcs.lpCreateParams) if pcs != nil else nil
-}
-
 fill_screen_with_image :: proc(app: papp) {
 	pvBits := app.pvBits
 	if pvBits != nil {
@@ -65,13 +63,7 @@ amstrad_colors := cv.AMSTRAD_COLORS
 amstrad_ink := cv.AMSTRAD_INK
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	/*
-	pcs := win32app.get_createstruct_from_lparam(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := get_settings(pcs)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	*/
-	settings := get_settings(lparam)
+	settings := win32app.get_settings_from_lparam(lparam)
 	if settings == nil {win32app.show_error_and_panic("Missing settings");return 1}
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
@@ -126,9 +118,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	//fmt.printf("WM_DESTROY %v\n%v\n", hwnd, app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.kill_timer(hwnd, &app.timer_id)
-	if !win32app.delete_object(&app.hbitmap) {
-		win32app.show_message_box("Unable to delete hbitmap", "Error")
-	}
+	if !win32app.delete_object(&app.hbitmap) {win32app.show_message_box("Unable to delete hbitmap", "Error")}
 	win32app.post_quit_message(0) // exit code
 	return 0
 }
@@ -207,8 +197,6 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
-// odinfmt: disable
-
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	/*
 	switch wparam {
@@ -216,14 +204,14 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	//case '\t':	put_chars ~= true
 	case: {
 		app := get_app(hwnd)
-		if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+		if app == nil {return 1}
 		//ch := u8(wparam);fmt.printfln("WM_CHAR %x %d %v", wparam, ch, rune(ch))
 		put_char(app.pvBits, u8(wparam))
 	}
 	}
 	*/
 	app := get_app(hwnd)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {return 1}
 	put_char(app.pvBits, u8(wparam))
 	return 0
 }
@@ -232,44 +220,45 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	vkCode := win32.LOWORD(wparam) // virtual-key code
 	keyFlags := win32.HIWORD(lparam)
 	scanCode := win32.WORD(win32.LOBYTE(keyFlags)) // scan code
-    isExtendedKey := (keyFlags & win32.KF_EXTENDED) == win32.KF_EXTENDED; // extended-key flag, 1 if scancode has 0xE0 prefix
+	isExtendedKey := (keyFlags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
 	if isExtendedKey {scanCode = win32.MAKEWORD(scanCode, 0xE0)}
-    wasKeyDown := (keyFlags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
-    repeatCount := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
-    isKeyReleased := (keyFlags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
+	wasKeyDown := (keyFlags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
+	repeatCount := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
+	isKeyReleased := (keyFlags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
 	switch (vkCode)
-    {
-    case win32.VK_SHIFT:   // converts to VK_LSHIFT or VK_RSHIFT
-    case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
-    case win32.VK_MENU:    // converts to VK_LMENU or VK_RMENU
-        vkCode = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scanCode), win32.MAPVK_VSC_TO_VK_EX));
-        break;
-    }
+	{
+	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
+	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
+	case win32.VK_MENU:
+		// converts to VK_LMENU or VK_RMENU
+		vkCode = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scanCode), win32.MAPVK_VSC_TO_VK_EX))
+		break
+	}
 
 	switch vkCode {
-		case win32.VK_ESCAPE: if isKeyReleased {win32app.close_application(hwnd)}
-		case win32.VK_F1: if isKeyReleased {put_chars ~= true}
-		case win32.VK_F2: {
-			app := get_app(hwnd)
-			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-			fill_screen_with_image(app)
-		}
-		case win32.VK_F3: {
-			app := get_app(hwnd)
-			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-			z.z80_instant_reset(app.cpu)
-			fmt.printfln("pc=%d", app.cpu.pc)
-		}
-		case win32.VK_F4: {
-			app := get_app(hwnd)
-			if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-			z.z80_power(app.cpu, true)
-			fmt.printfln("pc=%d", app.cpu.pc)
-		}
-		case win32.VK_F9: print_info()
-		//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vkCode, keyFlags, scanCode, isExtendedKey, wasKeyDown, isKeyReleased)
-		}
+	case win32.VK_ESCAPE:
+		if isKeyReleased {win32app.close_application(hwnd)}
+	case win32.VK_F1:
+		if isKeyReleased {put_chars ~= true}
+	case win32.VK_F2:
+		app := get_app(hwnd)
+		if app == nil {return 1}
+		fill_screen_with_image(app)
+	case win32.VK_F3:
+		app := get_app(hwnd)
+		if app == nil {return 1}
+		z.z80_instant_reset(app.cpu)
+		fmt.printfln("pc=%d", app.cpu.pc)
+	case win32.VK_F4:
+		app := get_app(hwnd)
+		if app == nil {return 1}
+		z.z80_power(app.cpu, true)
+		fmt.printfln("pc=%d", app.cpu.pc)
+	case win32.VK_F9:
+		print_info()
+	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vkCode, keyFlags, scanCode, isExtendedKey, wasKeyDown, isKeyReleased)
+	}
 	return 0
 }
 
@@ -280,6 +269,7 @@ handle_sys_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	// odinfmt: disable
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
@@ -297,6 +287,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
 
 // odinfmt: enable
@@ -306,8 +297,10 @@ reps := 0
 
 run_app :: proc(app: papp) {
 
-	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT * HEIGHT_SCALE, wndproc)
+	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE, wndproc)
 	settings.app = app
+
+	app.settings = settings
 
 	inst := win32app.get_instance()
 	atom := win32app.register_window_class(inst, settings.wndproc)

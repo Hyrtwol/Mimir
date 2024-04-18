@@ -8,7 +8,6 @@ import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas/app"
 
 int2 :: cv.int2
-uint2 :: cv.uint2
 byte4 :: cv.byte4
 
 WIDTH: i32 : 320
@@ -17,8 +16,6 @@ ZOOM :: 4
 FPS :: 20
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
-point_count :: 50000
 
 dude_count :: 4 * 100
 dude :: struct {
