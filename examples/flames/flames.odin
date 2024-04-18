@@ -23,7 +23,7 @@ TITLE :: "Flames"
 WIDTH: i32 : 160
 HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
-ZOOM :: 4
+ZOOM :: 8
 FPS :: 20
 
 settings := win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
@@ -148,7 +148,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	dib = cv.dib_create_v5(hdc, {WIDTH, HEIGHT})
 	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
-	cv.dib_clear(&dib, {0, 0, 0, 255})
+	cv.canvas_clear(&dib, {0, 0, 0, 255})
 
 	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
 	assert(timer_id != 0)

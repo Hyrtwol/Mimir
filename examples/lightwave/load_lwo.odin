@@ -1,7 +1,7 @@
 package main
 
 import "core:fmt"
-import lw "libs:lightwave"
+import lw "shared:newtek_lightwave"
 
 box :: "../data/models/box.lwo"
 multi_layer :: "../models/multi_layer.lwo"

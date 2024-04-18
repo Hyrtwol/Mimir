@@ -7,7 +7,7 @@ import "core:runtime"
 import "core:strings"
 import clr "shared:coreclr"
 
-CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2"
+CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.4"
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
 	if hr != .ok {fmt.printf("Error %v (0x%X8) @ %v\n", hr, u32(hr), loc)}
