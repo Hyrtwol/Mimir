@@ -1,0 +1,10 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Import Project="$(ODIN_ROOT)\shared\msbuild\Odin.MSBuild\bin\Debug\netstandard2.0\Odin.MSBuild.targets"/>
+
+	<Target Name="Build">
+		<Message Text="Build" Importance="High" />
+		<Odin Command="run" InputFile="examples\hello" ExeOutputPath="bin\hello.exe" />
+	</Target>
+
+</Project>

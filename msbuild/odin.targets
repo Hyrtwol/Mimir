@@ -31,7 +31,7 @@
 
 	<Target Name="_OdinBuild">
 		<Error Condition="'$(OdinProject)'==''" Text="OdinProject is missing" />
-		<CreateItem Include="-collection:%(Collection.Filename)=%(Collection.FullPath)">
+		<CreateItem Include="-collection:%(Collection.Alias)=%(Collection.FullPath)">
 			<Output TaskParameter="Include" ItemName="_Collection" />
 		</CreateItem>
 		<PropertyGroup>
@@ -47,7 +47,7 @@
 
 	<Target Name="_OdinTest">
 		<Error Condition="'$(OdinProject)'==''" Text="OdinProject is missing" />
-		<CreateItem Include="-collection:%(Collection.Filename)=%(Collection.FullPath)">
+		<CreateItem Include="-collection:%(Collection.Alias)=%(Collection.FullPath)">
 			<Output TaskParameter="Include" ItemName="_Collection" />
 		</CreateItem>
 		<PropertyGroup>

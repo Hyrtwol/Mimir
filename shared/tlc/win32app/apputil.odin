@@ -368,12 +368,12 @@ is_user_interactive :: proc() -> bool {
 
 create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WORD) -> win32.BITMAPINFOHEADER {
 	bmp_header := win32.BITMAPINFOHEADER {
-		biSize          = size_of(win32.BITMAPINFOHEADER),
-		biWidth         = size.x,
-		biHeight        = -size.y if top_down else size.y,
-		biPlanes        = 1,
-		biBitCount      = color_bit_count,
-		biCompression   = win32.BI_RGB,
+		biSize        = size_of(win32.BITMAPINFOHEADER),
+		biWidth       = size.x,
+		biHeight      = -size.y if top_down else size.y,
+		biPlanes      = 1,
+		biBitCount    = color_bit_count,
+		biCompression = win32.BI_RGB,
 	}
 	return bmp_header
 }

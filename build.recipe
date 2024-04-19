@@ -24,6 +24,9 @@
 			<Flavour>Odin</Flavour>
 			<OutputType>Exe</OutputType>
 		</Project>
+		<Project Include="examples\dla">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\flames">
 			<Flavour>Odin</Flavour>
 			<OutputType>WinExe</OutputType>
@@ -49,21 +52,58 @@
 		<Project Include="examples\hello_winapp">
 			<Flavour>Odin</Flavour>
 		</Project>
+		<Project Include="examples\lerp">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\lightwave">
 			<Flavour>Odin</Flavour>
 		</Project>
-
+		<Project Include="examples\microui">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\minimal_d3d11_pt1">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\minimal_d3d11_pt2">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\minimal_d3d11_pt3">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\movers">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\newton_dynamics">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\noise">
 			<Flavour>Odin</Flavour>
 		</Project>
+		<Project Include="examples\plugins">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\rawinput">
 			<Flavour>Odin</Flavour>
 		</Project>
-
+		<Project Include="examples\raycaster">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\raylib">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\win32\game_of_life">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\win32\monochrome">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\win32\win32_microui">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\winapp">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\xterm">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\z80emulator">
@@ -82,7 +122,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Collection Include="shared" />
+		<Collection Include="shared">
+			<Alias>libs</Alias>
+		</Collection>
 	</ItemGroup>
 
 	<Import Project="msbuild\odin.targets"/>

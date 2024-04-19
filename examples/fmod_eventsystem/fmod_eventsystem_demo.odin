@@ -181,7 +181,7 @@ fft_window :: fmod.FMOD_DSP_FFT_WINDOW.FMOD_DSP_FFT_WINDOW_TRIANGLE
 lin2dB :: proc(linear: f32) -> f32 {return math.clamp(math.log10(linear) * 20.0, -80.0, 0.0)}
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	switch (wparam)
+	switch win32.UINT_PTR(wparam)
 	{
 	case win32app.IDT_TIMER1:
 		{

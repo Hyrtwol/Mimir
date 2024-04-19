@@ -14,13 +14,15 @@ main :: proc() {
 	println()
 	print_vertical_border(size, "Hello")
 	println()
+	print_vertical_border(size, "Hello")
+	println()
 	print_horizontal_border(size, false)
 	println()
 
 	set_cursor_position({2, 2})
 	print("Benny")
 
-	set_cursor_position({4, 1})
+	set_cursor_position({5, 1})
 
 	for _ in 0 ..< 4 {
 		printfln(rgb{u8(rand.int31_max(255, &rng)), u8(rand.int31_max(255, &rng)), u8(rand.int31_max(255, &rng))}, "hello")
