@@ -39,6 +39,8 @@ pvBits        : screen_buffer
 
 bg_brush: win32.HBRUSH
 
+show_atlas := false
+
 set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
@@ -122,9 +124,6 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 		//win32.FillRect(ps.hdc, &ps.rcPaint, bg_brush)
 
-		//win32.SelectObject(hdc_source, bitmap_handle)
-		//win32.BitBlt(ps.hdc, 0, 0, bitmap_size.x, bitmap_size.y, hdc_source, 0, 0, win32.SRCCOPY)
-
 		ctx := &app.mu_ctx
 		if ctx != nil {
 			mu.begin(ctx)
@@ -132,6 +131,11 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 			mu.end(ctx)
 
 			render(ctx, &ps, hdc_source)
+		}
+
+		if show_atlas {
+			win32.SelectObject(hdc_source, bitmap_handle)
+			win32.BitBlt(ps.hdc, 0, 0, bitmap_size.x, bitmap_size.y, hdc_source, 0, 0, win32.SRCCOPY)
 		}
 	}
 	return 0
@@ -329,8 +333,8 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 			old_pen := win32.SelectObject(hdc, win32app.HGDIOBJ_PS_NULL)
 			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
 			//win32.FillRect(hdc, &cmd.rect, win32.HBRUSH(dc_brush))
-			win32.SetDCBrushColor(hdc, old_color)
 			win32.SelectObject(hdc, old_pen)
+			win32.SetDCBrushColor(hdc, old_color)
 			win32.SelectObject(hdc, old_brush)
 
 		case ^mu.Command_Icon:
