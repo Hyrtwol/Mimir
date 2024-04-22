@@ -24,7 +24,8 @@
 		"*.lst": "plaintext",
 		"*.fdp": "xml",
 		"*.recipe": "msbuild",
-		"*.csproj": "msbuild"
+		"*.csproj": "msbuild",
+		"*.oproj": "msbuild"
 	},
 	"workbench.editorAssociations": {
 		"*.fsb": "hexEditor.hexedit",
