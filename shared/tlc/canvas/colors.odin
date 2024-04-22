@@ -106,7 +106,7 @@ C64_COLORS: [16]byte4 : {
 // https://www.cpcwiki.eu/index.php/Video_modes#Colours_and_Palettes
 
 /*
-Firmware Number	Hardware Number	Colour Name	R %	G %	B %	Hexadecimal	RGB valuee
+Firmware Number	Hardware Number	Color Name	R %	G %	B %	Hexadecimal	RGB value
 
 0	54h				Black			0	0	0		#000000		  0/  0/  0
 1	44h (or 50h)	Blue			0	0	50		#000080		  0/  0/128
@@ -196,7 +196,7 @@ AMSTRAD_COLORS: [27]byte4 : {
 }
 
 /*
-Ink Colour
+Ink Color
 Paper/Pen No.	Mode 0	Mode 1	Mode 2
 		0		 1		 1		 1
 		1		24		24		24

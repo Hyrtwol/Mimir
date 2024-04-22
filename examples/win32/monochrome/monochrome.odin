@@ -49,11 +49,11 @@ rng := rand.create(u64(intrinsics.read_cycle_counter()))
 msg: [6]wstring = {L("Tik"), L("Tok"), L("Ping"), L("Pong"), L("Yin"), L("Yang")}
 
 print_info :: proc() {
-	fmt.printf("color_bits             =%v\n", color_bits)
-	fmt.printf("palette_count          =%v\n", palette_count)
-	fmt.printf("len(color_palette)     =%v\n", len(color_palette))
-	fmt.printf("size_of(color)         =%v\n", size_of(color))
-	fmt.printf("size_of(color_palette) =%v\n", size_of(color_palette))
+	fmt.printfln("color_bits             =%v", color_bits)
+	fmt.printfln("palette_count          =%v", palette_count)
+	fmt.printfln("len(color_palette)     =%v", len(color_palette))
+	fmt.printfln("size_of(color)         =%v", size_of(color))
+	fmt.printfln("size_of(color_palette) =%v", size_of(color_palette))
 }
 
 ConfigFlag :: enum u32 {
@@ -96,7 +96,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	app := (^Game)(pcs.lpCreateParams)
 	if app == nil {show_error_and_panic("Missing app!")}
-	fmt.printf("WM_CREATE %v %v %v\n", hwnd, pcs, app)
+	fmt.println(#procedure, hwnd, pcs, app)
 	set_app(hwnd, app)
 
 	app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
@@ -140,7 +140,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
 
-	fmt.printf("app.hbitmap=%v %v\n", app.hbitmap, app.pvBits)
+	fmt.println("app.hbitmap:", app.hbitmap, app.pvBits)
 	pvBits := app.pvBits
 	if pvBits != nil {
 		for i in 0 ..< bwidth * bheight / 8 {
@@ -153,7 +153,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
-	fmt.printf("WM_DESTROY %v\n%v\n", hwnd, app)
+	fmt.println(#procedure, hwnd, app)
 	if app == nil {show_error_and_panic("Missing app!")}
 	if app.timer_id != 0 {
 		if !win32.KillTimer(hwnd, app.timer_id) {
@@ -204,7 +204,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 		}
 	case:
-		fmt.printf("WM_TIMER %v %v %v\n", hwnd, wparam, lparam)
+		fmt.println(#procedure, hwnd, wparam, lparam)
 	}
 	return 0
 }
@@ -215,8 +215,8 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
-	case '\t':		fmt.print("tab\n")
-	case '\r':		fmt.print("return\n")
+	case '\t':		fmt.println("tab")
+	case '\r':		fmt.println("return")
 	case 'p':		show_error_and_panic("Test Panic")
 	}
 	return 0
@@ -300,7 +300,6 @@ run :: proc() -> int {
 		fps  = 60,
 		control_flags = {.CENTER},
 	}
-	fmt.printf("window=%p\n%v\n", &window, window)
 	game := Game {
 		tick_rate = 300 * time.Millisecond,
 		last_tick = time.now(),
@@ -309,8 +308,8 @@ run :: proc() -> int {
 		size      = {64, 64},
 		//window    = window,
 	}
-	fmt.printf("game=%p\n%v\n", &game, game)
-	defer fmt.printf("game=%p\n%v\n", &game, game)
+	fmt.printfln("game=%p\n%v", &game, game)
+	defer fmt.printfln("game=%p\n%v", &game, game)
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {show_error_and_panic("No instance")}
@@ -339,6 +338,6 @@ run :: proc() -> int {
 main :: proc() {
 	exit_code := run()
 	print_info()
-	fmt.printf("Done!\n")
+	fmt.println("Done.", exit_code)
 	os.exit(exit_code)
 }

@@ -297,8 +297,8 @@ main :: proc() {
 			constants.light_vector = {+1, -1, +1}
 
 			constants.projection = {2 * n / w, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), n * f / (n - f), 0, 0, 1, 0}
-			//fmt.printf("%s %v\n", "projection ", constants.projection)
-			//fmt.printf("%s %v\n", "Perspective", glm.mat4Perspective(glm.PI*0.25, viewport.Height / viewport.Width, n, f))
+			//fmt.printfln("%s %v", "projection ", constants.projection)
+			//fmt.printfln("%s %v", "Perspective", glm.mat4Perspective(glm.PI*0.25, viewport.Height / viewport.Width, n, f))
 			device_context->Unmap(constant_buffer, 0)
 		}
 
@@ -344,7 +344,7 @@ main :: proc() {
 		swap_chain->Present(1, {})
 	}
 
-	fmt.print("DONE\n")
+	fmt.println("Done.")
 }
 
 shaders_hlsl := #load(SHADER_FILE)

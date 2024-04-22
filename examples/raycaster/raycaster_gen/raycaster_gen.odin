@@ -113,7 +113,7 @@ gen_pics :: proc(output_name: string, pattern: string) -> int {
 
 main :: proc() {
 	pattern := "*.png" if len(os.args) <= 1 else os.args[1]
-	hr := gen_pics("pics.dat", pattern)
-	fmt.println("Done.", hr)
-	os.exit(int(hr))
+	exit_code := gen_pics("pics.dat", pattern)
+	fmt.println("Done.", exit_code)
+	os.exit(exit_code)
 }

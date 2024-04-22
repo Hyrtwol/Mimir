@@ -211,7 +211,7 @@ main :: proc() {
 		BindFlags      = {.CONSTANT_BUFFER},
 		CPUAccessFlags = {.WRITE},
 	}
-	//fmt.printf("constant_buffer_desc=%v\n", constant_buffer_desc)
+	//fmt.println("constant_buffer_desc:", constant_buffer_desc)
 	constant_buffer: ^d3d11.IBuffer
 	hr = device->CreateBuffer(&constant_buffer_desc, nil, &constant_buffer)
 	assert(hr == 0);assert(constant_buffer != nil)
@@ -372,7 +372,7 @@ main :: proc() {
 		swap_chain->Present(1, {})
 	}
 
-	fmt.print("DONE\n")
+	fmt.println("Done.")
 	//os.exit(int(msg.wParam))
 }
 

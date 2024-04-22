@@ -1,4 +1,4 @@
-package canvasapp
+package canvas_app
 
 import cv ".."
 import "core:fmt"
@@ -7,19 +7,19 @@ import "core:runtime"
 import win32 "core:sys/windows"
 import win32app "libs:tlc/win32app"
 
-FPS :: 5
+TimerTickPS :: 5
 
 int2 :: cv.int2
 color: cv.color
 dib: cv.DIB
 
 settings: win32app.window_settings = {
-	// title       = title,
 	window_size = {640, 480},
 	center      = true,
 	wndproc     = wndproc,
 	dwStyle     = win32app.default_dwStyle,
 	dwExStyle   = win32app.default_dwExStyle,
+	//title       = title,
 	//run         = run,
 }
 
@@ -70,7 +70,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	settings := get_settings(lparam)
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, app)
 	set_app(hwnd, app)
 
 	hdc := win32.GetDC(hwnd)
@@ -82,7 +81,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	app.create(app)
 
-	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
+	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / TimerTickPS)
 	assert(app.timer_id != 0)
 
 	stopwatch->start()
@@ -109,10 +108,14 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
+set_window_text :: #force_inline proc (hwnd: win32.HWND) {
+	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+}
+
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//app := get_app(hwnd)
 	settings.window_size = win32app.decode_lparam(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	set_window_text(hwnd)
 	return 0
 }
 
@@ -123,7 +126,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	fc := frame_counter
 	frame_counter = 0
 	fps = f64(fc) / delta
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	set_window_text(hwnd)
 	//win32app.redraw_window(hwnd)
 	return 0
 }

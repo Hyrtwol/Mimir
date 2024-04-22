@@ -26,7 +26,7 @@ application :: struct {
 papp :: ^application
 
 main :: proc() {
-	fmt.print("Amstrad\n")
+	fmt.println("Amstrad")
 
 	snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
 	fmt.printfln("reading %s", snapshot_path)
@@ -50,13 +50,13 @@ main :: proc() {
 
 	// cpu.pc = ss.PC
 	// cpu.sp = ss.SP
-	// fmt.printf("CPU %v\n", cpu)
+	// fmt.printfln("CPU %v", cpu)
 
 	running = true
 	run_app(&app)
 	fmt.printfln("app %#v", app)
 
-	fmt.printf("total %v (%v)\n", total, reps)
+	fmt.printfln("total %v (%v)", total, reps)
 	//print_info()
 
 	fmt.println("Done.")

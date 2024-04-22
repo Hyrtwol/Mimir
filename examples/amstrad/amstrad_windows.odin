@@ -68,7 +68,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 
-	//fmt.printf("WM_CREATE %v %v %v\n", hwnd, pcs, app)
+	//fmt.println(#procedure, hwnd, pcs, app)
 	set_app(hwnd, app)
 
 	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
@@ -107,7 +107,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if app.cpu != nil {
 		z.z80_power(app.cpu, true)
-		//fmt.printf("CPU %v\n", app.cpu)
+		//fmt.printfln("CPU %v", app.cpu)
 	}
 
 	return 0
@@ -115,7 +115,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
-	//fmt.printf("WM_DESTROY %v\n%v\n", hwnd, app)
+	//fmt.println(#procedure, hwnd, app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.kill_timer(hwnd, &app.timer_id)
 	if !win32app.delete_object(&app.hbitmap) {win32app.show_message_box("Unable to delete hbitmap", "Error")}
@@ -192,7 +192,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 		}
 	case:
-		fmt.printf("WM_TIMER %v %v %v\n", hwnd, wparam, lparam)
+		fmt.println(#procedure, hwnd, wparam, lparam)
 	}
 	return 0
 }

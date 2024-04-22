@@ -1,17 +1,17 @@
 package test_misc
 
 import "core:fmt"
-import fp "core:path/filepath"
 import "core:os"
-import "core:strings"
+import fp "core:path/filepath"
 import "core:slice"
+import "core:strings"
 import "core:testing"
 import "shared:ounit"
 
 @(test)
 write_hello_txt :: proc(t: ^testing.T) {
 	path := "hello.log"
-	fmt.printf("writing %s\n", path)
+	fmt.printfln("writing %s", path)
 	data := "ABCD"
 	ok := os.write_entire_file(path, transmute([]byte)data)
 	testing.expect(t, ok)
@@ -26,7 +26,7 @@ EXPECTED_FILE_SIZE :: 2893
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
 	path := fp.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
-	fmt.printf("reading %s\n", path)
+	fmt.printfln("reading %s", path)
 
 	data, ok := os.read_entire_file_from_filename(path)
 	testing.expect(t, ok)
@@ -90,9 +90,8 @@ file_io :: proc(t: ^testing.T) {
 @(test)
 lowercase_dictionary :: proc(t: ^testing.T) {
 	path := fp.join({"..", "doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
-	//path := fp.join({"doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
-	fmt.printfln("reading %s", path)
 
+	fmt.printfln("reading %s", path)
 	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
 	testing.expect(t, ok)
 	if !ok {return}
@@ -118,7 +117,7 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 	fmt.println("----")*/
 
 	fmt.printfln("writing %s", path)
-	fd, ferr := os.open(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
+	fd, ferr := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
 	testing.expect(t, ferr == 0)
 	if ferr != 0 {return}
 	defer os.close(fd)

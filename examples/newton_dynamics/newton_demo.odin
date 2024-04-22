@@ -4,80 +4,81 @@ import "core:fmt"
 import newton "shared:newton_dynamics"
 
 main :: proc() {
-	fmt.print("Newton Dynamics\n")
+	fmt.println("Newton Dynamics")
+	defer fmt.println("Done.")
 
-	fmt.print("Globals:\n")
-	fmt.printf("  Version             : %.2f\n", f32(newton.GetVersion()) / 100)
-	fmt.printf("  FloatSize           : %v\n", newton.GetFloatSize())
-	fmt.printf("  MemoryUsed          : %v\n", newton.GetMemoryUsed())
+	fmt.println("Globals:")
+	fmt.printfln("  Version             : %.2f", f32(newton.GetVersion()) / 100)
+	fmt.printfln("  FloatSize           : %v", newton.GetFloatSize())
+	fmt.printfln("  MemoryUsed          : %v", newton.GetMemoryUsed())
 
 	world := newton.Create()
 	defer newton.Destroy(world)
 
-	fmt.print("World:\n")
-	fmt.printf("  BodyCount           : %v\n", newton.WorldGetBodyCount(world))
-	fmt.printf("  ConstraintCount     : %v\n", newton.WorldGetConstraintCount(world))
-	fmt.printf("  BroadphaseAlgorithm : %v\n", newton.GetBroadphaseAlgorithm(world))
-	fmt.printf("  ThreadsCount        : %v\n", newton.GetThreadsCount(world))
-	fmt.printf("  MaxThreadsCount     : %v\n", newton.GetMaxThreadsCount(world))
+	fmt.println("World:")
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+	fmt.printfln("  BroadphaseAlgorithm : %v", newton.GetBroadphaseAlgorithm(world))
+	fmt.printfln("  ThreadsCount        : %v", newton.GetThreadsCount(world))
+	fmt.printfln("  MaxThreadsCount     : %v", newton.GetMaxThreadsCount(world))
 
 	{
 		collision := newton.CreateBox(world, 2, 2, 2, 0, nil)
 		defer newton.DestroyCollision(collision)
 
-		fmt.printf("  BodyCount           : %v\n", newton.WorldGetBodyCount(world))
-		fmt.printf("  ConstraintCount     : %v\n", newton.WorldGetConstraintCount(world))
+		fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+		fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
 
-		fmt.print("Collision:\n")
-		fmt.printf("  CollisionType       : %v\n", newton.CollisionGetType(collision))
-		fmt.printf("  IsConvexShape       : %v\n", newton.CollisionIsConvexShape(collision))
-		fmt.printf("  IsStaticShape       : %v\n", newton.CollisionIsStaticShape(collision))
+		fmt.println("Collision:")
+		fmt.printfln("  CollisionType       : %v", newton.CollisionGetType(collision))
+		fmt.printfln("  IsConvexShape       : %v", newton.CollisionIsConvexShape(collision))
+		fmt.printfln("  IsStaticShape       : %v", newton.CollisionIsStaticShape(collision))
 
 		{
 			cir: newton.NewtonCollisionInfoRecord
 			newton.CollisionGetInfo(collision, &cir)
-			fmt.print("CollisionInfoRecord:\n")
-			fmt.printf("  m_collisionType     : %v\n", cir.m_collisionType)
-			fmt.printf("  m_collisionMaterial : %v\n", cir.m_collisionMaterial)
+			fmt.println("CollisionInfoRecord:")
+			fmt.printfln("  m_collisionType     : %v", cir.m_collisionType)
+			fmt.printfln("  m_collisionMaterial : %v", cir.m_collisionMaterial)
 			#partial switch cir.m_collisionType {
 			case newton.SerializeId.Box:
-				fmt.printf("  m_box:                %v\n", cir.u.m_box)
+				fmt.printfln("  m_box:                %v", cir.u.m_box)
 			case newton.SerializeId.Cone:
-				fmt.printf("  m_cone:               %v\n", cir.u.m_cone)
+				fmt.printfln("  m_cone:               %v", cir.u.m_cone)
 			case newton.SerializeId.Sphere:
-				fmt.printf("  m_sphere:             %v\n", cir.u.m_sphere)
+				fmt.printfln("  m_sphere:             %v", cir.u.m_sphere)
 			case newton.SerializeId.Capsule:
-				fmt.printf("  m_capsule:            %v\n", cir.u.m_capsule)
+				fmt.printfln("  m_capsule:            %v", cir.u.m_capsule)
 			case newton.SerializeId.Cylinder:
-				fmt.printf("  m_cylinder:           %v\n", cir.u.m_cylinder)
+				fmt.printfln("  m_cylinder:           %v", cir.u.m_cylinder)
 			case newton.SerializeId.Chamfercylinder:
-				fmt.printf("  m_chamferCylinder:    %v\n", cir.u.m_chamferCylinder)
+				fmt.printfln("  m_chamferCylinder:    %v", cir.u.m_chamferCylinder)
 			case newton.SerializeId.Convexhull:
-				fmt.printf("  m_convexHull:         %v\n", cir.u.m_convexHull)
+				fmt.printfln("  m_convexHull:         %v", cir.u.m_convexHull)
 			case newton.SerializeId.DeformableSolid:
-				fmt.printf("  m_deformableMesh:     %v\n", cir.u.m_deformableMesh)
+				fmt.printfln("  m_deformableMesh:     %v", cir.u.m_deformableMesh)
 			case newton.SerializeId.Compound:
-				fmt.printf("  m_compoundCollision:  %v\n", cir.u.m_compoundCollision)
+				fmt.printfln("  m_compoundCollision:  %v", cir.u.m_compoundCollision)
 			case newton.SerializeId.Tree:
-				fmt.printf("  m_collisionTree:      %v\n", cir.u.m_collisionTree)
+				fmt.printfln("  m_collisionTree:      %v", cir.u.m_collisionTree)
 			case newton.SerializeId.Heightfield:
-				fmt.printf("  m_heightField:        %v\n", cir.u.m_heightField)
+				fmt.printfln("  m_heightField:        %v", cir.u.m_heightField)
 			case newton.SerializeId.Scene:
-				fmt.printf("  m_sceneCollision:     %v\n", cir.u.m_sceneCollision)
+				fmt.printfln("  m_sceneCollision:     %v", cir.u.m_sceneCollision)
 			case newton.SerializeId.Usermesh:
-				fmt.printf("  m_paramArray:         %v\n", cir.u.m_paramArray)
+				fmt.printfln("  m_paramArray:         %v", cir.u.m_paramArray)
 			case:
-				fmt.print("  unknown\n")
+				fmt.println("  unknown")
 			}
 		}
 	}
 
-	fmt.printf("  BodyCount           : %v\n", newton.WorldGetBodyCount(world))
-	fmt.printf("  ConstraintCount     : %v\n", newton.WorldGetConstraintCount(world))
-	fmt.print("DestroyAllBodies:\n")
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+	fmt.println("DestroyAllBodies:")
 	newton.DestroyAllBodies(world)
-	fmt.printf("  BodyCount           : %v\n", newton.WorldGetBodyCount(world))
-	fmt.printf("  ConstraintCount     : %v\n", newton.WorldGetConstraintCount(world))
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
 
 	f3: newton.float3
 	i3: newton.int3

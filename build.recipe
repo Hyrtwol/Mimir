@@ -127,6 +127,6 @@
 		</Collection>
 	</ItemGroup>
 
-	<Import Project="msbuild\odin.targets"/>
+	<Import Project="msbuild\Odin.targets"/>
 
 </Project>

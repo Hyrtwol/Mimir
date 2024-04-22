@@ -158,7 +158,7 @@ main :: proc() {
 		Usage = .DEFAULT,
 		BindFlags = {.DEPTH_STENCIL, .SHADER_RESOURCE},
 	}
-	//fmt.printf("%s %v\n", "shadowmapDepthDesc", shadowmapDepthDesc)
+	//fmt.println("shadowmapDepthDesc:", shadowmapDepthDesc)
 	shadowmapDepthTexture: ^d3d11.ITexture2D
 	hr = device->CreateTexture2D(&shadowmapDepthDesc, nil, &shadowmapDepthTexture)
 	assert(hr == 0);assert(shadowmapDepthTexture != nil)
@@ -167,7 +167,7 @@ main :: proc() {
 		Format        = .D32_FLOAT,
 		ViewDimension = .TEXTURE2D,
 	}
-	//fmt.printf("%s %v\n", "shadowmapDSVdesc", shadowmapDSVdesc)
+	//fmt.println("shadowmapDSVdesc:", shadowmapDSVdesc)
 	shadowmapDSV: ^d3d11.IDepthStencilView
 	hr = device->CreateDepthStencilView(shadowmapDepthTexture, &shadowmapDSVdesc, &shadowmapDSV)
 	assert(hr == 0);assert(shadowmapDSV != nil)
@@ -318,7 +318,7 @@ main :: proc() {
 		ShadowmapSize    = {shadowmapVP.Width, shadowmapVP.Height, 0, 0},
 	}
 
-	fmt.printf("%s %v\n", "constants", constants)
+	fmt.println("constants:", constants)
 
 	//-- Main Loop --//
 
@@ -391,7 +391,7 @@ main :: proc() {
 		swap_chain->Present(1, {})
 	}
 
-	fmt.print("DONE\n")
+	fmt.println("Done.")
 	//os.exit(int(msg.wParam))
 }
 

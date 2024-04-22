@@ -14,17 +14,16 @@ int2 :: cv.int2
 uint2 :: cv.uint2
 byte4 :: cv.byte4
 
-TITLE :: "Diffusion Limited Aggregation"
-WIDTH: i32 : 320
-HEIGHT: i32 : WIDTH * 3 / 4
-ZOOM :: 4
+WIDTH: i32 : 256 * 2
+HEIGHT: i32 : WIDTH
+ZOOM :: 2
 FPS :: 20
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
 point_count :: 50000
 
-world_radius :: 512
+world_radius :: WIDTH
 rh :: world_radius / 2
 rl :: (world_radius - 4) / 2
 rm :: world_radius - 2
@@ -33,27 +32,29 @@ rofs := 10
 
 map_size :: world_radius * world_radius
 //map_: [world_radius][world_radius]u8
-map_: [map_size]u32
+_map: [map_size]u8
 bmp: rawptr //TBitmap32; //lcBitmap;
 cnt: i32
 maxrad, maxrad2, maxrad3: i32
 
-dude_count :: 4 * 100
+dude_count :: 2 * 100
 dude :: struct {
 	pos: int2,
 	col: byte4,
 }
 dudes: [dude_count]dude
 
-// U {0,1} R {1,0} D {0,-1} L {-1,0}
-dude_moves: [5]i32 = {0, 1, 0, -1, 0}
-
 get_dude_move :: #force_inline proc "contextless" (dir: i32) -> int2 {
+	// U{0,+1} R{+1,0} D{0,-1} L{-1,0}
+	@static dude_moves: [5]i32 = {0, 1, 0, -1, 0}
 	return ((^int2)(&dude_moves[dir & 3]))^
 }
 
 on_create :: proc(app: ca.papp) -> int {
 	//fmt.println("user_create:", app)
+	for i in 0..<map_size {
+		_map[i] = 0
+	}
 	size := ca.dib.canvas.size
 	for &d in dudes {
 		d.pos = cv.random_position(size, &rng)
@@ -98,7 +99,7 @@ main :: proc() {
 	ca.app.create = on_create
 	ca.app.update = on_update
 	ca.app.destroy = on_destroy
-	ca.settings.title = TITLE
+	ca.settings.title = "Diffusion Limited Aggregation"
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
 }

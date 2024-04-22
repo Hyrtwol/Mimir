@@ -1,13 +1,13 @@
 // +vet
 package main
 
-import          "core:fmt"
-import          "core:intrinsics"
-import          "core:math/rand"
-import          "core:runtime"
-import win32    "core:sys/windows"
+import "core:fmt"
+import "core:intrinsics"
+import "core:math/rand"
+import "core:runtime"
+import win32 "core:sys/windows"
+import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
-import cv		"libs:tlc/canvas"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -141,10 +141,10 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 ftn := win32.BLENDFUNCTION {
-	BlendOp = win32.AC_SRC_OVER,
-	BlendFlags = 0,
+	BlendOp             = win32.AC_SRC_OVER,
+	BlendFlags          = 0,
 	SourceConstantAlpha = 128,
-	AlphaFormat= win32.AC_SRC_ALPHA,
+	AlphaFormat         = win32.AC_SRC_ALPHA,
 }
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
@@ -173,7 +173,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 	col = win32.RGB(150, 100, 50)
 	org_color = win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))
-	rect := win32.RECT{40,40, 240,240}
+	rect := win32.RECT{40, 40, 240, 240}
 	win32.FillRect(ps.hdc, &rect, brush)
 	win32.SetDCBrushColor(ps.hdc, org_color)
 
@@ -193,7 +193,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	win32.TextOutW(ps.hdc, 50, 50, win32.utf8_to_wstring(txt), i32(len(txt)))
 
 	win32.SelectObject(hdc_source, bitmap_handle)
-	win32.AlphaBlend(ps.hdc, 0,0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, ftn)
+	win32.AlphaBlend(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, ftn)
 
 	return 0
 }
@@ -216,20 +216,21 @@ decode_set_dot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
 	set_dot_invalidate(hwnd, decode_scrpos(lparam), col)
 }
 
-// odinfmt: disable
-
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	// odinfmt: disable
 	switch wparam {
 	case 1: decode_set_dot(hwnd, lparam, cv.COLOR_RED)
 	case 2: decode_set_dot(hwnd, lparam, cv.COLOR_BLUE)
 	case 3: decode_set_dot(hwnd, lparam, cv.COLOR_GREEN)
-	case: //fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
+	//case: fmt.println(#procedure, decode_scrpos(lparam), wparam)
 	}
+	// odinfmt: enable
 	return 0
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
 	case .WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case .WM_DESTROY:		return WM_DESTROY(hwnd)
@@ -245,9 +246,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.
 	case .WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	case:					return win32.DefWindowProcW(hwnd, win32.UINT(msg), wparam, lparam)
 	}
+	// odinfmt: enable
 }
-
-// odinfmt: enable
 
 main :: proc() {
 
@@ -263,5 +263,5 @@ main :: proc() {
 	win32app.run(&settings)
 
 	stopwatch->stop()
-	fmt.printf("Done! (%fs)\n", stopwatch->get_delta_seconds())
+	fmt.printfln("Done! (%fs)", stopwatch->get_delta_seconds())
 }

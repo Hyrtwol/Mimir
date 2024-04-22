@@ -38,11 +38,11 @@ can_i_call_rdtsc :: proc(t: ^testing.T) {
 
 	clock_cycles := act2 - act
 
-	fmt.printf("rdtsc start  : %d\n", act)
-	fmt.printf("rdtsc stop   : %d\n", act2)
-	fmt.printf("clock cycles : %d\n", clock_cycles)
-	fmt.printf("avg. cc      : %f\n", f64(clock_cycles) / reps)
-	fmt.printf("time         : %fs ms\n", elapsed_ms)
+	fmt.printfln("rdtsc start  : %d", act)
+	fmt.printfln("rdtsc stop   : %d", act2)
+	fmt.printfln("clock cycles : %d", clock_cycles)
+	fmt.printfln("avg. cc      : %f", f64(clock_cycles) / reps)
+	fmt.printfln("time         : %fs ms", elapsed_ms)
 }
 
 @(test)

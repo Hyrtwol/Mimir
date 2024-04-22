@@ -49,7 +49,7 @@ clear_color: cv.byte4 : {150, 100, 50, 255}
 play_event :: proc(event_id: i32) {
 	event: ^fmod.FMOD_EVENT = events[event_id]
 	if event == nil {
-		fmt.printf("event_id %d is nil\n", event_id)
+		fmt.eprintfln("event_id %d is nil", event_id)
 		return
 	}
 
@@ -57,7 +57,7 @@ play_event :: proc(event_id: i32) {
 
 	res = fmod.FMOD_Event_Stop(event, 1)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
+		fmt.eprintfln("FMOD_Event_Stop:", res)
 		return
 	}
 
@@ -67,7 +67,7 @@ play_event :: proc(event_id: i32) {
 
 	res = fmod.FMOD_Event_Start(event)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
+		fmt.eprintfln("FMOD_EventSystem_Load", res)
 		return
 	}
 }
@@ -77,7 +77,7 @@ play_song :: proc() {
 	if song == nil {
 		res = fmod.FMOD_System_CreateSound(system, "Ktulu.xm", fmod.FMOD_HARDWARE | fmod.FMOD_2D, nil, &song)
 		if res != .FMOD_OK {
-			fmt.printf("FMOD_System_CreateSound %v\n", res)
+			fmt.eprintfln("FMOD_System_CreateSound:", res)
 			return
 		}
 	}
@@ -85,10 +85,10 @@ play_song :: proc() {
 		channel: ^fmod.FMOD_CHANNEL
 		res = fmod.FMOD_System_PlaySound(system, fmod.FMOD_CHANNELINDEX.FMOD_CHANNEL_FREE, song, 0, &channel)
 		if res != .FMOD_OK {
-			fmt.printf("FMOD_System_PlaySound %v\n", res)
+			fmt.eprintfln("FMOD_System_PlaySound:", res)
 			return
 		}
-		fmt.printf("FMOD_System_PlaySound channel %v\n", channel)
+		fmt.println("FMOD_System_PlaySound channel:", channel)
 	}
 }
 
@@ -106,14 +106,14 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printfln("WM_CREATE %v", hwnd)
+	fmt.println(#procedure, hwnd)
 
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 50)
 
 	client_size := win32app.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
-	fmt.printf("bitmap_size=%v\n", bitmap_size)
+	fmt.println("bitmap_size:", bitmap_size)
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
@@ -136,7 +136,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.printfln("WM_DESTROY %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
 	win32app.delete_object(&bitmap_handle)
@@ -148,7 +148,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	//fmt.printfln("%s %4d 0x%4x 0x%4x 0x%4x", #procedure, wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	// odinfmt: disable
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
@@ -187,7 +187,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		{
 			fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
 			fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
-			new_title := fmt.tprintf("%s cpu %v channels %v\n", title, total, channels_playing)
+			new_title := fmt.tprintf("%s cpu %v channels %v", title, total, channels_playing)
 			win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 		}
 	case win32app.IDT_TIMER2:
@@ -276,7 +276,7 @@ main :: proc() {
 
 	res := fmod.FMOD_EventSystem_Create(&eventsys)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Create, res)
+		fmt.eprintln("FMOD_EventSystem_Create:", res)
 		return
 	}
 	defer fmod.FMOD_EventSystem_Release(eventsys)
@@ -284,19 +284,19 @@ main :: proc() {
 	fmod_version: fmod.FMOD_VERSION
 	res = fmod.FMOD_EventSystem_GetVersion(eventsys, &fmod_version)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetVersion, res)
+		fmt.eprintln("FMOD_EventSystem_GetVersion:", res)
 		return
 	}
 
 	res = fmod.FMOD_EventSystem_GetSystemObject(eventsys, &system)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetSystemObject, res)
+		fmt.eprintln("FMOD_EventSystem_GetSystemObject:", res)
 		return
 	}
 	driver_index: i32 = 0
 	res = fmod.FMOD_System_GetDriver(system, &driver_index)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriver, res)
+		fmt.eprintln("FMOD_System_GetDriver:", res)
 		return
 	}
 	driver_caps: fmod.FMOD_CAPS
@@ -304,39 +304,43 @@ main :: proc() {
 	speaker_mode: fmod.FMOD_SPEAKERMODE
 	res = fmod.FMOD_System_GetDriverCaps(system, driver_index, &driver_caps, &output_rate, &speaker_mode)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_System_GetDriverCaps, res)
+		fmt.eprintln("FMOD_System_GetDriverCaps:", res)
 		return
 	}
-	fmt.printf("caps: %v\n", driver_caps)
+	fmt.println("caps:", driver_caps)
 
 	res = fmod.FMOD_System_SetSpeakerMode(system, speaker_mode)
 	if .HARDWARE_EMULATED in driver_caps {
 		/* The user has the 'Acceleration' slider set to off!  This is really bad for latency!. */
 		/* You might want to warn the user about this. */
-		fmt.print("HARDWARE_EMULATED\n")
+		fmt.println("HARDWARE_EMULATED")
 		res = fmod.FMOD_System_SetDSPBufferSize(system, 1024, 10)
 		/* At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms. */
 		if res != .FMOD_OK {
-			fmt.printf("%v %v\n", fmod.FMOD_System_SetDSPBufferSize, res)
+			fmt.eprintln("FMOD_System_SetDSPBufferSize:", res)
 			return
 		}
 	}
 
 	res = fmod.FMOD_EventSystem_Init(eventsys, max_channels, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
-		fmt.print("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...\n")
+		fmt.println("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...")
 		/* Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo... */
 		speaker_mode = fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO
 		res = fmod.FMOD_System_SetSpeakerMode(system, speaker_mode)
+		if res != .FMOD_OK {
+			fmt.eprintln("FMOD_System_SetSpeakerMode:", res)
+			return
+		}
 		res = fmod.FMOD_EventSystem_Init(eventsys, max_channels, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	}
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Init, res)
+		fmt.eprintln("FMOD_EventSystem_Init:", res)
 		return
 	}
 	res = fmod.FMOD_System_Set3DSettings(system, 1.0, DistanceFactor, 1.0)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_System_Set3DSettings, res)
+		fmt.eprintln("FMOD_System_Set3DSettings:", res)
 		return
 	}
 
@@ -345,17 +349,17 @@ main :: proc() {
 	//res = fmod.FMOD_EventSystem_Load(eventsys, c_str, nil, nil)
 	res = fmod.FMOD_EventSystem_Load(eventsys, "WolfensteinSFX.fev", nil, nil)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_Load, res)
+		fmt.eprintln("FMOD_EventSystem_Load:", res)
 		return
 	}
 
 	num_events: i32 = 0
 	res = fmod.FMOD_EventSystem_GetNumEvents(eventsys, &num_events)
 	if res != .FMOD_OK {
-		fmt.printf("%v %v\n", fmod.FMOD_EventSystem_GetNumEvents, res)
+		fmt.eprintln("FMOD_EventSystem_GetNumEvents:", res)
 		return
 	}
-	fmt.printf("Events : %v\n", num_events)
+	fmt.println("Events:", num_events)
 
 	/*
 	_events = new Event[WolfensteinSFX.EVENTCATEGORYCOUNT_WOLFENSTEINSFX_MASTER];
@@ -371,12 +375,12 @@ main :: proc() {
 	for i: u32 = 0; i < wolf.EVENTCOUNT_WOLFENSTEINSFX; i += 1 {
 		res = fmod.FMOD_EventSystem_GetEventBySystemID(eventsys, i, fmod.FMOD_EVENT_DEFAULT, &events[i])
 		if res != .FMOD_OK {
-			fmt.printf("%v %v event id %d\n", fmod.FMOD_EventSystem_GetEventBySystemID, res, i)
+			fmt.eprintln("FMOD_EventSystem_GetEventBySystemID", res, i)
 			return
 		}
 	}
 
-	title = fmt.aprintf("%s Version : %d.%d.%d (0x%x)\n", TITLE, fmod_version.Major, fmod_version.Minor, fmod_version.Development, transmute(u32)fmod_version)
+	title = fmt.aprintf("%s Version : %d.%d.%d (0x%x)", TITLE, fmod_version.Major, fmod_version.Minor, fmod_version.Development, transmute(u32)fmod_version)
 	defer delete(title)
 
 	settings := win32app.create_window_settings(title, WIDTH, HEIGHT, wndproc)

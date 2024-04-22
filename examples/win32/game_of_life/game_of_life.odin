@@ -289,7 +289,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			win32app.redraw_window(hwnd)
 		}
 	case:
-		fmt.printf("WM_TIMER %v %v %v\n", hwnd, wparam, lparam)
+		fmt.println(#procedure, hwnd, wparam, lparam)
 	}
 	return 0
 }
@@ -405,7 +405,6 @@ run :: proc() -> int {
 		fps           = 10,
 		control_flags = {.CENTER},
 	}
-	//fmt.printf("window=%p\n%v\n", &window, window)
 	game := Game {
 		tick_rate = 300 * time.Millisecond,
 		last_tick = time.now(),
@@ -446,6 +445,6 @@ run :: proc() -> int {
 
 main :: proc() {
 	exit_code := run()
-	fmt.printf("Done (%d)\n", exit_code)
+	fmt.println("Done.", exit_code)
 	os.exit(exit_code)
 }

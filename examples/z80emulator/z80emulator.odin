@@ -12,22 +12,22 @@ memory: [mem_size]u8
 running: bool = false
 
 z_fetch_opcode :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
-	//fmt.printf("fetch_opcode[%d]=0x%2X\n", address, memory[address])
+	//fmt.printfln("fetch_opcode[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
 z_fetch :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
-	//fmt.printf("fetch[%d]=0x%2X\n", address, memory[address])
+	//fmt.printfln("fetch[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
 z_read :: proc(zcontext: rawptr, address: z80.zuint16) -> z80.zuint8 {
-	//fmt.printf("read[%d]=0x%2X\n", address, memory[address])
+	//fmt.printfln("read[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
 z_write :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
-	//fmt.printf("write[0x%4X]=0x%2X\n", address, value)
+	//fmt.printfln("write[0x%4X]=0x%2X", address, value)
 	memory[address] = value
 }
 
@@ -59,39 +59,39 @@ z_out :: proc(zcontext: rawptr, address: z80.zuint16, value: z80.zuint8) {
 		{
 			fmt.printf("out[0x%2X]=0x%2X", port, value)
 			if value >= 32 {fmt.printf(" '%v'", rune(value))}
-			fmt.print("\n")
+			fmt.println()
 		}
 	}
 }
 
 z_halt :: proc(zcontext: rawptr, signal: z80.zuint8) {
-	fmt.printf("\nhalt %d\n", signal)
+	fmt.printfln("\nhalt %d", signal)
 	running = false
 }
 
 z_reti :: proc(zcontext: rawptr) {
-	fmt.print("reti\n")
+	fmt.println("reti")
 }
 
 z_retn :: proc(zcontext: rawptr) {
-	fmt.print("retn\n")
+	fmt.println("retn")
 }
 
 z_illegal :: proc(zcpu: z80.PZ80, opcode: z80.zuint8) -> z80.zuint8 {
 	context = runtime.default_context()
-	fmt.printf("illegal %d\n", opcode)
+	fmt.println("illegal:", opcode)
 	return 10
 }
 
 reset :: proc() {
-	fmt.print("memory reset\n")
+	fmt.println("memory reset")
 	runtime.memset(&memory, 0, mem_size)
 }
 
 load_rom :: proc(filename: string) {
 	reset()
 
-	fmt.printf("loading rom %v\n", filename)
+	fmt.println("loading rom:", filename)
 
 	data, ok := os.read_entire_file(filename)
 	defer delete(data)
@@ -102,12 +102,12 @@ load_rom :: proc(filename: string) {
 			memory[i] = data[i]
 		}
 	} else {
-		panic(fmt.tprintf("Unable to load rom %v\n", filename))
+		fmt.panicf("Unable to load rom %v\n", filename)
 	}
 }
 
 main :: proc() {
-	fmt.print("Z80 Emulator\n")
+	fmt.println("Z80 Emulator")
 
 	load_rom("../data/z80/hello.rom")
 
@@ -138,7 +138,7 @@ main :: proc() {
 
 	//cycles :: 4000
 	//res := z80.z80_run(&cpu, cycles)
-	//fmt.printf("\nRun %v\n", res)
+	//fmt.printfln("\nRun %v", res)
 
 	running = true
 	total: z80.zusize = 0
@@ -147,9 +147,9 @@ main :: proc() {
 		total += z80.z80_run(&cpu, cycles_per_tick)
 		reps += 1
 	}
-	fmt.printf("total %v (%v)\n", total, reps)
+	fmt.printfln("total %v (%v)", total, reps)
 
-	if dump_cpu {fmt.printf("CPU %v\n", cpu)}
+	if dump_cpu {fmt.printfln("CPU %v", cpu)}
 
 	fmt.println("Done.")
 }

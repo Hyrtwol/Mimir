@@ -46,25 +46,25 @@ z_get_app :: #force_inline proc(zcontext: rawptr) -> papp {
 
 z_fetch_opcode :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
-	//fmt.printf("fetch_opcode[%d]=0x%2X\n", address, memory[address])
+	//fmt.printfln("fetch_opcode[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
 z_fetch :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
-	//fmt.printf("fetch[%d]=0x%2X\n", address, memory[address])
+	//fmt.printfln("fetch[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
 z_read :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
-	//fmt.printf("read[%d]=0x%2X\n", address, memory[address])
+	//fmt.printfln("read[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
 z_write :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
 	//app := z_get_app(zcontext)
-	//fmt.printf("write[0x%4X]=0x%2X\n", address, value)
+	//fmt.printfln("write[0x%4X]=0x%2X", address, value)
 	memory[address] = value
 }
 
@@ -96,28 +96,28 @@ z_out :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
 		case: put_char(app.pvBits, value)
 		}
 	case:
-		//fmt.printf("out[0x%2X]=0x%2X %v", port, value, app)
 		fmt.printf("out[0x%2X]=0x%2X", port, value)
 		if value >= 32 {fmt.printf(" '%v'", rune(value))}
-		fmt.print("\n")
+		fmt.println()
 	}
 }
 
 z_halt :: proc(zcontext: rawptr, signal: z.zuint8) {
 	app := z_get_app(zcontext)
-	fmt.printf("\nhalt %d pc=%d\n", signal, app.cpu.pc)
+	fmt.println()
+	fmt.printfln("halt %d pc=%d", signal, app.cpu.pc)
 	running = signal == 0
 }
 
 reset :: proc() {
-	//fmt.print("memory reset\n")
+	//fmt.println("memory reset")
 	runtime.memset(&memory, 0, mem_size)
 }
 
 load_rom :: proc(filename: string) {
 	reset()
 
-	fmt.printf("loading rom %v\n", filename)
+	fmt.printfln("loading rom %v", filename)
 
 	data, ok := os.read_entire_file(filename)
 	defer delete(data)
@@ -128,7 +128,7 @@ load_rom :: proc(filename: string) {
 			memory[i] = data[i]
 		}
 	} else {
-		panic(fmt.tprintf("Unable to load rom %v\n", filename))
+		fmt.panicf("Unable to load rom %v", filename)
 	}
 }
 

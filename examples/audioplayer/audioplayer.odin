@@ -140,15 +140,15 @@ OpenFile :: proc(hwnd: win32.HWND) {
 	}
 	WaveFormatEx.nBlockAlign = WaveFormatEx.nChannels * WaveFormatEx.wBitsPerSample / 8
 	WaveFormatEx.nAvgBytesPerSec = WaveFormatEx.nSamplesPerSec * win32.DWORD(WaveFormatEx.nBlockAlign)
-	fmt.printf("WaveFormatEx=%v\n", WaveFormatEx)
+	fmt.println("WaveFormatEx:", WaveFormatEx)
 
 	BufferLength = WAVE_DISPLAY_WIDTH << 4
-	fmt.printf("BufferLength=%v\n", BufferLength)
+	fmt.println("BufferLength:", BufferLength)
 	CurrentBuffer = 0
 	Ending = 1
 	Closing = false
 
-	fmt.print("waveOutOpen pre\n")
+	fmt.println("waveOutOpen pre")
 	hr := win32.waveOutOpen(&waveout, win32.WAVE_MAPPER, &WaveFormatEx, win32.DWORD_PTR(uintptr(hwnd)), 0, win32.CALLBACK_WINDOW | win32.WAVE_ALLOWSYNC)
 
 	if hr != win32.MMSYSERR_NOERROR {
@@ -156,7 +156,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 		return
 	}
 
-	fmt.printf("waveOutOpen waveout=%v\n", waveout)
+	fmt.println("waveOutOpen waveout=%v", waveout)
 
 	for i in 0 ..< NUM_BUFFERS {
 		header := &Headers[i]
@@ -171,7 +171,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 
 		hr = win32.waveOutPrepareHeader(waveout, header, size_of(win32.WAVEHDR))
 		if hr != 0 {
-			win32app.show_last_errorf("header[%d]=%v\n", i, header)
+			win32app.show_last_errorf("header[%d]=%v", i, header)
 			return
 		}
 	}
@@ -200,7 +200,7 @@ CloseFile :: proc() {
 		assert(hr == 0)
 	}
 
-	fmt.printf("waveOutClose waveout=%v\n", waveout)
+	fmt.printfln("waveOutClose waveout=%v", waveout)
 	hr = win32.waveOutClose(waveout)
 	assert(hr == 0)
 	waveout = nil
@@ -216,17 +216,16 @@ WriteBuffer :: proc() {
 	assert(hr == 0)
 	CurrentBuffer = (CurrentBuffer + 1) % NUM_BUFFERS
 	// win32.PostMessage(Handle, WM_PREPARE_NEXT_BUFFER, CurrentBuffer, 0);
-	//fmt.printf("WB %d\n", CurrentBuffer)
+	//fmt.printfln("WB %d", CurrentBuffer)
 }
 
-decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
+decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
 	size := win32app.decode_lparam(lparam)
-	scrpos := size / ZOOM
-	return scrpos
+	return size / ZOOM
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printf("WM_CREATE %v %v\n", hwnd, win32app.get_createstruct_from_lparam(lparam))
+	fmt.println(#procedure, hwnd, win32app.get_createstruct_from_lparam(lparam))
 
 	client_size := win32app.get_client_size(hwnd)
 
@@ -244,7 +243,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.printfln("WM_DESTROY %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	cv.dib_free_section(&dib)
 	//CloseFile()
 	win32app.post_quit_message(0)
@@ -252,12 +251,12 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	// fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	// odinfmt: disable
 	switch wparam {
 	case '\x1b': CloseFile()
-	case '\t':	 fmt.print("tab\n")
-	case '\r':	 fmt.print("return\n")
+	case '\t':	 fmt.println("tab")
+	case '\r':	 fmt.println("return")
 	case '1':	 if colidx > 0 {colidx -= 1}
 	case '2':	 if colidx < 15 {colidx += 1}
 	case '3':	 cols = cv.C64_COLORS
@@ -269,8 +268,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	new_title := fmt.tprintf("%s %v %v\n", TITLE, size, dib.canvas.size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
+	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }
 
@@ -316,7 +314,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 		set_dot(pos, cv.C64_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
-		fmt.printf("input %v %d\n", decode_scrpos(lparam), wparam)
+		fmt.println("input:", decode_scrpos(lparam), wparam)
 	case:
 	}
 	return 0
@@ -328,13 +326,13 @@ get_waveout :: #force_inline proc "contextless" (wparam: win32.WPARAM) -> win32.
 
 MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	wo := get_waveout(wparam)
-	fmt.printf("MM_WOM_OPEN waveout=%v\n", wo)
+	fmt.println(#procedure, wo)
 	return 0
 }
 
 MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	wo := get_waveout(wparam)
-	fmt.printf("MM_WOM_CLOSE waveout=%v\n", wo)
+	fmt.println(#procedure, wo)
 	win32app.close_application(hwnd)
 	return 0
 }
@@ -343,24 +341,24 @@ n_done := 0
 
 MM_WOM_DONE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//wo := get_waveout(wparam)
-	//fmt.printf("MM_WOM_DONE waveout=%v\n", wo)
+	//fmt.println(#procedure, wo)
 	WriteBuffer()
 	n_done += 1
 
-	//new_title := fmt.tprintf("%s %v\n", TITLE, n_done)
+	//new_title := fmt.tprintf("%s %v", TITLE, n_done)
 	//win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 
 	return 0
 }
 
 StopPlay :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_STOP_PLAY\n")
+	fmt.println(#procedure)
 	CloseFile()
 	return 0
 }
 
 PrepareNext :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.print("WM_PREPARE_NEXT_BUFFER\n")
+	fmt.println(#procedure)
 	return 0
 }
 
@@ -391,11 +389,11 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 list_audio_devices :: proc() {
 	num_devs := win32.waveOutGetNumDevs()
-	fmt.printf("Audio Devices (%d)\n", num_devs)
+	fmt.printfln("Audio Devices (%d)", num_devs)
 	woc: win32.WAVEOUTCAPSW
 	for i in 0 ..< num_devs {
 		if win32.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32.WAVEOUTCAPSW)) == 0 {
-			fmt.printf("Device ID #%d: '%s'\n", i, woc.szPname)
+			fmt.printfln("Device ID #%d: '%s'", i, woc.szPname)
 		}
 	}
 }

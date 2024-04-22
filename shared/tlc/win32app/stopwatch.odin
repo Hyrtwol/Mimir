@@ -88,7 +88,7 @@ create_stopwatch :: proc() -> stopwatch {
 /*@(init, private)
 _initialization :: proc() {
 	if win32.QueryPerformanceFrequency(cast(^win32.LARGE_INTEGER)&performance_frequency) {
-		// fmt.printf("QueryPerformanceFrequency: %v\n", performance_frequency)
+		// fmt.println("QueryPerformanceFrequency:", performance_frequency)
 		ticks_to_seconds = 1.0 / performance_frequency
 		ticks_to_millisecond = 1_000.0 / performance_frequency
 		ticks_to_timespan = 10_000_000.0 / performance_frequency

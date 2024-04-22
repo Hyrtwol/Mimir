@@ -16,25 +16,25 @@ main :: proc() {
 	obj := lw.lwGetObject(lwo_file, &fail_id, &fail_pos)
 	defer if obj != nil {lw.lwFreeObject(obj)}
 
-	fmt.printf("lwo %v\n", obj)
+	fmt.println("lwo:", obj)
 
 	for layer := obj.layer; layer != nil; layer = layer.next {
-		fmt.printf("layer %v\n", layer)
+		fmt.println("layer:", layer)
 
-		fmt.printf("  name %v\n", layer.name)
+		fmt.println("  name:", layer.name)
 
-		fmt.printf("  point.count:  %d\n", layer.point.count)
-		fmt.printf("  point.offset: %d\n", layer.point.offset)
+		fmt.println("  point.count:", layer.point.count)
+		fmt.println("  point.offset:", layer.point.offset)
 
 		point_cnt := layer.point.count
 		points := ([^]lw.lwPoint)(layer.point.pt)
 		for i in 0 ..< point_cnt {
-			//fmt.printf("  point[%d]: %v\n", i, points[i])
+			//fmt.printfln("  point[%d]: %v", i, points[i])
 			point := &points[i]
-			fmt.printf("  point[%d]:\n", i)
-			fmt.printf("    pos: %v\n", point^.pos)
-			fmt.printf("    npols: %d\n", point^.npols)
-			fmt.printf("    nvmaps: %d\n", point^.nvmaps)
+			fmt.printfln("  point[%d]:", i)
+			fmt.println("    pos:   ", point^.pos)
+			fmt.println("    npols: ", point^.npols)
+			fmt.println("    nvmaps:", point^.nvmaps)
 
 		}
 
@@ -42,13 +42,13 @@ main :: proc() {
 		polys := ([^]lw.lwPolygon)(layer.polygon.pol)
 		for i in 0 ..< poly_cnt {
 			poly := &polys[i]
-			fmt.printf("  polygon[%d]:\n", i)
-			fmt.printf("    part: %d\n", poly^.part)
-			fmt.printf("    smoothgrp: %d\n", poly^.smoothgrp)
-			fmt.printf("    flags: 0x%8X\n", poly^.flags)
-			fmt.printf("    type: 0x%8X\n", poly^.type)
-			fmt.printf("    norm: %v\n", poly^.norm)
-			fmt.printf("    nverts: %d\n", poly^.nverts)
+			fmt.printfln("  polygon[%d]:", i)
+			fmt.printfln("    part: %d", poly^.part)
+			fmt.printfln("    smoothgrp: %d", poly^.smoothgrp)
+			fmt.printfln("    flags: 0x%8X", poly^.flags)
+			fmt.printfln("    type: 0x%8X", poly^.type)
+			fmt.printfln("    norm: %v", poly^.norm)
+			fmt.printfln("    nverts: %d", poly^.nverts)
 		}
 	}
 

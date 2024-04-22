@@ -23,14 +23,14 @@ show_error_and_panic :: proc(msg: string, type: win32.UINT = win32.MB_ICONSTOP |
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
-	fmt.printfln("WM_CREATE %v", hwnd)
-	fmt.printfln("%v", pcs)
+	fmt.println(#procedure, hwnd)
+	fmt.printfln("%#v", pcs)
 	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.printfln("WM_DESTROY %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	hbrGray = nil
 	win32.PostQuitMessage(666) // exit code
 	return 0
@@ -43,7 +43,7 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	size := [2]i32{win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
-	fmt.printfln("WM_SIZE %v", size)
+	fmt.println(#procedure, size)
 	return 0
 }
 
@@ -61,24 +61,23 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
-
-
-// odinfmt: disable
-
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printf("WM_CHAR %4d 0x%4x 0x%4x 0x%4x\n", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	//fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", #procedure, wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	// odinfmt: disable
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
-	case '\t':		fmt.print("tab\n")
-	case '\r':		fmt.print("return\n")
+	case '\t':		fmt.println("tab")
+	case '\r':		fmt.println("return")
 	case 'm':		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
 	case 'p':		show_error_and_panic("Don't worry it's just a test!")
 	}
+	// odinfmt: enable
 	return 0
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
@@ -88,9 +87,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
-
-// odinfmt: enable
 
 main :: proc() {
 
@@ -132,7 +130,7 @@ main :: proc() {
 			size = {i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
 		}
 	}
-	fmt.printf("size %v\n", size)
+	fmt.println("size:", size)
 
 	position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
 	if CENTER {
@@ -141,22 +139,22 @@ main :: proc() {
 			position = (dm_size - size) / 2
 		}
 	}
-	fmt.printf("position %v\n", position)
+	fmt.println("position:", position)
 
 	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
 	if hwnd == nil {show_error_and_panic("CreateWindowEx failed")}
-	fmt.printf("hwnd %d\n", hwnd)
+	fmt.println("hwnd: ", hwnd)
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)
 
-	fmt.print("MainLoop\n")
+	fmt.println("MainLoop")
 	msg: win32.MSG
 	for win32.GetMessageW(&msg, nil, 0, 0) {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}
-
+	fmt.println("exit_code", msg.wParam)
 	assert(msg.wParam == 666)
 	os.exit(int(msg.wParam))
 }

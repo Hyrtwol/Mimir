@@ -1,5 +1,6 @@
 # Odin Dictionary Words
 amstrad
+aprintf
 bitmapinfo
 codepage
 coreclr
@@ -11,6 +12,7 @@ directx
 dword
 dxgi
 dynlib
+eprintfln
 eprintln
 erasebkgnd
 errorf
@@ -49,10 +51,12 @@ odinfmt
 ounit
 panicf
 pixelshader
+polyline
 printfln
 println
 proc
 rasterizer
+rawinput
 rawptr
 raycaster
 raylib

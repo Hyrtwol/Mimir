@@ -86,7 +86,7 @@ dib_noise2 :: proc(dib: ^canvas) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printfln("WM_CREATE %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	timer_id = win32.SetTimer(hwnd, win32app.IDT_TIMER1, 50, nil)
 	if timer_id == 0 {
 		win32app.show_error_and_panic("No timer")
@@ -103,7 +103,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printfln("WM_DESTROY %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	if timer_id != 0 {
 		if !win32.KillTimer(hwnd, timer_id) {win32.MessageBoxW(nil, L("Unable to kill timer"), L("Error"), win32.MB_OK)}
 	}
@@ -114,8 +114,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam(lparam)
-	title := fmt.tprintf("%s %v %v\n", settings.title, size, dib.canvas.size)
-	win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(title))
+	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }
 

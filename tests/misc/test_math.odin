@@ -129,7 +129,7 @@ find_epsilon_for_f64 :: proc(t: ^testing.T) {
 		next = epsilon / 2
 		oneplusnext = 1 + next
 	}
-	fmt.printf("epsilon = %e\n", epsilon)
+	fmt.printfln("epsilon = %e", epsilon)
 	testing.expect(t, math.F64_EPSILON == epsilon)
 }
 
@@ -146,7 +146,7 @@ find_epsilon_for_f32 :: proc(t: ^testing.T) // The AMD CPU finds the same epsilo
 		next = epsilon / 2
 		oneplusnext = 1 + next
 	}
-	fmt.printf("epsilon = %e\n", epsilon)
+	fmt.printfln("epsilon = %e", epsilon)
 	testing.expect(t, math.F32_EPSILON == epsilon)
 }
 
@@ -162,7 +162,7 @@ find_epsilon_for_f16 :: proc(t: ^testing.T) {
 		next = epsilon / 2
 		oneplusnext = 1 + next
 	}
-	fmt.printf("epsilon = %e\n", epsilon)
+	fmt.printfln("epsilon = %e", epsilon)
 	testing.expect(t, 4.8828120e-04 == epsilon)
 	//testing.expect(t, math.F16_EPSILON == epsilon) // fails as F16_EPSILON=0.00097656
 	testing.expect(t, math.F16_EPSILON == epsilon * 2)

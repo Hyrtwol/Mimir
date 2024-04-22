@@ -83,9 +83,9 @@ pixel_defines :: proc(t: ^testing.T) {
 		// p2 = z80d.MODE_1_P2(i)
 		// p3 = z80d.MODE_1_P3(i)
 		p = {z80d.MODE_1_P0(i),z80d.MODE_1_P1(i),z80d.MODE_1_P2(i),z80d.MODE_1_P3(i)}
-		//fmt.printf("P0: %2d %8b %8b %8b %8b\n", i, p.x, p.y, p.z, p.w)
-		//fmt.printf("P0: %2d %2d %2d %2d %2d\n", i, p.x, p.y, p.z, p.w)
-		fmt.printf("%8b %v\n", i, p)
+		//fmt.printfln("P0: %2d %8b %8b %8b %8b", i, p.x, p.y, p.z, p.w)
+		//fmt.printfln("P0: %2d %2d %2d %2d %2d", i, p.x, p.y, p.z, p.w)
+		fmt.printfln("%8b %v", i, p)
 	}
 }
 

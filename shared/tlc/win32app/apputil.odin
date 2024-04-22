@@ -181,6 +181,7 @@ get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {return (psett
 
 @(private = "file")
 create_window_settings_1 :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
+	fmt.println(#procedure)
 	settings: window_settings = {
 		title       = title,
 		window_size = size,
@@ -195,11 +196,13 @@ create_window_settings_1 :: proc(title: string, size: int2, wndproc: win32.WNDPR
 
 @(private = "file")
 create_window_settings_2 :: #force_inline proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
+	fmt.println(#procedure)
 	return create_window_settings_1(title, {width, height}, wndproc)
 }
 
 @(private = "file")
 create_window_settings_3 :: #force_inline proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
+	fmt.println(#procedure)
 	return create_window_settings_1(title, size, win32.WNDPROC(wndproc))
 }
 
@@ -423,3 +426,77 @@ get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psetting
 // 	pause:                   bool,
 // 	size:                    int2,
 // }
+
+show_cursor :: #force_inline proc "contextless" (show: bool) -> INT {
+	return win32.ShowCursor(win32.BOOL(show))
+}
+
+clip_cursor :: proc(hwnd: win32.HWND, clip: bool) -> (ok: bool) {
+	if clip {
+		rect: win32.RECT
+		ok = bool(win32.GetWindowRect(hwnd, &rect))
+		if ok {
+			ok = bool(win32.ClipCursor(&rect))
+		}
+	} else {
+		ok = bool(win32.ClipCursor(nil))
+	}
+	return
+}
+
+draw_marker :: proc(hdc: HDC, p: int2, size: i32 = 10) {
+	// win32.BeginPath(hdc)
+	win32.MoveToEx(hdc, p.x - size, p.y, nil)
+	win32.LineTo(hdc, p.x + size, p.y)
+	win32.MoveToEx(hdc, p.x, p.y - size, nil)
+	win32.LineTo(hdc, p.x, p.y + size)
+	// win32.EndPath(hdc)
+	// win32.StrokePath(hdc)
+}
+
+draw_grid :: proc(hdc: HDC, p, cell, dim: int2) {
+	// win32.BeginPath(hdc)
+	size := cell * dim
+	x, y: i32
+	for i in 0 ..< dim.x {
+		x = i * cell.x
+		win32.MoveToEx(hdc, x, 0, nil)
+		win32.LineTo(hdc, x, size.y)
+	}
+	for i in 0 ..< dim.y {
+		y = i * cell.y
+		win32.MoveToEx(hdc, 0, y, nil)
+		win32.LineTo(hdc, size.x, y)
+	}
+
+	// win32.EndPath(hdc)
+	// win32.StrokePath(hdc)
+}
+
+/*
+	ok: win32.BOOL
+	pts: [2]win32.POINT
+	pts[0] = {p.x - siz, p.y}
+	pts[1] = {p.x + siz, p.y}
+	ok = win32.Polyline(hdc, &pts[0], 2)
+	assert(ok == true, "Polyline")
+	pts[0] = {p.x, p.y - siz}
+	pts[1] = {p.x, p.y + siz}
+	ok = win32.Polyline(hdc, &pts[0], 2)
+	assert(ok == true, "Polyline")
+*/
+
+/*
+void Marker(LONG x, LONG y, HWND hwnd)
+{
+    HDC hdc;
+
+    hdc = GetDC(hwnd);
+        MoveToEx(hdc, (int) x - 10, (int) y, (LPPOINT) NULL);
+        LineTo(hdc, (int) x + 10, (int) y);
+        MoveToEx(hdc, (int) x, (int) y - 10, (LPPOINT) NULL);
+        LineTo(hdc, (int) x, (int) y + 10);
+
+    ReleaseDC(hwnd, hdc);
+}
+*/

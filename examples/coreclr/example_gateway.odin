@@ -10,11 +10,11 @@ import clr "shared:coreclr"
 CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.4"
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
-	if hr != .ok {fmt.printf("Error %v (0x%X8) @ %v\n", hr, u32(hr), loc)}
+	if hr != .ok {fmt.printfln("Error %v (0x%X8) @ %v", hr, u32(hr), loc)}
 }
 
 event_callback :: proc(ch: ^clr.clr_host, type: clr.event_type, hr: clr.error) {
-	fmt.printf("[%v] %v (%p,%p)\n", type, hr, ch.host, ch.hostHandle)
+	fmt.printfln("[%v] %v (%p,%p)", type, hr, ch.host, ch.hostHandle)
 }
 
 create_gateway_delegates :: proc(host: ^clr.clr_host, gateway: ^Gateway) -> (res: clr.error) {
@@ -30,21 +30,21 @@ create_gateway_delegates :: proc(host: ^clr.clr_host, gateway: ^Gateway) -> (res
 
 unmanaged_callback :: proc "c" (actionName: cstring, jsonArgs: cstring) -> bool {
 	context = runtime.default_context()
-	fmt.printf("Odin>> %s, %v\n", actionName, jsonArgs)
+	fmt.printfln("Odin>> %s, %v", actionName, jsonArgs)
 	return true
 }
 
 call_csharp :: proc(gateway: ^Gateway) {
 
 	f := gateway.Plus(13, 27)
-	fmt.printf("Plus=%v\n", f)
+	fmt.println("Plus:", f)
 
 	s := gateway.Bootstrap()
-	fmt.printf("Bootstrap=%v\n", s)
+	fmt.println("Bootstrap:", s)
 
-	fmt.print("ManagedDirectMethod\n")
+	fmt.println("ManagedDirectMethod")
 	ok := gateway.ManagedDirectMethod("funky", "json doc", unmanaged_callback)
-	fmt.printf("Result: '%v'\n", ok)
+	fmt.printfln("Result: '%v'", ok)
 }
 
 execute_clr_host :: proc(tpa: string) -> clr.error {
@@ -73,7 +73,7 @@ main :: proc() {
 	fmt.println(" -=< CoreCLR Host Demo >=- ")
 	tpa := clr.create_trusted_platform_assemblies(CORECLR_DIR, "../examples/coreclr")
 	clr.write_tpa("tpa.log", tpa)
-	hr := execute_clr_host(tpa)
-	fmt.printfln("exit %v\n", hr)
-	os.exit(int(hr))
+	exit_code := execute_clr_host(tpa)
+	fmt.println("Done.", exit_code)
+	os.exit(int(exit_code))
 }
