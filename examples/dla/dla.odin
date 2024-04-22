@@ -1,9 +1,9 @@
 // +vet
 // https://en.wikipedia.org/wiki/Diffusion-limited_aggregation
+// D:\dev\pascal\Delphi7\DLA\DLAMain.pas
 package dla
 
-// D:\dev\pascal\Delphi7\DLA\DLAMain.pas
-
+import "core:fmt"
 import "core:intrinsics"
 import "core:math/rand"
 import "core:time"
@@ -51,7 +51,7 @@ get_dude_move :: #force_inline proc "contextless" (dir: i32) -> int2 {
 }
 
 on_create :: proc(app: ca.papp) -> int {
-	//fmt.println("user_create:", app)
+	//fmt.println(#procedure, app)
 	for i in 0..<map_size {
 		_map[i] = 0
 	}
@@ -64,12 +64,11 @@ on_create :: proc(app: ca.papp) -> int {
 }
 
 on_destroy :: proc(app: ca.papp) -> int {
-	//fmt.println("on_destroy:", app)
+	//fmt.println(#procedure, app)
 	return 0
 }
 
 on_update :: proc(app: ca.papp) -> int {
-	//fmt.println("on_update:", app)
 	pc := &ca.dib.canvas
 	pp: ^int2
 	dir: int2

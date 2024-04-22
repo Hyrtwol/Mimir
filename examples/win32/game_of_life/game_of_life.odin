@@ -134,7 +134,6 @@ update_world :: #force_inline proc(world: ^World, next_world: ^World) {
 		for y: i32 = 0; y < world.height; y += 1 {
 			neighbors := count_neighbors(world, x, y)
 			index := y * world.width + x
-
 			switch neighbors {
 			case 2:
 				{next_world.alive[index] = world.alive[index]}
@@ -281,9 +280,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			app.tick += 1
 			if !app.pause {
 				update_world(app.world, app.next_world)
-
 				app.world, app.next_world = app.next_world, app.world
-
 				draw_world(app.pvBits, app.world)
 			}
 			win32app.redraw_window(hwnd)
@@ -315,12 +312,9 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-
-
-// odinfmt: disable
-
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
@@ -330,9 +324,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
+	// odinfmt: enable
 }
-
-// odinfmt: enable
 
 register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))

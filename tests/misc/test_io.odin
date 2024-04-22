@@ -112,14 +112,10 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 
 	slice.sort(new_words[:])
 
-	/*fmt.println("----")
-	for w in new_words {fmt.println(w)}
-	fmt.println("----")*/
-
 	fmt.printfln("writing %s", path)
-	fd, ferr := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
+	fd, fe := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
 	testing.expect(t, ferr == 0)
-	if ferr != 0 {return}
+	if fe != 0 {return}
 	defer os.close(fd)
 	os.write_string(fd, "# Odin Dictionary Words" + newline)
 	for w in new_words {

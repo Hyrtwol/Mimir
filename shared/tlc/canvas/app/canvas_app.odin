@@ -121,11 +121,10 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printfln("WM_TIMER %v %v", hwnd, wparam)
-	app := get_app(hwnd)
-	delta := stopwatch->get_delta_seconds()
-	fc := frame_counter
+	// app := get_app(hwnd)
+	fps = f64(frame_counter) / frame_time
 	frame_counter = 0
-	fps = f64(fc) / delta
+	frame_time = 0
 	set_window_text(hwnd)
 	//win32app.redraw_window(hwnd)
 	return 0
@@ -157,12 +156,18 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
+delta, frame_time : f64 = 0, 0
+
 run :: proc() {
 	settings.app = &app
 	//inst, atom, hwnd := win32app.prepare_run(&settings)
 	_, _, hwnd := win32app.prepare_run(&settings)
 	res: int
 	for win32app.pull_messages() {
+
+		delta = stopwatch->get_delta_seconds()
+		frame_time += delta
+
 		res = app.update(&app)
 		if res == 1 {
 			win32app.redraw_window(hwnd)

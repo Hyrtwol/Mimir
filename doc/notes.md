@@ -31,3 +31,4 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\SDK\ScopeCppSDK\vc15\SDK
 * <https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example>
 * <https://cezarypiatek.github.io/post/develop-vsextension-with-github-actions/>
 * <https://www.codeproject.com/articles/251892/guide-to-image-composition-with-win32-msimg32-dll>
+* <https://github.com/jmschrack/DDS-Image-Wrapper/blob/master/DDSImage.cs>

@@ -39,9 +39,9 @@ application :: struct {
 papp :: ^application
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	scrpos := win32app.decode_lparam(lparam) / ZOOM
-	scrpos.y = bitmap_size.y - 1 - scrpos.y
-	return scrpos
+	pos := win32app.decode_lparam(lparam) / ZOOM
+	pos.y = bitmap_size.y - 1 - pos.y
+	return pos
 }
 
 random_scrpos :: proc() -> win32app.int2 {
@@ -49,21 +49,20 @@ random_scrpos :: proc() -> win32app.int2 {
 }
 
 set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
-	i := pos.y * bitmap_size.x + pos.x
-	if i >= 0 && i < bitmap_count {
+	i := u32(pos.y * bitmap_size.x + pos.x)
+	if i < u32(bitmap_count) {
 		pvBits[i] = col
 	}
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.printfln("WM_CREATE %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	pcs := win32app.get_createstruct_from_lparam(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
 	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	app := papp(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	//fmt.printfln("WM_CREATE %v %v %v", hwnd, pcs, app)
 	win32app.set_settings(hwnd, settings)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
@@ -93,7 +92,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	fmt.printfln("WM_DESTROY %v", hwnd)
+	fmt.println(#procedure, hwnd)
 	settings := win32app.get_settings(hwnd)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	app := settings.app
@@ -113,12 +112,12 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 }
 
 WM_SETFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
-	fmt.printfln("WM_SETFOCUS %v %v", hwnd, wparam)
+	fmt.println(#procedure, hwnd, wparam)
 	return 0
 }
 
 WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
-	fmt.printfln("WM_KILLFOCUS %v %v", hwnd, wparam)
+	fmt.println(#procedure, hwnd, wparam)
 	return 0
 }
 
@@ -263,5 +262,5 @@ main :: proc() {
 	win32app.run(&settings)
 
 	stopwatch->stop()
-	fmt.printfln("Done! (%fs)", stopwatch->get_delta_seconds())
+	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())
 }

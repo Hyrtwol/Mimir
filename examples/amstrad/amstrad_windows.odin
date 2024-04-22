@@ -163,18 +163,18 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if app == nil {return 0}
 
 	ps: win32.PAINTSTRUCT
-	win32.BeginPaint(hwnd, &ps)
+	hdc := win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
 
 	if (app.hbitmap != nil) {
-		hdc_source := win32.CreateCompatibleDC(ps.hdc)
+		hdc_source := win32.CreateCompatibleDC(hdc)
 		defer win32.DeleteDC(hdc_source)
 
 		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
 		client_size := win32app.get_rect_size(&ps.rcPaint)
-		//win32.BitBlt(ps.hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hdc_source, 0, 0, win32.SRCCOPY)
-		//win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
-		win32.StretchBlt(ps.hdc, SOX, SOY, SCREEN_WIDTH, SCREEN_HEIGHT * 2, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
+		//win32.BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hdc_source, 0, 0, win32.SRCCOPY)
+		//win32.StretchBlt(hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
+		win32.StretchBlt(hdc, SOX, SOY, SCREEN_WIDTH, SCREEN_HEIGHT * 2, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
 	}
 
 	return 0
@@ -186,9 +186,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		app := get_app(hwnd)
 		if app != nil {
 			app.tick += 1
-
 			if put_chars {update_screen_3(app)}
-
 			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 		}
 	case:

@@ -12,6 +12,7 @@ directx
 dword
 dxgi
 dynlib
+eprintf
 eprintfln
 eprintln
 erasebkgnd
@@ -31,6 +32,7 @@ hlsl
 hresult
 hwnd
 imag
+kbps
 killfocus
 libfmodex
 lightwave
@@ -45,6 +47,7 @@ memset
 metaprogramming
 microarch
 microui
+miniaudio
 mipmaps
 newtek
 odinfmt
@@ -86,6 +89,7 @@ unorm
 userdata
 ushort
 viewports
+vorbis
 waprintf
 waprintfln
 wasmtime

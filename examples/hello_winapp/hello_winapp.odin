@@ -22,8 +22,8 @@ show_error_and_panic :: proc(msg: string, type: win32.UINT = win32.MB_ICONSTOP |
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	fmt.println(#procedure, hwnd)
+	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	fmt.printfln("%#v", pcs)
 	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
 	return 0
