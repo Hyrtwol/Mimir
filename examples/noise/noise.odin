@@ -110,7 +110,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc_target := win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
@@ -152,7 +152,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:    return WM_DESTROY(hwnd, wparam, lparam)
 	case win32.WM_ERASEBKGND: return 1
 	case win32.WM_SIZE:       return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:      return WM_PAINT(hwnd, wparam, lparam)
+	case win32.WM_PAINT:      return WM_PAINT(hwnd)
 	case win32.WM_TIMER:      return WM_TIMER(hwnd, wparam, lparam)
 	case win32.WM_CHAR:       return WM_CHAR(hwnd, wparam, lparam)
 	case:                     return win32.DefWindowProcW(hwnd, msg, wparam, lparam)

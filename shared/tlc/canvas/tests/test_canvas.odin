@@ -1,9 +1,9 @@
-package test_tlc
+package test_canvas
 
 import "core:testing"
 import win32 "core:sys/windows"
 import o "shared:ounit"
-import cv "libs:tlc/canvas"
+import cv ".."
 
 expect_value :: proc(t: ^testing.T, act: cv.byte4, exp: cv.byte4, loc := #caller_location) {
 	testing.expectf(t, act == exp, "%v (should be: %v)", act, exp, loc = loc)

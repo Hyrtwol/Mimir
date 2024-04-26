@@ -12,7 +12,7 @@ mem_size :: 0x10000
 running: bool = false
 
 zstate :: struct {
-	memory: []z80.zuint8
+	memory: []z80.zuint8,
 }
 zcontext :: ^zstate
 
@@ -112,7 +112,7 @@ main :: proc() {
 	fmt.println("Z80 Emulator")
 
 	state: zstate = {
-		memory = make([]z80.zuint8, mem_size)
+		memory = make([]z80.zuint8, mem_size),
 	}
 	defer delete(state.memory)
 

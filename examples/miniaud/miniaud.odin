@@ -8,9 +8,9 @@ import "core:time"
 import ma "vendor:miniaudio"
 
 //AUDIO_FORMAT :: ma.encoding_format.wav
-//AUDIO_FORMAT :: ma.encoding_format.flac
+AUDIO_FORMAT :: ma.encoding_format.flac
 //AUDIO_FORMAT :: ma.encoding_format.mp3
-AUDIO_FORMAT :: ma.encoding_format.vorbis
+//AUDIO_FORMAT :: ma.encoding_format.vorbis
 
 // 0 - Use native channel count of the device
 AUDIO_CHANNELS :: 0
@@ -54,7 +54,7 @@ main :: proc() {
 	sound_result := ma.sound_init_from_data_source(pEngine = &engine, pDataSource = decoder.ds.pCurrent, flags = 0, pGroup = nil, pSound = &sound)
 	if sound_result != .SUCCESS {fmt.panicf("failed to init sound file from memory: %v", sound_result)}
 
-	fmt.println("Playing", encoding_format)
+	fmt.println("Playing", decoder_config.encodingFormat)
 	ma.sound_start(&sound)
 	time.sleep(time.Millisecond * 1500)
 	fmt.println("Done.")

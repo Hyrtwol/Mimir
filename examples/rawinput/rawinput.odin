@@ -86,7 +86,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 pen_color: u32 = 0x80808080
 
-WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc := win32.BeginPaint(hwnd, &ps)
 	if hdc == nil {return 1}
@@ -232,7 +232,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:		return WM_PAINT(hwnd, wparam, lparam)
+	case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
 	//case win32.WM_ACTIVATE: return WM_ACTIVATE(hwnd, wparam, lparam)
 	case win32.WM_SETFOCUS:		return wm_focus(hwnd, wparam, true)

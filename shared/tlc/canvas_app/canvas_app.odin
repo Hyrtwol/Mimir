@@ -120,7 +120,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printfln("WM_TIMER %v %v", hwnd, wparam)
+	//fmt.println(#procedure, hwnd, wparam)
 	// app := get_app(hwnd)
 	fps = f64(frame_counter) / frame_time
 	frame_counter = 0

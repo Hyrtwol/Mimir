@@ -1,14 +1,14 @@
+// +vet
 package main
 
 import          "core:fmt"
 import          "core:intrinsics"
 import          "core:math"
-import          "core:math/noise"
 import          "core:runtime"
 import win32	"core:sys/windows"
+import fmod		"shared:fmodex"
 import			"libs:tlc/win32app"
 import cv		"libs:tlc/canvas"
-import fmod		"shared:fmodex"
 import			"libs:tlc/wolf"
 
 L :: intrinsics.constant_utf16_cstring
@@ -247,9 +247,9 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 		set_dot(pos, cv.COLOR_GREEN)
 		win32.InvalidateRect(hwnd, nil, false)
 	case 4:
-		fmt.printfln("input %v %d", decode_scrpos(lparam), wparam)
+		fmt.printfln("input %d %v", wparam, decode_scrpos(lparam))
 	case:
-	//fmt.printfln("input %v %d", decode_scrpos(lparam), wparam)
+	//fmt.printfln("input %d %v", wparam, decode_scrpos(lparam))
 	}
 	return 0
 }
@@ -261,7 +261,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_PAINT:		return cv.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
+	case win32.WM_PAINT:		return win32app.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)

@@ -500,3 +500,18 @@ void Marker(LONG x, LONG y, HWND hwnd)
     ReleaseDC(hwnd, hdc);
 }
 */
+
+@(private)
+select_object_hgdiobj :: #force_inline proc "contextless" (hdc: win32.HDC, hgdiobj: win32.HGDIOBJ) -> win32.HGDIOBJ {
+	return win32.SelectObject(hdc, hgdiobj)
+}
+
+@(private)
+select_object_hbitmap :: #force_inline proc "contextless" (hdc: win32.HDC, hbitmap: win32.HBITMAP) -> win32.HGDIOBJ {
+	return select_object_hgdiobj(hdc, win32.HGDIOBJ(hbitmap))
+}
+
+select_object :: proc {
+	select_object_hgdiobj,
+	select_object_hbitmap,
+}
