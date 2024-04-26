@@ -1,13 +1,13 @@
 // +build windows
 // +vet
-package canvas
+package win32app
 
 import "core:intrinsics"
 import win32 "core:sys/windows"
-import win32app "libs:tlc/win32app"
+import cv "libs:tlc/canvas"
 
 DIB :: struct {
-	#subtype canvas: canvas,
+	#subtype canvas: cv.canvas,
 	hbitmap: win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
 }
 
@@ -15,7 +15,7 @@ DIB :: struct {
 dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
 	dib.hbitmap = win32.CreateDIBSection(hdc, pbmi, win32.DIB_RGB_COLORS, &dib.canvas.pvBits, nil, 0)
 	if dib.hbitmap == nil || dib.canvas.pvBits == nil {
-		canvas_zero(&dib.canvas)
+		cv.canvas_zero(&dib.canvas)
 	}
 }
 
@@ -40,7 +40,7 @@ dib_free_section :: proc(dib: ^DIB) {
 		win32.DeleteObject(win32.HGDIOBJ(dib.hbitmap))
 	}
 	dib.hbitmap = nil
-	canvas_zero(&dib.canvas)
+	cv.canvas_zero(&dib.canvas)
 }
 
 dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
@@ -49,14 +49,14 @@ dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		biWidth         = size.x,
 		biHeight        = -size.y, // minus for top-down
 		biPlanes        = 1,
-		biBitCount      = color_bit_count,
+		biBitCount      = cv.color_bit_count,
 		biCompression   = win32.BI_RGB,
 		biSizeImage     = 0,
 		biClrImportant  = 0,
 		biClrUsed       = 0,
 	}
 	dib := DIB {
-		canvas = {size = transmute(uint2)size, pixel_count = size.x * size.y},
+		canvas = {size = transmute(cv.uint2)size, pixel_count = size.x * size.y},
 	}
 	dib_create_section(&dib, hdc, &bmp_header)
 	return dib
@@ -68,7 +68,7 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		bV5Width         = size.x,
 		bV5Height        = -size.y, // minus for top-down
 		bV5Planes        = 1,
-		bV5BitCount      = color_bit_count,
+		bV5BitCount      = cv.color_bit_count,
 		bV5Compression   = win32.BI_BITFIELDS,
 		bV5RedMask       = 0x000000FF,
 		bV5GreenMask     = 0x0000FF00,
@@ -76,7 +76,7 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 		bV5AlphaMask     = 0xFF000000,
 	}
 	dib := DIB {
-		canvas = {size = transmute(uint2)size, pixel_count = size.x * size.y},
+		canvas = {size = transmute(cv.uint2)size, pixel_count = size.x * size.y},
 	}
 	dib_create_section(&dib, hdc, &bmp_v5_header)
 	return dib
@@ -94,7 +94,7 @@ wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ
 	defer win32.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, hgdiobj)
-	client_size := win32app.get_rect_size(&ps.rcPaint)
+	client_size := get_rect_size(&ps.rcPaint)
 	ok := win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, size.x, size.y, win32.SRCCOPY)
 
 	return ok ? 0 : 3

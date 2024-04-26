@@ -16,7 +16,7 @@ int2 :: cv.int2
 double2 :: [2]f64
 double3 :: [3]f64
 
-DIB :: cv.DIB
+DIB :: win32app.DIB
 canvas	:: cv.canvas
 
 TITLE :: "Flames"
@@ -146,7 +146,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = cv.dib_create_v5(hdc, {WIDTH, HEIGHT})
+	dib = win32app.dib_create_v5(hdc, {WIDTH, HEIGHT})
 	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
 	cv.canvas_clear(&dib, {0, 0, 0, 255})
 
@@ -157,7 +157,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	cv.dib_free_section(&dib)
+	win32app.dib_free_section(&dib)
 	win32app.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
 	win32app.post_quit_message(0)
@@ -210,7 +210,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:     return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:  return 1
 	case win32.WM_SIZE:        return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:       return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
+	case win32.WM_PAINT:       return win32app.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
 	case win32.WM_CHAR:        return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:       return WM_TIMER(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:   return handle_input(hwnd, wparam, lparam)

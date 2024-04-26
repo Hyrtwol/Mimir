@@ -19,7 +19,7 @@ HEIGHT :: WIDTH
 
 settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
 
-dib: cv.DIB
+dib: win32app.DIB
 selected_color: i32 = 1
 cols := cv.C64_COLORS
 
@@ -58,7 +58,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = cv.dib_create_v5(hdc, client_size / ZOOM)
+	dib = win32app.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
 		cv.canvas_clear(&dib, cols[0])
 	}
@@ -72,7 +72,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if cursor_state < 1 {
 		show_cursor(true)
 	}
-	cv.dib_free_section(&dib)
+	win32app.dib_free_section(&dib)
 	win32app.post_quit_message()
 	return 0
 }

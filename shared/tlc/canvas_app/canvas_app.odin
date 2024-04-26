@@ -11,7 +11,7 @@ TimerTickPS :: 5
 
 int2 :: cv.int2
 color: cv.color
-dib: cv.DIB
+dib: win32app.DIB
 
 settings: win32app.window_settings = {
 	window_size = {640, 480},
@@ -75,7 +75,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = cv.dib_create_v5(hdc, app.size)
+	dib = win32app.dib_create_v5(hdc, app.size)
 	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
 	cv.canvas_clear(&dib, cv.COLOR_BLACK)
 
@@ -92,7 +92,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	app.destroy(app)
-	cv.dib_free_section(&dib)
+	win32app.dib_free_section(&dib)
 	win32app.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
 	win32app.post_quit_message(0)
@@ -134,7 +134,7 @@ frame_counter := 0
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	frame_counter += 1
-	return cv.wm_paint_dib(hwnd, dib.hbitmap, transmute(cv.int2)dib.canvas.size)
+	return win32app.wm_paint_dib(hwnd, dib.hbitmap, transmute(cv.int2)dib.canvas.size)
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {

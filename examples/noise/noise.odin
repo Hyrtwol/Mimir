@@ -14,7 +14,7 @@ int2    :: [2]i32 //cv.int2
 float2  :: [2]f32 //cv.float2
 double2 :: [2]f64 //cv.double2
 double3 :: [3]f64 //cv.double3
-DIB     :: cv.DIB
+DIB     :: win32app.DIB
 canvas  :: cv.canvas
 
 TITLE   :: "Noise"
@@ -88,7 +88,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 50)
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
-	dib = cv.dib_create_v5(hdc, win32app.get_client_size(hwnd) / ZOOM)
+	dib = win32app.dib_create_v5(hdc, win32app.get_client_size(hwnd) / ZOOM)
 	if dib.canvas.pvBits != nil {
 		cv.canvas_clear(&dib, {50, 150, 100, 255})
 	} else {
@@ -99,7 +99,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	win32app.kill_timer(hwnd, &timer_id)
-	cv.dib_free_section(&dib)
+	win32app.dib_free_section(&dib)
 	win32app.post_quit_message(0)
 	return 0
 }

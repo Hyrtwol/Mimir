@@ -13,7 +13,7 @@ _ :: mud
 
 ZOOM :: 4
 
-DIB :: cv.DIB
+DIB :: win32app.DIB
 canvas :: cv.canvas
 
 application :: struct {
@@ -22,7 +22,7 @@ application :: struct {
 	log_buf_len:     int,
 	log_buf_updated: bool,
 	bg:              mu.Color,
-	atlas_texture:   cv.DIB,
+	atlas_texture:   win32app.DIB,
 }
 papp :: ^application
 

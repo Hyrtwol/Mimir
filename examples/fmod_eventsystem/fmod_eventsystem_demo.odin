@@ -30,7 +30,7 @@ bitmap_count  : i32
 pvBits        : screen_buffer
 pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
-//dib           : cv.DIB
+//dib           : win32app.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
