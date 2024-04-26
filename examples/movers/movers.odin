@@ -5,7 +5,7 @@ import "core:intrinsics"
 import "core:math/rand"
 import "core:time"
 import cv "libs:tlc/canvas"
-import ca "libs:tlc/canvas/app"
+import ca "libs:tlc/canvas_app"
 
 int2 :: cv.int2
 byte4 :: cv.byte4
@@ -34,6 +34,7 @@ on_create :: proc(app: ca.papp) -> int {
 	size := ca.dib.canvas.size
 	for &d in dudes {
 		d.pos = cv.random_position(size, &rng)
+		//d.pos = transmute(int2) (size / 2)
 		d.col = cv.random_color(&rng)
 	}
 	return 0

@@ -2,6 +2,7 @@
 package main
 
 import "core:fmt"
+import "core:time"
 import "libs:tlc/wolf"
 import fmod "shared:fmodex"
 
@@ -92,7 +93,7 @@ main :: proc() {
 	res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 	if res == .FMOD_ERR_OUTPUT_CREATEBUFFER {
 		fmt.println("ERR_OUTPUT_CREATEBUFFER Switch it back to stereo...")
-		res = fmod.FMOD_System_SetSpeakerMode(system, fmod.FMOD_SPEAKERMODE.FMOD_SPEAKERMODE_STEREO)
+		res = fmod.FMOD_System_SetSpeakerMode(system, .FMOD_SPEAKERMODE_STEREO)
 		// Ok, the speaker mode selected isn't supported by this soundcard.  Switch it back to stereo...
 		res = fmod.FMOD_EventSystem_Init(eventsys, 32, init_flags, nil, fmod.FMOD_EVENT_INIT_NORMAL)
 		// Replace with whatever channel count and flags you use!
@@ -134,16 +135,13 @@ main :: proc() {
 	velocity := fmod.FMOD_VECTOR{0, 0, 0}
 	fmod.FMOD_Event_Set3DAttributes(event, &position, &velocity, nil)
 
-	/*
+
 	res = fmod.FMOD_Event_Start(event)
 	if res != .FMOD_OK {
 		fmt.eprintln("FMOD_EventSystem_Load", res)
 		return
 	}
-	{
-		ch: [1]byte
-		os.read(os.stdin, ch[:])
-	}
-	*/
+
+	time.sleep(time.Millisecond * 1000)
 	fmt.println("Done.")
 }

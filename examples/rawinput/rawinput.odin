@@ -84,7 +84,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-pen_color : u32 = 0x80808080
+pen_color: u32 = 0x80808080
 
 WM_PAINT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
@@ -186,10 +186,10 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 				}
 			}
 			switch put_it {
-				case 1:
-					set_dot(mouse_pos / ZOOM, cols[selected_color])
-				case 2:
-					set_dot(mouse_pos / ZOOM, cols[0])
+			case 1:
+				set_dot(mouse_pos / ZOOM, cols[selected_color])
+			case 2:
+				set_dot(mouse_pos / ZOOM, cols[0])
 			}
 
 			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)

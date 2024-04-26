@@ -15,26 +15,26 @@ canvas :: struct {
 	pixel_count: i32,
 }
 
-canvas_zero :: #force_inline proc "contextless" (c: ^canvas) {
-	c.pvBits = nil
-	c.size = {0, 0}
-	c.pixel_count = 0
+canvas_zero :: #force_inline proc "contextless" (cv: ^canvas) {
+	cv.pvBits = nil
+	cv.size = {0, 0}
+	cv.pixel_count = 0
 }
 
-canvas_clear :: #force_inline proc "contextless" (c: ^canvas, col: byte4) {
-	fill_screen(c.pvBits, c.pixel_count, col)
+canvas_clear :: #force_inline proc "contextless" (cv: ^canvas, col: byte4) {
+	fill_screen(cv.pvBits, cv.pixel_count, col)
 }
 
 @(private)
-canvas_set_dot_uint2 :: #force_inline proc "contextless" (c: ^canvas, p: uint2, col: byte4) {
-	if p.x < c.size.x && p.y < c.size.y {
-		c.pvBits[p.y * c.size.x + p.x] = col
+canvas_set_dot_uint2 :: #force_inline proc "contextless" (cv: ^canvas, pos: uint2, col: byte4) {
+	if pos.x < cv.size.x && pos.y < cv.size.y {
+		cv.pvBits[pos.y * cv.size.x + pos.x] = col
 	}
 }
 
 @(private)
-canvas_set_dot_int2 :: #force_inline proc "contextless" (c: ^canvas, pos: int2, col: byte4) {
-	canvas_set_dot_uint2(c, transmute(uint2)pos, col)
+canvas_set_dot_int2 :: #force_inline proc "contextless" (cv: ^canvas, pos: int2, col: byte4) {
+	canvas_set_dot_uint2(cv, transmute(uint2)pos, col)
 }
 
 canvas_set_dot :: proc {
@@ -53,9 +53,9 @@ color_fade_to_black :: #force_inline proc "contextless" (cp: ^color) {
 }
 
 @(private)
-canvas_fade_to_black :: proc(c: ^canvas) {
-	cc := c.pixel_count
-	bp := c.pvBits
+canvas_fade_to_black :: proc(cv: ^canvas) {
+	cc := cv.pixel_count
+	bp := cv.pvBits
 	for i in 0 ..< cc {
 		color_fade_to_black(&bp[i])
 	}

@@ -307,7 +307,7 @@ main :: proc() {
 		fmt.eprintln("FMOD_System_GetDriverCaps:", res)
 		return
 	}
-	fmt.println("caps:", driver_caps)
+	fmt.println("DriverCaps:", driver_caps, output_rate, speaker_mode)
 
 	res = fmod.FMOD_System_SetSpeakerMode(system, speaker_mode)
 	if .HARDWARE_EMULATED in driver_caps {
@@ -344,9 +344,6 @@ main :: proc() {
 		return
 	}
 
-	//name := "WolfensteinSFX.fev"
-	//c_str := strings.clone_to_cstring(name, context.temp_allocator)
-	//res = fmod.FMOD_EventSystem_Load(eventsys, c_str, nil, nil)
 	res = fmod.FMOD_EventSystem_Load(eventsys, "WolfensteinSFX.fev", nil, nil)
 	if res != .FMOD_OK {
 		fmt.eprintln("FMOD_EventSystem_Load:", res)

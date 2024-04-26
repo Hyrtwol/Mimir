@@ -51,6 +51,7 @@ miniaudio
 mipmaps
 newtek
 odinfmt
+origo
 ounit
 panicf
 pixelshader

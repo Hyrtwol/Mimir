@@ -2,7 +2,7 @@ package test_tlc
 
 import "core:testing"
 import win32 "core:sys/windows"
-import o "libs:ounit"
+import o "shared:ounit"
 import cv "libs:tlc/canvas"
 
 expect_value :: proc(t: ^testing.T, act: cv.byte4, exp: cv.byte4, loc := #caller_location) {
@@ -21,6 +21,8 @@ verify_c64_colors :: proc(t: ^testing.T) {
 	o.expect_value(t, len(cv.C64_COLORS), 16)
 	expect_value(t, cv.C64_BLACK			, cv.byte4{0x00, 0x00, 0x00, 0xFF})
 	expect_value(t, cv.C64_WHITE			, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
+	expect_value(t, cv.get_color_c64(.BLACK), cv.byte4{0x00, 0x00, 0x00, 0xFF})
+	expect_value(t, cv.get_color_c64(.WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 }
 
 @(test)
@@ -37,4 +39,10 @@ verify_amstrad_colors :: proc(t: ^testing.T) {
 	expect_value(t, cv.AMSTRAD_MAGENTA  	, cv.W95_PURPLE)
 
 	expect_value(t, cv.AMSTRAD_GREEN		, cv.W95_GREEN)
+
+	expect_value(t, cv.get_color(cv.AMSTRAD_COLOR.BLACK), cv.byte4{0x00, 0x00, 0x00, 0xFF})
+	expect_value(t, cv.get_color(cv.AMSTRAD_COLOR.BRIGHT_WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
+
+	expect_value(t, cv.get_color_amstrad(.BLACK), cv.byte4{0x00, 0x00, 0x00, 0xFF})
+	expect_value(t, cv.get_color_amstrad(.BRIGHT_WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 }

@@ -6,8 +6,7 @@ import "core:intrinsics"
 import "core:math/rand"
 import "core:time"
 import cv "libs:tlc/canvas"
-import ca "libs:tlc/canvas/app"
-//import win32app "libs:tlc/win32app"
+import ca "libs:tlc/canvas_app"
 
 WIDTH: i32 : 320
 HEIGHT: i32 : WIDTH * 3 / 4
@@ -34,10 +33,16 @@ rng := rand.create(u64(intrinsics.read_cycle_counter()))
 // }
 
 pics := #load("pics.dat")
-pics_w, pics_h: i32 = 64, 64
-pics_ps: i32 = size_of(cv.byte4)
-pics_size := pics_w * pics_h * pics_ps
+pics_w, pics_h: i32 : 64, 64
+pics_ps: i32 : size_of(cv.byte4)
+pics_size: i32 : pics_w * pics_h * pics_ps
 pics_count := i32(len(pics)) / pics_size
+pics_buf_size :: pics_w * pics_h
+pics_buf :: [pics_buf_size]cv.byte4
+#assert(pics_ps == 4)
+#assert(pics_size == 16384)
+#assert(pics_buf_size == 4096)
+#assert(size_of(pics_buf) == 16384)
 
 xo: i32 = 0
 po: i32 = rand.int31_max(pics_count, &rng)
@@ -58,10 +63,14 @@ on_destroy :: proc(app: ca.papp) -> int {
 	return 0
 }
 
-xof : f64 = 0
+xof: f64 = 0
 
 on_update :: proc(app: ca.papp) -> int {
 	xof += ca.delta * 64
+	if xof >= f64(256 + pics_w) {
+		xof = f64(-pics_w)
+		po += 1
+	}
 	xo = i32(xof)
 
 	pc := &ca.dib.canvas
@@ -97,19 +106,15 @@ on_update :: proc(app: ca.papp) -> int {
 	// 	xo = -pics_w
 	// 	po += 1
 	//}
-	if xof >= f64(256 + pics_w) {
-		xof = f64(-pics_w)
-		po += 1
-	}
 
-	time.sleep(time.Millisecond)
+	time.sleep(time.Millisecond * 10)
 
 	return 1 // repaint
 }
 
 main :: proc() {
 	fmt.println("Raycaster")
-	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", pics_count, pics_w, pics_w, pics_ps*8, pics_size, pics_count * pics_size)
+	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", pics_count, pics_w, pics_w, pics_ps * 8, pics_size, pics_count * pics_size)
 	ca.app.size = {WIDTH, HEIGHT}
 	ca.app.create = on_create
 	ca.app.update = on_update

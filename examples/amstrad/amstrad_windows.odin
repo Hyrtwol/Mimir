@@ -102,6 +102,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	}
 
 	//fill_screen_with_image(app)
+	if app.pvBits != nil {
+		intrinsics.mem_copy(app.pvBits, &memory[0xC000], size_16kb)
+	}
 
 	app.timer_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
 
@@ -215,30 +218,30 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	vkCode := win32.LOWORD(wparam) // virtual-key code
-	keyFlags := win32.HIWORD(lparam)
-	scanCode := win32.WORD(win32.LOBYTE(keyFlags)) // scan code
-	isExtendedKey := (keyFlags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
-	if isExtendedKey {scanCode = win32.MAKEWORD(scanCode, 0xE0)}
-	wasKeyDown := (keyFlags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
-	repeatCount := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
-	isKeyReleased := (keyFlags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
+	vk_code := win32.LOWORD(wparam) // virtual-key code
+	key_flags := win32.HIWORD(lparam)
+	scan_code := win32.WORD(win32.LOBYTE(key_flags)) // scan code
+	is_extended_key := (key_flags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
+	if is_extended_key {scan_code = win32.MAKEWORD(scan_code, 0xE0)}
+	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
+	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
+	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
-	switch (vkCode)
+	switch (vk_code)
 	{
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
 	case win32.VK_MENU:
 		// converts to VK_LMENU or VK_RMENU
-		vkCode = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scanCode), win32.MAPVK_VSC_TO_VK_EX))
+		vk_code = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scan_code), win32.MAPVK_VSC_TO_VK_EX))
 		break
 	}
 
-	switch vkCode {
+	switch vk_code {
 	case win32.VK_ESCAPE:
-		if isKeyReleased {win32app.close_application(hwnd)}
+		if is_key_released {win32app.close_application(hwnd)}
 	case win32.VK_F1:
-		if isKeyReleased {put_chars ~= true}
+		if is_key_released {put_chars ~= true}
 	case win32.VK_F2:
 		app := get_app(hwnd)
 		if app == nil {return 1}
@@ -255,7 +258,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 		fmt.printfln("pc=%d", app.cpu.pc)
 	case win32.VK_F9:
 		print_info()
-	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vkCode, keyFlags, scanCode, isExtendedKey, wasKeyDown, isKeyReleased)
+	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
 	return 0
 }

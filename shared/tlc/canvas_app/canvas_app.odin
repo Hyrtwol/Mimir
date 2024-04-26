@@ -1,10 +1,10 @@
 package canvas_app
 
-import cv ".."
 import "core:fmt"
 import "core:intrinsics"
 import "core:runtime"
 import win32 "core:sys/windows"
+import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
 TimerTickPS :: 5
@@ -108,7 +108,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	return 0
 }
 
-set_window_text :: #force_inline proc (hwnd: win32.HWND) {
+set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
 }
 
@@ -156,7 +156,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-delta, frame_time : f64 = 0, 0
+delta, frame_time: f64 = 0, 0
 
 run :: proc() {
 	settings.app = &app

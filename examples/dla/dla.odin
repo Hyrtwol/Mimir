@@ -5,37 +5,41 @@ package dla
 
 import "core:fmt"
 import "core:intrinsics"
+import "core:math"
 import "core:math/rand"
 import "core:time"
 import cv "libs:tlc/canvas"
-import ca "libs:tlc/canvas/app"
+import ca "libs:tlc/canvas_app"
 
 int2 :: cv.int2
 uint2 :: cv.uint2
 byte4 :: cv.byte4
 
-WIDTH: i32 : 256 * 2
-HEIGHT: i32 : WIDTH
 ZOOM :: 2
+WIDTH: i32 : (512 * 2) / ZOOM
+HEIGHT: i32 : WIDTH
 FPS :: 20
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
 point_count :: 50000
 
-world_radius :: WIDTH
+world_radius :: u32(WIDTH)
+world_radius_mask :: world_radius - 1
 rh :: world_radius / 2
 rl :: (world_radius - 4) / 2
 rm :: world_radius - 2
 
-rofs := 10
+rofs: i32 = 10
 
 map_size :: world_radius * world_radius
 //map_: [world_radius][world_radius]u8
-_map: [map_size]u8
-bmp: rawptr //TBitmap32; //lcBitmap;
+dla_map: [map_size]u8
+bmp: rawptr
 cnt: i32
 maxrad, maxrad2, maxrad3: i32
+//origo := int2{i32(rh), i32(rh)}
+origo := uint2{u32(rh), u32(rh)}
 
 dude_count :: 2 * 100
 dude :: struct {
@@ -44,20 +48,64 @@ dude :: struct {
 }
 dudes: [dude_count]dude
 
-get_dude_move :: #force_inline proc "contextless" (dir: i32) -> int2 {
-	// U{0,+1} R{+1,0} D{0,-1} L{-1,0}
-	@static dude_moves: [5]i32 = {0, 1, 0, -1, 0}
-	return ((^int2)(&dude_moves[dir & 3]))^
+map_set_dot :: #force_inline proc "contextless" (pos: uint2, val: u8) {
+	if pos.x < world_radius && pos.y < world_radius {
+		dla_map[pos.y * world_radius + pos.x] = val
+	}
 }
+map_get_dot :: #force_inline proc "contextless" (x, y: u32) -> u8 {
+	if x < world_radius && y < world_radius {
+		return dla_map[y * world_radius + x]
+	}
+	return 0
+}
+
+map_is_free :: #force_inline proc "contextless" (x, y: u32) -> bool {
+	if x < world_radius && y < world_radius {
+		return dla_map[y * world_radius + x] == 0
+	}
+	return true
+}
+
+map_check_free :: #force_inline proc "contextless" (x, y: u32) -> bool {
+	// odinfmt: disable
+	return map_is_free(x+1,y+1) &&	map_is_free(x  ,y+1) &&	map_is_free(x-1,y+1) &&
+	       map_is_free(x+1,y  ) &&	                        map_is_free(x-1,y  ) &&
+	       map_is_free(x+1,y-1) &&	map_is_free(x  ,y-1) &&	map_is_free(x-1,y-1)
+	// odinfmt: enable
+}
+
+random_position :: #force_inline proc(r: ^rand.Rand) -> int2 {
+	//return {(rand.int31_max(i32(dim.x), r)), (rand.int31_max(i32(dim.y), r))}
+	theta := rand.float32(r) * math.PI * 2
+	x, y := math.cos(theta) * f32(maxrad), math.sin(theta) * f32(maxrad)
+	x, y = math.round(x), math.round(y)
+	return int2{i32(x), i32(y)} + transmute(int2)origo
+}
+
 
 on_create :: proc(app: ca.papp) -> int {
 	//fmt.println(#procedure, app)
-	for i in 0..<map_size {
-		_map[i] = 0
+	pc := &ca.dib.canvas
+	for i in 0 ..< map_size {
+		dla_map[i] = 0
 	}
-	size := ca.dib.canvas.size
+	map_set_dot(origo, 1)
+	cv.canvas_set_dot(pc, origo, cv.COLOR_WHITE)
+
+	cnt = point_count
+	//rofs = i32(rl)
+	//rofs = i32(world_radius / 8)
+	rofs = 10
+	maxrad = rofs // + rh div 2;
+	maxrad2 = maxrad * maxrad // math.sqr(maxrad)
+	i := maxrad + rofs
+	maxrad3 = i*i
+
+	//size := ca.dib.canvas.size
 	for &d in dudes {
-		d.pos = cv.random_position(size, &rng)
+		//d.pos = cv.random_position(size, &rng)
+		d.pos = random_position(&rng)
 		d.col = cv.random_color(&rng)
 	}
 	return 0
@@ -76,19 +124,65 @@ on_update :: proc(app: ca.papp) -> int {
 
 	for &d in dudes {
 		pp = &d.pos
-		dir = get_dude_move(rand.int31_max(4, &rng))
-		pp^ += dir
-		if pp.x < 0 {pp.x = mx} else if pp.x > mx {pp.x = 0}
-		if pp.y < 0 {pp.y = my} else if pp.y > my {pp.y = 0}
+		//dir = cv.get_direction4(rand.int31_max(4, &rng))
+		dir = cv.get_direction8(rand.int31_max(8, &rng))
+		//pp^ += dir
+		np := pp^ + dir
+
+		dv := np - transmute(int2)origo
+		r := dv.x*dv.x + dv.y*dv.y
+
+		if r > maxrad3
+		{
+			d.pos = random_position(&rng)
+			continue
+		}
+
+		if np.x < 0 {np.x = mx} else if np.x > mx {np.x = 0}
+		if np.y < 0 {np.y = my} else if np.y > my {np.y = 0}
+
+		if map_check_free(u32(np.x), u32(np.y)) {
+			pp^ = np
+		} else {
+			//fmt.println("hit")
+			map_set_dot(transmute(uint2)np, 1)
+			//cv.canvas_set_dot(pc, np, d.col)
+			cv.canvas_set_dot(pc, np, cv.COLOR_WHITE)
+
+			dv = np - transmute(int2)origo
+			r = dv.x*dv.x + dv.y*dv.y
+			if r > maxrad2 {
+				maxrad = i32(math.round_f32(math.sqrt_f32(f32(r))))
+				maxrad2 = maxrad*maxrad
+				i := maxrad + rofs
+				if i > i32(rl) {
+				  i = i32(rl)
+				}
+				maxrad3 = i*i //Sqr(i);
+				//fmt.println("hit", maxrad, maxrad2, maxrad3)
+			}
+
+			d.pos = random_position(&rng)
+			d.col = cv.random_color(&rng)
+		}
 	}
 
 	for &d in dudes {
 		cv.canvas_set_dot(pc, d.pos, d.col)
 	}
 
-	cv.fade_to_black(pc)
+	//cv.fade_to_black(pc)
+	{
+		cc := pc.pixel_count
+		bp := pc.pvBits
+		for i in 0 ..< cc {
+			if dla_map[i] == 0 {
+				cv.fade_to_black(&bp[i])
+			}
+		}
+	}
 
-	time.sleep(time.Millisecond * 1)
+	time.sleep(time.Millisecond * 10)
 
 	return 1 // repaint
 }
@@ -101,4 +195,5 @@ main :: proc() {
 	ca.settings.title = "Diffusion Limited Aggregation"
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
+	fmt.printfln("Done. %fs", ca.stopwatch->get_elapsed_seconds())
 }

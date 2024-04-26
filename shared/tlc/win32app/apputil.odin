@@ -492,9 +492,9 @@ void Marker(LONG x, LONG y, HWND hwnd)
     HDC hdc;
 
     hdc = GetDC(hwnd);
-        MoveToEx(hdc, (int) x - 10, (int) y, (LPPOINT) NULL);
+        MoveToEx(hdc, (int) x - 10, (int) y, nil);
         LineTo(hdc, (int) x + 10, (int) y);
-        MoveToEx(hdc, (int) x, (int) y - 10, (LPPOINT) NULL);
+        MoveToEx(hdc, (int) x, (int) y - 10, nil);
         LineTo(hdc, (int) x, (int) y + 10);
 
     ReleaseDC(hwnd, hdc);

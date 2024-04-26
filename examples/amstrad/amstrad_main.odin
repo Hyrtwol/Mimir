@@ -28,15 +28,12 @@ papp :: ^application
 main :: proc() {
 	fmt.println("Amstrad")
 
-	snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
-	fmt.printfln("reading %s", snapshot_path)
-	ss: snapshot
-	//ram: bank64kb
-	err := a.load_snapshot(snapshot_path, &ss, memory[:])
-	assert(err == 0)
-
-	rom_path := fp.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
-	load_rom(rom_path)
+	// snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
+	// fmt.printfln("reading %s", snapshot_path)
+	// ss: snapshot
+	// //ram: bank64kb
+	// err := a.load_snapshot(snapshot_path, &ss, memory[:])
+	// assert(err == 0)
 
 	cpu: Z80
 	init_cpu(&cpu)
@@ -48,9 +45,18 @@ main :: proc() {
 
 	//z.z80_power(&cpu, true)
 
+	snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
+	fmt.printfln("reading %s", snapshot_path)
+	ss: snapshot
+	err := a.load_snapshot(snapshot_path, &ss, memory[:])
+	assert(err == 0)
+
 	// cpu.pc = ss.PC
 	// cpu.sp = ss.SP
 	// fmt.printfln("CPU %v", cpu)
+
+	rom_path := fp.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
+	load_rom(rom_path)
 
 	running = true
 	run_app(&app)

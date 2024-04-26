@@ -1,6 +1,7 @@
 package canvas
 
 
+
 // odinfmt: disable
 
 // Color Palette
@@ -14,7 +15,7 @@ COLOR_YELLOW	: byte4 : { 0xFF, 0xFF, 0x00, 0xFF }
 COLOR_MAGENTA	: byte4 : { 0xFF, 0x00, 0xFF, 0xFF }
 COLOR_WHITE     : byte4 : { 0xFF, 0xFF, 0xFF, 0xFF }
 
-COLORS: [8]byte4 : {
+COLORS:= [8]byte4 {
 	COLOR_BLACK,
 	COLOR_RED,
 	COLOR_GREEN,
@@ -23,6 +24,17 @@ COLORS: [8]byte4 : {
 	COLOR_YELLOW,
 	COLOR_MAGENTA,
 	COLOR_WHITE,
+}
+
+COLOR :: enum u8 {
+	BLACK,
+	RED,
+	GREEN,
+	CYAN,
+	BLUE,
+	YELLOW,
+	MAGENTA,
+	WHITE,
 }
 
 // Windows 95 Palette
@@ -44,7 +56,7 @@ W95_FUCHSIA     : byte4 : { 0xFF, 0x00, 0xFF, 0xFF }
 W95_AQUA        : byte4 : { 0x00, 0xFF, 0xFF, 0xFF }
 W95_WHITE       : byte4 : { 0xFF, 0xFF, 0xFF, 0xFF }
 
-W95_COLORS: [16]byte4 : {
+W95_COLORS:= [16]byte4 {
 	W95_BLACK,
 	W95_MAROON,
 	W95_GREEN,
@@ -61,6 +73,25 @@ W95_COLORS: [16]byte4 : {
 	W95_FUCHSIA,
 	W95_AQUA,
 	W95_WHITE,
+}
+
+W95_COLOR :: enum u8 {
+	BLACK,
+	MAROON,
+	GREEN,
+	OLIVE,
+	NAVY,
+	PURPLE,
+	TEAL,
+	SILVER,
+	GRAY,
+	RED,
+	LIME,
+	YELLOW,
+	BLUE,
+	FUCHSIA,
+	AQUA,
+	WHITE,
 }
 
 // C64 Palette
@@ -82,7 +113,7 @@ C64_LIGHT_GREEN : byte4 : { 0x9A, 0xD2, 0x84, 0xFF }
 C64_LIGHT_BLUE  : byte4 : { 0x6C, 0x5E, 0xB5, 0xFF }
 C64_LIGHT_GREY	: byte4 : { 0x95, 0x95, 0x95, 0xFF }
 
-C64_COLORS: [16]byte4 : {
+C64_COLORS:= [16]byte4 {
 	C64_BLACK,
 	C64_WHITE,
 	C64_RED,
@@ -99,6 +130,25 @@ C64_COLORS: [16]byte4 : {
 	C64_LIGHT_GREEN,
 	C64_LIGHT_BLUE,
 	C64_LIGHT_GREY,
+}
+
+C64_COLOR :: enum u8 {
+	BLACK,
+	WHITE,
+	RED,
+	CYAN,
+	PURPLE,
+	GREEN,
+	BLUE,
+	YELLOW,
+	ORANGE,
+	BROWN,
+	LIGHT_RED,
+	DARK_GREY,
+	GREY,
+	LIGHT_GREEN,
+	LIGHT_BLUE,
+	LIGHT_GREY,
 }
 
 // Amstrad Palette
@@ -165,7 +215,7 @@ AMSTRAD_BRIGHT_YELLOW	: byte4 : { 0xFF, 0xFF, 0x00, 0xFF }
 AMSTRAD_PASTEL_YELLOW	: byte4 : { 0xFF, 0xFF, 0x80, 0xFF }
 AMSTRAD_BRIGHT_WHITE	: byte4 : { 0xFF, 0xFF, 0xFF, 0xFF }
 
-AMSTRAD_COLORS: [27]byte4 : {
+AMSTRAD_COLORS:= [27]byte4 {
 	AMSTRAD_BLACK,
 	AMSTRAD_BLUE,
 	AMSTRAD_BRIGHT_BLUE,
@@ -195,6 +245,36 @@ AMSTRAD_COLORS: [27]byte4 : {
 	AMSTRAD_BRIGHT_WHITE,
 }
 
+AMSTRAD_COLOR :: enum u8 {
+	BLACK,
+	BLUE,
+	BRIGHT_BLUE,
+	RED,
+	MAGENTA,
+	MAUVE,
+	BRIGHT_RED,
+	PURPLE,
+	BRIGHT_MAGENTA,
+	GREEN,
+	CYAN,
+	SKY_BLUE,
+	YELLOW,
+	WHITE,
+	PASTEL_BLUE,
+	ORANGE,
+	PINK,
+	PASTEL_MAGENTA,
+	BRIGHT_GREEN,
+	SEA_GREEN,
+	BRIGHT_CYAN,
+	LIME,
+	PASTEL_GREEN,
+	PASTEL_CYAN,
+	BRIGHT_YELLOW,
+	PASTEL_YELLOW,
+	BRIGHT_WHITE,
+}
+
 /*
 Ink Color
 Paper/Pen No.	Mode 0	Mode 1	Mode 2
@@ -219,4 +299,28 @@ Paper/Pen No.	Mode 0	Mode 1	Mode 2
 
 // odinfmt: enable
 
-AMSTRAD_INK: [16]byte : {1, 24, 20, 6, 26, 0, 2, 8, 10, 12, 14, 16, 18, 22, 1, 16}
+AMSTRAD_INK := [16]byte{1, 24, 20, 6, 26, 0, 2, 8, 10, 12, 14, 16, 18, 22, 1, 16}
+
+
+get_color_basic :: #force_inline proc "contextless" (col: COLOR) -> byte4 {
+	return COLORS[col]
+}
+
+get_color_w95 :: #force_inline proc "contextless" (col: W95_COLOR) -> byte4 {
+	return W95_COLORS[col]
+}
+
+get_color_c64 :: #force_inline proc "contextless" (col: C64_COLOR) -> byte4 {
+	return C64_COLORS[col]
+}
+
+get_color_amstrad :: #force_inline proc "contextless" (col: AMSTRAD_COLOR) -> byte4 {
+	return AMSTRAD_COLORS[col]
+}
+
+get_color :: proc {
+	get_color_basic,
+	get_color_w95,
+	get_color_c64,
+	get_color_amstrad,
+}

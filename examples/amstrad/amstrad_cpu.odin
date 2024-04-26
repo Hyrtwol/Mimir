@@ -110,23 +110,18 @@ z_halt :: proc(zcontext: rawptr, signal: z.zuint8) {
 }
 
 reset :: proc() {
-	//fmt.println("memory reset")
+	fmt.println("memory reset")
 	runtime.memset(&memory, 0, mem_size)
 }
 
 load_rom :: proc(filename: string) {
-	reset()
-
+	//reset()
 	fmt.printfln("loading rom %v", filename)
-
 	data, ok := os.read_entire_file(filename)
-	defer delete(data)
-
 	if ok {
-		rom_size := len(data)
-		for i in 0 ..< rom_size {
-			memory[i] = data[i]
-		}
+		defer delete(data)
+		rom_size := min(len(data), len(memory))
+		intrinsics.mem_copy(&memory[0], &data[0], rom_size)
 	} else {
 		fmt.panicf("Unable to load rom %v", filename)
 	}
