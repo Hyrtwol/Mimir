@@ -71,3 +71,7 @@ fade_to_black :: proc {
 	color_fade_to_black,
 	canvas_fade_to_black,
 }
+
+canvas_max :: #force_inline proc "contextless" (cv: ^canvas) -> (x, y: i32) {
+	return i32(cv.size.x) - 1, i32(cv.size.y) - 1
+}

@@ -13,6 +13,8 @@ int2 :: cv.int2
 uint2 :: cv.uint2
 byte4 :: cv.byte4
 
+DIR4 :: true
+
 ZOOM :: 2
 WIDTH: i32 : (512 * 2) / ZOOM
 HEIGHT: i32 : WIDTH
@@ -39,7 +41,7 @@ maxrad, maxrad2, maxrad3: i32
 //origo := int2{i32(rh), i32(rh)}
 origo := uint2{u32(rh), u32(rh)}
 
-dude_count :: 2 * 100
+dude_count :: 1 * 100
 dude :: struct {
 	pos: int2,
 	col: byte4,
@@ -65,7 +67,15 @@ map_is_free :: #force_inline proc "contextless" (x, y: u32) -> bool {
 	return true
 }
 
-map_check_free :: #force_inline proc "contextless" (x, y: u32) -> bool {
+map_check_free4 :: #force_inline proc "contextless" (x, y: u32) -> bool {
+	// odinfmt: disable
+	return							map_is_free(x  ,y+1) &&
+	       map_is_free(x+1,y  ) &&	                        map_is_free(x-1,y  ) &&
+	       							map_is_free(x  ,y-1)
+	// odinfmt: enable
+}
+
+map_check_free8 :: #force_inline proc "contextless" (x, y: u32) -> bool {
 	// odinfmt: disable
 	return map_is_free(x+1,y+1) &&	map_is_free(x  ,y+1) &&	map_is_free(x-1,y+1) &&
 	       map_is_free(x+1,y  ) &&	                        map_is_free(x-1,y  ) &&
@@ -75,8 +85,9 @@ map_check_free :: #force_inline proc "contextless" (x, y: u32) -> bool {
 
 random_position :: #force_inline proc(r: ^rand.Rand) -> int2 {
 	//return {(rand.int31_max(i32(dim.x), r)), (rand.int31_max(i32(dim.y), r))}
+	radius := f32(maxrad)
 	theta := rand.float32(r) * math.PI * 2
-	x, y := math.cos(theta) * f32(maxrad), math.sin(theta) * f32(maxrad)
+	x, y := math.cos(theta) * radius, math.sin(theta) * radius
 	x, y = math.round(x), math.round(y)
 	return int2{i32(x), i32(y)} + transmute(int2)origo
 }
@@ -114,17 +125,25 @@ on_destroy :: proc(app: ca.papp) -> int {
 	return 0
 }
 
+when DIR4 {
+	get_direction :: cv.get_direction4
+	map_check_free :: map_check_free4
+} else {
+	get_direction :: cv.get_direction8
+	map_check_free :: map_check_free8
+}
+
 on_update :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
 	pp: ^int2
 	dir: int2
 	mx, my := i32(pc.size.x - 1), i32(pc.size.y - 1)
 
+	for _ in 0..<16 {
 	for &d in dudes {
 		pp = &d.pos
-		//dir = cv.get_direction4(rand.int31_max(4, &rng))
-		dir = cv.get_direction8(rand.int31_max(8, &rng))
-		//pp^ += dir
+		//dir = cv.get_direction8(rand.int31_max(4, &rng))
+		dir = get_direction(rand.int31_max(8, &rng))
 		np := pp^ + dir
 
 		dv := np - transmute(int2)origo
@@ -163,6 +182,7 @@ on_update :: proc(app: ca.papp) -> int {
 			d.pos = random_position(&rng)
 			d.col = cv.random_color(&rng)
 		}
+	}
 	}
 
 	for &d in dudes {

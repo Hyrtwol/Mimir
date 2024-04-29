@@ -60,10 +60,9 @@ main :: proc() {
 
 	running = true
 	run_app(&app)
-	fmt.printfln("app %#v", app)
 
+	//fmt.printfln("app %#v", app)
 	fmt.printfln("total %v (%v)", total, reps)
-	//print_info()
 
 	fmt.println("Done.")
 }
