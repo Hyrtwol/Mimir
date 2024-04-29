@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:intrinsics"
 import "core:runtime"
 import win32 "core:sys/windows"
+import "core:time"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
@@ -13,16 +14,7 @@ int2 :: cv.int2
 color: cv.color
 dib: win32app.DIB
 
-settings: win32app.window_settings = {
-	window_size = {640, 480},
-	center      = true,
-	wndproc     = wndproc,
-	dwStyle     = win32app.default_dwStyle,
-	dwExStyle   = win32app.default_dwExStyle,
-	//title       = title,
-	//run         = run,
-}
-
+settings := win32app.create_window_settings(int2{640, 480}, wndproc)
 app_action :: #type proc(app: papp) -> int
 
 on_idle :: proc(app: papp) -> int {return 0}
@@ -45,8 +37,8 @@ app: application = {
 	destroy = on_idle,
 }
 
-stopwatch := win32app.create_stopwatch()
 fps: f64 = 0
+frame_counter := 0
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
 	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
@@ -67,6 +59,7 @@ get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.println(#procedure, hwnd)
 	settings := get_settings(lparam)
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
@@ -79,24 +72,23 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
 	cv.canvas_clear(&dib, cv.COLOR_BLACK)
 
-	app.create(app)
+	app->create()
 
 	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / TimerTickPS)
 	assert(app.timer_id != 0)
-
-	stopwatch->start()
 
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	fmt.println(#procedure, hwnd)
 	app := get_app(hwnd)
-	app.destroy(app)
+	app->destroy()
 	win32app.dib_free_section(&dib)
 	win32app.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
 	win32app.post_quit_message(0)
-	stopwatch->stop()
+
 	return 0
 }
 
@@ -113,6 +105,7 @@ set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.println(#procedure, hwnd)
 	//app := get_app(hwnd)
 	settings.window_size = win32app.decode_lparam(lparam)
 	set_window_text(hwnd)
@@ -130,11 +123,30 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	return 0
 }
 
-frame_counter := 0
+draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
+	//app := get_app(hwnd)
+	win32app.draw_dib(hwnd, hdc, settings.window_size, &dib)
+}
+
+draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	//dib_update_func(&dib.canvas)
+	hdc := win32.GetDC(hwnd)
+	if hdc != nil {
+		defer win32.ReleaseDC(hwnd, hdc)
+		draw_dib(hwnd, hdc)
+	}
+	return 0
+}
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	frame_counter += 1
-	return win32app.wm_paint_dib(hwnd, dib.hbitmap, transmute(cv.int2)dib.canvas.size)
+	fmt.println(#procedure, hwnd)
+	ps: win32.PAINTSTRUCT
+	hdc := win32.BeginPaint(hwnd, &ps)
+	if hdc != nil {
+		defer win32.EndPaint(hwnd, &ps)
+		draw_dib(hwnd, hdc)
+	}
+	return 0
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -160,17 +172,23 @@ delta, frame_time: f64 = 0, 0
 
 run :: proc() {
 	settings.app = &app
-	//inst, atom, hwnd := win32app.prepare_run(&settings)
 	_, _, hwnd := win32app.prepare_run(&settings)
 	res: int
+
+	stopwatch := win32app.create_stopwatch()
+	stopwatch->start()
 	for win32app.pull_messages() {
 
 		delta = stopwatch->get_delta_seconds()
 		frame_time += delta
+		frame_counter += 1
 
 		res = app.update(&app)
-		if res == 1 {
-			win32app.redraw_window(hwnd)
+		if res != 0 {break}
+		draw_frame(hwnd)
+		if settings.sleep >= 0 {
+			time.accurate_sleep(settings.sleep)
 		}
 	}
+	stopwatch->stop()
 }

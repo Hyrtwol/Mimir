@@ -4,9 +4,11 @@ package raycaster
 import "core:fmt"
 import "core:intrinsics"
 import "core:math/rand"
-import "core:time"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
+
+USE_DELTA :: true
+USE_RANDOM_COLORS :: false
 
 WIDTH: i32 : 320
 HEIGHT: i32 : WIDTH * 3 / 4
@@ -44,9 +46,6 @@ pics_buf :: [pics_buf_size]cv.byte4
 #assert(pics_buf_size == 4096)
 #assert(size_of(pics_buf) == 16384)
 
-xo: i32 = 0
-po: i32 = rand.int31_max(pics_count, &rng)
-
 ray2i: struct {
 	pos, dir: cv.int2,
 }
@@ -63,22 +62,34 @@ on_destroy :: proc(app: ca.papp) -> int {
 	return 0
 }
 
+xo: i32 = -pics_w
+po: i32 = rand.int31_max(pics_count, &rng)
 xof: f64 = 0
 
 on_update :: proc(app: ca.papp) -> int {
-	xof += ca.delta * 64
-	if xof >= f64(256 + pics_w) {
-		xof = f64(-pics_w)
-		po += 1
+	when USE_DELTA {
+		xof += ca.delta * 64
+		if xof >= f64(256 + pics_w) {
+			xof = f64(-pics_w)
+			po += 1
+		}
+		xo = i32(xof)
+	} else {
+		xo += 1
+		if xo >= 256 + pics_w {
+			xo = -pics_w
+			po += 1
+		}
 	}
-	xo = i32(xof)
 
 	pc := &ca.dib.canvas
 	for _ in 0 ..< 500 {
 		pos := cv.random_position(pc.size, &rng)
-		//col := cv.random_color(&rng)
-		//cv.canvas_set_dot(pc, pos, col)
-		cv.canvas_set_dot(pc, pos, cv.COLOR_BLACK)
+		when USE_RANDOM_COLORS {
+			cv.canvas_set_dot(pc, pos, cv.random_color(&rng))
+		} else {
+			cv.canvas_set_dot(pc, pos, cv.COLOR_BLACK)
+		}
 	}
 
 	k: i32 : 4
@@ -101,15 +112,7 @@ on_update :: proc(app: ca.papp) -> int {
 		}
 	}
 
-	//xo += 1
-	//if xo >= 256 + pics_w {
-	// 	xo = -pics_w
-	// 	po += 1
-	//}
-
-	time.sleep(time.Millisecond * 10)
-
-	return 1 // repaint
+	return 0
 }
 
 main :: proc() {
@@ -120,6 +123,7 @@ main :: proc() {
 	ca.app.update = on_update
 	ca.app.destroy = on_destroy
 	ca.settings.window_size = ca.app.size * ZOOM
+	//ca.settings.sleep = win32app.sleep_duration(6)
 	ca.run()
 	fmt.println("Done.")
 }

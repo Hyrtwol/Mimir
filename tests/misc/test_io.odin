@@ -114,7 +114,7 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 
 	fmt.printfln("writing %s", path)
 	fd, fe := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
-	testing.expect(t, ferr == 0)
+	testing.expect(t, fe == 0)
 	if fe != 0 {return}
 	defer os.close(fd)
 	os.write_string(fd, "# Odin Dictionary Words" + newline)

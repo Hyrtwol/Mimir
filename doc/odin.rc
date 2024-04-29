@@ -1,2 +1,9 @@
+//#include "winres.h"
 
-1   ICON    "odin.ico"
+//LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+LANGUAGE 0x0409, 0x01
+#pragma code_page(65001) // 1252 or 65001 (CP_UTF8)
+
+#define IDI_ICON1                       101
+
+IDI_ICON1   ICON    "odin.ico"

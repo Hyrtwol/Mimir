@@ -91,6 +91,9 @@
 		<Project Include="examples\raycaster">
 			<Flavour>Odin</Flavour>
 		</Project>
+		<Project Include="examples\raycaster\raycaster_edit">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\raylib">
 			<Flavour>Odin</Flavour>
 		</Project>
@@ -133,6 +136,6 @@
 		</Collection>
 	</ItemGroup>
 
-	<Import Project="msbuild\Odin.targets"/>
+	<Import Project="$(ODIN_ROOT)\shared\msbuild\Odin.MSBuild\bin\Release\netstandard2.0\Odin.targets"/>
 
 </Project>

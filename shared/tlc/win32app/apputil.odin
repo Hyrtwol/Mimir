@@ -4,7 +4,9 @@ package win32app
 
 import "core:fmt"
 import fp "core:path/filepath"
+//import ow "shared:owin"
 import win32 "core:sys/windows"
+import "core:time"
 
 int2 :: [2]i32
 
@@ -43,7 +45,7 @@ show_last_error :: proc(caption: string, loc := #caller_location) {
 	last_error := win32.GetLastError()
 	error_text: [512]win32.WCHAR
 	error_wstring := wstring(&error_text)
-	cch := win32.FormatMessageW(win32.FORMAT_MESSAGE_FROM_SYSTEM | win32.FORMAT_MESSAGE_IGNORE_INSERTS, nil, last_error, win32.LANGID_NEUTRAL, error_wstring, len(error_text) - 1, nil)
+	cch := win32.FormatMessageW(win32.FORMAT_MESSAGE_FROM_SYSTEM | win32.FORMAT_MESSAGE_IGNORE_INSERTS, nil, last_error, LANGID_NEUTRAL_DEFAULT, error_wstring, len(error_text) - 1, nil)
 	if (cch != 0) {return}
 	error_string, err := wstring_to_utf8(&error_wstring[0], int(cch))
 	if err == .None {
@@ -173,6 +175,7 @@ window_settings :: struct {
 	wndproc:     win32.WNDPROC,
 	run:         proc(this: ^window_settings) -> win32.HWND,
 	app:         rawptr,
+	sleep:       time.Duration,
 }
 psettings :: ^window_settings
 
@@ -180,36 +183,52 @@ set_settings :: #force_inline proc(hwnd: win32.HWND, settings: psettings) {win32
 get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {return (psettings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
 @(private = "file")
-create_window_settings_1 :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
+create_window_settings_sw :: proc(size: int2, wndproc: win32.WNDPROC) -> window_settings {
 	fmt.println(#procedure)
 	settings: window_settings = {
-		title       = title,
 		window_size = size,
 		center      = true,
 		wndproc     = wndproc,
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
 		run         = run,
+		sleep       = time.Millisecond * 10,
 	}
 	return settings
 }
 
 @(private = "file")
-create_window_settings_2 :: #force_inline proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
+create_window_settings_tsw :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
 	fmt.println(#procedure)
-	return create_window_settings_1(title, {width, height}, wndproc)
+	settings := create_window_settings_sw(size, wndproc)
+	settings.title = title
+	return settings
 }
 
 @(private = "file")
-create_window_settings_3 :: #force_inline proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
+create_window_settings_twhw :: #force_inline proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
 	fmt.println(#procedure)
-	return create_window_settings_1(title, size, win32.WNDPROC(wndproc))
+	return create_window_settings_tsw(title, {width, height}, wndproc)
+}
+
+@(private = "file")
+create_window_settings_sw2 :: #force_inline proc(size: int2, wndproc: WNDPROC) -> window_settings {
+	fmt.println(#procedure)
+	return create_window_settings_sw(size, win32.WNDPROC(wndproc))
+}
+
+@(private = "file")
+create_window_settings_tsw2 :: #force_inline proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
+	fmt.println(#procedure)
+	return create_window_settings_tsw(title, size, win32.WNDPROC(wndproc))
 }
 
 create_window_settings :: proc {
-	create_window_settings_1,
-	create_window_settings_2,
-	create_window_settings_3,
+	create_window_settings_sw,
+	create_window_settings_tsw,
+	create_window_settings_twhw,
+	create_window_settings_sw2,
+	create_window_settings_tsw2,
 }
 
 register_and_create_window :: proc(settings: ^window_settings) -> win32.HWND {
@@ -297,6 +316,20 @@ run :: proc(settings: ^window_settings) -> win32.HWND {
 	loop_messages()
 	return hwnd
 }
+
+sleep_duration :: #force_inline proc "contextless" (sleep: f64) -> time.Duration {
+	return time.Duration(sleep * f64(time.Millisecond))
+}
+
+// run :: proc(settings: ^window_settings, ) {
+// 	_, _, hwnd := win32app.prepare_run(&settings)
+// 	for win32app.pull_messages() {
+
+// 		//delta = stopwatch->get_delta_seconds()
+// 		//frame_time += delta
+// 		//res = app.update(&app)
+// 	}
+// }
 
 // default no draw background erase
 WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
@@ -514,4 +547,14 @@ select_object_hbitmap :: #force_inline proc "contextless" (hdc: win32.HDC, hbitm
 select_object :: proc {
 	select_object_hgdiobj,
 	select_object_hbitmap,
+}
+
+@(private)
+stretch_blt_size :: #force_inline proc "contextless" (dest_hdc: HDC, dest_size: int2, src_hdc: HDC, src_size: int2, rop: win32.ROP = .SRCCOPY) -> BOOL {
+	return win32.StretchBlt(dest_hdc, 0, 0, dest_size.x, dest_size.y, src_hdc, 0, 0, src_size.x, src_size.y, win32.DWORD(rop))
+}
+
+stretch_blt :: proc {
+	win32.StretchBlt,
+	stretch_blt_size,
 }

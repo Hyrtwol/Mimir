@@ -26,18 +26,24 @@ canvas_clear :: #force_inline proc "contextless" (cv: ^canvas, col: byte4) {
 }
 
 @(private)
-canvas_set_dot_uint2 :: #force_inline proc "contextless" (cv: ^canvas, pos: uint2, col: byte4) {
-	if pos.x < cv.size.x && pos.y < cv.size.y {
-		cv.pvBits[pos.y * cv.size.x + pos.x] = col
+canvas_set_dot_xy :: #force_inline proc "contextless" (cv: ^canvas, x, y: u32, col: byte4) {
+	if x < u32(cv.size.x) && y < u32(cv.size.y) {
+		cv.pvBits[y * cv.size.x + x] = col
 	}
 }
 
 @(private)
+canvas_set_dot_uint2 :: #force_inline proc "contextless" (cv: ^canvas, pos: uint2, col: byte4) {
+	canvas_set_dot_xy(cv, pos.x, pos.y, col)
+}
+
+@(private)
 canvas_set_dot_int2 :: #force_inline proc "contextless" (cv: ^canvas, pos: int2, col: byte4) {
-	canvas_set_dot_uint2(cv, transmute(uint2)pos, col)
+	canvas_set_dot_xy(cv, u32(pos.x), u32(pos.y), col)
 }
 
 canvas_set_dot :: proc {
+	canvas_set_dot_xy,
 	canvas_set_dot_uint2,
 	canvas_set_dot_int2,
 }

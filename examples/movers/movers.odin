@@ -1,12 +1,13 @@
 // +vet
 package movers
 
+import "core:fmt"
 import "core:intrinsics"
 import "core:math/rand"
-import "core:time"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
+_ :: fmt
 int2 :: cv.int2
 byte4 :: cv.byte4
 
@@ -24,23 +25,18 @@ dude :: struct {
 }
 dudes: [dude_count]dude
 
-get_dude_move :: #force_inline proc "contextless" (dir: i32) -> int2 {
-	// U{0,+1} R{+1,0} D{0,-1} L{-1,0}
-	@static dude_moves: [5]i32 = {0, 1, 0, -1, 0}
-	return ((^int2)(&dude_moves[dir & 3]))^
-}
-
 on_create :: proc(app: ca.papp) -> int {
+	//fmt.println(#procedure, app)
 	size := ca.dib.canvas.size
 	for &d in dudes {
 		d.pos = cv.random_position(size, &rng)
-		//d.pos = transmute(int2) (size / 2)
 		d.col = cv.random_color(&rng)
 	}
 	return 0
 }
 
 on_destroy :: proc(app: ca.papp) -> int {
+	//fmt.println(#procedure, app)
 	return 0
 }
 
@@ -52,7 +48,7 @@ on_update :: proc(app: ca.papp) -> int {
 
 	for &d in dudes {
 		pp = &d.pos
-		dir = get_dude_move(rand.int31_max(4, &rng))
+		dir = cv.get_direction8(rand.int31_max(4, &rng))
 		pp^ += dir
 		if pp.x < 0 {pp.x = mx} else if pp.x > mx {pp.x = 0}
 		if pp.y < 0 {pp.y = my} else if pp.y > my {pp.y = 0}
@@ -64,9 +60,7 @@ on_update :: proc(app: ca.papp) -> int {
 
 	cv.fade_to_black(pc)
 
-	time.sleep(time.Millisecond * 1)
-
-	return 1 // repaint
+	return 0
 }
 
 main :: proc() {

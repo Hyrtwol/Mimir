@@ -3,11 +3,9 @@
 // D:\dev\pascal\Delphi7\DLA\DLAMain.pas
 package dla
 
-import "core:fmt"
 import "core:intrinsics"
 import "core:math"
 import "core:math/rand"
-import "core:time"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
@@ -171,7 +169,6 @@ on_update :: proc(app: ca.papp) -> int {
 		cv.canvas_set_dot(pc, d.pos, d.col)
 	}
 
-	//cv.fade_to_black(pc)
 	{
 		cc := pc.pixel_count
 		bp := pc.pvBits
@@ -182,9 +179,7 @@ on_update :: proc(app: ca.papp) -> int {
 		}
 	}
 
-	time.sleep(time.Millisecond * 10)
-
-	return 1 // repaint
+	return 0
 }
 
 main :: proc() {
@@ -195,5 +190,4 @@ main :: proc() {
 	ca.settings.title = "Diffusion Limited Aggregation"
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
-	fmt.printfln("Done. %fs", ca.stopwatch->get_elapsed_seconds())
 }

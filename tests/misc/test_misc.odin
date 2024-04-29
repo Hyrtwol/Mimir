@@ -179,22 +179,48 @@ array_of_procs :: proc(t: ^_t.T) {
 	}
 }
 
-a :: struct  {
+ta :: struct  {
 	aa : int,
 }
-b :: struct  {
-	#subtype a: a,
+tb :: struct  {
+	#subtype a: ta,
 	bb : int,
 }
+tc :: struct  {
+	using a: ta,
+	cc : int,
+}
+td :: struct  {
+	a: ta,
+	dd : int,
+}
 
-do_a :: proc(v: ^a) {
-	fmt.println(v)
+do_ta :: proc(v: ^ta) {
+	fmt.println("aa:", v.aa)
 }
 
 @(test)
 subtypes :: proc(t: ^_t.T) {
-	sut := b{bb = 2, a = { aa = 3}}
-	_u.expect_value_int(t, sut.bb, 2)
-	_u.expect_value_int(t, a(sut).aa, 3)
-	do_a(&sut)
+	_u.expect_value_int(t, size_of(ta), 8)
+	_u.expect_value_int(t, size_of(tb), 16)
+	_u.expect_value_int(t, size_of(tc), 16)
+	_u.expect_value_int(t, size_of(td), 16)
+
+	b := tb{bb = 2, a = { aa = 21}}
+	_u.expect_value_int(t, b.bb, 2)
+	_u.expect_value_int(t, b.a.aa, 21)
+	_u.expect_value_int(t, ta(b).aa, 21)
+	do_ta(&b)
+
+	c := tc{cc = 3, aa = 31}
+	_u.expect_value_int(t, c.cc, 3)
+	_u.expect_value_int(t, c.aa, 31)
+	_u.expect_value_int(t, c.a.aa, 31)
+	_u.expect_value_int(t, ta(c).aa, 31)
+	do_ta(&c)
+
+	d := td{dd = 4, a = { aa = 41}}
+	_u.expect_value_int(t, d.dd, 4)
+	_u.expect_value_int(t, d.a.aa, 41)
+	//do_ta(&d)
 }

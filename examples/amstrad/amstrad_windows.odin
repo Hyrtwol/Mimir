@@ -175,8 +175,6 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
 		client_size := win32app.get_rect_size(&ps.rcPaint)
-		//win32.BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hdc_source, 0, 0, win32.SRCCOPY)
-		//win32.StretchBlt(hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
 		win32.StretchBlt(hdc, SOX, SOY, SCREEN_WIDTH, SCREEN_HEIGHT * 2, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
 	}
 
