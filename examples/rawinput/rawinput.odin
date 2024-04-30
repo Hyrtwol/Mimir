@@ -167,7 +167,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		{
 			mouse_delta: win32app.int2 = {raw.data.mouse.lLastX, raw.data.mouse.lLastY}
 			mouse_pos += mouse_delta
-			//cs := transmute(win32app.int2)dib.canvas.size
+			//cs := transmute(win32app.int2)(settings.window_size - 1)
 			cs := settings.window_size - 1
 			mouse_pos = {clamp(mouse_pos.x, 0, cs.x), clamp(mouse_pos.y, 0, cs.y)}
 			//mouse_pos = clamp(mouse_pos, zero, cs)
@@ -196,25 +196,13 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		}
 	case win32.RIM_TYPEKEYBOARD:
 		{
-			fmt.println("keyboard:", raw.data.keyboard)
-			// if raw.data.keyboard.VKey == win32.VK_ESCAPE {
-			// 	win32.DestroyWindow(hwnd)
-			// }
 			switch raw.data.keyboard.VKey {
 			case win32.VK_ESCAPE:
 				win32app.close_application(hwnd)
-			// case win32.VK_0: selected_color = 0
-			// case win32.VK_1: selected_color = 1
-			// case win32.VK_2: selected_color = 2
-			// case win32.VK_3: selected_color = 3
-			// case win32.VK_4: selected_color = 4
-			// case win32.VK_5: selected_color = 5
-			// case win32.VK_6: selected_color = 6
-			// case win32.VK_7: selected_color = 7
-			// case win32.VK_8: selected_color = 8
-			// case win32.VK_9: selected_color = 9
 			case win32.VK_0 ..= win32.VK_9:
 				selected_color = i32(raw.data.keyboard.VKey - win32.VK_0)
+			case:
+				fmt.println("keyboard:", raw.data.keyboard)
 			}
 		}
 	case:

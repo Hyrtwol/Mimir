@@ -558,3 +558,13 @@ stretch_blt :: proc {
 	win32.StretchBlt,
 	stretch_blt_size,
 }
+
+@(private)
+bit_blt_size :: #force_inline proc "contextless" (dest_hdc: HDC, size: int2, src_hdc: HDC, rop: win32.ROP = .SRCCOPY) -> BOOL {
+	return win32.BitBlt(dest_hdc, 0, 0, size.x, size.y, src_hdc, 0, 0, win32.DWORD(rop))
+}
+
+bit_blt :: proc {
+	win32.BitBlt,
+	bit_blt_size,
+}

@@ -112,7 +112,8 @@ dib_flames :: proc(dib: ^canvas) {
 
 cnp := noise.Vec3{0, 0, 0}
 //n_scale := 0.01 // nice
-n_scale := 0.03
+n_scale := 0.02
+//n_scale := 0.03
 
 dib_flames_2 :: proc(dib: ^canvas) {
 	w, h := i32(dib.size.x), i32(dib.size.y)

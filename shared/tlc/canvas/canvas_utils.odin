@@ -1,20 +1,33 @@
+// +vet
 package canvas
 
 import "core:math/rand"
 
 @(private)
-random_position_uint2 :: #force_inline proc(dim: uint2, r: ^rand.Rand) -> int2 {
-	return {(rand.int31_max(i32(dim.x), r)), (rand.int31_max(i32(dim.y), r))}
+random_position_int_xy :: #force_inline proc(x, y: i32, r: ^rand.Rand) -> int2 {
+	return {rand.int31_max(x, r), rand.int31_max(y, r)}
+}
+
+@(private)
+random_position_uint_xy :: #force_inline proc(x, y: u32, r: ^rand.Rand) -> int2 {
+	return random_position_int_xy(i32(x), i32(y), r)
 }
 
 @(private)
 random_position_int2 :: #force_inline proc(dim: int2, r: ^rand.Rand) -> int2 {
-	return random_position_uint2(transmute(uint2)dim, r)
+	return random_position_int_xy(dim.x, dim.y, r)
+}
+
+@(private)
+random_position_uint2 :: #force_inline proc(dim: uint2, r: ^rand.Rand) -> int2 {
+	return random_position_uint_xy(dim.x, dim.y, r)
 }
 
 random_position :: proc {
-	random_position_uint2,
+	random_position_int_xy,
+	random_position_uint_xy,
 	random_position_int2,
+	random_position_uint2,
 }
 
 random_color :: #force_inline proc(r: ^rand.Rand, alpha: u8 = 255) -> byte4 {

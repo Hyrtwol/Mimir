@@ -44,6 +44,8 @@ is_active: bool = true
 is_focused := false
 cursor_state: i32 = 0
 
+grid_color: u32 = 0x80808080
+
 show_cursor :: proc(show: bool) {
 	cursor_state = win32app.show_cursor(show)
 	fmt.println(#procedure, cursor_state)
@@ -89,9 +91,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure)
 	win32app.kill_timer(hwnd, &timer_id)
 	// win32app.clip_cursor(hwnd, false)
-	// if cursor_state < 1 {
-	// 	show_cursor(true)
-	// }
+	// if cursor_state < 1 {show_cursor(true)}
 	win32app.dib_free_section(&dib)
 	for i in 0 ..< fbc {
 		win32app.dib_free_section(&fbs[i])
@@ -100,18 +100,16 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
+set_window_text :: #force_inline proc(hwnd: win32.HWND) {
+	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+}
+
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	settings.window_size = win32app.decode_lparam(lparam)
 	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
 	// win32app.clip_cursor(hwnd, true)
 	return 0
 }
-
-set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
-}
-
-pen_color: u32 = 0x80808080
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.printfln("WM_TIMER %v %v", hwnd, wparam)
@@ -132,6 +130,8 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	assert(hdc_fb != nil)
 	defer win32.DeleteDC(hdc_fb)
 
+	canvas_size := transmute(cv.int2)fb.canvas.size
+
 	old_obj := win32app.select_object(hdc_fb, fb.hbitmap)
 
 	// paint dbi to active fb
@@ -141,24 +141,23 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		defer win32.DeleteDC(hdc_source)
 
 		old_hdc_source_object := win32app.select_object(hdc_source, dib.hbitmap)
-		win32app.stretch_blt(hdc_fb, transmute(cv.int2)fb.canvas.size, hdc_source, transmute(cv.int2)dib.canvas.size)
+		win32app.stretch_blt(hdc_fb, canvas_size, hdc_source, transmute(cv.int2)dib.canvas.size)
 		win32app.select_object(hdc_source, old_hdc_source_object)
 	}
-
+	// draw grid
 	{
 		dc_pen := win32.GetStockObject(win32.DC_PEN)
 
 		old_dc_pen := win32.SelectObject(hdc_fb, dc_pen)
-		old_pen := win32.SetDCPenColor(hdc_fb, pen_color)
+		old_pen := win32.SetDCPenColor(hdc_fb, grid_color)
 
-		win32app.draw_grid(hdc_fb, {0, 0}, {ZOOM, ZOOM}, transmute(win32app.int2)fb.canvas.size)
+		win32app.draw_grid(hdc_fb, {0, 0}, {ZOOM, ZOOM}, canvas_size)
 
 		win32.SetDCPenColor(hdc_fb, old_pen)
 		win32.SelectObject(hdc_fb, old_dc_pen)
 	}
 
-	bitmap_size := transmute(cv.int2)fb.canvas.size
-	win32.BitBlt(hdc, 0, 0, bitmap_size.x, bitmap_size.y, hdc_fb, 0, 0, win32.SRCCOPY)
+	win32app.bit_blt(hdc, canvas_size, hdc_fb)
 	win32app.select_object(hdc_fb, old_obj)
 
 	return 0
@@ -233,19 +232,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 main :: proc() {
 
-	app: application = {} //size = {WIDTH, HEIGHT},
-
-	settings = win32app.window_settings {
-		//title       = title,
-		window_size = {WIDTH, HEIGHT},
-		center      = true,
-		wndproc     = wndproc,
-	}
+	app: application = {}
+	settings = win32app.create_window_settings({WIDTH, HEIGHT}, wndproc)
+	settings.app = &app
 
 	stopwatch := win32app.create_stopwatch()
 	stopwatch->start()
 
-	settings.app = &app
 	win32app.run(&settings)
 
 	stopwatch->stop()
