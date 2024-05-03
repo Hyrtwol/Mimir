@@ -105,3 +105,21 @@ direction8 :: proc(t: ^testing.T) {
 
 	print_map(m)
 }
+
+@(test)
+to_color :: proc(t: ^testing.T) {
+	o.expect_value(t, f32(255.99609375), cv.color_scale_f2b)
+
+	expect_value(t, 000, cv.to_color(-0.10000))
+	expect_value(t, 000, cv.to_color(+0.00000))
+	expect_value(t, 000, cv.to_color(+0.00390))
+	expect_value(t, 001, cv.to_color(+0.00391))
+	expect_value(t, 127, cv.to_color(+0.50000))
+	expect_value(t, 128, cv.to_color(+0.50001))
+	expect_value(t, 254, cv.to_color(+0.99610))
+	expect_value(t, 255, cv.to_color(+0.99611))
+	expect_value(t, 255, cv.to_color(+1.00000))
+	expect_value(t, 255, cv.to_color(+1.10000))
+
+	expect_value(t, {63, 127, 191, 255}, cv.to_color(cv.float4{0.25,0.5,0.75,1.0}))
+}

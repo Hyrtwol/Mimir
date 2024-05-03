@@ -6,7 +6,6 @@ import "core:fmt"
 import fp "core:path/filepath"
 //import ow "shared:owin"
 import win32 "core:sys/windows"
-import "core:time"
 
 int2 :: [2]i32
 
@@ -118,9 +117,11 @@ get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_all
 	return "?"
 }
 
+IDI_ICON1 :: 101
+
 register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
 
-	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
+	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(IDI_ICON1))
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
@@ -175,7 +176,7 @@ window_settings :: struct {
 	wndproc:     win32.WNDPROC,
 	run:         proc(this: ^window_settings) -> win32.HWND,
 	app:         rawptr,
-	sleep:       time.Duration,
+	sleep:       f32,
 }
 psettings :: ^window_settings
 
@@ -192,7 +193,7 @@ create_window_settings_sw :: proc(size: int2, wndproc: win32.WNDPROC) -> window_
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
 		run         = run,
-		sleep       = time.Millisecond * 10,
+		sleep       = 10,
 	}
 	return settings
 }
@@ -279,27 +280,6 @@ loop_messages :: proc() {
 	}
 }
 
-/*run_wndproc :: proc(settings: ^window_settings, wndproc: win32.WNDPROC) -> win32.HWND {
-	inst := get_instance()
-	atom := register_window_class(inst, wndproc)
-	hwnd := create_and_show_window(inst, atom, settings)
-	loop_messages()
-	return hwnd
-}
-
-run_settings :: proc(settings: ^window_settings) -> win32.HWND {
-	inst := get_instance()
-	atom := register_window_class(inst, settings.wndproc)
-	hwnd := create_and_show_window(inst, atom, settings)
-	loop_messages()
-	return hwnd
-}
-
-run :: proc {
-	run_settings,
-	run_wndproc,
-}*/
-
 prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
 	module_handle := get_module_handle()
 	if settings.title == "" {
@@ -315,10 +295,6 @@ run :: proc(settings: ^window_settings) -> win32.HWND {
 	_, _, hwnd := prepare_run(settings)
 	loop_messages()
 	return hwnd
-}
-
-sleep_duration :: #force_inline proc "contextless" (sleep: f64) -> time.Duration {
-	return time.Duration(sleep * f64(time.Millisecond))
 }
 
 // run :: proc(settings: ^window_settings, ) {

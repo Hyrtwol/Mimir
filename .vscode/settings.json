@@ -10,7 +10,7 @@
 	"[markdown]": {
 		"editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
 	},
-	"omnisharp.autoStart": false,
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
 	"typescript.tsc.autoDetect": "off",
 	"npm.autoDetect": "off",
 	"files.exclude": {

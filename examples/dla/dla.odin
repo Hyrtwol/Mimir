@@ -13,7 +13,7 @@ int2 :: cv.int2
 uint2 :: cv.uint2
 byte4 :: cv.byte4
 
-DIR4 :: true
+DIR4 :: false
 
 ZOOM :: 2
 WIDTH: i32 : (512 * 2) / ZOOM

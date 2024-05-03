@@ -27,7 +27,7 @@ HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
 ZOOM :: 8
 
-settings := win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
+settings : win32app.window_settings
 
 stopwatch := win32app.create_stopwatch()
 fps: f64 = 0
@@ -281,6 +281,8 @@ main :: proc() {
 		palette[i] = {calc_col(math.pow(f, 0.5)), calc_col(math.pow(f, 1.25)), calc_col(math.pow(f, 3.0)), 255}
 	}
 
+	settings = win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
+	settings.sleep = 4
 	_, _, hwnd := win32app.prepare_run(&settings)
 	stopwatch->start()
 	for win32app.pull_messages() {
@@ -288,7 +290,7 @@ main :: proc() {
 		frame_time += delta
 		frame_counter += 1
 		draw_frame(hwnd)
-		time.sleep(time.Millisecond)
+		time.sleep(settings.sleep)
 	}
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())

@@ -13,8 +13,12 @@ uint2	:: [2]uint
 uint3	:: [3]uint
 float2	:: [2]float
 float3	:: [3]float
+float4	:: [4]float
 double2	:: [2]double
 double3	:: [3]double
+
+float3x3 :: matrix[3, 3]float
+float4x4 :: matrix[4, 4]float
 
 color           :: byte4
 color_byte_size :: size_of(color)

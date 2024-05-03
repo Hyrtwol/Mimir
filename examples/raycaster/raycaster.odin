@@ -123,7 +123,7 @@ main :: proc() {
 	ca.app.update = on_update
 	ca.app.destroy = on_destroy
 	ca.settings.window_size = ca.app.size * ZOOM
-	//ca.settings.sleep = win32app.sleep_duration(6)
+	ca.settings.sleep = 6
 	ca.run()
 	fmt.println("Done.")
 }

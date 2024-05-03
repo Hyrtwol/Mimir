@@ -27,6 +27,9 @@ application :: struct {
 	tick:                    u32,
 	hbitmap:                 win32.HBITMAP,
 	create, update, destroy: app_action,
+
+	mouse_pos:               int2,
+	mouse_buttons:           win32app.MOUSE_KEY_STATE,
 }
 papp :: ^application
 
@@ -119,7 +122,6 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	frame_counter = 0
 	frame_time = 0
 	set_window_text(hwnd)
-	//win32app.redraw_window(hwnd)
 	return 0
 }
 
@@ -149,6 +151,12 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
+handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	app.mouse_pos = win32app.decode_lparam(lparam)
+	app.mouse_buttons = win32app.MOUSE_KEY_STATE(wparam)
+	return 0
+}
+
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	// odinfmt: disable
@@ -160,9 +168,9 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_PAINT:        return WM_PAINT(hwnd)
 	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam)
-	// case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)
-	// case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
-	// case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
+	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)
+	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
+	case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
 	case:                       return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable
@@ -182,12 +190,13 @@ run :: proc() {
 		delta = stopwatch->get_delta_seconds()
 		frame_time += delta
 		frame_counter += 1
+		app.tick += 1
 
 		res = app.update(&app)
 		if res != 0 {break}
 		draw_frame(hwnd)
 		if settings.sleep >= 0 {
-			time.accurate_sleep(settings.sleep)
+			time.accurate_sleep(time.Duration(settings.sleep * f32(time.Millisecond)))
 		}
 	}
 	stopwatch->stop()

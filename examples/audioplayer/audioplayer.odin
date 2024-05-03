@@ -13,6 +13,7 @@ import "core:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
+import f "shared:flac"
 
 // https://learn.microsoft.com/en-us/windows/win32/multimedia/example-of-writing-waveform-data
 // https://github.com/cornyum/Windows-programming-5th/blob/master/Chap22/SineWave/SineWave.c

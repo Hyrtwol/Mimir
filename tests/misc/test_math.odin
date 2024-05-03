@@ -3,15 +3,16 @@ package test_misc
 import "core:bytes"
 import "core:fmt"
 import "core:math"
+import "core:math/linalg"
 import "core:runtime"
 import "core:testing"
 import o "shared:ounit"
 
-vec2 :: [2]i32
+int2 :: [2]i32
 
 @(test)
 can_i_swizzle :: proc(t: ^testing.T) {
-	v: vec2 = {3, 7}
+	v: int2 = {3, 7}
 	o.expect_value(t, v[0], 3)
 	o.expect_value(t, v[1], 7)
 	o.expect_value(t, v.x, 3)
@@ -185,4 +186,40 @@ float_01_to_byte :: proc(t: ^testing.T) {
 	for i in 0 ..< 256 {
 		testing.expect(t, b[i] == C)
 	}
+}
+
+@(test)
+vector2_max :: proc(t: ^testing.T) {
+	v1: int2 = {1, 4}
+	v2: int2 = {3, 2}
+	m: int2 = linalg.max(v1, v2)
+	testing.expect(t, m == {3, 4})
+}
+
+/*
+150 50 ; 80 150 ; 50 50
+abc:150 50 1
+80 150 1
+50 50 1
+
+det:10000
+*/
+
+mat3x3 :: linalg.Matrix3x3f32
+vec2 :: linalg.Vector2f32
+vec3 :: linalg.Vector3f32
+vec4 :: linalg.Vector4f32
+tri :: [3] vec2
+
+@(test)
+determinant_3x3 :: proc(t: ^testing.T) {
+	tri: tri = { vec2{150,50}, vec2{80,150}, vec2{50,50} }
+	fmt.println("t:", tri)
+	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
+	fmt.println("ABC:", ABC)
+    //if (ABC.det()<1e-3) return {-1,1,1}; // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
+    //if (lg.determinant(ABC)<1e-3) {return {-1,1,1}} // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
+	det := linalg.matrix3x3_determinant(ABC)
+	fmt.println("det:", det)
+	o.expect_valuef(t, det, 10000, 0.0001)
 }

@@ -2,6 +2,19 @@
 package canvas
 
 import "core:math/rand"
+import lg "core:math/linalg"
+
+to_int2 :: #force_inline proc "contextless" (v: float2) -> int2 {
+	return int2{i32(v.x), i32(v.y)}
+}
+
+to_int2_floor :: #force_inline proc "contextless" (v: float2) -> int2 {
+	return to_int2(lg.floor(v))
+}
+
+to_int2_ceil :: #force_inline proc "contextless" (v: float2) -> int2 {
+	return to_int2(lg.ceil(v))
+}
 
 @(private)
 random_position_int_xy :: #force_inline proc(x, y: i32, r: ^rand.Rand) -> int2 {

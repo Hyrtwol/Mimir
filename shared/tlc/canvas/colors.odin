@@ -1,6 +1,6 @@
 package canvas
 
-
+import "core:math"
 
 // odinfmt: disable
 
@@ -323,4 +323,45 @@ get_color :: proc {
 	get_color_w95,
 	get_color_c64,
 	get_color_amstrad,
+}
+
+
+// 256-(1/256) = 65535/256 = 255.99609375
+color_scale_f2b :: f32(65535) / 256
+
+to_color_float :: #force_inline proc "contextless" (color: float) -> byte {
+	return byte(clamp(color, 0, 1) * color_scale_f2b)
+}
+
+to_color_float3 :: #force_inline proc "contextless" (color: float3) -> byte4 {
+	return {to_color_float(color.x), to_color_float(color.y), to_color_float(color.z), 255}
+}
+
+to_color_float4 :: #force_inline proc "contextless" (color: float4) -> byte4 {
+	return {to_color_float(color.x), to_color_float(color.y), to_color_float(color.z), to_color_float(color.w)}
+}
+
+to_color :: proc {
+	to_color_float,
+	to_color_float3,
+	to_color_float4,
+}
+
+@(private)
+two_pi_over_3 :: math.PI * f32(2) / 3.0
+
+color_hue_float4 :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> float4 {
+	half_scale := scale * 0.5
+	hue_g := hue + two_pi_over_3
+	hue_b := hue_g + two_pi_over_3
+	return {
+		(f32)((math.sin(hue) + 1.0) * half_scale + bias),
+		(f32)((math.sin(hue_g) + 1.0) * half_scale + bias),
+		(f32)((math.sin(hue_b) + 1.0) * half_scale + bias),
+		scale + bias
+	}
+}
+
+color_hue :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> byte4 {
+	return to_color(color_hue_float4(hue, scale, bias))
 }

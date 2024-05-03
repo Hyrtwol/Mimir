@@ -29,7 +29,6 @@ write_image :: proc(fd: ^os.Handle, img: ^image.Image) {
 	}
 	fmt.println("pix:", len(pix))
 
-	//os.write(fd, bytes)
 	dp := img.depth
 	ch := img.channels
 	w, h := img.width, img.height
@@ -89,13 +88,13 @@ gen_pics :: proc(output_name: string, pattern: string) -> int {
 		return 1
 	}
 	fmt.printfln("writing %s", output_path)
-	fd, ferr := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
-	if ferr != 0 {
-		fmt.eprintln("open error:", ferr)
+	fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
+	if fe != 0 {
+		fmt.eprintln("open error:", fe)
 		return 1
 	}
 	defer os.close(fd)
-	// be os nice
+
 	pics_path, ok = fp.abs(fp.join({"..", "examples", "raycaster", "pics"}))
 	if ok {
 		path_pattern := fp.join({pics_path, pattern}, context.temp_allocator)
