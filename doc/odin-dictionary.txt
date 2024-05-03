@@ -40,6 +40,7 @@ lightwave
 linalg
 localizable
 longlong
+lookat
 lparam
 lpctstr
 lresult

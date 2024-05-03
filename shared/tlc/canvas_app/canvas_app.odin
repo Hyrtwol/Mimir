@@ -24,6 +24,7 @@ application :: struct {
 	//colors:    []color,
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
+	delta:                   f32,
 	tick:                    u32,
 	hbitmap:                 win32.HBITMAP,
 	create, update, destroy: app_action,
@@ -40,7 +41,7 @@ app: application = {
 	destroy = on_idle,
 }
 
-fps: f64 = 0
+fps: f32 = 0
 frame_counter := 0
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
@@ -118,7 +119,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.println(#procedure, hwnd, wparam)
 	// app := get_app(hwnd)
-	fps = f64(frame_counter) / frame_time
+	fps = f32(frame_counter) / frame_time
 	frame_counter = 0
 	frame_time = 0
 	set_window_text(hwnd)
@@ -176,7 +177,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-delta, frame_time: f64 = 0, 0
+delta, frame_time: f32 = 0, 0
 
 run :: proc() {
 	settings.app = &app
@@ -187,8 +188,8 @@ run :: proc() {
 	stopwatch->start()
 	for win32app.pull_messages() {
 
-		delta = stopwatch->get_delta_seconds()
-		frame_time += delta
+		app.delta = f32(stopwatch->get_delta_seconds())
+		frame_time += app.delta
 		frame_counter += 1
 		app.tick += 1
 

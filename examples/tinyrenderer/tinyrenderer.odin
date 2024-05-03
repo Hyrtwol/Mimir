@@ -1,8 +1,9 @@
-// vet
+//
 package tinyrenderer
 
 import "core:fmt"
 import "core:intrinsics"
+import "core:math"
 import lg "core:math/linalg"
 import "core:math/rand"
 import win32 "core:sys/windows"
@@ -22,11 +23,10 @@ int2 :: cv.int2
 width: i32 : 160
 height: i32 : width * 3 / 4
 ZOOM :: 8
-// FPS :: 20
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
-// width  : i32 : 800; // output image size
-// height : i32 : 800;
+fov :: math.PI / 4
+
+rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
 ModelView: mat4x4
 Viewport: mat4x4
@@ -50,42 +50,34 @@ create_viewport :: #force_inline proc "contextless" (mx: ^mat4x4, x, y, w, h: f3
 	}
 }
 
-// check https://en.wikipedia.org/wiki/Camera_matrix
-create_projection :: #force_inline proc "contextless" (mx: ^mat4x4, f: f32) {
-	mx^ = {
-		1,  0,    0, 0,
-		0, -1,    0, 0,
-		0,  0,    1, 0,
-		0,  0, -1/f, 0,
-	}
-}
+// // check https://en.wikipedia.org/wiki/Camera_matrix
+// create_projection :: #force_inline proc "contextless" (mx: ^mat4x4, f: f32) {
+// 	mx^ = {
+// 		1,  0,    0, 0,
+// 		0, -1,    0, 0,
+// 		0,  0,    1, 0,
+// 		0,  0, -1/f, 0,
+// 	}
+// }
 
-// odinfmt: enable
+// // odinfmt: enable
 
 viewport :: proc(x, y, w, h: i32) {
 	create_viewport(&Viewport, f32(x), f32(y), f32(w), f32(h))
 }
 
-projection :: proc(f: f32) {
-	create_projection(&Projection, f)
-}
+// projection :: proc(f: f32) {
+// 	create_projection(&Projection, f)
+// }
 
-// check https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
-lookat :: proc(eye, center, up: vec3) {
-	z := lg.normalize(center - eye)
-	x := lg.normalize(lg.cross(up, z))
-	y := lg.normalize(lg.cross(z, x))
-	mx_inv: mat4x4 = {x.x, x.y, x.z, 0, y.x, y.y, y.z, 0, z.x, z.y, z.z, 0, 0, 0, 0, 1}
-	mx_tr: mat4x4 = {1, 0, 0, -eye.x, 0, 1, 0, -eye.y, 0, 0, 1, -eye.z, 0, 0, 0, 1}
-	ModelView = mx_inv * mx_tr
-}
-
-// barycentric :: proc(tri: ^cv.triangle, P: vec2) -> vec3 {
-// 	abc := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
-// 	// for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
-// 	if (lg.determinant(abc) < 1e-3) {return {-1, 1, 1}}
-// 	//return ABC.invert_transpose() * embed<3>(P);
-// 	return lg.inverse_transpose(abc) * vec3{P.x, P.y, 1}
+// // check https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
+// lookat :: proc(eye, center, up: vec3) {
+// 	z := lg.normalize(center - eye)
+// 	x := lg.normalize(lg.cross(up, z))
+// 	y := lg.normalize(lg.cross(z, x))
+// 	mx_inv: mat4x4 = {x.x, x.y, x.z, 0, y.x, y.y, y.z, 0, z.x, z.y, z.z, 0, 0, 0, 0, 1}
+// 	mx_tr: mat4x4 = {1, 0, 0, -eye.x, 0, 1, 0, -eye.y, 0, 0, 1, -eye.z, 0, 0, 0, 1}
+// 	ModelView = mx_inv * mx_tr
 // }
 
 barycentric :: #force_inline proc "contextless" (abc: ^mat3x3, x, y: i32) -> vec3 {
@@ -104,20 +96,10 @@ triangle :: proc(clip_verts: [3]vec4, shader: ^IShader, image: ^cv.canvas, zbuff
 
 	abc := mat3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
 
-	//int bboxmin[2] = {image.width()-1, image.height()-1};
-	//mx, my := cv.canvas_max(pc)
-	// iw := i32(image.size.x)
-	// ih := i32(image.size.y)
 	iw, ih := cv.canvas_size(image)
 	bboxmin: int2 = {iw - 1, ih - 1}
 	bboxmax: int2 = {0, 0}
 	for i in 0 ..< 3 {
-		// for j in 0..<2 {
-		//     bboxmin[j] = lg.min(bboxmin[j], i32(pts2[i][j]))
-		//     bboxmax[j] = lg.max(bboxmax[j], i32(pts2[i][j]))
-		// }
-		// bboxmin = lg.min(bboxmin, transmute(int2)pts2[i])
-		// bboxmax = lg.max(bboxmax, transmute(int2)pts2[i])
 		bboxmin = lg.min(bboxmin, cv.to_int2_floor(pts2[i]))
 		bboxmax = lg.max(bboxmax, cv.to_int2_ceil(pts2[i]))
 	}
@@ -159,39 +141,25 @@ decode_mouse_pos :: #force_inline proc "contextless" (app: ca.papp) -> vec2 {
 	return {f32(v.x), f32(v.y)} / ZOOM
 }
 
-testpts: cv.triangle = {vec2{120, 30}, vec2{81, 100}, vec2{30, 50}}
-/*
-            mesh.vertices = new[]
-            {
-                new Vector3(-half.x, 0, 0),
-                new Vector3( half.x, 0, 0),
-                new Vector3( 0,-half.y, 0), //2
-                new Vector3( 0, half.y, 0),
-                new Vector3( 0, 0,-half.z), //4
-                new Vector3( 0, 0, half.z)
-            };
-*/
-vertices:= [?]cv.float3{
-	{-1, 0, 0},
-	{ 1, 0, 0},
-	{ 0,-1, 0},
-	{ 0, 1, 0},
-	{ 0, 0,-1},
-	{ 0, 0, 1},
-}
-triangles := [?]cv.int3{
-	{3, 4, 0},
-	{3, 0, 5},
-	{3, 5, 1},
-	{3, 1, 4},
-	{2, 0, 4},
-	{2, 5, 0},
-	{2, 1, 5},
-	{2, 4, 1},
-}
+testpts: cv.triangle = {vec2{120, 30}, vec2{80, 100}, vec2{30, 30}}
+
+vertices := [?]cv.float3{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
+triangles := [?]cv.int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
 
 on_create :: proc(app: ca.papp) -> int {
-	// size := ca.dib.canvas.size
+	pc := &ca.dib.canvas
+	width, height := cv.canvas_size(pc)
+	aspect: f32 = 1 // f32(width) / f32(height)
+
+	ModelView = lg.matrix4_look_at(eye, center, up)
+	viewport(20, 0, height, height) // build the Viewport matrix
+	//Viewport = lg.matrix4_look_at(eye, center, up)
+	//viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4) // build the Viewport matrix
+	//projection(lg.distance(eye, center)) // build the Projection matrix
+	Projection = lg.matrix4_perspective(fov, aspect, 0.1, 2)
+	fmt.println("ModelView:", ModelView)
+	fmt.println("Viewport:", Viewport)
+	fmt.println("Projection:", Projection)
 	return 0
 }
 
@@ -209,17 +177,39 @@ on_update :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
 	cv.canvas_clear(pc, cv.COLOR_BLACK)
 
-	cv.draw_triangle(pc, testpts)
+	eye.x = math.sin(f32(app.tick) * 0.01) * 3
+	//lookat(eye, center, up)
+	ModelView = lg.matrix4_look_at(eye, center, up)
 
-	// if app.tick & 0x10 == 0 {
-	// 	cv.canvas_set_dot(pc, testpts[0], cv.COLOR_BLUE)
-	// 	cv.canvas_set_dot(pc, testpts[1], cv.COLOR_GREEN)
-	// 	cv.canvas_set_dot(pc, testpts[2], cv.COLOR_RED)
-	// } else {
-	// 	cv.canvas_set_dot(pc, testpts[0], cv.COLOR_BLACK)
-	// 	cv.canvas_set_dot(pc, testpts[1], cv.COLOR_BLACK)
-	// 	cv.canvas_set_dot(pc, testpts[2], cv.COLOR_BLACK)
-	// }
+	for t in triangles {
+		v0, v1, v2 := cv.to_float4(vertices[t.x]), cv.to_float4(vertices[t.y]), cv.to_float4(vertices[t.z])
+
+		// v0 = Projection * v0
+		// v1 = Projection * v1
+		// v2 = Projection * v2
+
+		v0 = ModelView * v0
+		v1 = ModelView * v1
+		v2 = ModelView * v2
+
+		v0 = Viewport * v0
+		v1 = Viewport * v1
+		v2 = Viewport * v2
+
+		v0 = v0 / v0.w
+		v1 = v1 / v1.w
+		v2 = v2 / v2.w
+
+		// v0 = Projection * v0
+		// v1 = Projection * v1
+		// v2 = Projection * v2
+
+		tri: cv.triangle = {v0.xy, v1.xy, v2.xy}
+		cv.draw_triangle(pc, tri)
+	}
+
+	//cv.draw_triangle(pc, testpts)
+
 	return 0
 }
 

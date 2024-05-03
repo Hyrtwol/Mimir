@@ -4,6 +4,10 @@ package canvas
 import "core:math/rand"
 import lg "core:math/linalg"
 
+to_float4 :: #force_inline proc "contextless" (v: float3, w: f32 = 1) -> float4 {
+	return float4{v.x, v.y, v.z, w}
+}
+
 to_int2 :: #force_inline proc "contextless" (v: float2) -> int2 {
 	return int2{i32(v.x), i32(v.y)}
 }
