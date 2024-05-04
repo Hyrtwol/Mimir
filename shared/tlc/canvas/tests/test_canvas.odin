@@ -50,24 +50,30 @@ verify_amstrad_colors :: proc(t: ^testing.T) {
 
 @(private)
 print_map :: proc(m: [3][3]i32) {
+	prefix :: "// "
+	format :: "% 2d"
 	for y in i32(0) ..< 3 {
-		fmt.println("   +---+---+---+")
+		fmt.println(prefix + "   +---+---+---+")
 		iy := 2 - y
-		fmt.printf("% 2d ", iy - 1)
+		fmt.printf(prefix + format + " ", iy - 1)
 		cy := m[iy]
 		for x in i32(0) ..< 3 {
 			c := cy[x]
 			fmt.print("|")
 			if c >= 0 {
-				fmt.printf("% 2d ", c)
+				fmt.printf(format + " ", c)
 			} else {
 				fmt.print("   ")
 			}
 		}
 		fmt.println("|")
 	}
-	fmt.println("   +---+---+---+")
-	fmt.println("    -1   0   1")
+	fmt.println(prefix + "   +---+---+---+")
+	fmt.print(prefix + "  ")
+	for y in i32(0) ..< 3 {
+		fmt.printf("  " + format, y - 1)
+	}
+	fmt.println()
 }
 
 @(test)
@@ -79,9 +85,7 @@ direction4 :: proc(t: ^testing.T) {
 		}
 	}
 	for i in i32(0) ..< 4 {
-		d := cv.get_direction4(i)
-		fmt.println("dir", i, d)
-		d += 1
+		d := cv.get_direction4(i) + 1
 		m[d.y][d.x] = i
 	}
 
@@ -97,9 +101,7 @@ direction8 :: proc(t: ^testing.T) {
 		}
 	}
 	for i in i32(0) ..< 8 {
-		d := cv.get_direction8(i)
-		fmt.println("dir", i, d)
-		d += 1
+		d := cv.get_direction8(i) + 1
 		m[d.y][d.x] = i
 	}
 
@@ -121,5 +123,5 @@ to_color :: proc(t: ^testing.T) {
 	expect_value(t, 255, cv.to_color(+1.00000))
 	expect_value(t, 255, cv.to_color(+1.10000))
 
-	expect_value(t, {63, 127, 191, 255}, cv.to_color(cv.float4{0.25,0.5,0.75,1.0}))
+	expect_value(t, {0x3F, 0x7F, 0xBF, 0xFF}, cv.to_color(cv.float4{0.25, 0.5, 0.75, 1.0}))
 }

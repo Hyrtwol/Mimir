@@ -1,8 +1,9 @@
 // +vet
 package canvas
 
+import "core:intrinsics"
+import "core:math/linalg"
 import "core:math/rand"
-import lg "core:math/linalg"
 
 to_float4 :: #force_inline proc "contextless" (v: float3, w: f32 = 1) -> float4 {
 	return float4{v.x, v.y, v.z, w}
@@ -13,12 +14,18 @@ to_int2 :: #force_inline proc "contextless" (v: float2) -> int2 {
 }
 
 to_int2_floor :: #force_inline proc "contextless" (v: float2) -> int2 {
-	return to_int2(lg.floor(v))
+	return to_int2(linalg.floor(v))
 }
 
 to_int2_ceil :: #force_inline proc "contextless" (v: float2) -> int2 {
-	return to_int2(lg.ceil(v))
+	return to_int2(linalg.ceil(v))
 }
+
+@(require_results)
+create_rng :: #force_inline proc () -> (res: rand.Rand) {
+	return rand.create(u64(intrinsics.read_cycle_counter()))
+}
+
 
 @(private)
 random_position_int_xy :: #force_inline proc(x, y: i32, r: ^rand.Rand) -> int2 {
@@ -47,8 +54,12 @@ random_position :: proc {
 	random_position_uint2,
 }
 
+random_color_byte :: #force_inline proc(r: ^rand.Rand) -> u8 {
+	return u8(rand.int31_max(256, r))
+}
+
 random_color :: #force_inline proc(r: ^rand.Rand, alpha: u8 = 255) -> byte4 {
-	return {u8(rand.int31_max(256, r)), u8(rand.int31_max(256, r)), u8(rand.int31_max(256, r)), alpha}
+	return {random_color_byte(r), random_color_byte(r), random_color_byte(r), alpha}
 }
 
 @(private)
@@ -76,4 +87,19 @@ get_direction4 :: #force_inline proc "contextless" (dir: i32) -> int2 {
 //     -1   0  +1
 get_direction8 :: #force_inline proc "contextless" (dir: i32) -> int2 {
 	return ((^int2)(&directions[dir & 7]))^
+}
+
+@(require_results)
+matrix4_rotate_x_f32 :: proc "c" (angle: f32) -> float4x4 {
+	return auto_cast linalg.matrix4_rotate(angle, float3{1, 0, 0})
+}
+
+@(require_results)
+matrix4_rotate_y_f32 :: proc "c" (angle: f32) -> float4x4 {
+	return auto_cast linalg.matrix4_rotate(angle, float3{0, 1, 0})
+}
+
+@(require_results)
+matrix4_rotate_z_f32 :: proc "c" (angle: f32) -> float4x4 {
+	return auto_cast linalg.matrix4_rotate(angle, float3{0, 0, 1})
 }

@@ -109,7 +109,7 @@ on_create :: proc(app: ca.papp) -> int {
 	maxrad = rofs // + rh div 2;
 	maxrad2 = maxrad * maxrad // math.sqr(maxrad)
 	i := maxrad + rofs
-	maxrad3 = i*i
+	maxrad3 = i * i
 
 	//size := ca.dib.canvas.size
 	for &d in dudes {
@@ -139,50 +139,49 @@ on_update :: proc(app: ca.papp) -> int {
 	dir: int2
 	mx, my := i32(pc.size.x - 1), i32(pc.size.y - 1)
 
-	for _ in 0..<16 {
-	for &d in dudes {
-		pp = &d.pos
-		//dir = cv.get_direction8(rand.int31_max(4, &rng))
-		dir = get_direction(rand.int31_max(8, &rng))
-		np := pp^ + dir
+	for _ in 0 ..< 16 * 4 {
+		for &d in dudes {
+			pp = &d.pos
+			//dir = cv.get_direction8(rand.int31_max(4, &rng))
+			dir = get_direction(rand.int31_max(8, &rng))
+			np := pp^ + dir
 
-		dv := np - transmute(int2)origo
-		r := dv.x*dv.x + dv.y*dv.y
+			dv := np - transmute(int2)origo
+			r := dv.x * dv.x + dv.y * dv.y
 
-		if r > maxrad3
-		{
-			d.pos = random_position(&rng)
-			continue
-		}
-
-		if np.x < 0 {np.x = mx} else if np.x > mx {np.x = 0}
-		if np.y < 0 {np.y = my} else if np.y > my {np.y = 0}
-
-		if map_check_free(u32(np.x), u32(np.y)) {
-			pp^ = np
-		} else {
-			//fmt.println("hit")
-			map_set_dot(transmute(uint2)np, 1)
-			//cv.canvas_set_dot(pc, np, d.col)
-			cv.canvas_set_dot(pc, np, cv.COLOR_WHITE)
-
-			dv = np - transmute(int2)origo
-			r = dv.x*dv.x + dv.y*dv.y
-			if r > maxrad2 {
-				maxrad = i32(math.round_f32(math.sqrt_f32(f32(r))))
-				maxrad2 = maxrad*maxrad
-				i := maxrad + rofs
-				if i > i32(rl) {
-				  i = i32(rl)
-				}
-				maxrad3 = i*i //Sqr(i);
-				//fmt.println("hit", maxrad, maxrad2, maxrad3)
+			if r > maxrad3 {
+				d.pos = random_position(&rng)
+				continue
 			}
 
-			d.pos = random_position(&rng)
-			d.col = cv.random_color(&rng)
+			if np.x < 0 {np.x = mx} else if np.x > mx {np.x = 0}
+			if np.y < 0 {np.y = my} else if np.y > my {np.y = 0}
+
+			if map_check_free(u32(np.x), u32(np.y)) {
+				pp^ = np
+			} else {
+				//fmt.println("hit")
+				map_set_dot(transmute(uint2)np, 1)
+				//cv.canvas_set_dot(pc, np, d.col)
+				cv.canvas_set_dot(pc, np, cv.COLOR_WHITE)
+
+				dv = np - transmute(int2)origo
+				r = dv.x * dv.x + dv.y * dv.y
+				if r > maxrad2 {
+					maxrad = i32(math.round_f32(math.sqrt_f32(f32(r))))
+					maxrad2 = maxrad * maxrad
+					i := maxrad + rofs
+					if i > i32(rl) {
+						i = i32(rl)
+					}
+					maxrad3 = i * i //Sqr(i);
+					//fmt.println("hit", maxrad, maxrad2, maxrad3)
+				}
+
+				d.pos = random_position(&rng)
+				d.col = cv.random_color(&rng)
+			}
 		}
-	}
 	}
 
 	for &d in dudes {

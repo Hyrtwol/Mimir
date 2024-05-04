@@ -2,8 +2,8 @@ package test_misc
 
 import "core:fmt"
 import "core:os"
-import _t "core:testing"
 import "core:strings"
+import _t "core:testing"
 import _u "shared:ounit"
 
 //TODO investigate #config
@@ -52,8 +52,8 @@ when_to_use_when :: proc(t: ^_t.T) {
 
 @(test)
 when_to_use_config :: proc(t: ^_t.T) {
-	val : i32
-	val = #config(LA_COUR,   -1)
+	val: i32
+	val = #config(LA_COUR, -1)
 	_t.expectf(t, val == -1, "%v", val)
 }
 
@@ -111,7 +111,7 @@ unroll_for_statement :: proc() {
 	// be very very useful for certain optimizations
 
 	fmt.println("Ranges")
-	#unroll for x, i in 1..<4 {
+	#unroll for x, i in 1 ..< 4 {
 		fmt.println(x, i)
 	}
 }
@@ -160,7 +160,7 @@ sign :: proc(x: i32) -> i32 {
 	return -1 if x < 0 else 1
 }
 
-callback :: #type proc(i32) -> i32
+callback :: #type proc(_: i32) -> i32
 
 @(test)
 array_of_procs :: proc(t: ^_t.T) {
@@ -179,20 +179,20 @@ array_of_procs :: proc(t: ^_t.T) {
 	}
 }
 
-ta :: struct  {
-	aa : int,
+ta :: struct {
+	aa: int,
 }
-tb :: struct  {
+tb :: struct {
 	#subtype a: ta,
-	bb : int,
+	bb: int,
 }
-tc :: struct  {
+tc :: struct {
 	using a: ta,
-	cc : int,
+	cc:      int,
 }
-td :: struct  {
-	a: ta,
-	dd : int,
+td :: struct {
+	a:  ta,
+	dd: int,
 }
 
 do_ta :: proc(v: ^ta) {
@@ -206,21 +206,46 @@ subtypes :: proc(t: ^_t.T) {
 	_u.expect_value_int(t, size_of(tc), 16)
 	_u.expect_value_int(t, size_of(td), 16)
 
-	b := tb{bb = 2, a = { aa = 21}}
+	b := tb {
+		bb = 2,
+		a = {aa = 21},
+	}
 	_u.expect_value_int(t, b.bb, 2)
 	_u.expect_value_int(t, b.a.aa, 21)
 	_u.expect_value_int(t, ta(b).aa, 21)
 	do_ta(&b)
 
-	c := tc{cc = 3, aa = 31}
+	c := tc {
+		cc = 3,
+		aa = 31,
+	}
 	_u.expect_value_int(t, c.cc, 3)
 	_u.expect_value_int(t, c.aa, 31)
 	_u.expect_value_int(t, c.a.aa, 31)
 	_u.expect_value_int(t, ta(c).aa, 31)
 	do_ta(&c)
 
-	d := td{dd = 4, a = { aa = 41}}
+	d := td {
+		dd = 4,
+		a = {aa = 41},
+	}
 	_u.expect_value_int(t, d.dd, 4)
 	_u.expect_value_int(t, d.a.aa, 41)
 	//do_ta(&d)
+}
+
+@(test)
+bit_sets :: proc(t: ^_t.T) {
+	Flag :: enum u8 {
+		A,
+		B,
+		C,
+	}
+	Flags :: bit_set[Flag;u8]
+	flags: Flags
+	flags = transmute(Flags)u8(1 << (1 ~ uint(max(Flag))) - 1)
+	fmt.println("1) flags:", flags, u8(max(Flag)))
+	fmt.println("2) flags transmuted:", transmute(u8)flags)
+	fmt.println("3) flags cardinality:", card(flags))
+	fmt.println("4) flags == {.A, .B, .C}:", flags == {.A, .B, .C})
 }

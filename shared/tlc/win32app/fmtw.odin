@@ -31,20 +31,20 @@ wtprintfln :: #force_inline proc(format: string, args: ..any, allocator := conte
 	return wtprintf(format, ..args, allocator = allocator, newline = true)
 }
 
-wchar_size :: size_of(WCHAR)
+WCHAR_SIZE :: size_of(WCHAR)
 
 wstring_byte_size :: proc "contextless" (s: wstring) -> int {
 	if s == nil {return 0}
 	p0 := uintptr((^WCHAR)(s))
 	p := p0
 	for p != 0 && (^WCHAR)(p)^ != 0 {
-		p += wchar_size
+		p += WCHAR_SIZE
 	}
 	return int(p - p0)
 }
 
 wstring_len :: #force_inline proc "contextless" (s: wstring) -> int {
-	return wstring_byte_size(s) / wchar_size
+	return wstring_byte_size(s) / WCHAR_SIZE
 }
 
 wstring_equal :: proc "contextless" (a, b: wstring) -> bool {

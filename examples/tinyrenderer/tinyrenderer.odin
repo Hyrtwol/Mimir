@@ -1,6 +1,7 @@
 //
 package tinyrenderer
 
+import "core:container/queue"
 import "core:fmt"
 import "core:intrinsics"
 import "core:math"
@@ -24,6 +25,9 @@ width: i32 : 160
 height: i32 : width * 3 / 4
 ZOOM :: 8
 
+do_rotate := true
+rot_y: f32 = 0
+
 fov :: math.PI / 4
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
@@ -37,12 +41,15 @@ Projection: mat4x4
 // odinfmt: disable
 
 light_dir := vec3{1, 1, 1} // light source
-eye       := vec3{1, 1, 3} // camera position
+eye       := vec3{1, 2.5, 3} // camera position
 center    := vec3{0, 0, 0} // camera direction
 up        := vec3{0, 1, 0} // camera up vector
 
-create_viewport :: #force_inline proc "contextless" (mx: ^mat4x4, x, y, w, h: f32) {
-	mx^ = {
+// check https://en.wikipedia.org/wiki/Camera_matrix
+// check https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
+
+create_viewport :: #force_inline proc "contextless" (x, y, w, h: f32) -> mat4x4 {
+	return {
 		w/2, 0  , 0  , x+w/2,
 		0  , h/2, 0  , y+h/2,
 		0  , 0  , 1  , 0    ,
@@ -50,35 +57,7 @@ create_viewport :: #force_inline proc "contextless" (mx: ^mat4x4, x, y, w, h: f3
 	}
 }
 
-// // check https://en.wikipedia.org/wiki/Camera_matrix
-// create_projection :: #force_inline proc "contextless" (mx: ^mat4x4, f: f32) {
-// 	mx^ = {
-// 		1,  0,    0, 0,
-// 		0, -1,    0, 0,
-// 		0,  0,    1, 0,
-// 		0,  0, -1/f, 0,
-// 	}
-// }
-
-// // odinfmt: enable
-
-viewport :: proc(x, y, w, h: i32) {
-	create_viewport(&Viewport, f32(x), f32(y), f32(w), f32(h))
-}
-
-// projection :: proc(f: f32) {
-// 	create_projection(&Projection, f)
-// }
-
-// // check https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
-// lookat :: proc(eye, center, up: vec3) {
-// 	z := lg.normalize(center - eye)
-// 	x := lg.normalize(lg.cross(up, z))
-// 	y := lg.normalize(lg.cross(z, x))
-// 	mx_inv: mat4x4 = {x.x, x.y, x.z, 0, y.x, y.y, y.z, 0, z.x, z.y, z.z, 0, 0, 0, 0, 1}
-// 	mx_tr: mat4x4 = {1, 0, 0, -eye.x, 0, 1, 0, -eye.y, 0, 0, 1, -eye.z, 0, 0, 0, 1}
-// 	ModelView = mx_inv * mx_tr
-// }
+// odinfmt: enable
 
 barycentric :: #force_inline proc "contextless" (abc: ^mat3x3, x, y: i32) -> vec3 {
 	return lg.inverse_transpose(abc^) * vec3{f32(x), f32(y), 1}
@@ -152,7 +131,8 @@ on_create :: proc(app: ca.papp) -> int {
 	aspect: f32 = 1 // f32(width) / f32(height)
 
 	ModelView = lg.matrix4_look_at(eye, center, up)
-	viewport(20, 0, height, height) // build the Viewport matrix
+	//viewport(0, 0, height, height) // build the Viewport matrix
+	Viewport = create_viewport(20, 0, f32(height), f32(height))
 	//Viewport = lg.matrix4_look_at(eye, center, up)
 	//viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4) // build the Viewport matrix
 	//projection(lg.distance(eye, center)) // build the Projection matrix
@@ -174,12 +154,35 @@ on_update :: proc(app: ca.papp) -> int {
 		testpts[2] = decode_mouse_pos(app)
 	}
 
+	ch, ok := queue.pop_front_safe(&app.char_queue)
+	if ok {
+		switch ch {
+		case ' ':
+			do_rotate ~= true
+		case:
+			fmt.println("ch:", ch)
+		}
+	}
+
 	pc := &ca.dib.canvas
 	cv.canvas_clear(pc, cv.COLOR_BLACK)
 
-	eye.x = math.sin(f32(app.tick) * 0.01) * 3
+	//eye.x = math.sin(f32(app.tick) * 0.01) * 3
+	//m := lg.matrix4_rotate_f32(f32(app.tick) * 0.01)
+
 	//lookat(eye, center, up)
 	ModelView = lg.matrix4_look_at(eye, center, up)
+	//ViewProj := ModelView * Viewport * Projection
+
+	//m := lg.matrix4_scale_f32(2)
+	//m := lg.matrix4_translate_f32({0.5,0,0})
+
+	mvp := Viewport * ModelView
+	//mvp := Projection * Viewport * ModelView
+	if do_rotate {
+		rot_y += f32(app.delta) * 0.5
+	}
+	mvp *= cv.matrix4_rotate_y_f32(rot_y)
 
 	for t in triangles {
 		v0, v1, v2 := cv.to_float4(vertices[t.x]), cv.to_float4(vertices[t.y]), cv.to_float4(vertices[t.z])
@@ -188,17 +191,8 @@ on_update :: proc(app: ca.papp) -> int {
 		// v1 = Projection * v1
 		// v2 = Projection * v2
 
-		v0 = ModelView * v0
-		v1 = ModelView * v1
-		v2 = ModelView * v2
-
-		v0 = Viewport * v0
-		v1 = Viewport * v1
-		v2 = Viewport * v2
-
-		v0 = v0 / v0.w
-		v1 = v1 / v1.w
-		v2 = v2 / v2.w
+		v0, v1, v2 = mvp * v0, mvp * v1, mvp * v2
+		v0, v1, v2 = v0 / v0.w, v1 / v1.w, v2 / v2.w
 
 		// v0 = Projection * v0
 		// v1 = Projection * v1

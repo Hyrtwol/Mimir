@@ -1,5 +1,6 @@
 package canvas_app
 
+import "core:container/queue"
 import "core:fmt"
 import "core:intrinsics"
 import "core:runtime"
@@ -28,9 +29,9 @@ application :: struct {
 	tick:                    u32,
 	hbitmap:                 win32.HBITMAP,
 	create, update, destroy: app_action,
-
 	mouse_pos:               int2,
 	mouse_buttons:           win32app.MOUSE_KEY_STATE,
+	char_queue:              queue.Queue(u8),
 }
 papp :: ^application
 
@@ -96,14 +97,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
-WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	switch wparam {
-	case '\x1b':
-		win32app.close_application(hwnd)
-	}
-	return 0
-}
-
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
 }
@@ -152,6 +145,41 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
+WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	app := get_app(hwnd)
+	queue.push_front(&app.char_queue, u8(wparam))
+	return 0
+}
+
+handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	app := get_app(hwnd)
+	vk_code := win32.LOWORD(wparam) // virtual-key code
+	key_flags := win32.HIWORD(lparam)
+	scan_code := win32.WORD(win32.LOBYTE(key_flags)) // scan code
+	is_extended_key := (key_flags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
+	if is_extended_key {scan_code = win32.MAKEWORD(scan_code, 0xE0)}
+	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
+	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
+	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
+
+	switch (vk_code)
+	{
+	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
+	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
+	case win32.VK_MENU:
+		// converts to VK_LMENU or VK_RMENU
+		vk_code = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scan_code), win32.MAPVK_VSC_TO_VK_EX))
+		break
+	}
+
+	switch vk_code {
+	case win32.VK_ESCAPE:
+		if is_key_released {win32app.close_application(hwnd)}
+	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
+	}
+	return 0
+}
+
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app.mouse_pos = win32app.decode_lparam(lparam)
 	app.mouse_buttons = win32app.MOUSE_KEY_STATE(wparam)
@@ -164,12 +192,16 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	switch msg {
 	case win32.WM_CREATE:       return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:      return WM_DESTROY(hwnd)
-	case win32.WM_ERASEBKGND:   return 1
 	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:        return WM_PAINT(hwnd)
-	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam)
-	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam)
+	case win32.WM_ERASEBKGND:   return 1 // 0x0014
+	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam) // 0x0102
+	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam) // 0x0113
+
+	//case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
+
+	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam) // 0x0200
 	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
 	case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
 	case:                       return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
@@ -180,6 +212,9 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 delta, frame_time: f32 = 0, 0
 
 run :: proc() {
+	// queue.init(&app.char_queue)
+	// defer queue.destroy(&app.char_queue)
+
 	settings.app = &app
 	_, _, hwnd := win32app.prepare_run(&settings)
 	res: int
