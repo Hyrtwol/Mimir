@@ -23,30 +23,34 @@ int2 :: cv.int2
 
 width: i32 : 160
 height: i32 : width * 3 / 4
-ZOOM :: 8
+ZOOM :: 6
 
 do_rotate := true
 rot_y: f32 = 0
 
-fov :: math.PI / 4
+fov90: f32 : 90 * math.PI / 360
+fov: f32 = fov90
+aspect: f32 = f32(width) / f32(height)
 
 rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
-ModelView: mat4x4
+// ModelView: mat4x4
 Viewport: mat4x4
-Projection: mat4x4
+// Projection: mat4x4
+proj, view, model: mat4x4
 
 
 
 // odinfmt: disable
 
 light_dir := vec3{1, 1, 1} // light source
-eye       := vec3{1, 2.5, 3} // camera position
+eye       := vec3{1, -2.5, 3} // camera position
 center    := vec3{0, 0, 0} // camera direction
 up        := vec3{0, 1, 0} // camera up vector
 
-// check https://en.wikipedia.org/wiki/Camera_matrix
-// check https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
+// https://en.wikipedia.org/wiki/Camera_matrix
+// https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
+// https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-coordinates
 
 create_viewport :: #force_inline proc "contextless" (x, y, w, h: f32) -> mat4x4 {
 	return {
@@ -68,90 +72,61 @@ IShader :: struct {}
 //fragment :: proc(shader: ^IShader, bc_clip :vec3, color: ^byte4) -> bool {return false}
 fragment_shader :: #type proc(shader: ^IShader, bc_clip: vec3, color: ^byte4) -> bool
 
-//triangle :: proc(const vec4 clip_verts[3], IShader &shader, TGAImage &image, std::vector<double> &zbuffer) {
-triangle :: proc(clip_verts: [3]vec4, shader: ^IShader, image: ^cv.canvas, zbuffer: []f64, fragment: fragment_shader) {
-	pts: [3]vec4 = {Viewport * clip_verts[0], Viewport * clip_verts[1], Viewport * clip_verts[2]} // triangle screen coordinates before persp. division
-	pts2: cv.triangle = {vec2(pts[0].xy / pts[0][3]), vec2(pts[1].xy / pts[1][3]), vec2(pts[2].xy / pts[2][3])} // triangle screen coordinates after  perps. division
+vert_count :: 6
+vertices: [vert_count]cv.float3 = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
+vert: [vert_count]cv.float4
 
-	abc := mat3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
-
-	iw, ih := cv.canvas_size(image)
-	bboxmin: int2 = {iw - 1, ih - 1}
-	bboxmax: int2 = {0, 0}
-	for i in 0 ..< 3 {
-		bboxmin = lg.min(bboxmin, cv.to_int2_floor(pts2[i]))
-		bboxmax = lg.max(bboxmax, cv.to_int2_ceil(pts2[i]))
-	}
-
-	//#pragma omp parallel for
-	// for (int x=std::max(bboxmin[0], 0); x<=std::min(bboxmax[0], image.width()-1); x++) {
-	//     for (int y=std::max(bboxmin[1], 0); y<=std::min(bboxmax[1], image.height()-1); y++) {
-	pp2 := &pts2
-	x1 := max(bboxmin[0], 0)
-	x2 := min(bboxmax[0], iw - 1)
-	y1 := max(bboxmin[1], 0)
-	y2 := min(bboxmax[1], ih - 1)
-	xy: vec2
-	for x in x1 ..= x2 {
-		xy.x = f32(x)
-		for y in y1 ..= y2 {
-			xy.y = f32(y)
-			iz := x + y * iw
-
-			bc_screen: vec3 = barycentric(&abc, x, y)
-			bc_clip: vec3 = {bc_screen.x / pts[0][3], bc_screen.y / pts[1][3], bc_screen.z / pts[2][3]}
-			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z) // check https://github.com/ssloy/tinyrenderer/wiki/Technical-difficulties-linear-interpolation-with-perspective-deformations
-			// double frag_depth = vec3{clip_verts[0][2], clip_verts[1][2], clip_verts[2][2]}*bc_clip;
-			//frag_depth :f64= vec3{clip_verts[0][2], clip_verts[1][2], clip_verts[2][2]} * bc_clip
-			frag_depth := f64(lg.dot(vec3{clip_verts[0][2], clip_verts[1][2], clip_verts[2][2]}, bc_clip))
-			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || frag_depth > zbuffer[x + y * iw]) {continue}
-			color: byte4
-			//if shader.fragment(bc_clip, &color) {continue} // fragment shader can discard current fragment
-			if fragment(shader, bc_clip, &color) {continue} 	// fragment shader can discard current fragment
-			zbuffer[x + y * iw] = frag_depth
-			//image.set(x, y, color);
-			cv.canvas_set_dot(image, x, y, color)
-		}
-	}
-}
-
-decode_mouse_pos :: #force_inline proc "contextless" (app: ca.papp) -> vec2 {
-	v := app.mouse_pos
-	return {f32(v.x), f32(v.y)} / ZOOM
-}
-
-testpts: cv.triangle = {vec2{120, 30}, vec2{80, 100}, vec2{30, 30}}
-
-vertices := [?]cv.float3{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
 triangles := [?]cv.int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
+
+models: [6]cv.float4x4
 
 on_create :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
 	width, height := cv.canvas_size(pc)
-	aspect: f32 = 1 // f32(width) / f32(height)
+	fov = fov90
+	aspect = f32(width) / f32(height)
+	fmt.println("width, height:", width, height)
 
-	ModelView = lg.matrix4_look_at(eye, center, up)
-	//viewport(0, 0, height, height) // build the Viewport matrix
-	Viewport = create_viewport(20, 0, f32(height), f32(height))
-	//Viewport = lg.matrix4_look_at(eye, center, up)
-	//viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4) // build the Viewport matrix
-	//projection(lg.distance(eye, center)) // build the Projection matrix
-	Projection = lg.matrix4_perspective(fov, aspect, 0.1, 2)
-	fmt.println("ModelView:", ModelView)
-	fmt.println("Viewport:", Viewport)
-	fmt.println("Projection:", Projection)
+	view = lg.matrix4_look_at(eye, center, up)
+	Viewport = create_viewport(0, 0, f32(width), f32(height))
+	proj = lg.matrix4_perspective(fov, aspect, 0.1, 10)
+	fmt.println("model:", model)
+	fmt.println("view :", view)
+	fmt.println("proj :", proj)
+
+	models = {
+		lg.matrix4_translate(cv.float3{0, 0, 0}),
+		lg.matrix4_translate(cv.float3{2, 0, 0}),
+		lg.matrix4_translate(cv.float3{-2, 0, 0}),
+		lg.matrix4_translate(cv.float3{0, 0, -2}),
+		lg.matrix4_translate(cv.float3{2, 0, -2}),
+		lg.matrix4_translate(cv.float3{-2, 0, -2}),
+	}
+
+	// for i in 0..<vert_count {
+	// 	vert[i] = cv.to_float4(vertices[i])
+	// }
+
 	return 0
 }
 
 on_update :: proc(app: ca.papp) -> int {
 
+	pc := &ca.dib.canvas
+
 	#partial switch app.mouse_buttons {
 	case .MK_LBUTTON:
-		testpts[0] = decode_mouse_pos(app)
+		mp := ca.decode_mouse_pos_01(app) // 0..1
+		eye.x = (mp.x - 0.5) * 10
+		eye.y = -2.5 + mp.y * 5
 	case .MK_RBUTTON:
-		testpts[1] = decode_mouse_pos(app)
+		mp := ca.decode_mouse_pos_01(app) // 0..1
+		eye = lg.normalize(eye) * (2 + mp.y * 5)
 	case .MK_MBUTTON:
-		testpts[2] = decode_mouse_pos(app)
+		mp := ca.decode_mouse_pos_01(app) // 0..1
+		fov = fov90 + fov90 * mp.y
+		aspect = cv.canvas_aspect(pc)
+		proj = lg.matrix4_perspective(fov, aspect, 0.1, 10)
 	}
 
 	ch, ok := queue.pop_front_safe(&app.char_queue)
@@ -164,45 +139,37 @@ on_update :: proc(app: ca.papp) -> int {
 		}
 	}
 
-	pc := &ca.dib.canvas
 	cv.canvas_clear(pc, cv.COLOR_BLACK)
 
-	//eye.x = math.sin(f32(app.tick) * 0.01) * 3
-	//m := lg.matrix4_rotate_f32(f32(app.tick) * 0.01)
+	view = lg.matrix4_look_at(eye, center, up)
+	proj_view := proj * view
 
-	//lookat(eye, center, up)
-	ModelView = lg.matrix4_look_at(eye, center, up)
-	//ViewProj := ModelView * Viewport * Projection
-
-	//m := lg.matrix4_scale_f32(2)
-	//m := lg.matrix4_translate_f32({0.5,0,0})
-
-	mvp := Viewport * ModelView
-	//mvp := Projection * Viewport * ModelView
 	if do_rotate {
 		rot_y += f32(app.delta) * 0.5
 	}
-	mvp *= cv.matrix4_rotate_y_f32(rot_y)
+	model := cv.matrix4_rotate_y_f32(rot_y)
 
-	for t in triangles {
-		v0, v1, v2 := cv.to_float4(vertices[t.x]), cv.to_float4(vertices[t.y]), cv.to_float4(vertices[t.z])
+	// for i in 0..<vert_count {
+	// 	vert[i] = cv.to_float4(vertices[i])
+	// }
 
-		// v0 = Projection * v0
-		// v1 = Projection * v1
-		// v2 = Projection * v2
+	for &m in models {
 
-		v0, v1, v2 = mvp * v0, mvp * v1, mvp * v2
-		v0, v1, v2 = v0 / v0.w, v1 / v1.w, v2 / v2.w
+		fm := m * model
+		proj_view_model := proj_view * fm
 
-		// v0 = Projection * v0
-		// v1 = Projection * v1
-		// v2 = Projection * v2
+		for i in 0 ..< vert_count {
+			v := cv.to_float4(vertices[i])
+			v = proj_view_model * v
+			v = cv.normalized_device_coordinates(&Viewport, v)
+			vert[i] = v
+		}
 
-		tri: cv.triangle = {v0.xy, v1.xy, v2.xy}
-		cv.draw_triangle(pc, tri)
+		for t in triangles {
+			v0, v1, v2 := vert[t.x], vert[t.y], vert[t.z]
+			cv.draw_triangle(pc, {v0, v1, v2})
+		}
 	}
-
-	//cv.draw_triangle(pc, testpts)
 
 	return 0
 }

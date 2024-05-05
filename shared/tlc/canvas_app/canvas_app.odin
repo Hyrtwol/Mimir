@@ -4,6 +4,7 @@ import "core:container/queue"
 import "core:fmt"
 import "core:intrinsics"
 import "core:runtime"
+import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
@@ -61,6 +62,19 @@ get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
 	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
 	return settings
+}
+
+// 0..1
+decode_mouse_pos_01 :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
+	LO :: cv.float2{0,0}
+	HI :: cv.float2{1,1}
+	normalized_mouse_pos :=  cv.to_float2(app.mouse_pos) / cv.to_float2(settings.window_size)
+	return linalg.clamp(normalized_mouse_pos, LO, HI)
+}
+
+// normalized device coordinates -1..1
+decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
+	return decode_mouse_pos_01(app) * 2 - 1
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {

@@ -9,6 +9,10 @@ to_float4 :: #force_inline proc "contextless" (v: float3, w: f32 = 1) -> float4 
 	return float4{v.x, v.y, v.z, w}
 }
 
+to_float2 :: #force_inline proc "contextless" (v: int2) -> float2 {
+	return float2{f32(v.x), f32(v.y)}
+}
+
 to_int2 :: #force_inline proc "contextless" (v: float2) -> int2 {
 	return int2{i32(v.x), i32(v.y)}
 }
@@ -102,4 +106,36 @@ matrix4_rotate_y_f32 :: proc "c" (angle: f32) -> float4x4 {
 @(require_results)
 matrix4_rotate_z_f32 :: proc "c" (angle: f32) -> float4x4 {
 	return auto_cast linalg.matrix4_rotate(angle, float3{0, 0, 1})
+}
+
+/*
+mat4 perspective_opengl_rh(
+  const float fovy, const float aspect, const float n, const float f)
+{
+  const float e = 1.0f / std::tan(fovy * 0.5f);
+  return {e / aspect, 0.0f,  0.0f,                    0.0f,
+          0.0f,       e,     0.0f,                    0.0f,
+          0.0f,       0.0f, (f + n) / (n - f),       -1.0f,
+          0.0f,       0.0f, (2.0f * f * n) / (n - f), 0.0f};
+}
+
+mat4 perspective_direct3d_lh(
+  const float fovy, const float aspect, const float n, const float f)
+{
+  const float e = 1.0f / std::tan(fovy * 0.5f);
+  return {e / aspect, 0.0f,  0.0f,             0.0f,
+          0.0f,       e,     0.0f,             0.0f,
+          0.0f,       0.0f,  f / (f - n),      1.0f,
+          0.0f,       0.0f, (f * n) / (n - f), 0.0f};
+}
+*/
+
+// https://www.learnopengles.com/tag/perspective-divide/
+perspective_divide ::  #force_inline proc "contextless" (v: float4) -> float4 {
+	return v / v.w
+}
+
+// normalized_device_coordinates
+normalized_device_coordinates ::  #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
+	return viewport^ * (v / v.w)
 }

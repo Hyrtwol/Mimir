@@ -33,7 +33,7 @@ on_update :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
 	pp: ^ cv.int2
 	dir:  cv.int2
-	mx, my := cv.canvas_max(pc)
+	mx, my := cv.canvas_max_xy(pc)
 	for &d in dudes {
 		pp = &d.pos
 		dir = cv.get_direction4(rand.int31_max(8, &rng))

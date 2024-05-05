@@ -209,17 +209,75 @@ mat3x3 :: linalg.Matrix3x3f32
 vec2 :: linalg.Vector2f32
 vec3 :: linalg.Vector3f32
 vec4 :: linalg.Vector4f32
-tri :: [3] vec2
+tri :: [3]vec2
 
 @(test)
 determinant_3x3 :: proc(t: ^testing.T) {
-	tri: tri = { vec2{150,50}, vec2{80,150}, vec2{50,50} }
+	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
 	fmt.println("t:", tri)
 	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
 	fmt.println("ABC:", ABC)
-    //if (ABC.det()<1e-3) return {-1,1,1}; // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
-    //if (lg.determinant(ABC)<1e-3) {return {-1,1,1}} // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
+	//if (ABC.det()<1e-3) return {-1,1,1}; // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
+	//if (lg.determinant(ABC)<1e-3) {return {-1,1,1}} // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
 	det := linalg.matrix3x3_determinant(ABC)
 	fmt.println("det:", det)
 	o.expect_valuef(t, det, 10000, 0.0001)
+}
+
+@(test)
+adjugate_3x3 :: proc(t: ^testing.T) {
+	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
+	fmt.println("t:", tri)
+	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
+	fmt.println("ABC:", ABC)
+	//if (ABC.det()<1e-3) return {-1,1,1}; // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
+	//if (lg.determinant(ABC)<1e-3) {return {-1,1,1}} // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
+	a := linalg.matrix3x3_adjugate(ABC)
+	fmt.println("adjugate:", a)
+
+	testing.expectf(t, [3]f32{100, -0, -100} == a[0], "a[0]=%v", a[0])
+	testing.expectf(t, [3]f32{-30, 100, -70} == a[1], "a[1]=%v", a[1])
+	testing.expectf(t, [3]f32{-3500, -5000, 18500} == a[2], "a[2]=%v", a[2])
+}
+
+@(test)
+transpose_3x3 :: proc(t: ^testing.T) {
+	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
+	fmt.println("t:", tri)
+	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
+	fmt.println("ABC:", ABC)
+	a := linalg.transpose(ABC)
+	fmt.println("transpose:", a)
+
+	testing.expectf(t, [3]f32{150, 50, 1} == a[0], "a[0]=%v", a[0])
+	testing.expectf(t, [3]f32{80, 150, 1} == a[1], "a[1]=%v", a[1])
+	testing.expectf(t, [3]f32{50, 50, 1} == a[2], "a[2]=%v", a[2])
+}
+
+@(test)
+inverse_3x3 :: proc(t: ^testing.T) {
+	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
+	fmt.println("t:", tri)
+	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
+	fmt.println("ABC:", ABC)
+	a := linalg.inverse(ABC)
+	fmt.println("inverse:", a)
+
+	testing.expectf(t, [3]f32{0.0099999998, -0.003, -0.34999999} == a[0], "a[0]=%v", a[0])
+	testing.expectf(t, [3]f32{-0, 0.0099999998, -0.5} == a[1], "a[1]=%v", a[1])
+	testing.expectf(t, [3]f32{-0.0099999998, -0.0069999998, 1.8499999} == a[2], "a[2]=%v", a[2])
+}
+
+@(test)
+inverse_transpose_3x3 :: proc(t: ^testing.T) {
+	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
+	fmt.println("t:", tri)
+	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
+	fmt.println("ABC:", ABC)
+	a := linalg.matrix3x3_inverse_transpose(ABC)
+	fmt.println("inverse_transpose:", a)
+
+	testing.expectf(t, [3]f32{0.0099999998, -0, -0.0099999998} == a[0], "a[0]=%v", a[0])
+	testing.expectf(t, [3]f32{-0.003, 0.0099999998, -0.0069999998} == a[1], "a[1]=%v", a[1])
+	testing.expectf(t, [3]f32{-0.34999999, -0.5, 1.8499999} == a[2], "a[2]=%v", a[2])
 }

@@ -1,4 +1,5 @@
 # Odin Dictionary Words
+adjugate
 amstrad
 aprintf
 bitmapinfo

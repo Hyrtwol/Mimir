@@ -142,7 +142,6 @@ on_update :: proc(app: ca.papp) -> int {
 	for _ in 0 ..< 16 * 4 {
 		for &d in dudes {
 			pp = &d.pos
-			//dir = cv.get_direction8(rand.int31_max(4, &rng))
 			dir = get_direction(rand.int31_max(8, &rng))
 			np := pp^ + dir
 

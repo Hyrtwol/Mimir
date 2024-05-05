@@ -2,6 +2,7 @@ package test_canvas
 
 import cv ".."
 import "core:fmt"
+import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:testing"
 import o "shared:ounit"
@@ -124,4 +125,36 @@ to_color :: proc(t: ^testing.T) {
 	expect_value(t, 255, cv.to_color(+1.10000))
 
 	expect_value(t, {0x3F, 0x7F, 0xBF, 0xFF}, cv.to_color(cv.float4{0.25, 0.5, 0.75, 1.0}))
+}
+
+@(test)
+barycentric :: proc(t: ^testing.T) {
+	tri := [3]cv.float2{cv.float2{150, 50}, cv.float2{80, 150}, cv.float2{50, 50}}
+	fmt.println("t:", tri)
+	ABC := cv.float3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
+	fmt.println("ABC:", ABC)
+
+	a := linalg.matrix3x3_inverse_transpose(ABC)
+	fmt.println("inverse_transpose:", a)
+
+	testing.expectf(t, [3]f32{0.0099999998, -0, -0.0099999998} == a[0], "a[0]=%v", a[0])
+	testing.expectf(t, [3]f32{-0.003, 0.0099999998, -0.0069999998} == a[1], "a[1]=%v", a[1])
+	testing.expectf(t, [3]f32{-0.34999999, -0.5, 1.8499999} == a[2], "a[2]=%v", a[2])
+
+	b := cv.barycentric(&ABC, 100, 100)
+	fmt.println("barycentric:", b)
+
+	testing.expectf(t, [3]f32{0.34999999, 0.5, 0.14999998} == b, "b=%v", b)
+}
+
+
+@(test)
+multiply :: proc(t: ^testing.T) {
+	ABC := cv.float3x3{11, 12, 13, 21, 22, 23, 31, 32, 33}
+	fmt.println("ABC:", ABC)
+
+	b := ABC * cv.float3{1, 0, 0}
+	fmt.println("multiply:", b)
+	testing.expectf(t, [3]f32{11, 21, 31} == b, "b=%v", b)
+
 }
