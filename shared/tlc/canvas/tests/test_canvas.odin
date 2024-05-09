@@ -158,3 +158,73 @@ multiply :: proc(t: ^testing.T) {
 	testing.expectf(t, [3]f32{11, 21, 31} == b, "b=%v", b)
 
 }
+
+/*
+matrix4_perspective_f32_01: 0.78539819 1.33333337 1 10
+proj : matrix[1.81065989, 0, -0, 0; 0, 2.4142134, -0, 0; 0, 0, -1.11111116, -1.11111116; 0, 0, -1, 0]
+model: matrix[0, 0, 0, 0; 0, 0, 0, 0; 0, 0, 0, 0; 0, 0, 0, 0]
+view : matrix[0.94868326, 0, -0.31622776, -0; -0.19611613, 0.78446448, -0.58834839, 1.1920929e-07; 0.24806947, 0.62017369, 0.7442084, -4.0311289; 0, 0, 0, 1]
+proj : matrix[1.81065989, 0, 0, 0; 0, 2.4142134, 0, 0; 0, 0, 0, -1.11111116; 0, 0, 1, 0]
+*/
+delta :: 0.000001
+
+@(test)
+matrix4_perspective_f32 :: proc(t: ^testing.T) {
+	flip_z_axis := true
+	fov, aspect, near, far: f32 = 0.78539819, 1.33333337, 1, 10
+	proj := cv.matrix4_perspective_f32(fov, aspect, near, far)
+	fmt.println("proj:", proj)
+	vn := cv.float4{0, 0, -near, 1}
+	vf := cv.float4{0, 0, -far, 1}
+
+	vn = proj * vn
+	vn = cv.perspective_divide(vn)
+	fmt.println("vn:", vn)
+	vf = proj * vf
+	vf = cv.perspective_divide(vf)
+	fmt.println("vf:", vf)
+
+	o.expect_valuef(t, vn.z, -1, delta)
+	o.expect_valuef(t, vf.z, 1, delta)
+}
+
+@(test)
+matrix4_perspective_f32_01 :: proc(t: ^testing.T) {
+	flip_z_axis := true
+	fov, aspect, near, far: f32 = 0.78539819, 1.33333337, 1, 10
+	proj := cv.matrix4_perspective_f32_01(fov, aspect, near, far)
+	fmt.println("proj:", proj)
+	vn := cv.float4{0, 0, -near, 1}
+	vf := cv.float4{0, 0, -far, 1}
+
+	vn = proj * vn
+	vn = cv.perspective_divide(vn)
+	fmt.println("vn:", vn)
+	vf = proj * vf
+	vf = cv.perspective_divide(vf)
+	fmt.println("vf:", vf)
+
+	o.expect_valuef(t, vn.z, 0, delta)
+	o.expect_valuef(t, vf.z, 1, delta)
+}
+
+@(test)
+reverse_z_perspective :: proc(t: ^testing.T) {
+	flip_z_axis := true
+	fov, aspect: f32 = 0.78539819, 1.33333337
+	near, far: f32 = 1, 10
+	proj := cv.matrix4_perspective_f32_01(fov, aspect, far, near)
+	fmt.println("proj:", proj)
+	vn := cv.float4{0, 0, -near, 1}
+	vf := cv.float4{0, 0, -far, 1}
+
+	vn = proj * vn
+	vn = cv.perspective_divide(vn)
+	fmt.println("vn:", vn)
+	vf = proj * vf
+	vf = cv.perspective_divide(vf)
+	fmt.println("vf:", vf)
+
+	o.expect_valuef(t, vn.z, 1, delta)
+	o.expect_valuef(t, vf.z, 0, delta)
+}

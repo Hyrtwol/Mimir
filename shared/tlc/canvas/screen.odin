@@ -1,6 +1,7 @@
-// +vet
+// vet
 package canvas
 
+import "core:fmt"
 import "core:math/linalg"
 
 screen_buffer :: [^]color
@@ -96,16 +97,16 @@ canvas_aspect :: #force_inline proc "contextless" (cv: ^canvas) -> f32 {
 	return f32(cv.size.x) / f32(cv.size.y)
 }
 
-// barycentric :: #force_inline proc "contextless" (abc: ^float3x3, x, y: i32) -> float3 {
-// 	return linalg.inverse_transpose(abc^) * float3{f32(x), f32(y), 1}
-// }
-barycentric :: #force_inline proc "contextless" (abc: ^float3x3, x, y: f32) -> float3 {
-	return linalg.matrix3x3_inverse_transpose(abc^) * float3{x, y, 1}
+@(private)
+min_max_int2_from_float4 :: #force_inline proc "contextless" (min, max: ^int2, v: float4) {
+	p := to_int2(v.xy)
+	min^ = linalg.min(min^, p)
+	max^ = linalg.max(max^, p)
 }
 
 @(private)
-min_max_int2 :: #force_inline proc "contextless" (min, max: ^int2, v: float4) {
-	p := to_int2(v.xy)
+min_max_int2_from_float2 :: #force_inline proc "contextless" (min, max: ^int2, v: float2) {
+	p := to_int2(v)
 	min^ = linalg.min(min^, p)
 	max^ = linalg.max(max^, p)
 }
@@ -114,37 +115,82 @@ min_max_int2 :: #force_inline proc "contextless" (min, max: ^int2, v: float4) {
 bbox_min_max :: #force_inline proc "contextless" (pc: ^canvas, pts: [3]float4) -> (x1, x2, y1, y2: i32) {
 	bbmin, bbmax: int2 = canvas_max(pc), int2{0, 0}
 	for i in 0 ..< 3 {
-		min_max_int2(&bbmin, &bbmax, pts[i])
+		min_max_int2_from_float4(&bbmin, &bbmax, pts[i])
 	}
 	x1, x2, y1, y2 = bbmin.x, bbmax.x, bbmin.y, bbmax.y
 	return
 }
 
-draw_triangle_epsilon :: -1e-3
+// https://mathworld.wolfram.com/BarycentricCoordinates.html
+barycentric :: #force_inline proc "contextless" (abc: ^float3x3, pp: float3) -> float3 {
+	return linalg.matrix3x3_inverse_transpose(abc^) * pp
+}
+
+draw_triangle_epsilon :: 1e-3
 draw_triangle_epsilon3 :: float3{draw_triangle_epsilon, draw_triangle_epsilon, draw_triangle_epsilon}
 
-draw_triangle :: proc(pc: ^canvas, pts: [3]float4) {
-	abc := float3x3{pts[0].x, pts[0].y, 1, pts[1].x, pts[1].y, 1, pts[2].x, pts[2].y, 1}
-	if (linalg.determinant(abc) < 1e-3) {return}
+draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: [3]float4) {
 
-	bbmin, bbmax: int2 = canvas_max(pc), int2{0, 0}
+	pts2: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]}
+	abc := float3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
+	//abc := float3x3{clip_verts[0].x, clip_verts[0].y, 1, clip_verts[1].x, clip_verts[1].y, 1, clip_verts[2].x, clip_verts[2].y, 1}
+	det := linalg.determinant(abc)
+	if det < 1e-3 {return}
+
+	clip_z := float3{clip_verts[0].z, clip_verts[1].z, clip_verts[2].z}
+	if clip_z.x < 0 && clip_z.y < 0 && clip_z.z < 0 {return}
+	if clip_z.x > 1 && clip_z.y > 1 && clip_z.z > 1 {return}
+
+	cmax := canvas_max(pc)
+	bbmin, bbmax: int2 = cmax, int2{0, 0}
 	for i in 0 ..< 3 {
-		min_max_int2(&bbmin, &bbmax, pts[i])
+		min_max_int2_from_float4(&bbmin, &bbmax, pts2[i])
 	}
+	bbmin = linalg.max(bbmin, int2{0, 0})
+	bbmax = linalg.min(bbmax, cmax)
 	x1, x2, y1, y2 := bbmin.x, bbmax.x, bbmin.y, bbmax.y
 
-	fy: f32
+	//it_abc := linalg.matrix3x3_inverse_transpose(abc)
+	it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det)
+
+	//fx, fy: f32
+	pp: float3 = {0, 0, 1}
+	//idx,
+	iy: i32
+	iw := i32(pc.size.x)
+	bits := pc.pvBits
 	for y in y1 ..= y2 {
-		fy = f32(y) + 0.5
+		pp.y = f32(y) + 0.5
+		iy = y * iw
 		for x in x1 ..= x2 {
-			//fx = f32(x) + 0.5
-			bc_screen := barycentric(&abc, f32(x) + 0.5, fy)
-			if bc_screen.x < draw_triangle_epsilon || bc_screen.y < draw_triangle_epsilon || bc_screen.z < draw_triangle_epsilon {continue}
+			pp.x = f32(x) + 0.5
+			//bc_screen := barycentric(&abc, pp)
+			bc_screen := it_abc * pp
+
+			if bc_screen.x < -draw_triangle_epsilon || bc_screen.y < -draw_triangle_epsilon || bc_screen.z < -draw_triangle_epsilon {continue}
 			//if linalg.any(linalg.less_than(bc_screen, draw_triangle_epsilon3)) {continue}
-			canvas_set_dot(pc, x, y, to_color(bc_screen))
+
+			/*
+			//bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
+			bc_clip := float3{bc_screen.x / clip_verts[0].w, bc_screen.y / clip_verts[1].w, bc_screen.z / clip_verts[2].w}
+			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z)
+			//double frag_depth = float3{clip_verts[0].z, clip_verts[1].z, clip_verts[2].z}*bc_clip
+			frag_depth := linalg.dot(clip_z, bc_clip)
+			*/
+			frag_depth := linalg.dot(clip_z, bc_screen)
+			if frag_depth < 0 || frag_depth >= 1 {continue}
+			// minz, maxz = min(minz, frag_depth), max(maxz, frag_depth)s
+
+			idx := iy + x
+			if frag_depth < zbuffer[idx] {continue}
+			zbuffer[idx] = frag_depth
+			//bits[idx] = to_color(frag_depth)
+			bits[idx] = to_color(bc_screen)
 		}
 	}
 }
+
+minz, maxz: f32 = 1000, -1000
 
 /*
 	vec3 bc_screen = barycentric(pts2, {static_cast<double>(x), static_cast<double>(y)});
