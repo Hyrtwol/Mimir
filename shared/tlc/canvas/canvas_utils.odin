@@ -173,11 +173,12 @@ matrix4_perspective_f32_01 :: proc "contextless" (fovy, aspect, near, far: f32, 
 perspective_direct3d_lh_dx :: proc "contextless" (fovy, aspect, near, far: f32, flip_z_axis := true) -> (m: float4x4) #no_bounds_check {
 
 	e := 1 / math.tan(0.5 * fovy)
-	m = {e / aspect, 0.0, 0.0,                         0.0,
-				0.0,   e, 0.0,                         0.0,
-				0.0, 0.0,          far / (far - near), 1.0,
-				0.0, 0.0, (far * near) / (near - far), 0.0}
-
+	m = {
+		e / aspect, 0.0, 0.0                        , 0.0,
+		0.0       , e  , 0.0                        , 0.0,
+		0.0       , 0.0, far / (far - near)         , 1.0,
+		0.0       , 0.0, (far * near) / (near - far), 0.0,
+	}
 	return
 }
 

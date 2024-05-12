@@ -81,7 +81,7 @@ fade_to_black :: proc {
 	canvas_fade_to_black,
 }
 
-canvas_size :: #force_inline proc "contextless" (cv: ^canvas) -> (x, y: i32) {
+canvas_size_xy :: #force_inline proc "contextless" (cv: ^canvas) -> (x, y: i32) {
 	return i32(cv.size.x), i32(cv.size.y)
 }
 
@@ -121,6 +121,8 @@ bbox_min_max :: #force_inline proc "contextless" (pc: ^canvas, pts: [3]float4) -
 	return
 }
 
+//minz, maxz: f32 = 1000, -1000
+
 // https://mathworld.wolfram.com/BarycentricCoordinates.html
 barycentric :: #force_inline proc "contextless" (abc: ^float3x3, pp: float3) -> float3 {
 	return linalg.matrix3x3_inverse_transpose(abc^) * pp
@@ -129,11 +131,32 @@ barycentric :: #force_inline proc "contextless" (abc: ^float3x3, pp: float3) -> 
 draw_triangle_epsilon :: 1e-3
 draw_triangle_epsilon3 :: float3{draw_triangle_epsilon, draw_triangle_epsilon, draw_triangle_epsilon}
 
-draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: [3]float4) {
+vertex_shader :: #type proc(shader: ^IShader, pos: float4, gl_Position: ^float4)
+pixel_shader :: #type proc(shader: ^IShader, bc_clip: float3, color: ^byte4) -> bool
 
-	pts2: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]}
+Model :: struct {
+	trans: float4x4,
+	color: float4,
+}
+IShader :: struct {
+	model: ^Model,
+	model_view, it_model_view: float4x4,
+
+	uniform_l: float3,     // light direction in view coordinates
+    varying_uv: float2x3,  // triangle uv coordinates, written by the vertex shader, read by the fragment shader
+    varying_nrm: float3x3, // normal per vertex to be interpolated by FS
+    view_tri: float3x3,    // triangle in view coordinates
+
+	vs: vertex_shader,
+	ps: pixel_shader,
+}
+
+
+draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: [3]float4, shader: ^IShader) {
+	pts: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]} // triangle screen coordinates before persp. division
+	pts2: [3]float4 = {(pts[0] / pts[0].w), (pts[1] / pts[1].w), (pts[2] / pts[2].w)} // triangle screen coordinates after  perps. division
+
 	abc := float3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
-	//abc := float3x3{clip_verts[0].x, clip_verts[0].y, 1, clip_verts[1].x, clip_verts[1].y, 1, clip_verts[2].x, clip_verts[2].y, 1}
 	det := linalg.determinant(abc)
 	if det < 1e-3 {return}
 
@@ -146,6 +169,9 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	for i in 0 ..< 3 {
 		min_max_int2_from_float4(&bbmin, &bbmax, pts2[i])
 	}
+
+	if bbmax.x < 0 || bbmin.x > cmax.x || bbmax.y < 0 || bbmin.y > cmax.y {return}
+
 	bbmin = linalg.max(bbmin, int2{0, 0})
 	bbmax = linalg.min(bbmax, cmax)
 	x1, x2, y1, y2 := bbmin.x, bbmax.x, bbmin.y, bbmax.y
@@ -153,12 +179,14 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	//it_abc := linalg.matrix3x3_inverse_transpose(abc)
 	it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det)
 
+	ps := shader.ps
 	//fx, fy: f32
 	pp: float3 = {0, 0, 1}
 	//idx,
 	iy: i32
 	iw := i32(pc.size.x)
 	bits := pc.pvBits
+	color: byte4
 	for y in y1 ..= y2 {
 		pp.y = f32(y) + 0.5
 		iy = y * iw
@@ -167,39 +195,27 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			//bc_screen := barycentric(&abc, pp)
 			bc_screen := it_abc * pp
 
-			if bc_screen.x < -draw_triangle_epsilon || bc_screen.y < -draw_triangle_epsilon || bc_screen.z < -draw_triangle_epsilon {continue}
+			bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
+			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z) // check https://github.com/ssloy/tinyrenderer/wiki/Technical-difficulties-linear-interpolation-with-perspective-deformations
+
+			//if bc_screen.x < -draw_triangle_epsilon || bc_screen.y < -draw_triangle_epsilon || bc_screen.z < -draw_triangle_epsilon {continue}
+			if bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 {continue}
 			//if linalg.any(linalg.less_than(bc_screen, draw_triangle_epsilon3)) {continue}
 
-			/*
-			//bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
-			bc_clip := float3{bc_screen.x / clip_verts[0].w, bc_screen.y / clip_verts[1].w, bc_screen.z / clip_verts[2].w}
-			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z)
-			//double frag_depth = float3{clip_verts[0].z, clip_verts[1].z, clip_verts[2].z}*bc_clip
 			frag_depth := linalg.dot(clip_z, bc_clip)
-			*/
-			frag_depth := linalg.dot(clip_z, bc_screen)
 			if frag_depth < 0 || frag_depth >= 1 {continue}
-			// minz, maxz = min(minz, frag_depth), max(maxz, frag_depth)s
+			// minz, maxz = min(minz, frag_depth), max(maxz, frag_depth)
 
 			idx := iy + x
 			if frag_depth < zbuffer[idx] {continue}
+
+            // if (shader.fragment(bc_clip, color)) {continue} // fragment shader can discard current fragment
+            if ps(shader, bc_clip, &color) {continue} // fragment shader can discard current fragment
+
 			zbuffer[idx] = frag_depth
 			//bits[idx] = to_color(frag_depth)
-			bits[idx] = to_color(bc_screen)
+			//bits[idx] = to_color(bc_clip)
+			bits[idx] = color
 		}
 	}
 }
-
-minz, maxz: f32 = 1000, -1000
-
-/*
-	vec3 bc_screen = barycentric(pts2, {static_cast<double>(x), static_cast<double>(y)});
-	vec3 bc_clip   = {bc_screen.x/pts[0][3], bc_screen.y/pts[1][3], bc_screen.z/pts[2][3]};
-	bc_clip = bc_clip/(bc_clip.x+bc_clip.y+bc_clip.z); // check https://github.com/ssloy/tinyrenderer/wiki/Technical-difficulties-linear-interpolation-with-perspective-deformations
-	double frag_depth = vec3{clip_verts[0][2], clip_verts[1][2], clip_verts[2][2]}*bc_clip;
-	if (bc_screen.x<0 || bc_screen.y<0 || bc_screen.z<0 || frag_depth > zbuffer[x+y*image.width()]) continue;
-	TGAColor color;
-	if (shader.fragment(bc_clip, color)) continue; // fragment shader can discard current fragment
-	zbuffer[x+y*image.width()] = frag_depth;
-	image.set(x, y, color);
-*/

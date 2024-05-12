@@ -3,8 +3,8 @@ package canvas_app
 import "core:container/queue"
 import "core:fmt"
 import "core:intrinsics"
-import "core:runtime"
 import "core:math/linalg"
+import "core:runtime"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
@@ -23,12 +23,12 @@ on_idle :: proc(app: papp) -> int {return 0}
 
 application :: struct {
 	pause:                   bool,
-	//colors:    []color,
+	//colors:                  []color,
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
 	delta:                   f32,
 	tick:                    u32,
-	hbitmap:                 win32.HBITMAP,
+	//hbitmap:                 win32.HBITMAP,
 	create, update, destroy: app_action,
 	mouse_pos:               int2,
 	mouse_buttons:           win32app.MOUSE_KEY_STATE,
@@ -43,8 +43,11 @@ app: application = {
 	destroy = on_idle,
 }
 
-fps: f32 = 0
-frame_counter := 0
+frame_stats: struct {
+	fps:           f32,
+	frame_counter: i32,
+	frame_time:    f32,
+}
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
 	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
@@ -66,9 +69,9 @@ get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
 
 // 0..1
 decode_mouse_pos_01 :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
-	LO :: cv.float2{0,0}
-	HI :: cv.float2{1,1}
-	normalized_mouse_pos :=  cv.to_float2(app.mouse_pos) / cv.to_float2(settings.window_size)
+	LO :: cv.float2{0, 0}
+	HI :: cv.float2{1, 1}
+	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(settings.window_size)
 	return linalg.clamp(normalized_mouse_pos, LO, HI)
 }
 
@@ -112,7 +115,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, frame_stats.fps)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -126,9 +129,9 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	//fmt.println(#procedure, hwnd, wparam)
 	// app := get_app(hwnd)
-	fps = f32(frame_counter) / frame_time
-	frame_counter = 0
-	frame_time = 0
+	frame_stats.fps = f32(frame_stats.frame_counter) / frame_stats.frame_time
+	frame_stats.frame_counter = 0
+	frame_stats.frame_time = 0
 	set_window_text(hwnd)
 	return 0
 }
@@ -223,8 +226,6 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-delta, frame_time: f32 = 0, 0
-
 run :: proc() {
 	// queue.init(&app.char_queue)
 	// defer queue.destroy(&app.char_queue)
@@ -238,8 +239,8 @@ run :: proc() {
 	for win32app.pull_messages() {
 
 		app.delta = f32(stopwatch->get_delta_seconds())
-		frame_time += app.delta
-		frame_counter += 1
+		frame_stats.frame_time += app.delta
+		frame_stats.frame_counter += 1
 		app.tick += 1
 
 		res = app.update(&app)

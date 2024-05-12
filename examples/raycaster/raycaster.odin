@@ -35,16 +35,23 @@ rng := rand.create(u64(intrinsics.read_cycle_counter()))
 // }
 
 pics := #load("pics.dat")
-pics_w, pics_h: i32 : 64, 64
+pics_w: i32 : 32
+pics_h: i32 : pics_w
 pics_ps: i32 : size_of(cv.byte4)
 pics_size: i32 : pics_w * pics_h * pics_ps
 pics_count := i32(len(pics)) / pics_size
 pics_buf_size :: pics_w * pics_h
 pics_buf :: [pics_buf_size]cv.byte4
 #assert(pics_ps == 4)
-#assert(pics_size == 16384)
-#assert(pics_buf_size == 4096)
-#assert(size_of(pics_buf) == 16384)
+when pics_w == 64 {
+	#assert(pics_size == 16384)
+	#assert(pics_buf_size == 4096)
+	#assert(size_of(pics_buf) == 16384)
+} else when pics_w == 32 {
+	#assert(pics_size == 4096)
+	#assert(pics_buf_size == 1024)
+	#assert(size_of(pics_buf) == 4096)
+}
 
 ray2i: struct {
 	pos, dir: cv.int2,
@@ -64,13 +71,13 @@ on_destroy :: proc(app: ca.papp) -> int {
 
 xo: i32 = -pics_w
 po: i32 = rand.int31_max(pics_count, &rng)
-xof: f64 = 0
+xof: f32 = 0
 
 on_update :: proc(app: ca.papp) -> int {
 	when USE_DELTA {
-		xof += ca.delta * 64
-		if xof >= f64(256 + pics_w) {
-			xof = f64(-pics_w)
+		xof += app.delta * 64
+		if xof >= f32(256 + pics_w) {
+			xof = f32(-pics_w)
 			po += 1
 		}
 		xo = i32(xof)
@@ -123,7 +130,7 @@ main :: proc() {
 	ca.app.update = on_update
 	ca.app.destroy = on_destroy
 	ca.settings.window_size = ca.app.size * ZOOM
-	ca.settings.sleep = 6
+	ca.settings.sleep = 8
 	ca.run()
 	fmt.println("Done.")
 }

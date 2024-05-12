@@ -348,7 +348,7 @@ to_color :: proc {
 }
 
 @(private)
-two_pi_over_3 :: math.PI * f32(2) / 3.0
+two_pi_over_3 :: f32(2) * math.PI / 3.0
 
 color_hue_float4 :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> float4 {
 	half_scale := scale * 0.5

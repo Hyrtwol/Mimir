@@ -17,6 +17,7 @@ float4	:: [4]float
 double2	:: [2]double
 double3	:: [3]double
 
+float2x3 :: matrix[2, 3]float
 float3x3 :: matrix[3, 3]float
 float4x4 :: matrix[4, 4]float
 

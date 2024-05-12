@@ -9,9 +9,11 @@ import "core:image/tga"
 import "core:os"
 import fp "core:path/filepath"
 import xt "shared:xterm"
+import si "vendor:stb/image"
 
 _ :: png
 _ :: tga
+_ :: si
 
 rgb :: [3]u8
 rgba :: [4]u8
@@ -27,7 +29,7 @@ write_image :: proc(fd: ^os.Handle, img: ^image.Image) {
 		//return 1
 		panic("pix!!!")
 	}
-	fmt.println("pix:", len(pix))
+	fmt.println("pix:", len(pix), img.width, img.height, img.channels, img.depth)
 
 	dp := img.depth
 	ch := img.channels
@@ -65,6 +67,12 @@ write_image :: proc(fd: ^os.Handle, img: ^image.Image) {
 	}
 }
 
+print_and_write_image :: proc(path: string,fd: ^os.Handle, img: ^image.Image) {
+	fmt.printfln("path: %s size: %d x %d channels: %d depth: %d", path, img.width, img.height, img.channels, img.depth)
+	xt.print_image(img, dot_alpha)
+	write_image(fd, img)
+}
+
 print_image :: proc(image_path: string, fd: ^os.Handle) {
 	path := fp.clean(image_path)
 	img, err := image.load_from_file(path)
@@ -74,9 +82,44 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 	}
 	defer image.destroy(img)
 
-	fmt.printfln("path: %s size: %d x %d channels: %d depth: %d", path, img.width, img.height, img.channels, img.depth)
-	xt.print_image(img, dot_alpha)
-	write_image(fd, img)
+	img2 := new(image.Image)
+	defer image.destroy(img2)
+
+	img2.width = img.width / 2
+	img2.height = img.height / 2
+	img2.channels = img.channels
+	img2.depth = img.depth
+	img2.which = img.which
+
+	if resize(&img2.pixels.buf, img2.width * img2.height * 4) != nil {
+		panic("resize")
+	}
+
+	pix := ([^]u8)(&img.pixels.buf[0])
+	pix2 := ([^]u8)(&img2.pixels.buf[0])
+
+	{
+		ch := img.channels
+		switch ch {
+			case 3:
+			case 4:
+				colors := ([^]rgba)(pix)
+				cnt := img.width*img.height
+				cb: ^rgba
+				for i in 0..<cnt {
+					cb = ((^rgba)(&colors[i]))
+					if cb^.a < 4 {
+						cb^ = {0, 0, 0, 0}
+						//cb^ = {255, 0, 255, 0}
+					}
+				}
+		}
+	}
+
+	res := si.resize_uint8(pix, i32(img.width), i32(img.height), 0, pix2, i32(img2.width), i32(img2.height), 0, i32(img.channels))
+	assert(res == 1)
+
+	print_and_write_image(path, fd, img2)
 }
 
 gen_pics :: proc(output_name: string, pattern: string) -> int {
