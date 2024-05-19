@@ -4,9 +4,9 @@
 // https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-coordinates
 package tinyrenderer
 
+import "base:intrinsics"
 import "core:container/queue"
 import "core:fmt"
-import "core:intrinsics"
 import "core:math"
 import lg "core:math/linalg"
 import "core:math/rand"

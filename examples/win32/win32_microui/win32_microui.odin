@@ -2,7 +2,7 @@
 package main
 
 import "core:fmt"
-import "core:runtime"
+import "base:runtime"
 import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"

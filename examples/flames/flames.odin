@@ -2,11 +2,11 @@
 package main
 
 import "core:fmt"
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math"
 import "core:math/noise"
 import "core:math/rand"
-import "core:runtime"
+import "base:runtime"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"

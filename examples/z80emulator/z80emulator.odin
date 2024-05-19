@@ -3,7 +3,7 @@ package z80emulator
 
 import "core:fmt"
 import "core:os"
-import "core:runtime"
+import "base:runtime"
 import z80 "shared:z80"
 
 dump_cpu :: false

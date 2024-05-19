@@ -2,9 +2,9 @@
 package main
 
 import          "core:fmt"
-import          "core:intrinsics"
+import          "base:intrinsics"
 import          "core:math"
-import          "core:runtime"
+import          "base:runtime"
 import win32	"core:sys/windows"
 import fmod		"shared:fmodex"
 import			"libs:tlc/win32app"

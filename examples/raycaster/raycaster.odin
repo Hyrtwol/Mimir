@@ -2,7 +2,7 @@
 package raycaster
 
 import "core:fmt"
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math/rand"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
@@ -76,14 +76,14 @@ xof: f32 = 0
 on_update :: proc(app: ca.papp) -> int {
 	when USE_DELTA {
 		xof += app.delta * 64
-		if xof >= f32(256 + pics_w) {
+		if xof >= f32(WIDTH) {
 			xof = f32(-pics_w)
 			po += 1
 		}
 		xo = i32(xof)
 	} else {
 		xo += 1
-		if xo >= 256 + pics_w {
+		if xo >= WIDTH {
 			xo = -pics_w
 			po += 1
 		}

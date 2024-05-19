@@ -2,10 +2,10 @@
 package audioplayer
 
 import "core:fmt"
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math"
 import "core:math/rand"
-import "core:runtime"
+import "base:runtime"
 //import "core:math/noise"
 //import "core:mem"
 //import "core:simd"

@@ -1,7 +1,7 @@
 // +vet
 package movers
 
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math/rand"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"

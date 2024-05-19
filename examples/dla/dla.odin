@@ -3,7 +3,7 @@
 // D:\dev\pascal\Delphi7\DLA\DLAMain.pas
 package dla
 
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math"
 import "core:math/rand"
 import cv "libs:tlc/canvas"

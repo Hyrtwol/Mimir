@@ -2,7 +2,7 @@ package test_misc
 
 import "core:bytes"
 import "core:fmt"
-import "core:runtime"
+import "base:runtime"
 import "core:testing"
 import win32app "libs:tlc/win32app"
 

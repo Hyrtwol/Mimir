@@ -4,7 +4,7 @@ import "core:bytes"
 import "core:fmt"
 import "core:math"
 import "core:math/linalg"
-import "core:runtime"
+import "base:runtime"
 import "core:testing"
 import o "shared:ounit"
 

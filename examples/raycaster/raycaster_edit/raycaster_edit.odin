@@ -1,10 +1,10 @@
 // vet
 package raycaster_edit
 
+import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
-import "core:intrinsics"
 import "core:math/rand"
-import "core:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"

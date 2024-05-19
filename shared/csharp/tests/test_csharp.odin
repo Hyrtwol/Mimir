@@ -3,7 +3,7 @@ package test_csharp
 
 import cs ".."
 import _c "core:c"
-import "core:intrinsics"
+import "base:intrinsics"
 import win32 "core:sys/windows"
 import "core:testing"
 import o "libs:ounit"

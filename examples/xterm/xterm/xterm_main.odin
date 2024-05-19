@@ -1,6 +1,6 @@
 package main
 
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math/rand"
 import "shared:xterm"
 

@@ -4,7 +4,7 @@ import "base:intrinsics"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
-import "core:runtime"
+import "base:runtime"
 import "core:time"
 import win32 "core:sys/windows"
 

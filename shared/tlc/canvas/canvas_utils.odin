@@ -2,7 +2,7 @@
 package canvas
 
 import "core:fmt"
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math"
 import "core:math/linalg"
 import "core:math/rand"

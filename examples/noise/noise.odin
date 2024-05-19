@@ -1,9 +1,9 @@
 // +vet
 package main
 
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:math/noise"
-import "core:runtime"
+import "base:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"

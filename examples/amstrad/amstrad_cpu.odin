@@ -2,9 +2,9 @@
 package main
 
 import "core:fmt"
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:os"
-import "core:runtime"
+import "base:runtime"
 import z "shared:z80"
 import a "libs:amstrad"
 

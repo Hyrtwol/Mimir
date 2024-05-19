@@ -2,8 +2,8 @@
 package main
 
 import "core:fmt"
-import "core:intrinsics"
-import "core:runtime"
+import "base:intrinsics"
+import "base:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"

@@ -1,11 +1,11 @@
 package test_win32app
 
 import win32app ".."
+import "base:intrinsics"
+import "base:runtime"
 import "core:bytes"
 import "core:fmt"
-import "core:intrinsics"
 import "core:mem"
-import "core:runtime"
 import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"

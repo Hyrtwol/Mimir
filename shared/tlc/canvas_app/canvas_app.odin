@@ -1,10 +1,10 @@
 package canvas_app
 
+import "base:intrinsics"
+import "base:runtime"
 import "core:container/queue"
 import "core:fmt"
-import "core:intrinsics"
 import "core:math/linalg"
-import "core:runtime"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
@@ -179,7 +179,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
-	switch (vk_code)
+	switch (vk_code) 
 	{
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
@@ -214,10 +214,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:   return 1 // 0x0014
 	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam) // 0x0102
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam) // 0x0113
-
 	//case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
 	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
-
 	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam) // 0x0200
 	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
 	case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)

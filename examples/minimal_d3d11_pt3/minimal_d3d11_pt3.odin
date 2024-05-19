@@ -3,7 +3,7 @@ package minimal_d3d11_pt3
 import "base:intrinsics"
 import "core:fmt"
 import hlm "core:math/linalg/hlsl"
-import "core:runtime"
+import "base:runtime"
 import win32 "core:sys/windows"
 import win32app "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"

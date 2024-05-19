@@ -165,14 +165,15 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	if clip_z.x > 1 && clip_z.y > 1 && clip_z.z > 1 {return}
 
 	cmax := canvas_max(pc)
-	bbmin, bbmax: int2 = cmax, int2{0, 0}
+	cmin := int2{0, 0}
+	bbmin, bbmax: int2 = cmax, cmin
 	for i in 0 ..< 3 {
 		min_max_int2_from_float4(&bbmin, &bbmax, pts2[i])
 	}
 
 	if bbmax.x < 0 || bbmin.x > cmax.x || bbmax.y < 0 || bbmin.y > cmax.y {return}
 
-	bbmin = linalg.max(bbmin, int2{0, 0})
+	bbmin = linalg.max(bbmin, cmin)
 	bbmax = linalg.min(bbmax, cmax)
 	x1, x2, y1, y2 := bbmin.x, bbmax.x, bbmin.y, bbmax.y
 

@@ -1,11 +1,11 @@
 // +vet
 package main
 
+import "base:intrinsics"
 import "core:fmt"
 import fp "core:path/filepath"
-import "core:intrinsics"
-import a "libs:amstrad"
 import win32 "core:sys/windows"
+import a "libs:amstrad"
 import win32app "libs:tlc/win32app"
 
 ROM_PATH := fp.clean("../data/z80/")
@@ -21,7 +21,7 @@ application :: struct {
 	//title:     wstring,
 	hbitmap:  win32.HBITMAP,
 	pvBits:   screen_buffer,
-	cpu: ^Z80,
+	cpu:      ^Z80,
 }
 papp :: ^application
 

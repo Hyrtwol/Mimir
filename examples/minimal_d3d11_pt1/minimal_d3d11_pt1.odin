@@ -2,7 +2,7 @@ package minimal_d3d11_pt1
 
 import "core:fmt"
 import glm "core:math/linalg/glsl"
-import "core:runtime"
+import "base:runtime"
 //import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
 import win32app "libs:tlc/win32app"

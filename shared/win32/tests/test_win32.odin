@@ -3,7 +3,7 @@ package test_owin
 
 import _w		".."
 import _c		"core:c"
-import			"core:intrinsics"
+import			"base:intrinsics"
 import win32	"core:sys/windows"
 import _t		"core:testing"
 import o		"shared:ounit"

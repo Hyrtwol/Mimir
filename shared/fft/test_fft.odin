@@ -2,7 +2,7 @@ package fft
 
 import "core:bytes"
 import "core:fmt"
-import "core:runtime"
+import "base:runtime"
 import "core:testing"
 import "shared:ounit"
 

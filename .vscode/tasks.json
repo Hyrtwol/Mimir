@@ -140,7 +140,7 @@
 		{
 			"label": "format",
 			"type": "process",
-			"command": "D:\\dev\\odin\\ols\\odinfmt.exe",
+			"command": "D:/dev/odin/Odin/shared/ols/odinfmt.exe",
 			"args": [
 				"-w",
 				"${workspaceFolder}\\${relativeFile}"

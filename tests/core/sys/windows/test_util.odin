@@ -2,7 +2,7 @@ package test_core_sys_windows
 
 import "core:bytes"
 import "core:fmt"
-import "core:runtime"
+import "base:runtime"
 import "core:testing"
 import win32 "core:sys/windows"
 import win32ex "shared:sys/windows"

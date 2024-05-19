@@ -2,7 +2,7 @@
 // +vet
 package win32app
 
-import "core:intrinsics"
+import "base:intrinsics"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 
