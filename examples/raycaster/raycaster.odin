@@ -33,8 +33,9 @@ FPS :: 20
 // 	//size = _pics.w * _pics.h * _pics.ps,
 // }
 
-pics := #load("pics64.dat")
-pics_w: i32 : 64
+pics := #load("pics.dat")
+//pics_w: i32 : 64
+pics_w: i32 : 32
 pics_h: i32 : pics_w
 pics_ps: i32 : size_of(cv.byte4)
 pics_size: i32 : pics_w * pics_h * pics_ps
@@ -129,7 +130,7 @@ main :: proc() {
 	ca.app.update = on_update
 	ca.app.destroy = on_destroy
 	ca.settings.window_size = ca.app.size * ZOOM
-	ca.settings.sleep = time.Millisecond * 8
+	ca.settings.sleep = time.Millisecond * 6
 	ca.run()
 	fmt.println("Done.")
 }
