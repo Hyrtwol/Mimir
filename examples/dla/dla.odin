@@ -83,10 +83,10 @@ map_check_free8 :: #force_inline proc "contextless" (x, y: u32) -> bool {
 	// odinfmt: enable
 }
 
-random_position :: #force_inline proc(r: ^rand.Rand) -> int2 {
+random_position :: #force_inline proc() -> int2 {
 	//return {(rand.int31_max(i32(dim.x), r)), (rand.int31_max(i32(dim.y), r))}
 	radius := f32(maxrad)
-	theta := rand.float32(r) * math.PI * 2
+	theta := rand.float32() * math.PI * 2
 	x, y := math.cos(theta) * radius, math.sin(theta) * radius
 	x, y = math.round(x), math.round(y)
 	return int2{i32(x), i32(y)} + transmute(int2)origo
@@ -113,9 +113,9 @@ on_create :: proc(app: ca.papp) -> int {
 
 	//size := ca.dib.canvas.size
 	for &d in dudes {
-		//d.pos = cv.random_position(size, &rng)
-		d.pos = random_position(&rng)
-		d.col = cv.random_color(&rng)
+		//d.pos = cv.random_position(size)
+		d.pos = random_position()
+		d.col = cv.random_color()
 	}
 	return 0
 }
@@ -142,14 +142,14 @@ on_update :: proc(app: ca.papp) -> int {
 	for _ in 0 ..< 16 * 4 {
 		for &d in dudes {
 			pp = &d.pos
-			dir = get_direction(rand.int31_max(8, &rng))
+			dir = get_direction(rand.int31_max(8))
 			np := pp^ + dir
 
 			dv := np - transmute(int2)origo
 			r := dv.x * dv.x + dv.y * dv.y
 
 			if r > maxrad3 {
-				d.pos = random_position(&rng)
+				d.pos = random_position()
 				continue
 			}
 
@@ -177,8 +177,8 @@ on_update :: proc(app: ca.papp) -> int {
 					//fmt.println("hit", maxrad, maxrad2, maxrad3)
 				}
 
-				d.pos = random_position(&rng)
-				d.col = cv.random_color(&rng)
+				d.pos = random_position()
+				d.col = cv.random_color()
 			}
 		}
 	}

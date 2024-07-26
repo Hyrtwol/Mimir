@@ -30,29 +30,29 @@ to_int2_ceil :: #force_inline proc "contextless" (v: float2) -> int2 {
 }
 
 @(require_results)
-create_rng :: #force_inline proc () -> (res: rand.Rand) {
+create_rng :: #force_inline proc () -> (state: rand.Default_Random_State) {
 	return rand.create(u64(intrinsics.read_cycle_counter()))
 }
 
 
 @(private)
-random_position_int_xy :: #force_inline proc(x, y: i32, r: ^rand.Rand) -> int2 {
-	return {rand.int31_max(x, r), rand.int31_max(y, r)}
+random_position_int_xy :: #force_inline proc(x, y: i32) -> int2 {
+	return {rand.int31_max(x), rand.int31_max(y)}
 }
 
 @(private)
-random_position_uint_xy :: #force_inline proc(x, y: u32, r: ^rand.Rand) -> int2 {
-	return random_position_int_xy(i32(x), i32(y), r)
+random_position_uint_xy :: #force_inline proc(x, y: u32) -> int2 {
+	return random_position_int_xy(i32(x), i32(y))
 }
 
 @(private)
-random_position_int2 :: #force_inline proc(dim: int2, r: ^rand.Rand) -> int2 {
-	return random_position_int_xy(dim.x, dim.y, r)
+random_position_int2 :: #force_inline proc(dim: int2) -> int2 {
+	return random_position_int_xy(dim.x, dim.y)
 }
 
 @(private)
-random_position_uint2 :: #force_inline proc(dim: uint2, r: ^rand.Rand) -> int2 {
-	return random_position_uint_xy(dim.x, dim.y, r)
+random_position_uint2 :: #force_inline proc(dim: uint2) -> int2 {
+	return random_position_uint_xy(dim.x, dim.y)
 }
 
 random_position :: proc {
@@ -62,12 +62,12 @@ random_position :: proc {
 	random_position_uint2,
 }
 
-random_color_byte :: #force_inline proc(r: ^rand.Rand) -> u8 {
-	return u8(rand.int31_max(256, r))
+random_color_byte :: #force_inline proc() -> u8 {
+	return u8(rand.int31_max(256))
 }
 
-random_color :: #force_inline proc(r: ^rand.Rand, alpha: u8 = 255) -> byte4 {
-	return {random_color_byte(r), random_color_byte(r), random_color_byte(r), alpha}
+random_color :: #force_inline proc(alpha: u8 = 255) -> byte4 {
+	return {random_color_byte(), random_color_byte(), random_color_byte(), alpha}
 }
 
 @(private)
