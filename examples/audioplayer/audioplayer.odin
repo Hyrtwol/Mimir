@@ -15,6 +15,8 @@ import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 import f "shared:flac"
 
+_ :: f
+
 // https://learn.microsoft.com/en-us/windows/win32/multimedia/example-of-writing-waveform-data
 // https://github.com/cornyum/Windows-programming-5th/blob/master/Chap22/SineWave/SineWave.c
 // D:\dev\pascal\Delphi7\Audio\PerlinNoisePlayer\PerlinNoisePlayerMain.pas
@@ -91,8 +93,6 @@ NoiseDisplayTop: i32
 // d, Radius: f32
 // x, y, z: f32
 
-rng := rand.create(1)
-
 DoBuffer := DoBuffer3
 
 set_dot :: #force_inline proc "contextless" (pos: win32app.int2, col: cv.byte4) {
@@ -111,7 +111,7 @@ DoBuffer2 :: proc(header: ^win32.WAVEHDR) {
 	data := ([^]sample)(header.lpData)
 	cnt := BufferLength / CHANNELS
 	for i in 0 ..< cnt {
-		data[i] = sample(rand.int31_max(4000, &rng))
+		data[i] = sample(rand.int31_max(4000))
 	}
 }
 

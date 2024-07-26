@@ -71,8 +71,6 @@ screen_buffer :: [^]u8
 bwidth :: WIDTH / ZOOM
 bheight :: HEIGHT / ZOOM
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 ConfigFlag :: enum u32 {
 	CENTER = 1,
 }
@@ -214,7 +212,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		for i in 0 ..< palette_count {
 			w = scale * f32(i)
 			when COLOR_MODE == 1 {
-				rbg = [3]f32{rand.float32(&rng), rand.float32(&rng), rand.float32(&rng)}
+				rbg = [3]f32{rand.float32(), rand.float32(), rand.float32()}
 			} else {
 				rbg = [3]f32{w, w, w}
 			}
@@ -226,8 +224,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	if app.world != nil {
 		cc := app.world.width * app.world.height
-		for i in 0 ..< cc {app.world.alive[i] = u8(rand.int31_max(2, &rng))}
-		for i in 0 ..< cc {app.next_world.alive[i] = u8(rand.int31_max(2, &rng))}
+		for i in 0 ..< cc {app.world.alive[i] = u8(rand.int31_max(2))}
+		for i in 0 ..< cc {app.next_world.alive[i] = u8(rand.int31_max(2))}
 	}
 	app.pause = false
 
@@ -306,7 +304,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case ' ':
 		app := get_app(hwnd)
 		siz := app.world.width * app.world.height
-		idx := rand.int31_max(siz, &rng)
+		idx := rand.int31_max(siz)
 		app.world.alive[idx] = 1
 	}
 	return 0

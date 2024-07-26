@@ -3,6 +3,7 @@
 package win32app
 
 import "core:fmt"
+import "core:time"
 import fp "core:path/filepath"
 //import ow "shared:owin"
 import win32 "core:sys/windows"
@@ -176,7 +177,7 @@ window_settings :: struct {
 	wndproc:     win32.WNDPROC,
 	run:         proc(this: ^window_settings) -> win32.HWND,
 	app:         rawptr,
-	sleep:       f32,
+	sleep:       time.Duration,
 }
 psettings :: ^window_settings
 
@@ -193,7 +194,7 @@ create_window_settings_sw :: proc(size: int2, wndproc: win32.WNDPROC) -> window_
 		dwStyle     = default_dwStyle,
 		dwExStyle   = default_dwExStyle,
 		run         = run,
-		sleep       = 10,
+		sleep       = time.Millisecond * 10,
 	}
 	return settings
 }

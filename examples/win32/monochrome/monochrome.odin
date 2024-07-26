@@ -44,8 +44,6 @@ screen_buffer :: [^]u8
 bwidth :: WIDTH / ZOOM
 bheight :: HEIGHT / ZOOM
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 msg: [6]wstring = {L("Tik"), L("Tok"), L("Ping"), L("Pong"), L("Yin"), L("Yang")}
 
 print_info :: proc() {
@@ -122,7 +120,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		for i in 0 ..< palette_count {
 			w = scale * f32(i)
 			when COLOR_MODE == 1 {
-				rbg = [3]f32{rand.float32(&rng), rand.float32(&rng), rand.float32(&rng)}
+				rbg = [3]f32{rand.float32(), rand.float32(), rand.float32()}
 			} else {
 				rbg = [3]f32{w, w, w}
 			}
@@ -144,7 +142,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pvBits := app.pvBits
 	if pvBits != nil {
 		for i in 0 ..< bwidth * bheight / 8 {
-			pvBits[i] = u8(rand.int31_max(255, &rng))
+			pvBits[i] = u8(rand.int31_max(255))
 		}
 	}
 

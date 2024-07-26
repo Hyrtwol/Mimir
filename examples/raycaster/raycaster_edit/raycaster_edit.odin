@@ -24,8 +24,6 @@ COLOR :: cv.W95_COLOR
 clear_color: COLOR = .BLACK
 select: COLOR = .WHITE
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 application :: struct {}
 papp :: ^application
 settings: win32app.window_settings

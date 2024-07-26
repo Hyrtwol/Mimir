@@ -30,8 +30,6 @@ FPS :: 10
 // globals
 SOX, SOY: i32 = (WIDTH - SCREEN_WIDTH) / 2, (HEIGHT - SCREEN_HEIGHT)
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 bkgnd_brush: win32.HBRUSH
 
 BITMAPINFO :: struct {
@@ -90,7 +88,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	for i in 0 ..< min(palette_count, 16) {
 		ink := amstrad_ink[i]
-		//ink := rand.int31_max(27, &rng)
+		//ink := rand.int31_max(27)
 		bitmap_info.bmiColors[i] = amstrad_colors[ink].bgra
 	}
 

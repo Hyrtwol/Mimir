@@ -20,8 +20,6 @@ WIDTH: i32 : (512 * 2) / ZOOM
 HEIGHT: i32 : WIDTH
 FPS :: 20
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 point_count :: 50000
 
 world_radius :: u32(WIDTH)

@@ -11,8 +11,6 @@ HEIGHT: i32 : WIDTH * 3 / 4
 ZOOM :: 4
 FPS :: 20
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 dude_count :: 4 * 100
 dude :: struct {
 	pos: cv.int2,
@@ -23,8 +21,8 @@ dudes: [dude_count]dude
 on_create :: proc(app: ca.papp) -> int {
 	size := ca.dib.canvas.size
 	for &d in dudes {
-		d.pos = cv.random_position(size, &rng)
-		d.col = cv.random_color(&rng)
+		d.pos = cv.random_position(size)
+		d.col = cv.random_color()
 	}
 	return 0
 }
@@ -36,7 +34,7 @@ on_update :: proc(app: ca.papp) -> int {
 	mx, my := cv.canvas_max_xy(pc)
 	for &d in dudes {
 		pp = &d.pos
-		dir = cv.get_direction4(rand.int31_max(8, &rng))
+		dir = cv.get_direction4(rand.int31_max(8))
 		pp^ += dir
 		if pp.x < 0 {pp.x = mx} else if pp.x > mx {pp.x = 0}
 		if pp.y < 0 {pp.y = my} else if pp.y > my {pp.y = 0}

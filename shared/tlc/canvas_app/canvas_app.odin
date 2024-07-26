@@ -179,7 +179,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
-	switch (vk_code) 
+	switch (vk_code)
 	{
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
@@ -245,7 +245,7 @@ run :: proc() {
 		if res != 0 {break}
 		draw_frame(hwnd)
 		if settings.sleep >= 0 {
-			time.accurate_sleep(time.Duration(settings.sleep * f32(time.Millisecond)))
+			time.accurate_sleep(settings.sleep)
 		}
 	}
 	stopwatch->stop()

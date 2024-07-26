@@ -42,8 +42,6 @@ fov: f32 = fov90
 aspect: f32 = f32(width) / f32(height)
 near, far: f32 = 1, 10
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 viewport: mat4x4
 proj, view: mat4x4
 rotate: mat4x4
@@ -176,8 +174,8 @@ on_create :: proc(app: ca.papp) -> int {
 	for y in -1 ..= 1 {for x in -1 ..= 1 {
 			models[x + y * 3 + 4] = cv.Model {
 				trans = lg.matrix4_translate(cv.float3{f32(x), 0, f32(y)} * 2),
-				//color = cv.random_color(&rng),
-				color = cv.color_hue_float4(rand.float32(&rng) * math.PI * 2),
+				//color = cv.random_color(),
+				color = cv.color_hue_float4(rand.float32() * math.PI * 2),
 			}
 		}}
 

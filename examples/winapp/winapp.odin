@@ -29,8 +29,6 @@ dib           : win32app.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
-
 application :: struct {
 	// title: string,
 	// size : [2]i32,
@@ -45,7 +43,7 @@ decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 }
 
 random_scrpos :: proc() -> win32app.int2 {
-	return {rand.int31_max(bitmap_size.x, &rng), rand.int31_max(bitmap_size.y, &rng)}
+	return {rand.int31_max(bitmap_size.x), rand.int31_max(bitmap_size.y)}
 }
 
 set_dot :: proc(pos: win32app.int2, col: cv.byte4) {

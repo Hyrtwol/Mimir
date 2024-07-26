@@ -37,7 +37,6 @@ delta, frame_time: f64 = 0, 0
 TimerTickPS :: 1
 timer_id: win32.UINT_PTR
 
-rng := rand.create(1)
 flamebuffer: [PXLCNT]u8
 palette: [256]byte4
 
@@ -99,7 +98,7 @@ dib_flames :: proc(dib: ^canvas) {
 		// set a new bottom line
 		i := w * (h - 1)
 		for _ in 0 ..< w {
-			flamebuffer[i] = u8(rand.int31_max(256, &rng))
+			flamebuffer[i] = u8(rand.int31_max(256))
 			i += 1
 		}
 	}
@@ -282,7 +281,7 @@ main :: proc() {
 	}
 
 	settings = win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
-	settings.sleep = 4
+	settings.sleep = time.Millisecond * 4
 	_, _, hwnd := win32app.prepare_run(&settings)
 	stopwatch->start()
 	for win32app.pull_messages() {

@@ -91,7 +91,7 @@ update_screen_1 :: proc(app: papp) {
 	if pvBits != nil {
 		for i in 0 ..< screen_byte_count {
 			//pvBits[i] = u8(i & 255)
-			pvBits[i] = u8(rand.int31_max(255, &rng))
+			pvBits[i] = u8(rand.int31_max(255))
 		}
 	}
 }
@@ -149,7 +149,7 @@ update_screen_2 :: proc(app: papp) {
 	if pvBits == nil {return}
 
 	for _ in 0 ..< 60 {
-		ch := u8(rand.int31_max(256, &rng))
+		ch := u8(rand.int31_max(256))
 		put_char(pvBits, ch)
 	}
 }
@@ -160,7 +160,7 @@ update_screen_3 :: proc(app: papp) {
 	if pvBits == nil {return}
 
 	for _ in 0 ..< 60 {
-		ch := u8(rand.int31_max(256, &rng))
+		ch := u8(rand.int31_max(256))
 		poke_char(pvBits, ch)
 	}
 }

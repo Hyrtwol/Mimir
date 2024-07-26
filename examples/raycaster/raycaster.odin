@@ -4,6 +4,7 @@ package raycaster
 import "core:fmt"
 import "base:intrinsics"
 import "core:math/rand"
+import "core:time"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
@@ -14,8 +15,6 @@ WIDTH: i32 : 320
 HEIGHT: i32 : WIDTH * 3 / 4
 ZOOM :: 4
 FPS :: 20
-
-rng := rand.create(u64(intrinsics.read_cycle_counter()))
 
 // pics_data :: struct {
 // 	data: []u8,
@@ -34,8 +33,8 @@ rng := rand.create(u64(intrinsics.read_cycle_counter()))
 // 	//size = _pics.w * _pics.h * _pics.ps,
 // }
 
-pics := #load("pics.dat")
-pics_w: i32 : 32
+pics := #load("pics64.dat")
+pics_w: i32 : 64
 pics_h: i32 : pics_w
 pics_ps: i32 : size_of(cv.byte4)
 pics_size: i32 : pics_w * pics_h * pics_ps
@@ -70,7 +69,7 @@ on_destroy :: proc(app: ca.papp) -> int {
 }
 
 xo: i32 = -pics_w
-po: i32 = rand.int31_max(pics_count, &rng)
+po: i32 = rand.int31_max(pics_count)
 xof: f32 = 0
 
 on_update :: proc(app: ca.papp) -> int {
@@ -91,9 +90,9 @@ on_update :: proc(app: ca.papp) -> int {
 
 	pc := &ca.dib.canvas
 	for _ in 0 ..< 500 {
-		pos := cv.random_position(pc.size, &rng)
+		pos := cv.random_position(pc.size)
 		when USE_RANDOM_COLORS {
-			cv.canvas_set_dot(pc, pos, cv.random_color(&rng))
+			cv.canvas_set_dot(pc, pos, cv.random_color())
 		} else {
 			cv.canvas_set_dot(pc, pos, cv.COLOR_BLACK)
 		}
@@ -130,7 +129,7 @@ main :: proc() {
 	ca.app.update = on_update
 	ca.app.destroy = on_destroy
 	ca.settings.window_size = ca.app.size * ZOOM
-	ca.settings.sleep = 8
+	ca.settings.sleep = time.Millisecond * 8
 	ca.run()
 	fmt.println("Done.")
 }
