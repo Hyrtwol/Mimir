@@ -328,9 +328,14 @@ get_color :: proc {
 
 // 256-(1/256) = 65535/256 = 255.99609375
 color_scale_f2b :: f32(65535) / 256
+color_scale_b2f :: 1 / f32(255)
 
 to_color_float :: #force_inline proc "contextless" (color: float) -> byte {
 	return byte(clamp(color, 0, 1) * color_scale_f2b)
+}
+
+to_color_byte :: #force_inline proc "contextless" (color: byte) -> float {
+	return float(color) * color_scale_b2f
 }
 
 to_color_float3 :: #force_inline proc "contextless" (color: float3) -> byte4 {
@@ -341,10 +346,15 @@ to_color_float4 :: #force_inline proc "contextless" (color: float4) -> byte4 {
 	return {to_color_float(color.x), to_color_float(color.y), to_color_float(color.z), to_color_float(color.w)}
 }
 
+to_color_byte4 :: #force_inline proc "contextless" (color: byte4) -> float4 {
+	return {to_color_byte(color.x), to_color_byte(color.y), to_color_byte(color.z), to_color_byte(color.w)}
+}
+
 to_color :: proc {
 	to_color_float,
 	to_color_float3,
 	to_color_float4,
+	to_color_byte4,
 }
 
 @(private)

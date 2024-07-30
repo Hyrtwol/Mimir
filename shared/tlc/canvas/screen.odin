@@ -137,6 +137,7 @@ pixel_shader :: #type proc(shader: ^IShader, bc_clip: float3, color: ^byte4) -> 
 Model :: struct {
 	trans: float4x4,
 	color: float4,
+	tex: i32,
 }
 IShader :: struct {
 	model: ^Model,
@@ -154,7 +155,7 @@ IShader :: struct {
 
 draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: [3]float4, shader: ^IShader) {
 	pts: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]} // triangle screen coordinates before persp. division
-	pts2: [3]float4 = {(pts[0] / pts[0].w), (pts[1] / pts[1].w), (pts[2] / pts[2].w)} // triangle screen coordinates after  perps. division
+	pts2: [3]float4 = {(pts[0] / pts[0].w), (pts[1] / pts[1].w), (pts[2] / pts[2].w)} // triangle screen coordinates after perps. division
 
 	abc := float3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
 	det := linalg.determinant(abc)
@@ -195,25 +196,24 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			pp.x = f32(x) + 0.5
 			//bc_screen := barycentric(&abc, pp)
 			bc_screen := it_abc * pp
+			if bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 {continue}
 
 			bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
 			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z) // check https://github.com/ssloy/tinyrenderer/wiki/Technical-difficulties-linear-interpolation-with-perspective-deformations
-
-			//if bc_screen.x < -draw_triangle_epsilon || bc_screen.y < -draw_triangle_epsilon || bc_screen.z < -draw_triangle_epsilon {continue}
-			if bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 {continue}
-			//if linalg.any(linalg.less_than(bc_screen, draw_triangle_epsilon3)) {continue}
 
 			frag_depth := linalg.dot(clip_z, bc_clip)
 			if frag_depth < 0 || frag_depth >= 1 {continue}
 			// minz, maxz = min(minz, frag_depth), max(maxz, frag_depth)
 
 			idx := iy + x
-			if frag_depth < zbuffer[idx] {continue}
+			zp := &zbuffer[idx];
+			if frag_depth < zp^ {continue}
+			//if frag_depth < zbuffer[idx] {continue}
 
-            // if (shader.fragment(bc_clip, color)) {continue} // fragment shader can discard current fragment
             if ps(shader, bc_clip, &color) {continue} // fragment shader can discard current fragment
 
-			zbuffer[idx] = frag_depth
+			//zbuffer[idx] = frag_depth
+			zp^ = frag_depth
 			//bits[idx] = to_color(frag_depth)
 			//bits[idx] = to_color(bc_clip)
 			bits[idx] = color

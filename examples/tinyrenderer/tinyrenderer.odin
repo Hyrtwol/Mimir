@@ -51,11 +51,17 @@ proj_view, proj_view_model: mat4x4
 zbuffer: [width * height]f32
 flip_z_axis := true
 
+pics := #load("../raycaster/pics.dat")
+pics_w: i32 : 32
+pics_h: i32 : pics_w
+pics_ps: i32 : size_of(cv.byte4)
+pics_size: i32 : pics_w * pics_h * pics_ps
+pics_count := i32(len(pics)) / pics_size
 
 
 // odinfmt: disable
 
-light_dir := vec3{1, 1, 1} // light source
+light_dir := vec3{1, -1, 1} // light source
 eye       := vec3{1, -2.5, 3} // camera position
 center    := vec3{0, 0, 0} // camera direction
 up        := vec3{0, 1, 0} // camera up vector
@@ -103,18 +109,63 @@ vs_default :: proc(shader: ^cv.IShader, pos: float4, gl_Position: ^float4) {
 	gl_Position^ = proj_view_model * pos
 }
 
+sample2D :: proc(uv: float2) -> cv.byte4 {
+	uvf := lg.fract(uv)
+	x, y := i32(uvf.x * f32(pics_w)), i32(uvf.y * f32(pics_h))
+	tidx := (((y * pics_w + x) * pics_ps) & 4095) + 4096 * shader.model.tex
+	return (^cv.byte4)(&pics[tidx])^
+}
+
 ps_default :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	color^ = cv.to_color(bc_clip)
 	return false
 }
 
 ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
-	// vec3 bn = (varying_nrm*bar).normalized(); // per-vertex normal interpolation
+	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
-	// vec2 uv = varying_uv*bar; // tex coord interpolation
-	/*
+
+	//d := lg.dot(shader.uniform_l, bn)
+	d := lg.dot(light_dir, bn)
+	d = clamp(d, 0, 1)
+	c := d * 0.8 + 0.2
+	col := float4{c, c, c, 0}
+	color^ = cv.to_color(shader.model.color * col)
+	return false
+}
+
+ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+	// per-vertex normal interpolation
+	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
+	// tex coord interpolation
 	uv: float2 = shader.varying_uv * bc_clip
 
+	texcol := sample2D(uv)
+	if texcol.a == 0 {return true}
+
+	//d := lg.dot(shader.uniform_l, bn)
+	d := lg.dot(light_dir, bn)
+	d = clamp(d, 0.2, 1)
+
+	col := cv.to_color_byte4(texcol)
+	col *= shader.model.color
+	col *= d
+	color^ = cv.to_color(col)
+
+	return false
+}
+
+ps_texture_wip :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+	// per-vertex normal interpolation
+	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
+	// tex coord interpolation
+	uv: float2 = shader.varying_uv * bc_clip
+	//uv: float2 = bc_clip.xy
+
+	texcol := sample2D(uv)
+	if texcol.a == 0 {return true}
+
+	/*
 	// for the math refer to the tangent space normal mapping lecture
 	// https://github.com/ssloy/tinyrenderer/wiki/Lesson-6bis-tangent-space-normal-mapping
 	// float3x3 AI = float3x3{ {view_tri.col(1) - view_tri.col(0), view_tri.col(2) - view_tri.col(0), bn} }.invert();
@@ -143,14 +194,26 @@ ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	// for (int i : {0,1,2})
 	//     gl_FragColor[i] = std::min<int>(10 + c[i]*(diff + spec), 255); // (a bit of ambient light, diff + spec), clamp the result
 
-	//d := lg.dot(shader.uniform_l, bn)
-	d := lg.dot(light_dir, bn)
-	d = clamp(d, 0, 1)
-	//color^ = shader.model.color
-	c := d * 0.8 + 0.2
-	//col := float4{c, c, c, 0}
-	color^ = cv.to_color(shader.model.color * c)
-	//color^ = cv.to_color(bn * 0.5 + 0.5)
+	d := lg.dot(shader.uniform_l, bn)
+	//d := lg.dot(light_dir, bn)
+	d = clamp(d, 0.2, 1)
+
+	//c := d * 0.8 + 0.2
+	//col := float4{uv.x, uv.y, 0, 1}
+
+
+	col := cv.to_color_byte4(texcol)
+
+	//col := shader.model.color
+	col *= shader.model.color
+	//col *= texcol
+	col *= d
+	//col += 0.1
+	//col = texcol
+	//col = lg.clamp(col, 0, 1)
+	color^ = cv.to_color(col)
+
+	//color^ = (^cv.byte4)(&pics[tidx])^
 	return false
 }
 
@@ -165,7 +228,7 @@ on_create :: proc(app: ca.papp) -> int {
 	viewport = cv.create_viewport(0, 0, f32(width), f32(height))
 	proj = cv.matrix4_perspective_f32_01(fov, aspect, far, near, flip_z_axis)
 	rotate = lg.identity(mat4x4)
-	light_dir = lg.normalize(float3{1, 1, 1})
+	light_dir = lg.normalize(light_dir)
 
 	fmt.println("viewport:", viewport)
 	fmt.println("view    :", view)
@@ -175,14 +238,16 @@ on_create :: proc(app: ca.papp) -> int {
 			models[x + y * 3 + 4] = cv.Model {
 				trans = lg.matrix4_translate(cv.float3{f32(x), 0, f32(y)} * 2),
 				//color = cv.random_color(),
-				color = cv.color_hue_float4(rand.float32() * math.PI * 2),
+				color = cv.color_hue_float4(rand.float32() * math.PI * 2, 0.3, 0.7),
+				tex   = rand.int31_max(pics_count),
 			}
 		}}
 
 	shader = cv.IShader {
 		vs = vs_default,
 		//ps = ps_default,
-		ps = ps_color,
+		//ps = ps_color,
+		ps = ps_texture,
 	}
 	return 0
 }
@@ -193,14 +258,14 @@ on_update :: proc(app: ca.papp) -> int {
 
 	#partial switch app.mouse_buttons {
 	case .MK_LBUTTON:
-		mp := ca.decode_mouse_pos_ndc(app) // 0..1
+		mp := ca.decode_mouse_pos_ndc(app)
 		eye.x = mp.x * 10
 		eye.y = mp.y * 5
 	case .MK_RBUTTON:
-		mp := ca.decode_mouse_pos_01(app) // 0..1
+		mp := ca.decode_mouse_pos_01(app)
 		eye = lg.normalize(eye) * (1 + mp.y * 10)
 	case .MK_MBUTTON:
-	// mp := ca.decode_mouse_pos_01(app) // 0..1
+	// mp := ca.decode_mouse_pos_01(app)
 	// fov = fov90 + fov90 * mp.y
 	// aspect = cv.canvas_aspect(pc)
 	// proj = lg.matrix4_perspective(fov, aspect, 1, 10)
@@ -211,6 +276,14 @@ on_update :: proc(app: ca.papp) -> int {
 		switch ch {
 		case ' ':
 			do_rotate ~= true
+		case '1':
+			shader.ps = ps_default
+		case '2':
+			shader.ps = ps_color
+		case '3':
+			shader.ps = ps_texture
+		case '4':
+			shader.ps = ps_texture_wip
 		case:
 			fmt.println("ch:", ch)
 		}
@@ -233,7 +306,10 @@ on_update :: proc(app: ca.papp) -> int {
 
 		shader.model = &model
 		shader.model_view = rotate * model.trans * rotate
+		//f33 := float3x3(shader.model_view)
 		shader.it_model_view = lg.inverse_transpose(shader.model_view)
+		//shader.it_model_view3 = lg.inverse_transpose(float3x3(shader.model_view))
+		it_model_view3 := lg.inverse_transpose(float3x3(shader.model_view))
 		proj_view_model = proj_view * shader.model_view
 
 		vs := shader.vs
@@ -246,14 +322,32 @@ on_update :: proc(app: ca.papp) -> int {
 			v0, v1, v2 := vert[t.x], vert[t.y], vert[t.z]
 			n0, n1, n2 := lg.normalize(vertices[t.x]), lg.normalize(vertices[t.y]), lg.normalize(vertices[t.z])
 			// varying_uv.set_col(nthvert, model.uv(iface, nthvert));
-			shader.varying_uv[0] = v0.xy
-			shader.varying_uv[1] = v1.xy
-			shader.varying_uv[2] = v2.xy
+			// shader.varying_uv[0] = v0.xy
+			// shader.varying_uv[1] = v1.xy
+			// shader.varying_uv[2] = v2.xy
+
+			shader.varying_uv[0] = vertices[t[0]].xy
+			shader.varying_uv[1] = vertices[t[1]].xy
+			shader.varying_uv[2] = vertices[t[2]].xy
+
+			// #unroll for vi in 0..<3 {
+			// 	shader.varying_uv[vi] = vertices[t[vi]].xy
+			// }
 
 			// varying_nrm.set_col(nthvert, proj<3>((ModelView).invert_transpose()*embed<4>(model.normal(iface, nthvert), 0.)));
-			shader.varying_nrm[0] = (shader.it_model_view * cv.to_float4(n0, 0)).xyz
-			shader.varying_nrm[1] = (shader.it_model_view * cv.to_float4(n1, 0)).xyz
-			shader.varying_nrm[2] = (shader.it_model_view * cv.to_float4(n2, 0)).xyz
+
+			// shader.varying_nrm[0] = (shader.it_model_view * cv.to_float4(n0, 0)).xyz
+			// shader.varying_nrm[1] = (shader.it_model_view * cv.to_float4(n1, 0)).xyz
+			// shader.varying_nrm[2] = (shader.it_model_view * cv.to_float4(n2, 0)).xyz
+
+			// shader.varying_nrm[0] = (shader.it_model_view3 * n0)
+			// shader.varying_nrm[1] = (shader.it_model_view3 * n1)
+			// shader.varying_nrm[2] = (shader.it_model_view3 * n2)
+
+			shader.varying_nrm[0] = (it_model_view3 * n0)
+			shader.varying_nrm[1] = (it_model_view3 * n1)
+			shader.varying_nrm[2] = (it_model_view3 * n2)
+
 
 			// gl_Position= ModelView*embed<4>(model.vert(iface, nthvert));
 			// view_tri.set_col(nthvert, proj<3>(gl_Position));

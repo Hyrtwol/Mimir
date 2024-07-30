@@ -29,7 +29,7 @@ write_image :: proc(fd: ^os.Handle, img: ^image.Image) {
 		//return 1
 		panic("pix!!!")
 	}
-	fmt.println("pix:", len(pix), img.width, img.height, img.channels, img.depth)
+	fmt.println("added:", len(pix), img.width, img.height, img.channels, img.depth)
 
 	dp := img.depth
 	ch := img.channels
@@ -144,7 +144,7 @@ gen_pics :: proc(output_name: string, pattern: string) -> int {
 		matches, err := fp.glob(path_pattern, context.temp_allocator)
 		if err == nil {
 			for path in matches {
-				fmt.println(path)
+				//fmt.println(path)
 				print_image(path, &fd)
 			}
 		}
