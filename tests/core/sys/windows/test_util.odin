@@ -28,4 +28,5 @@ wstring_convert :: proc(t: ^testing.T) {
 	result, err := win32.wstring_to_utf8(wstr, 256, context.allocator)
 	testing.expectf(t, exp == result, "wstring_convert: %v (should be: %v)", result, exp)
 	testing.expectf(t, err == .None, "wstring_convert: error %v", err)
+	delete(result)
 }
