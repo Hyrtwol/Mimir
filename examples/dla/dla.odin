@@ -1,6 +1,5 @@
 // +vet
 // https://en.wikipedia.org/wiki/Diffusion-limited_aggregation
-// D:\dev\pascal\Delphi7\DLA\DLAMain.pas
 package dla
 
 import "base:intrinsics"
@@ -16,9 +15,8 @@ byte4 :: cv.byte4
 DIR4 :: false
 
 ZOOM :: 2
-WIDTH: i32 : (512 * 2) / ZOOM
+WIDTH: i32 : (256 * 3) / ZOOM
 HEIGHT: i32 : WIDTH
-FPS :: 20
 
 point_count :: 50000
 
@@ -31,12 +29,10 @@ rm :: world_radius - 2
 rofs: i32 = 10
 
 map_size :: world_radius * world_radius
-//map_: [world_radius][world_radius]u8
 dla_map: [map_size]u8
 bmp: rawptr
 cnt: i32
 maxrad, maxrad2, maxrad3: i32
-//origo := int2{i32(rh), i32(rh)}
 origo := uint2{u32(rh), u32(rh)}
 
 dude_count :: 1 * 100
@@ -82,7 +78,6 @@ map_check_free8 :: #force_inline proc "contextless" (x, y: u32) -> bool {
 }
 
 random_position :: #force_inline proc() -> int2 {
-	//return {(rand.int31_max(i32(dim.x), r)), (rand.int31_max(i32(dim.y), r))}
 	radius := f32(maxrad)
 	theta := rand.float32() * math.PI * 2
 	x, y := math.cos(theta) * radius, math.sin(theta) * radius
@@ -157,7 +152,6 @@ on_update :: proc(app: ca.papp) -> int {
 			if map_check_free(u32(np.x), u32(np.y)) {
 				pp^ = np
 			} else {
-				//fmt.println("hit")
 				map_set_dot(transmute(uint2)np, 1)
 				//cv.canvas_set_dot(pc, np, d.col)
 				cv.canvas_set_dot(pc, np, cv.COLOR_WHITE)
