@@ -1,6 +1,6 @@
 # Odin
 
-odin version dev-2024-04:37084a82e
+odin version dev-2024-08:684e032ef
 
 ## Commands
 
@@ -78,6 +78,16 @@ Usage:
 		Specifies the filename for `-export-timings`.
 		Example: -export-timings-file:timings.json
 
+	-export-dependencies:<format>
+		Exports dependencies to one of a few formats. Requires `-export-dependencies-file`.
+		Available options:
+			-export-dependencies:make   Exports in Makefile format
+			-export-dependencies:json   Exports in JSON format
+
+	-export-dependencies-file:<filename>
+		Specifies the filename for `-export-dependencies`.
+		Example: -export-dependencies-file:dependencies.d
+
 	-thread-count:<integer>
 		Overrides the number of threads the compiler will use to compile with.
 		Example: -thread-count:2
@@ -97,12 +107,21 @@ Usage:
 		Usage in code:
 			#config(SPAM, default_value)
 
+	-show-defineables
+		Shows an overview of all the #config/#defined usages in the project.
+
+	-export-defineables:<filename>
+		Exports an overview of all the #config/#defined usages in CSV format to the given file path.
+		Example: -export-defineables:defineables.csv
+
 	-build-mode:<mode>
 		Sets the build mode.
 		Available options:
 			-build-mode:exe         Builds as an executable.
 			-build-mode:dll         Builds as a dynamically linked library.
 			-build-mode:shared      Builds as a dynamically linked library.
+			-build-mode:lib         Builds as a statically linked library.
+			-build-mode:static      Builds as a statically linked library.
 			-build-mode:obj         Builds as an object file.
 			-build-mode:object      Builds as an object file.
 			-build-mode:assembly    Builds as an assembly file.
@@ -123,6 +142,9 @@ Usage:
 	-no-bounds-check
 		Disables bounds checking program wide.
 
+	-no-type-assert
+		Disables type assertion checking program wide.
+
 	-no-crt
 		Disables automatic linking with the C Run Time.
 
@@ -133,9 +155,9 @@ Usage:
 		Uses the LLD linker rather than the default.
 
 	-use-separate-modules
-	[EXPERIMENTAL]
 		The backend generates multiple build units which are then linked together.
 		Normally, a single build unit is generated for a standard project.
+		This is the default behaviour on Windows for '-o:none' and '-o:minimal' builds.
 
 	-no-threaded-checker
 		Disables multithreading in the semantic checker stage.
@@ -177,6 +199,20 @@ Usage:
 	-vet-semicolon
 		Errs on unneeded semicolons.
 
+	-vet-cast
+		Errs on casting a value to its own type or using `transmute` rather than `cast`.
+
+	-vet-tabs
+		Errs when the use of tabs has not been used for indentation.
+
+	-custom-attribute:<string>
+		Add a custom attribute which will be ignored if it is unknown.
+		This can be used with metaprogramming tools.
+		Examples:
+			-custom-attribute:my_tag
+			-custom-attribute:my_tag,the_other_thing
+			-custom-attribute:my_tag -custom-attribute:the_other_thing
+
 	-ignore-unknown-attributes
 		Ignores unknown attributes.
 		This can be used with metaprogramming tools.
@@ -200,7 +236,18 @@ Usage:
 		Examples:
 			-microarch:sandybridge
 			-microarch:native
-			-microarch:? for a list
+			-microarch:"?" for a list
+
+	-target-features:<string>
+		Specifies CPU features to enable on top of the enabled features implied by -microarch.
+		Examples:
+			-target-features:atomics
+			-target-features:"sse2,aes"
+			-target-features:"?" for a list
+
+	-strict-target-features
+		Makes @(enable_target_features="...") behave the same way as @(require_target_features="...").
+		This enforces that all generated code uses features supported by the combination of -target, -microarch, and -target-features.
 
 	-reloc-mode:<string>
 		Specifies the reloc mode.
@@ -216,6 +263,9 @@ Usage:
 	-dynamic-map-calls
 		Uses dynamic map calls to minimize code generation at the cost of runtime execution.
 
+	-print-linker-flags
+		Prints the all of the flags/arguments that will be passed to the linker.
+
 	-disallow-do
 		Disallows the 'do' keyword in the project.
 
@@ -223,9 +273,13 @@ Usage:
 		Sets the default allocator to be the nil_allocator, an allocator which does nothing.
 
 	-strict-style
+		This enforces parts of same style as the Odin compiler, prefer '-vet-style -vet-semicolon' if you do not want to match it exactly.
+		
 		Errs on unneeded tokens, such as unneeded semicolons.
 		Errs on missing trailing commas followed by a newline.
 		Errs on deprecated syntax.
+		Errs when the attached-brace style in not adhered to (also known as 1TBS).
+		Errs when 'case' labels are not in the same column as the associated 'switch' token.
 
 	-ignore-warnings
 		Ignores warning messages.
@@ -276,6 +330,7 @@ Usage:
 		[Windows only]
 		Defines the resource file for the executable.
 		Example: -resource:path/to/file.rc
+		or:      -resource:path/to/file.res for a precompiled one.
 
 	-pdb-name:<filepath>
 		[Windows only]

@@ -9,7 +9,9 @@
 				"run",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
-				"-collection:libs=..\\shared"
+				"-collection:libs=..\\shared",
+				"-vet",
+				"-strict-style"
 			],
 			"problemMatcher": [],
 			"group": {

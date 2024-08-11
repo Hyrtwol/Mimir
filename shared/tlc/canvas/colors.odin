@@ -368,7 +368,7 @@ color_hue_float4 :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, 
 		(f32)((math.sin(hue) + 1.0) * half_scale + bias),
 		(f32)((math.sin(hue_g) + 1.0) * half_scale + bias),
 		(f32)((math.sin(hue_b) + 1.0) * half_scale + bias),
-		scale + bias
+		scale + bias,
 	}
 }
 

@@ -3,8 +3,6 @@ package main
 
 import "core:fmt"
 import "base:intrinsics"
-import "core:math/rand"
-import "core:os"
 import "base:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
@@ -155,7 +153,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	if settings == nil {return 1}
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	settings.window_size = win32app.decode_lparam(lparam)
-	win32app.set_window_textf(hwnd, "%s %v", settings.title, settings.window_size)
+	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, type)
 	return 0
 }
 
@@ -172,7 +170,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		defer win32.DeleteDC(hdc_source)
 
 		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
-		client_size := win32app.get_rect_size(&ps.rcPaint)
+		//client_size := win32app.get_rect_size(&ps.rcPaint)
 		win32.StretchBlt(hdc, SOX, SOY, SCREEN_WIDTH, SCREEN_HEIGHT * 2, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
 	}
 
@@ -216,11 +214,11 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	vk_code := win32.LOWORD(wparam) // virtual-key code
 	key_flags := win32.HIWORD(lparam)
+	// repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
 	scan_code := win32.WORD(win32.LOBYTE(key_flags)) // scan code
 	is_extended_key := (key_flags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
 	if is_extended_key {scan_code = win32.MAKEWORD(scan_code, 0xE0)}
-	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
-	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
+	// was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
 	switch (vk_code)
@@ -253,7 +251,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 		z.z80_power(app.cpu, true)
 		fmt.printfln("pc=%d", app.cpu.pc)
 	case win32.VK_F9:
-		print_info()
+		print_screen_info()
 	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
 	return 0
@@ -301,7 +299,7 @@ run_app :: proc(app: papp) {
 
 	inst := win32app.get_instance()
 	atom := win32app.register_window_class(inst, settings.wndproc)
-	hwnd := win32app.create_and_show_window(inst, atom, &settings)
+	_/*hwnd:*/ = win32app.create_and_show_window(inst, atom, &settings)
 
 	for win32app.pull_messages() {
 		for running {

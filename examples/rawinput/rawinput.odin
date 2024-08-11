@@ -132,11 +132,7 @@ WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 
 wm_focus :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32.LRESULT {
 	is_focused = focused
-	fmt.println(
-		#procedure,
-		/*hwnd, wparam,*/
-		is_focused,
-	)
+	fmt.println(#procedure, /*hwnd, wparam,*/ is_focused)
 	return 0
 }
 
@@ -169,9 +165,9 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			mouse_pos = {clamp(mouse_pos.x, 0, cs.x), clamp(mouse_pos.y, 0, cs.y)}
 			//mouse_pos = clamp(mouse_pos, zero, cs)
 
-			buttons := &raw.data.mouse.DUMMYUNIONNAME.DUMMYSTRUCTNAME
-			if buttons.usButtonFlags > 0 {
-				switch buttons.usButtonFlags {
+			button_flags := raw.data.mouse.usButtonFlags
+			if button_flags > 0 {
+				switch button_flags {
 				case win32.RI_MOUSE_BUTTON_1_DOWN:
 					put_it = 1
 				case win32.RI_MOUSE_BUTTON_1_UP:

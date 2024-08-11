@@ -5,15 +5,15 @@
 package tinyrenderer
 
 import "base:intrinsics"
-import "core:container/queue"
-import "core:fmt"
-import "core:math"
+//import "core:container/queue"
+//import "core:fmt"
+//import "core:math"
 import lg "core:math/linalg"
-import "core:math/rand"
-import "core:mem"
-import win32 "core:sys/windows"
+//import "core:math/rand"
+//import "core:mem"
+//import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import ca "libs:tlc/canvas_app"
+//import ca "libs:tlc/canvas_app"
 
 ps_texture_wip :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	// per-vertex normal interpolation

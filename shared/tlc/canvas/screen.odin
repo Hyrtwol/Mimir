@@ -1,7 +1,6 @@
 // vet
 package canvas
 
-import "core:fmt"
 import "core:math/linalg"
 
 screen_buffer :: [^]color
@@ -81,7 +80,11 @@ fade_to_black :: proc {
 	canvas_fade_to_black,
 }
 
-canvas_size_xy :: #force_inline proc "contextless" (cv: ^canvas) -> (x, y: i32) {
+gat_canvas_size :: #force_inline proc "contextless" (cv: ^canvas) -> int2 {
+	return transmute(int2)cv.size
+}
+
+get_canvas_size_xy :: #force_inline proc "contextless" (cv: ^canvas) -> (x, y: i32) {
 	return i32(cv.size.x), i32(cv.size.y)
 }
 
@@ -206,7 +209,7 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			// minz, maxz = min(minz, frag_depth), max(maxz, frag_depth)
 
 			idx := iy + x
-			zp := &zbuffer[idx];
+			zp := &zbuffer[idx]
 			if frag_depth < zp^ {continue}
 			//if frag_depth < zbuffer[idx] {continue}
 

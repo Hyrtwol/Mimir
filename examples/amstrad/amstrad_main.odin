@@ -1,6 +1,7 @@
 // +vet
 package main
 
+import "core:os"
 import "base:intrinsics"
 import "core:fmt"
 import fp "core:path/filepath"
@@ -46,10 +47,10 @@ main :: proc() {
 	//z.z80_power(&cpu, true)
 
 	snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
-	fmt.printfln("reading %s", snapshot_path)
+	fmt.printfln("loading snapshot %s", snapshot_path)
 	ss: snapshot
 	err := a.load_snapshot(snapshot_path, &ss, memory[:])
-	assert(err == 0)
+	assert(err == os.ERROR_NONE)
 
 	// cpu.pc = ss.PC
 	// cpu.sp = ss.SP

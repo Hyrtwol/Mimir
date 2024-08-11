@@ -111,3 +111,17 @@ wstring_print :: proc(t: ^testing.T) {
 
 	o.expect_value(t, mem.compare_byte_ptrs((^u8)(&wmsg[0]), (^u8)(&wexp[0]), wexp_size), 0)
 }
+
+@(test)
+check_mouse_key_state_flags :: proc(t: ^testing.T) {
+	expect_state :: proc(t: ^testing.T, val: win32app.MOUSE_KEY_STATE, exp: u32) {
+		testing.expect_value(t, transmute(u32)val, exp)
+	}
+	expect_state(t, {.MK_LBUTTON}, win32.MK_LBUTTON)
+	expect_state(t, {.MK_RBUTTON}, win32.MK_RBUTTON)
+	expect_state(t, {.MK_SHIFT}, win32.MK_SHIFT)
+	expect_state(t, {.MK_CONTROL}, win32.MK_CONTROL)
+	expect_state(t, {.MK_MBUTTON}, win32.MK_MBUTTON)
+	expect_state(t, {.MK_XBUTTON1}, win32.MK_XBUTTON1)
+	expect_state(t, {.MK_XBUTTON2}, win32.MK_XBUTTON2)
+}

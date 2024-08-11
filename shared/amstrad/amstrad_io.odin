@@ -255,17 +255,17 @@ snapshot :: struct #packed {
 }
 psnapshot :: ^snapshot
 
-load_snapshot :: proc(path: string, pss: psnapshot, ram: []u8) -> os.Errno {
-	err: os.Errno
+load_snapshot :: proc(path: string, pss: psnapshot, ram: []u8) -> os.Error {
+	err: os.Error
 	fd: os.Handle
 	fd, err = os.open(path)
-	if err != 0 {return err}
+	if err != os.ERROR_NONE {return err}
 	defer os.close(fd)
 
 	buf: [256]u8
 	total_read: int
 	total_read, err = os.read(fd, buf[:])
-	if err != 0 {return err}
+	if err != os.ERROR_NONE {return err}
 	assert(total_read == 0x100)
 	pss^ = psnapshot(&buf[0])^
 

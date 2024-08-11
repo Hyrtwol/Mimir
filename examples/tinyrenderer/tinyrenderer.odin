@@ -11,7 +11,7 @@ import "core:math"
 import lg "core:math/linalg"
 import "core:math/rand"
 import "core:mem"
-import win32 "core:sys/windows"
+//import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
@@ -157,7 +157,7 @@ ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 
 on_create :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
-	width, height := cv.canvas_size_xy(pc)
+	width, height := cv.get_canvas_size_xy(pc)
 	fov = fov90
 	aspect = f32(width) / f32(height)
 	fmt.println("width, height:", width, height)
@@ -193,19 +193,31 @@ on_update :: proc(app: ca.papp) -> int {
 
 	pc := &ca.dib.canvas
 
-	#partial switch app.mouse_buttons {
-	case .MK_LBUTTON:
+	// #partial switch app.mouse_buttons {
+	// case .MK_LBUTTON:
+	// 	mp := ca.decode_mouse_pos_ndc(app)
+	// 	eye.x = mp.x * 10
+	// 	eye.y = mp.y * 5
+	// case .MK_RBUTTON:
+	// 	mp := ca.decode_mouse_pos_01(app)
+	// 	eye = lg.normalize(eye) * (1 + mp.y * 10)
+	// case .MK_MBUTTON:
+	// // mp := ca.decode_mouse_pos_01(app)
+	// // fov = fov90 + fov90 * mp.y
+	// // aspect = cv.canvas_aspect(pc)
+	// // proj = lg.matrix4_perspective(fov, aspect, 1, 10)
+	// }
+
+	if .MK_LBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_ndc(app)
 		eye.x = mp.x * 10
 		eye.y = mp.y * 5
-	case .MK_RBUTTON:
+	}
+	if .MK_RBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_01(app)
 		eye = lg.normalize(eye) * (1 + mp.y * 10)
-	case .MK_MBUTTON:
-	// mp := ca.decode_mouse_pos_01(app)
-	// fov = fov90 + fov90 * mp.y
-	// aspect = cv.canvas_aspect(pc)
-	// proj = lg.matrix4_perspective(fov, aspect, 1, 10)
+	}
+	if .MK_MBUTTON in app.mouse_buttons {
 	}
 
 	ch, ok := queue.pop_front_safe(&app.char_queue)
@@ -305,5 +317,6 @@ main :: proc() {
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
 	fmt.println("app:", ca.app)
+	fmt.println("app.mouse_buttons:", ca.app.mouse_buttons)
 	//fmt.println("z min/max:", cv.minz, cv.maxz)
 }

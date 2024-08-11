@@ -3,8 +3,8 @@
 package win32app
 
 import "core:fmt"
-import "core:strings"
 import "core:mem"
+import "core:strings"
 
 // similar to strings.to_string
 to_wstring :: #force_inline proc(b: strings.Builder, allocator := context.temp_allocator) -> (res: wstring) {
@@ -49,15 +49,15 @@ wstring_len :: #force_inline proc "contextless" (s: wstring) -> int {
 
 wstring_equal :: proc "contextless" (a, b: wstring) -> bool {
 	switch {
-		case a == b:   return true
-		case a == nil: return false
-		case b == nil: return false
-		}
+	case a == b:   return true
+	case a == nil: return false
+	case b == nil: return false
+	}
 	sa, sb := wstring_byte_size(a), wstring_byte_size(b)
 	switch {
-		case sa == 0: return false
-		case sb == 0: return false
-		case sa != sb: return false
+	case sa == 0:  return false
+	case sb == 0:  return false
+	case sa != sb: return false
 	}
 	return mem.compare_byte_ptrs((^u8)(&a[0]), (^u8)(&b[0]), sa) == 0
 }

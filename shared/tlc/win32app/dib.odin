@@ -92,7 +92,7 @@ draw_hgdiobj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.H
 }
 
 @(private)
-wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) -> win32.LRESULT {
+_wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc := win32.BeginPaint(hwnd, &ps)
 	if hdc == nil {return 1}
@@ -105,11 +105,17 @@ wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) 
 }
 
 @(private)
-wm_paint_hbitmap :: #force_inline proc (hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2) -> win32.LRESULT {
-	return wm_paint_hgdiobj(hwnd, win32.HGDIOBJ(hbitmap), size)
+_wm_paint_hbitmap :: #force_inline proc (hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2) -> win32.LRESULT {
+	return _wm_paint_hgdiobj(hwnd, win32.HGDIOBJ(hbitmap), size)
+}
+
+@(private)
+_wm_paint_dib :: #force_inline proc (hwnd: win32.HWND, dib: DIB) -> win32.LRESULT {
+	return _wm_paint_hbitmap(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
 }
 
 wm_paint_dib :: proc {
-	wm_paint_hgdiobj,
-	wm_paint_hbitmap,
+	_wm_paint_hgdiobj,
+	_wm_paint_hbitmap,
+	_wm_paint_dib,
 }

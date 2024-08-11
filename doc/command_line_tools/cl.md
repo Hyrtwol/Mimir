@@ -21,9 +21,8 @@
 
 /Gu[-] ensure distinct functions have distinct addresses
 /Gw[-] separate global variables for linker
-/GF enable read-only string pooling     /Gm[-] enable minimal rebuild
-/Gy[-] separate functions for linker    /GS[-] enable security checks
-/GR[-] enable C++ RTTI                  /GX[-] enable C++ EH (same as /EHsc)
+/GF enable read-only string pooling     /Gy[-] separate functions for linker
+/GS[-] enable security checks           /GR[-] enable C++ RTTI
 /guard:cf[-] enable CFG (control flow guard)
 /guard:ehcont[-] enable EH continuation metadata (CET)
 /EHs enable C++ EH (no SEH exceptions)  /EHa enable C++ EH (w/ SEH exceptions)
@@ -63,7 +62,9 @@
 /fsanitize=address Enable address sanitizer codegen
 /homeparams Force parameters passed in registers to be written to the stack
 /GZ Enable stack checks (/RTCs)         /Gv __vectorcall calling convention
-/arch:<AVX|AVX2|AVX512> minimum CPU architecture requirements, one of:
+/arch:<SSE2|SSE4.2|AVX|AVX2|AVX512> minimum CPU architecture requirements, one of:
+   SSE2 - (default) enable use of instructions available with SSE2-enabled CPUs
+   SSE4.2 - enable use of instructions available with SSE 4.2-enabled CPUs
    AVX - enable use of instructions available with AVX-enabled CPUs
    AVX2 - enable use of instructions available with AVX2-enabled CPUs
    AVX512 - enable use of instructions available with AVX-512-enabled CPUs
@@ -116,7 +117,6 @@
     clatest - latest draft standard (feature set subject to change)
 /permissive[-] enable some nonconforming code to compile
                (feature set subject to change) (off by default in C++20 and later)
-/Ze (deprecated) enable extensions (default)
 /Za disable extensions (not recommended for C++)
 /ZW enable WinRT language extensions    /Zs syntax check only
 /await enable resumable functions extension
@@ -186,11 +186,6 @@
 
 @<file> options response file           /?, /help print this help message
 /bigobj generate extended object format /c compile only, no link
-/errorReport:option deprecated. Report internal compiler errors to Microsoft
-    none - do not send report
-    prompt - prompt to immediately send report
-    queue - at next admin logon, prompt to send report (default)
-    send - send report automatically
 /FC use full pathnames in diagnostics   /H<num> max external name length
 /J default char type is unsigned        
 /MP[n] use up to 'n' processes for compilation

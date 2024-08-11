@@ -322,7 +322,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 }
 
 get_waveout :: #force_inline proc "contextless" (wparam: win32.WPARAM) -> win32.HWAVEOUT {
-	return win32.HWAVEOUT(uintptr(wparam))
+	return win32.HWAVEOUT(wparam)
 }
 
 MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -373,7 +373,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:    return 1
 	case win32.WM_SIZE:          return WM_SIZE(hwnd, wparam, lparam)
 	//case win32.WM_PAINT:       return WM_PAINT(hwnd)
-	case win32.WM_PAINT:         return win32app.wm_paint_dib(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
+	case win32.WM_PAINT:         return win32app.wm_paint_dib(hwnd, dib)
 	case win32.WM_CHAR:          return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:     return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:   return WM_LBUTTONDOWN(hwnd, wparam, lparam)

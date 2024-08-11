@@ -5,8 +5,8 @@ package win32app
 import "core:fmt"
 import "core:time"
 import fp "core:path/filepath"
-//import ow "shared:owin"
 import win32 "core:sys/windows"
+//import ow "shared:owin"
 
 int2 :: [2]i32
 
@@ -78,7 +78,7 @@ adjust_window_size :: proc "contextless" (size: int2, dwStyle, dwExStyle: u32) -
 }
 
 adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
-	rect := win32.RECT{0, 0, size.x, size.y}
+	rect := RECT{0, 0, size.x, size.y}
 	if win32.AdjustWindowRect(&rect, dwStyle, false) {
 		size^ = get_rect_size(&rect)
 	}

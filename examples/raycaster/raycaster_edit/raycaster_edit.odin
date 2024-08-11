@@ -4,7 +4,6 @@ package raycaster_edit
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
-import "core:math/rand"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
@@ -35,7 +34,7 @@ fps: f64 = 0
 frame_counter := 0
 
 timer_id: win32.UINT_PTR
-stopwatch := win32app.create_stopwatch()
+stopwatch : win32app.stopwatch
 
 mouse_pos: win32app.int2 = {0, 0}
 is_active: bool = true
@@ -76,9 +75,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	}
 
 	dib = win32app.dib_create_v5(hdc, client_size / ZOOM)
-	if dib.canvas.pvBits != nil {
-		cv.canvas_clear(&dib, cc)
-	}
+	cv.canvas_clear(&dib, cc)
 
 	timer_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
 
@@ -234,7 +231,7 @@ main :: proc() {
 	settings = win32app.create_window_settings({WIDTH, HEIGHT}, wndproc)
 	settings.app = &app
 
-	stopwatch := win32app.create_stopwatch()
+	stopwatch = win32app.create_stopwatch()
 	stopwatch->start()
 
 	win32app.run(&settings)

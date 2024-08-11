@@ -194,12 +194,16 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 		if is_key_released {win32app.close_application(hwnd)}
 	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
+	_ = was_key_down
+	_ = repeat_count
+	_ = app
 	return 0
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app.mouse_pos = win32app.decode_lparam(lparam)
-	app.mouse_buttons = win32app.MOUSE_KEY_STATE(wparam)
+	//app.mouse_buttons = win32app.MOUSE_KEY_STATE(wparam)
+	app.mouse_buttons = transmute(win32app.MOUSE_KEY_STATE)win32.DWORD(wparam)
 	return 0
 }
 

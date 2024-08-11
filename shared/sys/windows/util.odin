@@ -12,6 +12,7 @@ LOBYTE :: win32.LOBYTE
 HIBYTE :: win32.HIBYTE
 MAKEWORD :: win32.MAKEWORD
 MAKELONG :: win32.MAKELONG
+MAKELRESULT :: win32.MAKELRESULT
 MAKEWPARAM :: win32.MAKEWPARAM
 MAKELPARAM :: win32.MAKELPARAM
 GET_X_LPARAM :: win32.GET_X_LPARAM
@@ -42,8 +43,7 @@ MAKEWPARAM :: #force_inline proc "contextless" (l, h: INT) -> WPARAM {
 MAKELPARAM :: #force_inline proc "contextless" (l, h: INT) -> LPARAM {
 	return LPARAM(MAKELONG(l, h))
 }
-//#define MAKELRESULT(l, h) ((LRESULT)(DWORD)MAKELONG(l, h))
-*/
+
 MAKELRESULT_FROM_LOHI :: #force_inline proc "contextless" (l, h: INT) -> LRESULT {
 	return LRESULT(MAKELONG(l, h))
 }
@@ -57,7 +57,6 @@ MAKELRESULT :: proc {
 	MAKELRESULT_FROM_BOOL,
 }
 
-/*
 tprintf :: proc(fmt: string, args: ..any) -> string {
 	str: strings.Builder
 	strings.builder_init(&str, context.temp_allocator)

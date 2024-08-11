@@ -18,7 +18,7 @@ screen_byte_count :: screen_pixel_count * color_bits / 8
 
 screen_buffer :: [^]u8
 
-print_info :: proc() {
+print_screen_info :: proc() {
 	fmt.printfln("color_bits             =%v", color_bits)
 	fmt.printfln("palette_count          =%v", palette_count)
 	fmt.printfln("len(color_palette)     =%v", len(color_palette))
