@@ -150,7 +150,6 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	dwSize: win32.UINT
 	win32.GetRawInputData(win32.HRAWINPUT(lparam), win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
 	if dwSize == 0 {return 0}
-	//assert(dwSize > size_of(win32.RAWINPUT), "dwSize too big")
 	if dwSize > size_of(win32.RAWINPUT) {win32app.show_error_and_panic("dwSize too big");return 0}
 
 	raw := &rawinput

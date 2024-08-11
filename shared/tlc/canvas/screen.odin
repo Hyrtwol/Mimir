@@ -121,7 +121,7 @@ bbox_min_max :: #force_inline proc "contextless" (pc: ^canvas, pts: [3]float4) -
 	return
 }
 
-//minz, maxz: f32 = 1000, -1000
+// for debug // minz, maxz: f32 = 1000, -1000
 
 // https://mathworld.wolfram.com/BarycentricCoordinates.html
 barycentric :: #force_inline proc "contextless" (abc: ^float3x3, pp: float3) -> float3 {
@@ -154,16 +154,19 @@ IShader :: struct {
 
 
 draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: [3]float4, shader: ^IShader) {
-	pts: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]} // triangle screen coordinates before persp. division
-	pts2: [3]float4 = {(pts[0] / pts[0].w), (pts[1] / pts[1].w), (pts[2] / pts[2].w)} // triangle screen coordinates after perps. division
-
-	abc := float3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
-	det := linalg.determinant(abc)
-	if det < 1e-3 {return}
 
 	clip_z := float3{clip_verts[0].z, clip_verts[1].z, clip_verts[2].z}
 	if clip_z.x < 0 && clip_z.y < 0 && clip_z.z < 0 {return}
 	if clip_z.x > 1 && clip_z.y > 1 && clip_z.z > 1 {return}
+
+	// triangle screen coordinates before persp. division
+	pts: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]}
+	// triangle screen coordinates after perps. division
+	pts2: [3]float4 = {pts[0] / pts[0].w, pts[1] / pts[1].w, pts[2] / pts[2].w}
+
+	abc := float3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
+	det := linalg.determinant(abc)
+	if det < 1e-3 {return}
 
 	cmax := canvas_max(pc)
 	cmin := int2{0, 0}
@@ -178,24 +181,21 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	bbmax = linalg.min(bbmax, cmax)
 	x1, x2, y1, y2 := bbmin.x, bbmax.x, bbmin.y, bbmax.y
 
-	//it_abc := linalg.matrix3x3_inverse_transpose(abc)
-	it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det)
+	// inverse transpose abc
+	it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det) // linalg.matrix3x3_inverse_transpose(abc)
 
 	ps := shader.ps
-	//fx, fy: f32
-	pp: float3 = {0, 0, 1}
-	//idx,
-	iy: i32
 	iw := i32(pc.size.x)
 	bits := pc.pvBits
+	pp: float3 = {0, 0, 1}
+	iy: i32
 	color: byte4
 	for y in y1 ..= y2 {
 		pp.y = f32(y) + 0.5
 		iy = y * iw
 		for x in x1 ..= x2 {
 			pp.x = f32(x) + 0.5
-			//bc_screen := barycentric(&abc, pp)
-			bc_screen := it_abc * pp
+			bc_screen := it_abc * pp // barycentric(&abc, pp)
 			if bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 {continue}
 
 			bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
