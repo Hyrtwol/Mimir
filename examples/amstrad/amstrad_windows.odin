@@ -152,7 +152,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	settings := win32app.get_settings(hwnd)
 	if settings == nil {return 1}
 	type := win32app.WM_SIZE_WPARAM(wparam)
-	settings.window_size = win32app.decode_lparam(lparam)
+	settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, type)
 	return 0
 }
@@ -214,11 +214,11 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	vk_code := win32.LOWORD(wparam) // virtual-key code
 	key_flags := win32.HIWORD(lparam)
-	// repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
+	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
 	scan_code := win32.WORD(win32.LOBYTE(key_flags)) // scan code
 	is_extended_key := (key_flags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
 	if is_extended_key {scan_code = win32.MAKEWORD(scan_code, 0xE0)}
-	// was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
+	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
 	switch (vk_code)
@@ -254,6 +254,8 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 		print_screen_info()
 	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
+	_ = was_key_down
+	_ = repeat_count
 	return 0
 }
 

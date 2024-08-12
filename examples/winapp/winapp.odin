@@ -1,10 +1,10 @@
 // +vet
 package main
 
-import "core:fmt"
 import "base:intrinsics"
-import "core:math/rand"
 import "base:runtime"
+import "core:fmt"
+import "core:math/rand"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
@@ -37,7 +37,7 @@ application :: struct {
 papp :: ^application
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	pos := win32app.decode_lparam(lparam) / ZOOM
+	pos := win32app.decode_lparam_as_int2(lparam) / ZOOM
 	pos.y = bitmap_size.y - 1 - pos.y
 	return pos
 }
@@ -110,7 +110,8 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 }
 
 WM_SETFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
-	fmt.println(#procedure, hwnd, wparam)
+	// wParam : A handle to the window that has lost the keyboard focus. This parameter can be NULL.
+	fmt.println(#procedure, hwnd, win32.HWND(wparam))
 	return 0
 }
 
@@ -128,11 +129,12 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	type := win32app.WM_SIZE_WPARAM(wparam)
+	size := win32app.decode_lparam_as_int2(lparam)
 	settings := win32app.get_settings(hwnd)
 	if settings == nil {return 1}
-	type := win32app.WM_SIZE_WPARAM(wparam)
-	fmt.println("type:", type)
-	settings.window_size = win32app.decode_lparam(lparam)
+	fmt.println(#procedure, hwnd, type, size)
+	settings.window_size = size
 	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, bitmap_size)
 	return 0
 }
@@ -198,8 +200,8 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch win32.UINT_PTR(wparam)
 	{
-		case win32app.IDT_TIMER1: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
-		case win32app.IDT_TIMER2: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
+	case win32app.IDT_TIMER1: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
+	case win32app.IDT_TIMER2: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
 	}
 	return 0
 }
@@ -215,11 +217,12 @@ decode_set_dot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	// odinfmt: disable
-	switch wparam {
-	case 1: decode_set_dot(hwnd, lparam, cv.COLOR_RED)
-	case 2: decode_set_dot(hwnd, lparam, cv.COLOR_BLUE)
-	case 3: decode_set_dot(hwnd, lparam, cv.COLOR_GREEN)
-	//case: fmt.println(#procedure, decode_scrpos(lparam), wparam)
+	mouse_key_state := win32app.decode_wparam_as_mouse_key_state(wparam)
+	switch mouse_key_state {
+	case {.MK_LBUTTON}: decode_set_dot(hwnd, lparam, cv.COLOR_RED)
+	case {.MK_RBUTTON}: decode_set_dot(hwnd, lparam, cv.COLOR_BLUE)
+	case {.MK_LBUTTON, .MK_RBUTTON}: decode_set_dot(hwnd, lparam, cv.COLOR_GREEN)
+	//case: fmt.println(#procedure, decode_scrpos(lparam), mouse_key_state)
 	}
 	// odinfmt: enable
 	return 0

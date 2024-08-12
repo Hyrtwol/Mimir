@@ -10,7 +10,7 @@ import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"
 import win32ex "libs:sys/windows"
-import o "shared:ounit"
+import ot "shared:ounit"
 
 L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
@@ -34,19 +34,19 @@ make_lresult_from_true :: proc(t: ^testing.T) {
 min_max_msg :: proc(t: ^testing.T) {
 
 	p := min_max_msg
-	o.expect_value(t, min(win32app.WM_MSG), 0x0001)
-	o.expect_value(t, max(win32app.WM_MSG), 0x0204)
-	o.expect_value(t, max(win32app.WM_MSG), 516)
-	o.expect_value(t, size_of(p), 8)
-	o.expect_value(t, int(max(win32app.WM_MSG)) * size_of(p), 4128)
+	ot.expect_value(t, min(win32app.WM_MSG), 0x0001)
+	ot.expect_value(t, max(win32app.WM_MSG), 0x0204)
+	ot.expect_value(t, max(win32app.WM_MSG), 516)
+	ot.expect_value(t, size_of(p), 8)
+	ot.expect_value(t, int(max(win32app.WM_MSG)) * size_of(p), 4128)
 
-	o.expect_value(t, min(win32app.WM_MSG), win32app.WM_MSG.WM_CREATE)
-	o.expect_value(t, max(win32app.WM_MSG), win32app.WM_MSG.WM_RBUTTONDOWN)
+	ot.expect_value(t, min(win32app.WM_MSG), win32app.WM_MSG.WM_CREATE)
+	ot.expect_value(t, max(win32app.WM_MSG), win32app.WM_MSG.WM_RBUTTONDOWN)
 }
 
 @(test)
 verify_bitmap_headers :: proc(t: ^testing.T) {
-	//o.expect_size(t, xatlasChart, 24)
+	//ot.expect_size(t, xatlasChart, 24)
 	size: [2]i32 = {300, 200}
 	ppm: i32 = 666
 	bpp: u16 = 4
@@ -66,17 +66,17 @@ verify_bitmap_headers :: proc(t: ^testing.T) {
 	}
 	pbmp5 := &bmp5
 	pbmp := cast(^win32.BITMAPINFOHEADER)pbmp5
-	o.expect_value(t, pbmp5.bV5Size, pbmp.biSize)
-	o.expect_value(t, pbmp5.bV5Width, pbmp.biWidth)
-	o.expect_value(t, pbmp5.bV5Height, pbmp.biHeight)
-	o.expect_value(t, pbmp5.bV5Planes, pbmp.biPlanes)
-	o.expect_value(t, pbmp5.bV5BitCount, pbmp.biBitCount)
-	o.expect_value(t, pbmp5.bV5Compression, pbmp.biCompression)
-	o.expect_value(t, pbmp5.bV5SizeImage, pbmp.biSizeImage)
-	o.expect_value(t, pbmp5.bV5XPelsPerMeter, pbmp.biXPelsPerMeter)
-	o.expect_value(t, pbmp5.bV5YPelsPerMeter, pbmp.biYPelsPerMeter)
-	o.expect_value(t, pbmp5.bV5ClrUsed, pbmp.biClrUsed)
-	o.expect_value(t, pbmp5.bV5ClrImportant, pbmp.biClrImportant)
+	ot.expect_value(t, pbmp5.bV5Size, pbmp.biSize)
+	ot.expect_value(t, pbmp5.bV5Width, pbmp.biWidth)
+	ot.expect_value(t, pbmp5.bV5Height, pbmp.biHeight)
+	ot.expect_value(t, pbmp5.bV5Planes, pbmp.biPlanes)
+	ot.expect_value(t, pbmp5.bV5BitCount, pbmp.biBitCount)
+	ot.expect_value(t, pbmp5.bV5Compression, pbmp.biCompression)
+	ot.expect_value(t, pbmp5.bV5SizeImage, pbmp.biSizeImage)
+	ot.expect_value(t, pbmp5.bV5XPelsPerMeter, pbmp.biXPelsPerMeter)
+	ot.expect_value(t, pbmp5.bV5YPelsPerMeter, pbmp.biYPelsPerMeter)
+	ot.expect_value(t, pbmp5.bV5ClrUsed, pbmp.biClrUsed)
+	ot.expect_value(t, pbmp5.bV5ClrImportant, pbmp.biClrImportant)
 }
 
 @(test)
@@ -88,8 +88,8 @@ wstring_print :: proc(t: ^testing.T) {
 	smsg: string = msg
 	cmsg: cstring = cstring("Hello!")
 	wmsg: wstring = L("Hello!")
-	o.expect_value(t, win32app.wstring_byte_size(wmsg), 12)
-	o.expect_value(t, win32app.wstring_len(wmsg), 6)
+	ot.expect_value(t, win32app.wstring_byte_size(wmsg), 12)
+	ot.expect_value(t, win32app.wstring_len(wmsg), 6)
 
 
 	cmsg = fmt.ctprintf(f, msg)
@@ -109,7 +109,7 @@ wstring_print :: proc(t: ^testing.T) {
 	fmt.sbprintf(&str, f, msg)
 	wmsg = win32app.to_wstring(str)
 
-	o.expect_value(t, mem.compare_byte_ptrs((^u8)(&wmsg[0]), (^u8)(&wexp[0]), wexp_size), 0)
+	ot.expect_value(t, mem.compare_byte_ptrs((^u8)(&wmsg[0]), (^u8)(&wexp[0]), wexp_size), 0)
 }
 
 @(test)
@@ -124,4 +124,10 @@ check_mouse_key_state_flags :: proc(t: ^testing.T) {
 	expect_state(t, {.MK_MBUTTON}, win32.MK_MBUTTON)
 	expect_state(t, {.MK_XBUTTON1}, win32.MK_XBUTTON1)
 	expect_state(t, {.MK_XBUTTON2}, win32.MK_XBUTTON2)
+}
+
+@(test)
+verify_sizes :: proc(t: ^testing.T) {
+	ot.expect_size(t, win32app.DWORD, 4)
+	ot.expect_size(t, win32app.MOUSE_KEY_STATE, 4)
 }

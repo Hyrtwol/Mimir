@@ -15,8 +15,12 @@ IDT_TIMER2: win32.UINT_PTR : 10002
 IDT_TIMER3: win32.UINT_PTR : 10003
 IDT_TIMER4: win32.UINT_PTR : 10004
 
-decode_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2 {
+decode_lparam_as_int2 :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2 {
 	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
+}
+
+decode_wparam_as_mouse_key_state :: #force_inline proc "contextless" (wparam: win32.WPARAM) -> MOUSE_KEY_STATE {
+	return transmute(MOUSE_KEY_STATE)win32.DWORD(wparam)
 }
 
 show_message_box :: #force_inline proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
@@ -128,7 +132,7 @@ register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> wi
 	if icon == nil {show_error_and_panic("Missing icon")}
 
 	cursor: win32.HCURSOR = win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
-	if (cursor == nil) {show_error_and_panic("Missing cursor")}
+	if cursor == nil {show_error_and_panic("Missing cursor")}
 
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),
@@ -156,13 +160,12 @@ unregister_window_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
 }
 
 create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwExStyle: u32, settings: ^window_settings) -> win32.HWND {
+	if atom == 0 {show_error_and_panic("atom is zero")}
 
 	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
 	position := get_window_position(size, settings.center)
 
-	hwnd: win32.HWND = win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
-
-	return hwnd
+	return win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
 }
 
 default_dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
@@ -432,11 +435,6 @@ get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psetting
 	return get_settings_from_createstruct(pcs)
 }
 
-// application :: struct {
-// 	pause:                   bool,
-// 	size:                    int2,
-// }
-
 show_cursor :: #force_inline proc "contextless" (show: bool) -> INT {
 	return win32.ShowCursor(win32.BOOL(show))
 }
@@ -512,17 +510,12 @@ void Marker(LONG x, LONG y, HWND hwnd)
 */
 
 @(private)
-select_object_hgdiobj :: #force_inline proc "contextless" (hdc: win32.HDC, hgdiobj: win32.HGDIOBJ) -> win32.HGDIOBJ {
-	return win32.SelectObject(hdc, hgdiobj)
-}
-
-@(private)
 select_object_hbitmap :: #force_inline proc "contextless" (hdc: win32.HDC, hbitmap: win32.HBITMAP) -> win32.HGDIOBJ {
-	return select_object_hgdiobj(hdc, win32.HGDIOBJ(hbitmap))
+	return win32.SelectObject(hdc, win32.HGDIOBJ(hbitmap))
 }
 
 select_object :: proc {
-	select_object_hgdiobj,
+	win32.SelectObject,
 	select_object_hbitmap,
 }
 

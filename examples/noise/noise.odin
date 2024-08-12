@@ -105,7 +105,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.decode_lparam(lparam)
+	size := win32app.decode_lparam_as_int2(lparam)
 	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }

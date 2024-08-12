@@ -38,7 +38,7 @@ clip_cursor :: proc(hwnd: win32.HWND, clip: bool) -> bool {
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	size := win32app.decode_lparam(lparam)
+	size := win32app.decode_lparam_as_int2(lparam)
 	return size / ZOOM
 }
 
@@ -76,7 +76,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings.window_size = win32app.decode_lparam(lparam)
+	settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
 	clip_cursor(hwnd, true)
 	return 0

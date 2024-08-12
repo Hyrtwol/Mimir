@@ -9,6 +9,7 @@
 				"run",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared",
 				"-vet",
 				"-strict-style"
@@ -30,6 +31,7 @@
 				"build",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared"
 			],
 			"problemMatcher": [],
@@ -49,6 +51,7 @@
 				"test",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared"
 			],
 			"problemMatcher": [],
@@ -68,6 +71,7 @@
 				"build",
 				"..\\${relativeFileDirname}",
 				"-resource:..\\doc\\odin.rc",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared",
 				"-debug"
 			],
@@ -87,6 +91,7 @@
 			"args": [
 				"check",
 				"..\\${relativeFileDirname}",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared",
 				"-no-entry-point",
 				"-vet"
@@ -107,6 +112,7 @@
 			"args": [
 				"strip-semicolon",
 				"..\\${relativeFileDirname}",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared",
 				"-no-entry-point"
 			],
@@ -126,6 +132,7 @@
 			"args": [
 				"doc",
 				"..\\${relativeFileDirname}", //"-doc-format",
+				"-collection:shared=..\\..\\shared",
 				"-collection:libs=..\\shared",
 				">",
 				"${fileDirnameBasename}.txt"
@@ -142,7 +149,7 @@
 		{
 			"label": "format",
 			"type": "process",
-			"command": "D:/dev/odin/Odin/shared/ols/odinfmt.exe",
+			"command": "D:/dev/odin/shared/ols/odinfmt.exe",
 			"args": [
 				"-w",
 				"${workspaceFolder}\\${relativeFile}"

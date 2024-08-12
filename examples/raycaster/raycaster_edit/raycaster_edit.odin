@@ -49,7 +49,7 @@ show_cursor :: proc(show: bool) {
 }
 
 decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> cv.int2 {
-	return win32app.decode_lparam(lparam) / ZOOM
+	return win32app.decode_lparam_as_int2(lparam) / ZOOM
 }
 
 set_dot :: #force_inline proc "contextless" (pos: cv.int2, col: COLOR) {
@@ -100,7 +100,7 @@ set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings.window_size = win32app.decode_lparam(lparam)
+	settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
 	// win32app.clip_cursor(hwnd, true)
 	return 0

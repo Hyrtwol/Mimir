@@ -1,9 +1,9 @@
 // +vet
 package main
 
-import "core:os"
 import "base:intrinsics"
 import "core:fmt"
+import "core:os"
 import fp "core:path/filepath"
 import win32 "core:sys/windows"
 import a "libs:amstrad"

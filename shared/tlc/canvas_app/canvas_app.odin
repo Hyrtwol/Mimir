@@ -121,7 +121,7 @@ set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	//app := get_app(hwnd)
-	settings.window_size = win32app.decode_lparam(lparam)
+	settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	set_window_text(hwnd)
 	return 0
 }
@@ -172,11 +172,11 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	app := get_app(hwnd)
 	vk_code := win32.LOWORD(wparam) // virtual-key code
 	key_flags := win32.HIWORD(lparam)
+	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
 	scan_code := win32.WORD(win32.LOBYTE(key_flags)) // scan code
 	is_extended_key := (key_flags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
 	if is_extended_key {scan_code = win32.MAKEWORD(scan_code, 0xE0)}
 	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
-	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
 	switch (vk_code)
@@ -201,7 +201,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	app.mouse_pos = win32app.decode_lparam(lparam)
+	app.mouse_pos = win32app.decode_lparam_as_int2(lparam)
 	//app.mouse_buttons = win32app.MOUSE_KEY_STATE(wparam)
 	app.mouse_buttons = transmute(win32app.MOUSE_KEY_STATE)win32.DWORD(wparam)
 	return 0

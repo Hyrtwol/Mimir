@@ -93,7 +93,7 @@ play_song :: proc() {
 }
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	scrpos := win32app.decode_lparam(lparam) / ZOOM
+	scrpos := win32app.decode_lparam_as_int2(lparam) / ZOOM
 	scrpos.y = bitmap_size.y - 1 - scrpos.y
 	return scrpos
 }

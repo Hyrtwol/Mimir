@@ -185,7 +185,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
-	settings.window_size = win32app.decode_lparam(lparam)
+	settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	set_window_text(hwnd)
 	return 0
 }
@@ -239,7 +239,7 @@ WM_CHAR :: proc "contextless" (hwnd: win32.HWND, wparam: win32.WPARAM, lparam: w
 }
 
 decode_input_position :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
-	return win32app.decode_lparam(lparam) / ZOOM
+	return win32app.decode_lparam_as_int2(lparam) / ZOOM
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {

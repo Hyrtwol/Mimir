@@ -90,10 +90,8 @@ Game :: struct {
 	colors:            []color,
 	size:              int2,
 	world, next_world: ^World,
-	//cell:	Cell,
 	timer_id:          win32.UINT_PTR,
 	tick:              u32,
-	//title:	wstring,
 	hbitmap:           win32.HBITMAP,
 	pvBits:            screen_buffer,
 }
@@ -183,9 +181,13 @@ set_app :: #force_inline proc(hwnd: win32.HWND, app: ^Game) {win32.SetWindowLong
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Game {return (^Game)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
 
+get_app_from_createstruct :: #force_inline proc "contextless" (pcs: ^win32.CREATESTRUCTW) -> ^Game {
+	return (^Game)(pcs.lpCreateParams) if pcs != nil else nil
+}
+
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := win32app.get_createstruct_from_lparam(lparam)
-	app := (^Game)(pcs.lpCreateParams)
+	app := get_app_from_createstruct(pcs)
 	if app == nil {show_error_and_panic("Missing app!")}
 	set_app(hwnd, app)
 	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
@@ -325,12 +327,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
+/*
 register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
-	if (icon == nil) {show_error_and_panic("Missing icon")}
+	if icon == nil {show_error_and_panic("Missing icon")}
 	cursor := win32.LoadCursorW(nil, wstring(win32._IDC_ARROW))
-	if (cursor == nil) {show_error_and_panic("Missing cursor")}
+	if cursor == nil {show_error_and_panic("Missing cursor")}
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),
 		style         = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC,
@@ -348,17 +351,18 @@ register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
 	return win32.RegisterClassExW(&wcx)
 }
 
-// unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
-// 	if atom == 0 {show_error_and_panic("atom is zero")}
-// 	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
-// }
+unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
+	if atom == 0 {show_error_and_panic("atom is zero")}
+	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
+}
 
-// adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
-// 	rect := win32.RECT{0, 0, size.x, size.y}
-// 	if win32.AdjustWindowRect(&rect, dwStyle, false) {
-// 		size^ = win32app.get_rect_size(&rect)
-// 	}
-// }
+adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
+	rect := win32.RECT{0, 0, size.x, size.y}
+	if win32.AdjustWindowRect(&rect, dwStyle, false) {
+		size^ = win32app.get_rect_size(&rect)
+	}
+}
+*/
 
 center_window :: proc(position: ^int2, size: int2) {
 	if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
@@ -412,7 +416,8 @@ run :: proc() -> int {
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {show_error_and_panic("No instance")}
-	atom := register_class(instance)
+	//atom := register_class(instance)
+	atom := win32app.register_window_class(instance, wndproc)
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
 	defer win32app.unregister_window_class(atom, instance)
 
