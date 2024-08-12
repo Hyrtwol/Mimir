@@ -9,7 +9,6 @@ import ca "libs:tlc/canvas_app"
 WIDTH: i32 : 320
 HEIGHT: i32 : WIDTH * 3 / 4
 ZOOM :: 4
-FPS :: 20
 
 dude_count :: 4 * 100
 dude :: struct {

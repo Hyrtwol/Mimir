@@ -112,10 +112,10 @@ main :: proc() {
 		// matrix support
 		// model matrix which a default scale of 0.5
 		model := glm.mat4{
-			0.5,   0,   0, 0,
-			  0, 0.5,   0, 0,
-			  0,   0, 0.5, 0,
-			  0,   0,   0, 1,
+			0.5, 0,   0,   0,
+			0  , 0.5, 0,   0,
+			0  , 0,   0.5, 0,
+			0  , 0,   0,   1,
 		}
 
 		// matrix indexing and array short with `.x`

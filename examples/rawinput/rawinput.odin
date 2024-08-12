@@ -14,8 +14,6 @@ TITLE :: "Raw Input"
 ZOOM :: 24
 WIDTH :: ZOOM * 32
 HEIGHT :: WIDTH
-// WIDTH :: ZOOM * 40
-// HEIGHT :: ZOOM * 30
 
 settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
 
