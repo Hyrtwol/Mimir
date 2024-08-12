@@ -19,7 +19,7 @@ __rdtsc :: #force_inline proc() -> i64 {
 	return asm() -> i64{`rdtsc`,"=r"}()
 }
 
-@(test)
+// not really a test @(test)
 can_i_call_rdtsc :: proc(t: ^testing.T) {
 	reps :: 100000
 	exp: u64 = 0

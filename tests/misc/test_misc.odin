@@ -15,18 +15,19 @@ get_version :: proc() -> (res: int, err: bool) {
 @(test)
 string_vs_cstring :: proc(t: ^_t.T) {
 	str: string = "Can i convert"
-	dst: cstring
 
-	dst = strings.clone_to_cstring(str)
+	//dst = strings.clone_to_cstring(str, allocator = context.temp_allocator)
+	dst := strings.clone_to_cstring(str)
+	defer delete(dst)
 
 	//expect_value(t, v[0], 3)
 	_t.expect(t, dst == "Can i convert")
 
 	// NOTE: This is valid because 'clone_string' appends a NUL terminator
 	// see core\encoding\json\unmarshal.odin unmarshal_string_token
-	dst = cstring(raw_data(str))
+	dst2 := cstring(raw_data(str))
 
-	_t.expect(t, dst == "Can i convert")
+	_t.expect(t, dst2 == "Can i convert")
 }
 
 // when
@@ -43,11 +44,11 @@ when_to_use_when :: proc(t: ^_t.T) {
 
 	_t.expectf(t, str == "Can i convert", "%v", str)
 
-	when ODIN_DEBUG {
-		fmt.println("Debug")
-	} else {
-		fmt.println("Release")
-	}
+	// when ODIN_DEBUG {
+	// 	fmt.println("Debug")
+	// } else {
+	// 	fmt.println("Release")
+	// }
 }
 
 @(test)
@@ -78,10 +79,10 @@ when_to_use_defer :: proc(t: ^_t.T) {
 some_slice :: proc(t: ^_t.T) {
 	slice := []int{1, 4, 9, 7}
 	_u.expect_value_int(t, slice[1], 4)
-	fmt.printfln("%v", slice)
-	fmt.printfln("%v", slice[1:3])
-	fmt.printfln("%v", slice[1:])
-	fmt.printfln("%v", slice[:3])
+	// fmt.printfln("%v", slice)
+	// fmt.printfln("%v", slice[1:3])
+	// fmt.printfln("%v", slice[1:])
+	// fmt.printfln("%v", slice[:3])
 }
 
 // Add leading 0x or 0X for hexadecimal (%#x or %#X)
@@ -104,15 +105,15 @@ format_hex :: proc(t: ^_t.T) {
 }
 
 unroll_for_statement :: proc() {
-	fmt.println("\n#'#unroll for' statements")
+	//fmt.println("\n#'#unroll for' statements")
 
 	// '#unroll for' works the same as if the 'inline' prefix did not
 	// exist but these ranged loops are explicitly unrolled which can
 	// be very very useful for certain optimizations
 
-	fmt.println("Ranges")
+	//fmt.println("Ranges")
 	#unroll for x, i in 1 ..< 4 {
-		fmt.println(x, i)
+		//fmt.println(x, i)
 	}
 }
 
@@ -162,7 +163,7 @@ sign :: proc(x: i32) -> i32 {
 
 callback :: #type proc(_: i32) -> i32
 
-@(test)
+//@(test)
 array_of_procs :: proc(t: ^_t.T) {
 	callbacks := make([dynamic]callback, 0, 0)
 	defer delete(callbacks)
@@ -199,7 +200,7 @@ do_ta :: proc(v: ^ta) {
 	fmt.println("aa:", v.aa)
 }
 
-@(test)
+//@(test)
 subtypes :: proc(t: ^_t.T) {
 	_u.expect_value_int(t, size_of(ta), 8)
 	_u.expect_value_int(t, size_of(tb), 16)
@@ -244,8 +245,7 @@ bit_sets :: proc(t: ^_t.T) {
 	Flags :: bit_set[Flag;u8]
 	flags: Flags
 	flags = transmute(Flags)u8(1 << (1 ~ uint(max(Flag))) - 1)
-	fmt.println("1) flags:", flags, u8(max(Flag)))
-	fmt.println("2) flags transmuted:", transmute(u8)flags)
-	fmt.println("3) flags cardinality:", card(flags))
-	fmt.println("4) flags == {.A, .B, .C}:", flags == {.A, .B, .C})
+	_t.expect_value(t, transmute(u8)flags, 7)
+	_t.expect_value(t, card(flags), 3)
+	_t.expect_value(t, flags, Flags{.A, .B, .C})
 }

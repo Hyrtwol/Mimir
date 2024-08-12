@@ -9,7 +9,6 @@ import z "shared:z80"
 import a "libs:amstrad"
 
 Z80 :: z.Z80
-//PZ80 :: z.PZ80 // todo rename pZ80
 bank64kb :: z.bank64kb
 snapshot :: a.snapshot
 

@@ -11,7 +11,7 @@ import "shared:ounit"
 @(test)
 write_hello_txt :: proc(t: ^testing.T) {
 	path := "hello.log"
-	fmt.printfln("writing %s", path)
+	// fmt.printfln("writing %s", path)
 	data := "ABCD"
 	ok := os.write_entire_file(path, transmute([]byte)data)
 	testing.expect(t, ok)
@@ -26,9 +26,9 @@ EXPECTED_FILE_SIZE :: 2893
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
 	path := fp.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
-	fmt.printfln("reading %s", path)
+	//fmt.printfln("reading %s", path)
 
-	data, ok := os.read_entire_file_from_filename(path)
+	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
 	testing.expect(t, ok)
 	testing.expectf(t, len(data) == EXPECTED_FILE_SIZE, "len=%d", len(data))
 	//data: []byte = {65, 66, 67, 68} // "ABCD"
@@ -91,14 +91,14 @@ file_io :: proc(t: ^testing.T) {
 lowercase_dictionary :: proc(t: ^testing.T) {
 	path := fp.join({"..", "doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
 
-	fmt.printfln("reading %s", path)
+	// fmt.printfln("reading %s", path)
 	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
 	testing.expect(t, ok)
 	if !ok {return}
 
 	newline :: "\r\n"
 
-	words, err := strings.split(string(data), newline)
+	words, err := strings.split(string(data), newline, allocator = context.temp_allocator)
 	testing.expect(t, err == .None)
 	if err != .None {return}
 
@@ -107,12 +107,12 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 	for w in words {
 		if len(w) == 0 {continue}
 		if w[0] == '#' {continue}
-		append(&new_words, strings.to_lower(w))
+		append(&new_words, strings.to_lower(w, allocator = context.temp_allocator))
 	}
 
 	slice.sort(new_words[:])
 
-	fmt.printfln("writing %s", path)
+	// fmt.printfln("writing %s", path)
 	fd, fe := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
 	testing.expect(t, fe == 0)
 	if fe != 0 {return}
