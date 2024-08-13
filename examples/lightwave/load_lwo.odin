@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:os"
 import lw "shared:newtek_lightwave"
 
-box :: "../data/models/box.lwo"
+box :: "../data/models/boxs.lwo"
 multi_layer :: "../models/multi_layer.lwo"
 
 newline :: "\r\n"
@@ -19,7 +19,7 @@ w :: proc(fd: os.Handle, args: ..any) {
 }
 
 wfln :: proc(fd: os.Handle, fmtstr: string, args: ..any) {
-	os.write_string(fd, fmt.tprintf(fmtstr, ..args, newline = true))
+	os.write_string(fd, fmt.tprintfln(fmtstr, ..args))
 }
 
 wf :: proc(fd: os.Handle, fmtstr: string, args: ..any) {
@@ -69,7 +69,7 @@ main :: proc() {
 			wln(fd, "pos:", point.pos, "pols:", pols, "nvmaps:", vmaps)
 		}
 
-		polys: []lw.lwPolygon = lw.get_polys(&layer.polygon) // slice.from_ptr(layer.polygon.pol, int(layer.polygon.count))
+		polys: []lw.lwPolygon = lw.get_polys(&layer.polygon)
 		for &poly, i in polys {
 			wfln(fd, "  polygon[%d]:", i)
 			wfln(fd, "    part: %d", poly.part)

@@ -1,0 +1,9 @@
+package all
+	procedures
+		main :: proc() {...}
+
+
+	fullpath:
+		D:/dev/odin/Mimir/doc
+	files:
+		all.odin
