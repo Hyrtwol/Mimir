@@ -23,12 +23,10 @@ on_idle :: proc(app: papp) -> int {return 0}
 
 application :: struct {
 	pause:                   bool,
-	//colors:                  []color,
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
 	delta:                   f32,
 	tick:                    u32,
-	//hbitmap:                 win32.HBITMAP,
 	create, update, destroy: app_action,
 	mouse_pos:               int2,
 	mouse_buttons:           win32app.MOUSE_KEY_STATE,
@@ -142,12 +140,9 @@ draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
 }
 
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	//dib_update_func(&dib.canvas)
 	hdc := win32.GetDC(hwnd)
-	if hdc != nil {
-		defer win32.ReleaseDC(hwnd, hdc)
-		draw_dib(hwnd, hdc)
-	}
+	defer win32.ReleaseDC(hwnd, hdc)
+	draw_dib(hwnd, hdc)
 	return 0
 }
 

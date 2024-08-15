@@ -72,19 +72,6 @@ barycentric :: #force_inline proc "contextless" (abc: ^mat3x3, x, y: i32) -> vec
 	return lg.inverse_transpose(abc^) * vec3{f32(x), f32(y), 1}
 }
 
-// vertex_shader :: #type proc(pos: float4, gl_Position: ^float4)
-// pixel_shader :: #type proc(shader: ^IShader, bc_clip: float3, color: ^byte4) -> bool
-
-// Model :: struct {
-// 	trans: cv.float4x4,
-// 	color: byte4,
-// }
-// IShader :: struct {
-// 	model: ^Model,
-// 	vs: vertex_shader,
-// 	ps: pixel_shader,
-// }
-
 vert_count :: 6
 vertices: [vert_count]cv.float3 = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
 vert: [vert_count]cv.float4
@@ -95,17 +82,6 @@ models: [9]cv.Model
 shader: cv.IShader
 
 vs_default :: proc(shader: ^cv.IShader, pos: float4, gl_Position: ^float4) {
-	// varying_uv.set_col(nthvert, model.uv(iface, nthvert));
-	// shader.varying_uv = cv.float2x3{
-	// 	0,0,0,
-	// 	0,0,0,
-	// }
-	// shader.varying_uv[0] = {0,0}
-
-	// varying_nrm.set_col(nthvert, proj<3>((ModelView).invert_transpose()*embed<4>(model.normal(iface, nthvert), 0.)));
-	// gl_Position= ModelView*embed<4>(model.vert(iface, nthvert));
-	// view_tri.set_col(nthvert, proj<3>(gl_Position));
-	// gl_Position = Projection*gl_Position;
 	gl_Position^ = proj_view_model * pos
 }
 
@@ -162,8 +138,8 @@ on_create :: proc(app: ca.papp) -> int {
 	aspect = f32(width) / f32(height)
 	fmt.println("width, height:", width, height)
 
-	view = lg.matrix4_look_at_f32(eye, center, up, flip_z_axis)
 	viewport = cv.create_viewport(0, 0, f32(width), f32(height))
+	view = lg.matrix4_look_at_f32(eye, center, up, flip_z_axis)
 	proj = cv.matrix4_perspective_f32_01(fov, aspect, far, near, flip_z_axis)
 	rotate = lg.identity(mat4x4)
 	light_dir = lg.normalize(light_dir)
@@ -192,21 +168,6 @@ on_create :: proc(app: ca.papp) -> int {
 on_update :: proc(app: ca.papp) -> int {
 
 	pc := &ca.dib.canvas
-
-	// #partial switch app.mouse_buttons {
-	// case .MK_LBUTTON:
-	// 	mp := ca.decode_mouse_pos_ndc(app)
-	// 	eye.x = mp.x * 10
-	// 	eye.y = mp.y * 5
-	// case .MK_RBUTTON:
-	// 	mp := ca.decode_mouse_pos_01(app)
-	// 	eye = lg.normalize(eye) * (1 + mp.y * 10)
-	// case .MK_MBUTTON:
-	// // mp := ca.decode_mouse_pos_01(app)
-	// // fov = fov90 + fov90 * mp.y
-	// // aspect = cv.canvas_aspect(pc)
-	// // proj = lg.matrix4_perspective(fov, aspect, 1, 10)
-	// }
 
 	if .MK_LBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_ndc(app)
@@ -238,7 +199,8 @@ on_update :: proc(app: ca.papp) -> int {
 		}
 	}
 
-	cv.canvas_clear(pc, cv.COLOR_BLACK)
+	//cv.canvas_clear(pc, cv.COLOR_BLACK)
+	cv.canvas_clear(pc)
 	mem.zero(&zbuffer, size_of(zbuffer))
 
 	view = lg.matrix4_look_at(eye, center, up)
@@ -255,7 +217,6 @@ on_update :: proc(app: ca.papp) -> int {
 
 		shader.model = &model
 		shader.model_view = rotate * model.trans * rotate
-		//f33 := float3x3(shader.model_view)
 		shader.it_model_view = lg.inverse_transpose(shader.model_view)
 		//shader.it_model_view3 = lg.inverse_transpose(float3x3(shader.model_view))
 		it_model_view3 := lg.inverse_transpose(float3x3(shader.model_view))
@@ -270,37 +231,24 @@ on_update :: proc(app: ca.papp) -> int {
 
 			v0, v1, v2 := vert[t.x], vert[t.y], vert[t.z]
 			n0, n1, n2 := lg.normalize(vertices[t.x]), lg.normalize(vertices[t.y]), lg.normalize(vertices[t.z])
-			// varying_uv.set_col(nthvert, model.uv(iface, nthvert));
-			// shader.varying_uv[0] = v0.xy
-			// shader.varying_uv[1] = v1.xy
-			// shader.varying_uv[2] = v2.xy
 
 			shader.varying_uv[0] = vertices[t[0]].xy
 			shader.varying_uv[1] = vertices[t[1]].xy
 			shader.varying_uv[2] = vertices[t[2]].xy
 
 			// #unroll for vi in 0..<3 {
-			// 	shader.varying_uv[vi] = vertices[t[vi]].xy
+			//   shader.varying_uv[vi] = vertices[t[vi]].xy
 			// }
-
-			// varying_nrm.set_col(nthvert, proj<3>((ModelView).invert_transpose()*embed<4>(model.normal(iface, nthvert), 0.)));
-
-			// shader.varying_nrm[0] = (shader.it_model_view * cv.to_float4(n0, 0)).xyz
-			// shader.varying_nrm[1] = (shader.it_model_view * cv.to_float4(n1, 0)).xyz
-			// shader.varying_nrm[2] = (shader.it_model_view * cv.to_float4(n2, 0)).xyz
 
 			shader.varying_nrm[0] = (it_model_view3 * n0)
 			shader.varying_nrm[1] = (it_model_view3 * n1)
 			shader.varying_nrm[2] = (it_model_view3 * n2)
 
-
-			// gl_Position= ModelView*embed<4>(model.vert(iface, nthvert));
-			// view_tri.set_col(nthvert, proj<3>(gl_Position));
 			shader.view_tri[0] = (shader.model_view * v0).xyz
 			shader.view_tri[1] = (shader.model_view * v1).xyz
 			shader.view_tri[2] = (shader.model_view * v2).xyz
 
-			// uniform_l = proj<3>((ModelView*embed<4>(light_dir, 0.))).normalized(); // transform the light vector to view coordinates
+			// transform the light vector to view coordinates
 			shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
 
 			cv.draw_triangle(pc, zbuffer[:], &viewport, {v0, v1, v2}, &shader)
@@ -316,6 +264,6 @@ main :: proc() {
 	ca.app.update = on_update
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
-	fmt.println("app:", ca.app)
-	//fmt.println("z min/max:", cv.minz, cv.maxz)
+	// fmt.println("app:", ca.app)
+	// fmt.println("z min/max:", cv.minz, cv.maxz)
 }

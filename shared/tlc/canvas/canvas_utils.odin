@@ -1,8 +1,8 @@
 // +vet
 package canvas
 
-import "core:fmt"
 import "base:intrinsics"
+import "core:fmt"
 import "core:math"
 import "core:math/linalg"
 import "core:math/rand"
@@ -30,7 +30,7 @@ to_int2_ceil :: #force_inline proc "contextless" (v: float2) -> int2 {
 }
 
 @(require_results)
-create_rng :: #force_inline proc () -> (state: rand.Default_Random_State) {
+create_rng :: #force_inline proc() -> (state: rand.Default_Random_State) {
 	return rand.create(u64(intrinsics.read_cycle_counter()))
 }
 
@@ -160,11 +160,11 @@ matrix4_perspective_f32 :: linalg.matrix4_perspective_f32
 matrix4_perspective_f32_01 :: proc "contextless" (fovy, aspect, near, far: f32, flip_z_axis := true) -> (m: float4x4) #no_bounds_check {
 
 	tan_half_fovy := math.tan(0.5 * fovy)
-	m[0, 0] = 1 / (aspect*tan_half_fovy)
+	m[0, 0] = 1 / (aspect * tan_half_fovy)
 	m[1, 1] = 1 / (tan_half_fovy)
 	m[2, 2] = far / (far - near)
 	m[3, 2] = +1
-	m[2, 3] = -1*far*near / (far - near)
+	m[2, 3] = -1 * far * near / (far - near)
 	if flip_z_axis {m[2] = -m[2]}
 	return
 }
@@ -195,16 +195,16 @@ perspective_direct3d_lh_dx :: proc "contextless" (fovy, aspect, near, far: f32, 
 // }
 
 // https://www.learnopengles.com/tag/perspective-divide/
-perspective_divide ::  #force_inline proc "contextless" (v: float4) -> float4 {
+perspective_divide :: #force_inline proc "contextless" (v: float4) -> float4 {
 	return v / v.w
 }
 
-viewport_transform ::  #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
+viewport_transform :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
 	return viewport^ * v
 }
 
 // normalized_device_coordinates
-normalized_device_coordinates ::  #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
+normalized_device_coordinates :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
 	return viewport^ * (v / v.w)
 	//return apply_viewport(viewport, perspective_divide(v))
 }

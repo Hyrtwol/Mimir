@@ -1,6 +1,7 @@
 // vet
 package canvas
 
+import "core:mem"
 import "core:math/linalg"
 
 screen_buffer :: [^]color
@@ -23,8 +24,19 @@ canvas_zero :: #force_inline proc "contextless" (cv: ^canvas) {
 	cv.pixel_count = 0
 }
 
-canvas_clear :: #force_inline proc "contextless" (cv: ^canvas, col: byte4) {
+@(private)
+canvas_clear_color :: #force_inline proc "contextless" (cv: ^canvas, col: byte4) {
 	fill_screen(cv.pvBits, cv.pixel_count, col)
+}
+
+@(private)
+canvas_clear_fast :: #force_inline proc "contextless" (cv: ^canvas) {
+	mem.zero(raw_data(cv.pvBits), int(cv.pixel_count * 4))
+}
+
+canvas_clear :: proc {
+	canvas_clear_color,
+	canvas_clear_fast,
 }
 
 @(private)

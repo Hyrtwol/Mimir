@@ -164,7 +164,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	defer win32.ReleaseDC(hwnd, hdc)
 	dib = win32app.dib_create_v5(hdc, {WIDTH, HEIGHT})
 	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
-	cv.canvas_clear(&dib, {0, 0, 0, 255})
+	cv.canvas_clear(&dib, cv.byte4{0, 0, 0, 255})
 
 	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / TimerTickPS)
 	assert(timer_id != 0)

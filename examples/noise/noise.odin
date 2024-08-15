@@ -89,11 +89,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 	dib = win32app.dib_create_v5(hdc, win32app.get_client_size(hwnd) / ZOOM)
-	if dib.canvas.pvBits != nil {
-		cv.canvas_clear(&dib, {50, 150, 100, 255})
-	} else {
-		win32app.show_error_and_panic("No DIB")
-	}
+	cv.canvas_clear(&dib, cv.byte4{50, 150, 100, 255})
 	return 0
 }
 

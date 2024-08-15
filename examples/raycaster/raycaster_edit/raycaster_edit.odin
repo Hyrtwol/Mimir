@@ -101,20 +101,19 @@ set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
+	set_window_text(hwnd)
 	// win32app.clip_cursor(hwnd, true)
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printfln("WM_TIMER %v %v", hwnd, wparam)
 	// app := get_app(hwnd)
 	frame_counter = (frame_counter + 1) & 1
 	delta := stopwatch->get_delta_seconds()
 	fps = f64(1 / delta)
 	set_window_text(hwnd)
 
-	//win32app.redraw_window(hwnd)
+	// win32app.redraw_window(hwnd)
 
 	hdc := win32.GetDC(hwnd)
 	assert(hdc != nil)
@@ -219,7 +218,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	// case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
 	// case win32.WM_SETFOCUS:		return wm_focus(hwnd, wparam, true)
-	// case win32.WM_KILLFOCUS:	return wm_focus(hwnd, wparam, false)
+	// case win32.WM_KILLFOCUS:		return wm_focus(hwnd, wparam, false)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable

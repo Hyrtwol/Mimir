@@ -235,7 +235,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	dib = win32app.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
-		cv.canvas_clear(&dib, {50, 100, 150, 255})
+		cv.canvas_clear(&dib, cv.byte4{50, 100, 150, 255})
 	}
 
 	OpenFile(hwnd)

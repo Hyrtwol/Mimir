@@ -3,14 +3,14 @@ package canvas
 byte	:: u8
 float	:: f32
 double	:: f64
-int		:: i32
+//int		:: i32
 uint	:: u32
 
 byte4	:: [4]byte
-int2	:: [2]int
-int3	:: [3]int
-uint2	:: [2]uint
-uint3	:: [3]uint
+int2	:: [2]i32
+int3	:: [3]i32
+uint2	:: [2]u32
+uint3	:: [3]u32
 float2	:: [2]float
 float3	:: [3]float
 float4	:: [4]float
