@@ -67,7 +67,7 @@ write_image :: proc(fd: ^os.Handle, img: ^image.Image) {
 	}
 }
 
-print_and_write_image :: proc(path: string,fd: ^os.Handle, img: ^image.Image) {
+print_and_write_image :: proc(path: string, fd: ^os.Handle, img: ^image.Image) {
 	fmt.printfln("path: %s size: %d x %d channels: %d depth: %d", path, img.width, img.height, img.channels, img.depth)
 	xt.print_image(img, dot_alpha)
 	write_image(fd, img)
@@ -76,7 +76,7 @@ print_and_write_image :: proc(path: string,fd: ^os.Handle, img: ^image.Image) {
 print_image :: proc(image_path: string, fd: ^os.Handle) {
 	path := fp.clean(image_path)
 	img, err := image.load_from_file(path)
-	if err != nil || img == nil {
+	if img == nil || err != nil {
 		fmt.println("Image load error:", err, path)
 		return
 	}
@@ -101,18 +101,17 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 	{
 		ch := img.channels
 		switch ch {
-			case 3:
-			case 4:
-				colors := ([^]rgba)(pix)
-				cnt := img.width*img.height
-				cb: ^rgba
-				for i in 0..<cnt {
-					cb = ((^rgba)(&colors[i]))
-					if cb^.a < 4 {
-						cb^ = {0, 0, 0, 0}
-						//cb^ = {255, 0, 255, 0}
-					}
+		case 3:
+		case 4:
+			colors := ([^]rgba)(pix)
+			cnt := img.width * img.height
+			cb: ^rgba
+			for i in 0 ..< cnt {
+				cb = ((^rgba)(&colors[i]))
+				if cb^.a < 4 {
+					cb^ = {0, 0, 0, 0}
 				}
+			}
 		}
 	}
 
@@ -132,7 +131,7 @@ gen_pics :: proc(output_name: string, pattern: string) -> int {
 	}
 	fmt.printfln("writing %s", output_path)
 	fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
-	if fe != 0 {
+	if fe != os.ERROR_NONE {
 		fmt.eprintln("open error:", fe)
 		return 1
 	}
@@ -144,7 +143,6 @@ gen_pics :: proc(output_name: string, pattern: string) -> int {
 		matches, err := fp.glob(path_pattern, context.temp_allocator)
 		if err == nil {
 			for path in matches {
-				//fmt.println(path)
 				print_image(path, &fd)
 			}
 		}

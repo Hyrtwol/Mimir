@@ -205,12 +205,12 @@ int main(int /*argc*/, char */*argv*/[])
 
         // floor
         color = texture[floorTexture][texWidth * ty + tx];
-        color = (color >> 1) & 8355711; // make a bit darker
+        color = (color >> 1) & 0x7F7F7F; // make a bit darker
         buffer[y][x] = color;
 
         //ceiling (symmetrical, at screenHeight - y - 1 instead of y)
         color = texture[ceilingTexture][texWidth * ty + tx];
-        color = (color >> 1) & 8355711; // make a bit darker
+        color = (color >> 1) & 0x7F7F7F; // make a bit darker
         buffer[screenHeight - y - 1][x] = color;
       }
     }
@@ -322,7 +322,7 @@ int main(int /*argc*/, char */*argv*/[])
         texPos += step;
         Uint32 color = texture[texNum][texHeight * texY + texX];
         //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-        if(side == 1) color = (color >> 1) & 8355711;
+        if(side == 1) color = (color >> 1) & 0x7F7F7F;
         buffer[y][x] = color;
       }
 
