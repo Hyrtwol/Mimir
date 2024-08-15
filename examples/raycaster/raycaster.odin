@@ -53,14 +53,6 @@ when pics_w == 64 {
 	#assert(size_of(pics_buf) == 4096)
 }
 
-ray2i: struct {
-	pos, dir: cv.int2,
-}
-
-ray2f: struct {
-	pos, dir: cv.float2,
-}
-
 on_create :: proc(app: ca.papp) -> int {
 	return 0
 }

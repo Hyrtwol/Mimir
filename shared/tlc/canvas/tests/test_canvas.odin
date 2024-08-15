@@ -14,15 +14,15 @@ expect_value :: proc(t: ^testing.T, act: cv.byte4, exp: cv.byte4, loc := #caller
 @(test)
 verify_w95_colors :: proc(t: ^testing.T) {
 	o.expect_value(t, len(cv.W95_COLORS), 16)
-	expect_value(t, cv.W95_BLACK			, cv.byte4{0x00, 0x00, 0x00, 0xFF})
-	expect_value(t, cv.W95_WHITE			, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
+	expect_value(t, cv.W95_BLACK, cv.byte4{0x00, 0x00, 0x00, 0xFF})
+	expect_value(t, cv.W95_WHITE, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 }
 
 @(test)
 verify_c64_colors :: proc(t: ^testing.T) {
 	o.expect_value(t, len(cv.C64_COLORS), 16)
-	expect_value(t, cv.C64_BLACK			, cv.byte4{0x00, 0x00, 0x00, 0xFF})
-	expect_value(t, cv.C64_WHITE			, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
+	expect_value(t, cv.C64_BLACK, cv.byte4{0x00, 0x00, 0x00, 0xFF})
+	expect_value(t, cv.C64_WHITE, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 	expect_value(t, cv.get_color_c64(.BLACK), cv.byte4{0x00, 0x00, 0x00, 0xFF})
 	expect_value(t, cv.get_color_c64(.WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 }
@@ -31,16 +31,16 @@ verify_c64_colors :: proc(t: ^testing.T) {
 verify_amstrad_colors :: proc(t: ^testing.T) {
 	o.expect_value(t, len(cv.AMSTRAD_COLORS), 27)
 
-	expect_value(t, cv.AMSTRAD_BLACK		, cv.byte4{0x00, 0x00, 0x00, 0xFF})
-	expect_value(t, cv.AMSTRAD_BRIGHT_WHITE	, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
+	expect_value(t, cv.AMSTRAD_BLACK, cv.byte4{0x00, 0x00, 0x00, 0xFF})
+	expect_value(t, cv.AMSTRAD_BRIGHT_WHITE, cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 
-	expect_value(t, cv.AMSTRAD_BLACK		, cv.W95_BLACK)
-	expect_value(t, cv.AMSTRAD_BLUE  		, cv.W95_NAVY)
-	expect_value(t, cv.AMSTRAD_BRIGHT_BLUE  , cv.W95_BLUE)
-	expect_value(t, cv.AMSTRAD_RED  		, cv.W95_MAROON)
-	expect_value(t, cv.AMSTRAD_MAGENTA  	, cv.W95_PURPLE)
+	expect_value(t, cv.AMSTRAD_BLACK, cv.W95_BLACK)
+	expect_value(t, cv.AMSTRAD_BLUE, cv.W95_NAVY)
+	expect_value(t, cv.AMSTRAD_BRIGHT_BLUE, cv.W95_BLUE)
+	expect_value(t, cv.AMSTRAD_RED, cv.W95_MAROON)
+	expect_value(t, cv.AMSTRAD_MAGENTA, cv.W95_PURPLE)
 
-	expect_value(t, cv.AMSTRAD_GREEN		, cv.W95_GREEN)
+	expect_value(t, cv.AMSTRAD_GREEN, cv.W95_GREEN)
 
 	expect_value(t, cv.get_color(cv.AMSTRAD_COLOR.BLACK), cv.byte4{0x00, 0x00, 0x00, 0xFF})
 	expect_value(t, cv.get_color(cv.AMSTRAD_COLOR.BRIGHT_WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
@@ -141,10 +141,11 @@ barycentric :: proc(t: ^testing.T) {
 	testing.expectf(t, [3]f32{-0.003, 0.0099999998, -0.0069999998} == a[1], "a[1]=%v", a[1])
 	testing.expectf(t, [3]f32{-0.34999999, -0.5, 1.8499999} == a[2], "a[2]=%v", a[2])
 
-	b := cv.barycentric(&ABC, 100, 100)
+	pp := cv.float3{10, 10, 10}
+	b := cv.barycentric(&ABC, pp)
 	fmt.println("barycentric:", b)
 
-	testing.expectf(t, [3]f32{0.34999999, 0.5, 0.14999998} == b, "b=%v", b)
+	testing.expectf(t, [3]f32{-3.43, -4.9, 18.33} == b, "b=%v", b)
 }
 
 

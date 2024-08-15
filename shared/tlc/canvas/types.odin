@@ -24,3 +24,30 @@ float4x4 :: matrix[4, 4]float
 color           :: byte4
 color_byte_size :: size_of(color)
 color_bit_count	:: color_byte_size * 8
+
+
+ray2i: struct {
+	pos, dir: int2,
+}
+
+ray2f: struct {
+	pos, dir: float2,
+}
+
+ray3i: struct {
+	pos, dir: int3,
+}
+
+ray3f: struct {
+	pos, dir: float3,
+}
+
+circle2f :: struct {
+	center: float2,
+	radius: float,
+}
+
+circle2i :: struct {
+	center: int2,
+	radius: int,
+}

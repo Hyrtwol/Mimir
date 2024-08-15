@@ -317,6 +317,5 @@ main :: proc() {
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
 	fmt.println("app:", ca.app)
-	fmt.println("app.mouse_buttons:", ca.app.mouse_buttons)
 	//fmt.println("z min/max:", cv.minz, cv.maxz)
 }
