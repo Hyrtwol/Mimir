@@ -11,6 +11,8 @@ import fp "core:path/filepath"
 import xt "shared:xterm"
 import si "vendor:stb/image"
 
+texWidth :: 64
+
 _ :: png
 _ :: tga
 _ :: si
@@ -82,43 +84,49 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 	}
 	defer image.destroy(img)
 
-	img2 := new(image.Image)
-	defer image.destroy(img2)
+	imgFinal := img
 
-	img2.width = img.width / 2
-	img2.height = img.height / 2
-	img2.channels = img.channels
-	img2.depth = img.depth
-	img2.which = img.which
+	when texWidth == 32 {
 
-	if resize(&img2.pixels.buf, img2.width * img2.height * 4) != nil {
-		panic("resize")
-	}
+		img2 := new(image.Image)
+		defer image.destroy(img2)
 
-	pix := ([^]u8)(&img.pixels.buf[0])
-	pix2 := ([^]u8)(&img2.pixels.buf[0])
+		img2.width = img.width / 2
+		img2.height = img.height / 2
+		img2.channels = img.channels
+		img2.depth = img.depth
+		img2.which = img.which
 
-	{
-		ch := img.channels
-		switch ch {
-		case 3:
-		case 4:
-			colors := ([^]rgba)(pix)
-			cnt := img.width * img.height
-			cb: ^rgba
-			for i in 0 ..< cnt {
-				cb = ((^rgba)(&colors[i]))
-				if cb^.a < 4 {
-					cb^ = {0, 0, 0, 0}
+		if resize(&img2.pixels.buf, img2.width * img2.height * 4) != nil {
+			panic("resize")
+		}
+
+		pix := ([^]u8)(&img.pixels.buf[0])
+
+		{
+			ch := img.channels
+			switch ch {
+			case 3:
+			case 4:
+				colors := ([^]rgba)(pix)
+				cnt := img.width * img.height
+				cb: ^rgba
+				for i in 0 ..< cnt {
+					cb = ((^rgba)(&colors[i]))
+					if cb^.a < 4 {
+						cb^ = {0, 0, 0, 0}
+					}
 				}
 			}
 		}
+
+		pix2 := ([^]u8)(&img2.pixels.buf[0])
+		res := si.resize_uint8(pix, i32(img.width), i32(img.height), 0, pix2, i32(img2.width), i32(img2.height), 0, i32(img.channels))
+		assert(res == 1)
+		imgFinal = img2
 	}
 
-	res := si.resize_uint8(pix, i32(img.width), i32(img.height), 0, pix2, i32(img2.width), i32(img2.height), 0, i32(img.channels))
-	assert(res == 1)
-
-	print_and_write_image(path, fd, img2)
+	print_and_write_image(path, fd, imgFinal)
 }
 
 gen_pics :: proc(output_name: string, pattern: string) -> int {
