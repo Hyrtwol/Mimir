@@ -80,6 +80,6 @@ main :: proc() {
 	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
 	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
 
-	f3: newton.float3
-	i3: newton.int3
+	// f3: newton.float3
+	// i3: newton.int3
 }
