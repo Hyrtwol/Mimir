@@ -21,6 +21,10 @@ app_action :: #type proc(app: papp) -> int
 
 on_idle :: proc(app: papp) -> int {return 0}
 
+key_state_count :: 128
+key_state :: bool
+key_states :: [key_state_count]key_state
+
 application :: struct {
 	pause:                   bool,
 	size:                    int2,
@@ -30,6 +34,7 @@ application :: struct {
 	create, update, destroy: app_action,
 	mouse_pos:               int2,
 	mouse_buttons:           win32app.MOUSE_KEY_STATE,
+	keys:                    key_states,
 	char_queue:              queue.Queue(u8),
 }
 papp :: ^application
@@ -58,7 +63,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 }
 
 get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
-	pcs := win32app.get_createstruct_from_lparam(lparam)
+	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
 	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
@@ -67,10 +72,8 @@ get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
 
 // 0..1
 decode_mouse_pos_01 :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
-	LO :: cv.float2{0, 0}
-	HI :: cv.float2{1, 1}
 	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(settings.window_size)
-	return linalg.clamp(normalized_mouse_pos, LO, HI)
+	return linalg.clamp(normalized_mouse_pos, cv.float2_zero, cv.float2_one)
 }
 
 // normalized device coordinates -1..1
@@ -113,13 +116,14 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, frame_stats.fps)
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, frame_stats.fps)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.println(#procedure, hwnd)
 	//app := get_app(hwnd)
-	settings.window_size = win32app.decode_lparam_as_int2(lparam)
+	type, size := win32app.decode_wm_size_params(wparam, lparam)
+	fmt.println(#procedure, hwnd, type, size)
+	settings.window_size = size
 	set_window_text(hwnd)
 	return 0
 }
@@ -187,8 +191,20 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	switch vk_code {
 	case win32.VK_ESCAPE:
 		if is_key_released {win32app.close_application(hwnd)}
-	//case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
+	// case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t",
+	// 	vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
+
+	keys := &app.keys
+	if vk_code < key_state_count {
+		keys[vk_code] = !is_key_released
+		// if was_key_down {
+		// }
+		// if is_key_released {
+		// 	keys[vk_code] = false
+		// }
+	}
+
 	_ = was_key_down
 	_ = repeat_count
 	_ = app
@@ -197,8 +213,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app.mouse_pos = win32app.decode_lparam_as_int2(lparam)
-	//app.mouse_buttons = win32app.MOUSE_KEY_STATE(wparam)
-	app.mouse_buttons = transmute(win32app.MOUSE_KEY_STATE)win32.DWORD(wparam)
+	app.mouse_buttons = win32app.decode_wparam_as_mouse_key_state(wparam)
 	return 0
 }
 
@@ -213,7 +228,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:   return 1 // 0x0014
 	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam) // 0x0102
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam) // 0x0113
-	//case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
 	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam) // 0x0200
 	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)

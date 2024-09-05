@@ -8,6 +8,7 @@ import "core:image/png"
 import "core:image/tga"
 import "core:os"
 import fp "core:path/filepath"
+import "core:strings"
 import xt "shared:xterm"
 import si "vendor:stb/image"
 
@@ -22,6 +23,8 @@ rgba :: [4]u8
 int2 :: [2]i32
 
 dot_alpha: bool = false
+
+pics_path: string
 
 write_image :: proc(fd: ^os.Handle, img: ^image.Image) {
 
@@ -129,14 +132,8 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 	print_and_write_image(path, fd, imgFinal)
 }
 
-gen_pics :: proc(output_name: string, pattern: string) -> int {
-	ok: bool
-	output_path, pics_path: string
-	output_path, ok = fp.abs(fp.join({"..", "examples", "raycaster", output_name}))
-	if !ok {
-		fmt.eprintln("abs error:", output_name)
-		return 1
-	}
+gen_pics :: proc(output_name: string, image_paths: []string) -> int {
+	output_path := fp.abs(fp.join({"..", "examples", "raycaster", output_name}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
 	fmt.printfln("writing %s", output_path)
 	fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
 	if fe != os.ERROR_NONE {
@@ -145,23 +142,65 @@ gen_pics :: proc(output_name: string, pattern: string) -> int {
 	}
 	defer os.close(fd)
 
-	pics_path, ok = fp.abs(fp.join({"..", "examples", "raycaster", "pics"}))
-	if ok {
-		path_pattern := fp.join({pics_path, pattern}, context.temp_allocator)
-		matches, err := fp.glob(path_pattern, context.temp_allocator)
-		if err == nil {
-			for path in matches {
-				print_image(path, &fd)
-			}
-		}
+	for path in image_paths {
+		print_image(path, &fd)
 	}
+
+	fmt.printfln("wrote %s", output_path)
 	return 0
 }
 
+gen_pics_scan :: proc(output_name: string, pattern: string) -> int {
+	image_paths := fp.glob(fp.join({pics_path, pattern}, context.temp_allocator), context.temp_allocator) or_else panic("glob")
+	return gen_pics(output_name, image_paths)
+}
+
+join_pics_path :: proc(image_paths: []string, allocator := context.allocator) {
+	for i in 0 ..< len(image_paths) {
+		image_paths[i] = fp.join({pics_path, image_paths[i]}, allocator)
+	}
+}
+
+gen_pics_from_filelist :: proc(output_name: string, input_file: string) -> int {
+	data := os.read_entire_file_from_filename(input_file, context.temp_allocator) or_else panic("read_entire_file_from_filename")
+	newline :: "\r\n"
+	image_paths := strings.split(string(data), newline, context.temp_allocator) or_else panic("split")
+	join_pics_path(image_paths, context.temp_allocator)
+	return gen_pics(output_name, image_paths)
+}
+
+gen_pics_from_list :: proc(output_name: string) -> int {
+	image_paths: []string = {
+		// textures
+		"eagle.png", // 0
+		"redbrick.png", // 1
+		"purplestone.png", // 2
+		"greystone.png", // 3
+		"bluestone.png", // 4
+		"mossy.png", // 5
+		"wood.png", // 6
+		"colorstone.png", // 7
+		// sprite textures
+		"barrel.png", // 8
+		"pillar.png", // 9
+		"greenlight.png", // 10
+	}
+	join_pics_path(image_paths, context.temp_allocator)
+	return gen_pics(output_name, image_paths)
+}
 
 main :: proc() {
-	pattern := "*.png" if len(os.args) <= 1 else os.args[1]
-	exit_code := gen_pics("pics.dat", pattern)
+	mode :: 2
+	pics_path = fp.abs(fp.join({"..", "examples", "raycaster", "pics"}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
+	output_name := fmt.tprintf("pics%d.dat", texWidth)
+	when mode == 0 {
+		pattern := "*.png" if len(os.args) <= 1 else os.args[1]
+		exit_code := gen_pics_scan(output_name, pattern)
+	} else when mode == 1 {
+		exit_code := gen_pics_from_filelist(output_name, "texture_list.txt")
+	} else {
+		exit_code := gen_pics_from_list(output_name)
+	}
 	fmt.println("Done.", exit_code)
 	os.exit(exit_code)
 }

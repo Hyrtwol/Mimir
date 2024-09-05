@@ -15,14 +15,6 @@ IDT_TIMER2: win32.UINT_PTR : 10002
 IDT_TIMER3: win32.UINT_PTR : 10003
 IDT_TIMER4: win32.UINT_PTR : 10004
 
-decode_lparam_as_int2 :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> int2 {
-	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
-}
-
-decode_wparam_as_mouse_key_state :: #force_inline proc "contextless" (wparam: win32.WPARAM) -> MOUSE_KEY_STATE {
-	return transmute(MOUSE_KEY_STATE)win32.DWORD(wparam)
-}
-
 show_message_box :: #force_inline proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
 	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), type)
 }
@@ -189,7 +181,7 @@ get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {return (psett
 
 @(private = "file")
 create_window_settings_sw :: proc(size: int2, wndproc: win32.WNDPROC) -> window_settings {
-	fmt.println(#procedure)
+	//fmt.println(#procedure)
 	settings: window_settings = {
 		window_size = size,
 		center      = true,
@@ -204,7 +196,7 @@ create_window_settings_sw :: proc(size: int2, wndproc: win32.WNDPROC) -> window_
 
 @(private = "file")
 create_window_settings_tsw :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
-	fmt.println(#procedure)
+	//fmt.println(#procedure)
 	settings := create_window_settings_sw(size, wndproc)
 	settings.title = title
 	return settings
@@ -212,19 +204,19 @@ create_window_settings_tsw :: proc(title: string, size: int2, wndproc: win32.WND
 
 @(private = "file")
 create_window_settings_twhw :: #force_inline proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
-	fmt.println(#procedure)
+	//fmt.println(#procedure)
 	return create_window_settings_tsw(title, {width, height}, wndproc)
 }
 
 @(private = "file")
 create_window_settings_sw2 :: #force_inline proc(size: int2, wndproc: WNDPROC) -> window_settings {
-	fmt.println(#procedure)
+	//fmt.println(#procedure)
 	return create_window_settings_sw(size, win32.WNDPROC(wndproc))
 }
 
 @(private = "file")
 create_window_settings_tsw2 :: #force_inline proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
-	fmt.println(#procedure)
+	//fmt.println(#procedure)
 	return create_window_settings_tsw(title, size, win32.WNDPROC(wndproc))
 }
 
@@ -278,7 +270,7 @@ pull_messages :: proc() -> bool {
 
 loop_messages :: proc() {
 	msg: win32.MSG
-	for win32.GetMessageW(&msg, nil, 0, 0) {
+	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}
@@ -317,13 +309,13 @@ WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARA
 }
 
 @(private)
-RedrawWindowNow :: #force_inline proc(hwnd: HWND) -> BOOL {
+redraw_window_now :: #force_inline proc(hwnd: HWND) -> BOOL {
 	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW | .RDW_NOCHILDREN)
 }
 
 redraw_window :: proc {
 	win32.RedrawWindow,
-	RedrawWindowNow,
+	redraw_window_now,
 }
 
 invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
@@ -331,17 +323,19 @@ invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
 }
 
 @(private)
-SetWindowText :: #force_inline proc(hwnd: HWND, text: string) -> BOOL {
+set_window_text_utf8 :: #force_inline proc(hwnd: HWND, text: string) -> BOOL {
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }
 
+@(private)
 set_window_textf :: #force_inline proc(hwnd: HWND, format: string, args: ..any) -> BOOL {
-	return SetWindowText(hwnd, fmt.tprintf(format, ..args))
+	return set_window_text_utf8(hwnd, fmt.tprintf(format, ..args))
 }
 
 set_window_text :: proc {
 	win32.SetWindowTextW,
-	SetWindowText,
+	set_window_text_utf8,
+	set_window_textf,
 }
 
 set_timer :: proc(hwnd: win32.HWND, id_event: UINT_PTR, elapse: win32.UINT) -> win32.UINT_PTR {
@@ -394,8 +388,13 @@ create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WOR
 	return bmp_header
 }
 
-create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: UINT, ppvBits: win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
-	return win32.CreateDIBSection(hdc, pbmi, usage, ppvBits, hSection, offset)
+dib_usage :: enum UINT {
+	DIB_RGB_COLORS = 0,
+	DIB_PAL_COLORS = 1,
+}
+
+create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
+	return win32.CreateDIBSection(hdc, pbmi, UINT(usage), ppvBits, hSection, offset)
 }
 
 @(private)
@@ -422,16 +421,12 @@ delete_object :: proc {
 /*key_input :: struct {
 }*/
 
-get_createstruct_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> ^CREATESTRUCTW {
-	return (^CREATESTRUCTW)(rawptr(uintptr(lparam)))
-}
-
 get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> psettings {
 	return psettings(pcs.lpCreateParams) if pcs != nil else nil
 }
 
 get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psettings {
-	pcs := get_createstruct_from_lparam(lparam)
+	pcs := decode_lparam_as_createstruct(lparam)
 	return get_settings_from_createstruct(pcs)
 }
 
@@ -453,17 +448,13 @@ clip_cursor :: proc(hwnd: win32.HWND, clip: bool) -> (ok: bool) {
 }
 
 draw_marker :: proc(hdc: HDC, p: int2, size: i32 = 10) {
-	// win32.BeginPath(hdc)
 	win32.MoveToEx(hdc, p.x - size, p.y, nil)
 	win32.LineTo(hdc, p.x + size, p.y)
 	win32.MoveToEx(hdc, p.x, p.y - size, nil)
 	win32.LineTo(hdc, p.x, p.y + size)
-	// win32.EndPath(hdc)
-	// win32.StrokePath(hdc)
 }
 
 draw_grid :: proc(hdc: HDC, p, cell, dim: int2) {
-	// win32.BeginPath(hdc)
 	size := cell * dim
 	x, y: i32
 	for i in 0 ..< dim.x {
@@ -476,9 +467,6 @@ draw_grid :: proc(hdc: HDC, p, cell, dim: int2) {
 		win32.MoveToEx(hdc, 0, y, nil)
 		win32.LineTo(hdc, size.x, y)
 	}
-
-	// win32.EndPath(hdc)
-	// win32.StrokePath(hdc)
 }
 
 /*

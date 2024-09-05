@@ -153,7 +153,7 @@ dib_flames_2 :: proc(dib: ^canvas) {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
 }
 
 

@@ -92,7 +92,7 @@ fade_to_black :: proc {
 	canvas_fade_to_black,
 }
 
-gat_canvas_size :: #force_inline proc "contextless" (cv: ^canvas) -> int2 {
+get_canvas_size :: #force_inline proc "contextless" (cv: ^canvas) -> int2 {
 	return transmute(int2)cv.size
 }
 
@@ -232,6 +232,28 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			//bits[idx] = to_color(frag_depth)
 			//bits[idx] = to_color(bc_clip)
 			bits[idx] = color
+		}
+	}
+}
+
+draw_hline :: #force_inline proc "contextless" (cv: ^canvas, #any_int x1, x2, y: u32, col: byte4) {
+	if x1 < u32(cv.size.x) && x2 < u32(cv.size.x) && y < u32(cv.size.y) {
+		w := cv.size.x
+		i := y * w + x1
+		for _ in x1..=x2 {
+			cv.pvBits[i] = col
+			i += 1
+		}
+	}
+}
+
+draw_vline :: #force_inline proc "contextless" (cv: ^canvas, #any_int x, y1, y2: u32, col: byte4) {
+	if x < u32(cv.size.x) && y1 < u32(cv.size.y) && y2 < u32(cv.size.y) {
+		w := cv.size.x
+		i := y1 * w + x
+		for _ in y1..=y2 {
+			cv.pvBits[i] = col
+			i += w
 		}
 	}
 }

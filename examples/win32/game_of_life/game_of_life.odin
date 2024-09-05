@@ -30,7 +30,7 @@ import win32app "libs:tlc/win32app"
 // defines
 L				:: intrinsics.constant_utf16_cstring
 wstring			:: win32.wstring
-utf8_to_wstring	:: win32.utf8_to_wstring
+//utf8_to_wstring	:: win32.utf8_to_wstring
 color			:: [4]u8
 int2			:: [2]i32
 
@@ -186,7 +186,7 @@ get_app_from_createstruct :: #force_inline proc "contextless" (pcs: ^win32.CREAT
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := win32app.get_createstruct_from_lparam(lparam)
+	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	app := get_app_from_createstruct(pcs)
 	if app == nil {show_error_and_panic("Missing app!")}
 	set_app(hwnd, app)
@@ -222,7 +222,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 			bitmap_info.bmiColors[i] = color{u8(rbg.b), u8(rbg.g), u8(rbg.r), 0}
 		}
 	}
-	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
+	app.hbitmap = win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
 
 	if app.world != nil {
 		cc := app.world.width * app.world.height
@@ -386,7 +386,7 @@ create_window :: #force_inline proc(
 
 message_loop :: proc() -> int {
 	msg: win32.MSG
-	for win32.GetMessageW(&msg, nil, 0, 0) {
+	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}

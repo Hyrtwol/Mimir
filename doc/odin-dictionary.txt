@@ -3,6 +3,7 @@ adjugate
 amstrad
 aprintf
 bitmapinfo
+bresenham
 codepage
 coreclr
 createstruct

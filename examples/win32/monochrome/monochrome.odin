@@ -284,7 +284,7 @@ create_window :: #force_inline proc(atom: win32.ATOM, window_name: win32.LPCTSTR
 
 message_loop :: proc() -> int {
 	msg: win32.MSG
-	for win32.GetMessageW(&msg, nil, 0, 0) {
+	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}

@@ -1,10 +1,10 @@
 // +vet
 package main
 
-import "core:fmt"
 import "base:intrinsics"
-import "core:os"
 import "base:runtime"
+import "core:fmt"
+import "core:os"
 import win32 "core:sys/windows"
 
 L :: intrinsics.constant_utf16_cstring
@@ -42,7 +42,7 @@ WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := [2]i32{win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
-	fmt.println(#procedure, size)
+	fmt.println(#procedure, size, wparam)
 	return 0
 }
 
@@ -61,7 +61,6 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", #procedure, wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	// odinfmt: disable
 	switch wparam {
 	case '\x1b':	win32.DestroyWindow(hwnd)
@@ -69,6 +68,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\r':		fmt.println("return")
 	case 'm':		win32.PlaySoundW(L("62a.wav"), nil, win32.SND_FILENAME)
 	case 'p':		show_error_and_panic("Don't worry it's just a test!")
+	case: fmt.printfln("%s %4d 0x%4x 0x%4x 0x%4x", #procedure, wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	}
 	// odinfmt: enable
 	return 0
@@ -94,11 +94,12 @@ main :: proc() {
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {show_error_and_panic("No instance")}
 
-	icon := win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
-	if (icon == nil) {show_error_and_panic("Missing icon")}
+	icon := win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(101))
+	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
+	if icon == nil {show_error_and_panic("Missing icon")}
 
 	cursor := win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
-	if (cursor == nil) {show_error_and_panic("Missing cursor")}
+	if cursor == nil {show_error_and_panic("Missing cursor")}
 
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),
@@ -129,7 +130,6 @@ main :: proc() {
 			size = {i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
 		}
 	}
-	fmt.println("size:", size)
 
 	position := [2]i32{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
 	if CENTER {
@@ -138,22 +138,22 @@ main :: proc() {
 			position = (dm_size - size) / 2
 		}
 	}
-	fmt.println("position:", position)
 
 	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
 	if hwnd == nil {show_error_and_panic("CreateWindowEx failed")}
-	fmt.println("hwnd: ", hwnd)
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)
 
-	fmt.println("MainLoop")
+	fmt.println("Main loop")
+
 	msg: win32.MSG
-	for win32.GetMessageW(&msg, nil, 0, 0) {
+	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}
-	fmt.println("exit_code", msg.wParam)
+
+	fmt.println("Exit code", msg.wParam)
 	assert(msg.wParam == 666)
 	os.exit(int(msg.wParam))
 }

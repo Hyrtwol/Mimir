@@ -1,7 +1,7 @@
 package microui_demo
 
 import "core:fmt"
-import "core:unicode/utf8"
+//import "core:unicode/utf8"
 import mu "vendor:microui"
 
 state := struct {
@@ -169,6 +169,7 @@ all_windows :: proc(ctx: ^mu.Context) {
 		@(static)
 		colors := [mu.Color_Type]string {
 			.TEXT         = "text",
+			.SELECTION_BG = "selection bg",
 			.BORDER       = "border",
 			.WINDOW_BG    = "window bg",
 			.TITLE_BG     = "title bg",

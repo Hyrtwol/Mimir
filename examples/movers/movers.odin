@@ -2,7 +2,6 @@
 package movers
 
 import "base:intrinsics"
-import "core:math/rand"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
@@ -33,7 +32,7 @@ on_update :: proc(app: ca.papp) -> int {
 	mx, my := cv.canvas_max_xy(pc)
 	for &d in dudes {
 		pp = &d.pos
-		dir = cv.get_direction4(rand.int31_max(8))
+		dir = cv.get_random_direction4()
 		pp^ += dir
 		if pp.x < 0 {pp.x = mx} else if pp.x > mx {pp.x = 0}
 		if pp.y < 0 {pp.y = my} else if pp.y > my {pp.y = 0}

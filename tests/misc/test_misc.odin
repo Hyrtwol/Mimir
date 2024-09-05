@@ -4,16 +4,25 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import _t "core:testing"
-import _u "shared:ounit"
+import "libs:ounit"
 
 //TODO investigate #config
+
+T :: ounit.T
+expectf :: ounit.expectf
+expect_value :: ounit.expect_value
+expect_u8 :: ounit.expect_u8
+expect_scalar :: ounit.expect_scalar
+expect_int :: ounit.expect_int
+expect_any_int :: ounit.expect_any_int
+expect_flags :: ounit.expect_flags
 
 get_version :: proc() -> (res: int, err: bool) {
 	return 666, false
 }
 
 @(test)
-string_vs_cstring :: proc(t: ^_t.T) {
+string_vs_cstring :: proc(t: ^T) {
 	str: string = "Can i convert"
 
 	//dst = strings.clone_to_cstring(str, allocator = context.temp_allocator)
@@ -34,7 +43,7 @@ string_vs_cstring :: proc(t: ^_t.T) {
 MODE :: 1
 
 @(test)
-when_to_use_when :: proc(t: ^_t.T) {
+when_to_use_when :: proc(t: ^T) {
 	str: cstring
 	when MODE == 1 {
 		str = "Can i convert"
@@ -52,33 +61,33 @@ when_to_use_when :: proc(t: ^_t.T) {
 }
 
 @(test)
-when_to_use_config :: proc(t: ^_t.T) {
+when_to_use_config :: proc(t: ^T) {
 	val: i32
 	val = #config(LA_COUR, -1)
 	_t.expectf(t, val == -1, "%v", val)
 }
 
 @(test)
-when_to_use_defer :: proc(t: ^_t.T) {
+when_to_use_defer :: proc(t: ^T) {
 
 	res := 0
 	{
 		res = 10
 		defer res = 20
-		_u.expect_value_int(t, res, 10)
+		expect_int(t, res, 10)
 	}
-	_u.expect_value_int(t, res, 20)
+	expect_int(t, res, 20)
 	{
-		defer res = 30;res = 40
-		_u.expect_value_int(t, res, 40)
+		defer res = 30;res = 40 // note the ;
+		expect_int(t, res, 40)
 	}
-	_u.expect_value_int(t, res, 30)
+	expect_int(t, res, 30)
 }
 
 @(test)
-some_slice :: proc(t: ^_t.T) {
+some_slice :: proc(t: ^T) {
 	slice := []int{1, 4, 9, 7}
-	_u.expect_value_int(t, slice[1], 4)
+	expect_int(t, slice[1], 4)
 	// fmt.printfln("%v", slice)
 	// fmt.printfln("%v", slice[1:3])
 	// fmt.printfln("%v", slice[1:])
@@ -87,7 +96,7 @@ some_slice :: proc(t: ^_t.T) {
 
 // Add leading 0x or 0X for hexadecimal (%#x or %#X)
 @(test)
-format_hex :: proc(t: ^_t.T) {
+format_hex :: proc(t: ^T) {
 	val: u32
 	exp, act: string
 
@@ -202,50 +211,35 @@ do_ta :: proc(v: ^ta) {
 
 //@(test)
 subtypes :: proc(t: ^_t.T) {
-	_u.expect_value_int(t, size_of(ta), 8)
-	_u.expect_value_int(t, size_of(tb), 16)
-	_u.expect_value_int(t, size_of(tc), 16)
-	_u.expect_value_int(t, size_of(td), 16)
+	expect_int(t, size_of(ta), 8)
+	expect_int(t, size_of(tb), 16)
+	expect_int(t, size_of(tc), 16)
+	expect_int(t, size_of(td), 16)
 
 	b := tb {
 		bb = 2,
 		a = {aa = 21},
 	}
-	_u.expect_value_int(t, b.bb, 2)
-	_u.expect_value_int(t, b.a.aa, 21)
-	_u.expect_value_int(t, ta(b).aa, 21)
+	expect_int(t, b.bb, 2)
+	expect_int(t, b.a.aa, 21)
+	expect_int(t, ta(b).aa, 21)
 	do_ta(&b)
 
 	c := tc {
 		cc = 3,
 		aa = 31,
 	}
-	_u.expect_value_int(t, c.cc, 3)
-	_u.expect_value_int(t, c.aa, 31)
-	_u.expect_value_int(t, c.a.aa, 31)
-	_u.expect_value_int(t, ta(c).aa, 31)
+	expect_int(t, c.cc, 3)
+	expect_int(t, c.aa, 31)
+	expect_int(t, c.a.aa, 31)
+	expect_int(t, ta(c).aa, 31)
 	do_ta(&c)
 
 	d := td {
 		dd = 4,
 		a = {aa = 41},
 	}
-	_u.expect_value_int(t, d.dd, 4)
-	_u.expect_value_int(t, d.a.aa, 41)
+	expect_int(t, d.dd, 4)
+	expect_int(t, d.a.aa, 41)
 	//do_ta(&d)
-}
-
-@(test)
-bit_sets :: proc(t: ^_t.T) {
-	Flag :: enum u8 {
-		A,
-		B,
-		C,
-	}
-	Flags :: bit_set[Flag;u8]
-	flags: Flags
-	flags = transmute(Flags)u8(1 << (1 ~ uint(max(Flag))) - 1)
-	_t.expect_value(t, transmute(u8)flags, 7)
-	_t.expect_value(t, card(flags), 3)
-	_t.expect_value(t, flags, Flags{.A, .B, .C})
 }

@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
 import mu "vendor:microui"
-import mud "libs:microui/demo"
+// todo import mud "libs:microui/demo"
 
 state := struct {
 	mu_ctx:          mu.Context,
@@ -310,6 +310,7 @@ all_windows :: proc(ctx: ^mu.Context) {
 		@(static)
 		colors := [mu.Color_Type]string {
 			.TEXT         = "text",
+			.SELECTION_BG = "selection bg",
 			.BORDER       = "border",
 			.WINDOW_BG    = "window bg",
 			.TITLE_BG     = "title bg",

@@ -21,10 +21,9 @@ main :: proc() {
 		fmt.eprintln("GLFW has failed to load.")
 		return
 	}
+	defer glfw.Terminate()
 
 	window_handle := glfw.CreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, nil, nil)
-
-	defer glfw.Terminate()
 	defer glfw.DestroyWindow(window_handle)
 
 	if window_handle == nil {

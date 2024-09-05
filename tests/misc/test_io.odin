@@ -6,7 +6,7 @@ import fp "core:path/filepath"
 import "core:slice"
 import "core:strings"
 import "core:testing"
-import "shared:ounit"
+import "libs:ounit"
 
 @(test)
 write_hello_txt :: proc(t: ^testing.T) {
@@ -21,7 +21,7 @@ write_hello_txt :: proc(t: ^testing.T) {
 	testing.expect(t, !os.exists(path))
 }
 
-EXPECTED_FILE_SIZE :: 2893
+EXPECTED_FILE_SIZE :: 2890
 
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
@@ -89,16 +89,16 @@ file_io :: proc(t: ^testing.T) {
 
 @(test)
 lowercase_dictionary :: proc(t: ^testing.T) {
-	path := fp.join({"..", "doc", "odin-dictionary.txt"}, allocator = context.temp_allocator)
+	path := fp.join({"..", "..", "doc", "odin-dictionary.txt"}, context.temp_allocator)
 
 	// fmt.printfln("reading %s", path)
-	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
+	data, ok := os.read_entire_file_from_filename(path, context.temp_allocator)
 	testing.expect(t, ok)
 	if !ok {return}
 
 	newline :: "\r\n"
 
-	words, err := strings.split(string(data), newline, allocator = context.temp_allocator)
+	words, err := strings.split(string(data), newline, context.temp_allocator)
 	testing.expect(t, err == .None)
 	if err != .None {return}
 
@@ -107,7 +107,7 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 	for w in words {
 		if len(w) == 0 {continue}
 		if w[0] == '#' {continue}
-		append(&new_words, strings.to_lower(w, allocator = context.temp_allocator))
+		append(&new_words, strings.to_lower(w, context.temp_allocator))
 	}
 
 	slice.sort(new_words[:])

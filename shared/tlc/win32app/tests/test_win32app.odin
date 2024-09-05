@@ -10,7 +10,7 @@ import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"
 import win32ex "libs:sys/windows"
-import ot "shared:ounit"
+import ot "libs:ounit"
 
 L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
@@ -34,9 +34,9 @@ make_lresult_from_true :: proc(t: ^testing.T) {
 min_max_msg :: proc(t: ^testing.T) {
 
 	p := min_max_msg
-	ot.expect_value(t, min(win32app.WM_MSG), 0x0001)
-	ot.expect_value(t, max(win32app.WM_MSG), 0x0204)
-	ot.expect_value(t, max(win32app.WM_MSG), 516)
+	ot.expect_any_int(t, min(win32app.WM_MSG), 0x0001)
+	ot.expect_any_int(t, max(win32app.WM_MSG), 0x0204)
+	ot.expect_any_int(t, max(win32app.WM_MSG), 516)
 	ot.expect_value(t, size_of(p), 8)
 	ot.expect_value(t, int(max(win32app.WM_MSG)) * size_of(p), 4128)
 

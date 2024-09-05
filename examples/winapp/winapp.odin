@@ -55,7 +55,7 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	pcs := win32app.get_createstruct_from_lparam(lparam)
+	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
 	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
@@ -135,7 +135,14 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	if settings == nil {return 1}
 	fmt.println(#procedure, hwnd, type, size)
 	settings.window_size = size
-	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, bitmap_size)
+	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, bitmap_size)
+	return 0
+}
+
+WM_SIZING :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	fmt.println(#procedure, hwnd, wparam, lparam)
+	// wParam - The edge of the window that is being sized.
+	// lParam - A pointer to a RECT structure with the screen coordinates of the drag rectangle. To change the size or position of the drag rectangle, an application must change the members of this structure.
 	return 0
 }
 
@@ -232,19 +239,20 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.
 	context = runtime.default_context()
 	// odinfmt: disable
 	switch msg {
-	case .WM_CREATE:		return WM_CREATE(hwnd, lparam)
-	case .WM_DESTROY:		return WM_DESTROY(hwnd)
-	case .WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
-	case .WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
-	case .WM_KILLFOCUS:		return WM_KILLFOCUS(hwnd, wparam)
-	case .WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
-	case .WM_PAINT:			return WM_PAINT(hwnd)
-	case .WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
-	case .WM_TIMER:			return WM_TIMER(hwnd, wparam, lparam)
-	case .WM_MOUSEMOVE:		return handle_input(hwnd, wparam, lparam)
-	case .WM_LBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
-	case .WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
-	case:					return win32.DefWindowProcW(hwnd, win32.UINT(msg), wparam, lparam)
+	case .WM_CREATE:      return WM_CREATE(hwnd, lparam)
+	case .WM_DESTROY:     return WM_DESTROY(hwnd)
+	case .WM_ERASEBKGND:  return WM_ERASEBKGND(hwnd, wparam)
+	case .WM_SETFOCUS:    return WM_SETFOCUS(hwnd, wparam)
+	case .WM_KILLFOCUS:   return WM_KILLFOCUS(hwnd, wparam)
+	case .WM_SIZE:        return WM_SIZE(hwnd, wparam, lparam)
+	case .WM_SIZING:      return WM_SIZING(hwnd, wparam, lparam)
+	case .WM_PAINT:       return WM_PAINT(hwnd)
+	case .WM_CHAR:        return WM_CHAR(hwnd, wparam, lparam)
+	case .WM_TIMER:       return WM_TIMER(hwnd, wparam, lparam)
+	case .WM_MOUSEMOVE:   return handle_input(hwnd, wparam, lparam)
+	case .WM_LBUTTONDOWN: return handle_input(hwnd, wparam, lparam)
+	case .WM_RBUTTONDOWN: return handle_input(hwnd, wparam, lparam)
+	case:                 return win32.DefWindowProcW(hwnd, win32.UINT(msg), wparam, lparam)
 	}
 	// odinfmt: enable
 }

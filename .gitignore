@@ -14,3 +14,5 @@ obj/
 x64/
 Debug/
 Release/
+shared/amstrad/tests/snapshot.json
+shared/amstrad/tests/snapshot_ram_dump.dat

@@ -87,7 +87,7 @@ int main(int /*argc*/, char */*argv*/[])
   std::vector<Uint32> texture[8];
   for(int i = 0; i < 8; i++) texture[i].resize(texWidth * texHeight);
 
-  screen(screenWidth,screenHeight, 0, "Raycaster");
+  screen(screenWidth, screenHeight, 0, "Raycaster");
 
   //load some textures
   unsigned long tw, th, error = 0;
@@ -369,7 +369,7 @@ int main(int /*argc*/, char */*argv*/[])
     double rotSpeed = frameTime * 2.0; //the constant value is in radians/second
     readKeys();
     //move forward if no wall in front of you
-    if (keyDown(SDLK_UP))
+    if(keyDown(SDLK_UP))
     {
       if(worldMap[int(posX + dirX * moveSpeed)][int(posY)] == false) posX += dirX * moveSpeed;
       if(worldMap[int(posX)][int(posY + dirY * moveSpeed)] == false) posY += dirY * moveSpeed;

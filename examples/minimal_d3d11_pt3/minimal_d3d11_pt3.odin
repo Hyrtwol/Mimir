@@ -1,9 +1,9 @@
 package minimal_d3d11_pt3
 
 import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
 import hlm "core:math/linalg/hlsl"
-import "base:runtime"
 import win32 "core:sys/windows"
 import win32app "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
@@ -42,19 +42,18 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		{win32app.post_quit_message(0);return 0}
+		win32app.post_quit_message(0)
+		return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
-		{
-			switch wparam {
-			case '\x1b':
-				win32.DestroyWindow(hwnd) // ESC
-			case 's':
-				show_shadowmap = !show_shadowmap
-			}
-			return 0
+		switch wparam {
+		case '\x1b':
+			win32.DestroyWindow(hwnd) // ESC
+		case 's':
+			show_shadowmap = !show_shadowmap
 		}
+		return 0
 	case:
 		return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}

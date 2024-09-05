@@ -2,8 +2,8 @@
 package test_csharp
 
 import cs ".."
-import _c "core:c"
 import "base:intrinsics"
+import _c "core:c"
 import win32 "core:sys/windows"
 import "core:testing"
 import o "libs:ounit"
@@ -25,7 +25,10 @@ verify_type_sizes :: proc(t: ^testing.T) {
 	o.expect_size(t, cs.bool  , 1);o.expect_size(t, cs.Bool   , 1)
 	o.expect_size(t, cs.char  , 2);o.expect_size(t, cs.Char   , 2)
 	o.expect_size(t, cs.string, 8);o.expect_size(t, cs.String , 8)
+}
 
+@(test)
+compare_type_sizes_c :: proc(t: ^testing.T) {
 	o.expect_value(t, size_of(cs.byte)   , size_of(_c.char)      )
 	o.expect_value(t, size_of(cs.sbyte)  , size_of(_c.schar)     )
 	o.expect_value(t, size_of(cs.short)  , size_of(_c.short)     )
@@ -40,7 +43,10 @@ verify_type_sizes :: proc(t: ^testing.T) {
 	o.expect_value(t, size_of(cs.double) , size_of(_c.double)    )
 	o.expect_value(t, size_of(cs.bool)   , size_of(_c.bool)      )
 	o.expect_value(t, size_of(cs.char)   , size_of(_c.wchar_t)   )
+}
 
+@(test)
+compare_type_sizes_win32 :: proc(t: ^testing.T) {
 	o.expect_value(t, size_of(cs.char)   , size_of(win32.WCHAR)  )
 	o.expect_value(t, size_of(cs.string) , size_of(win32.wstring))
 }

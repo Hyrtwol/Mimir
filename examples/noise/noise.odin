@@ -2,35 +2,35 @@
 package main
 
 import "base:intrinsics"
-import "core:math/noise"
 import "base:runtime"
+import "core:math/noise"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import win32app "libs:tlc/win32app"
 
-L       :: intrinsics.constant_utf16_cstring
-byte4   :: [4]u8 //cv.byte4
-int2    :: [2]i32 //cv.int2
-float2  :: [2]f32 //cv.float2
-double2 :: [2]f64 //cv.double2
-double3 :: [3]f64 //cv.double3
-DIB     :: win32app.DIB
-canvas  :: cv.canvas
+L :: intrinsics.constant_utf16_cstring
+byte4 :: [4]u8
+int2 :: [2]i32
+float2 :: [2]f32
+double2 :: [2]f64
+double3 :: [3]f64
+DIB :: win32app.DIB
+canvas :: cv.canvas
 
-TITLE   :: "Noise"
-WIDTH   :: 640
-HEIGHT  :: WIDTH * 9 / 16
-ZOOM    :: 4
+TITLE :: "Noise"
+WIDTH :: 640
+HEIGHT :: WIDTH * 9 / 16
+ZOOM :: 4
 
-settings    := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
-timer_id    : win32.UINT_PTR
-dib         : DIB
-npos1       : double3 = {0, 0, 0}
-ndir1       : double3 = {0.007, 0.009, 0.011}
-npos2       : double2 = {0, 0}
-ndir2       : double2 = {0.007, 0.003}
-nseed       : i64 = 12345
-noise_func  : proc(dib: ^canvas) = dib_noise1
+settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+timer_id: win32.UINT_PTR
+dib: DIB
+npos1: double3 = {0, 0, 0}
+ndir1: double3 = {0.007, 0.009, 0.011}
+npos2: double2 = {0, 0}
+ndir2: double2 = {0.007, 0.003}
+nseed: i64 = 12345
+noise_func: proc(dib: ^canvas) = dib_noise1
 
 dib_noise1 :: proc(dib: ^canvas) {
 	p := dib.pvBits
@@ -43,12 +43,12 @@ dib_noise1 :: proc(dib: ^canvas) {
 	ofs: double3 = {0, 0, 0}
 	scale: f64 : 0.01
 	for y in 0 ..< h {
-		ofs.y = f64(y)
+		ofs.y = f64(y) * scale
 		for x in 0 ..< w {
-			ofs.x = f64(x)
-			np := pp + ofs * scale
-			n1 = noise.noise_3d_improve_xy(nseed, noise.Vec3(np))
-			n2 = noise.noise_3d_improve_xy(nseed, noise.Vec3(np * -2.0))
+			ofs.x = f64(x) * scale
+			np := pp + ofs
+			n1 = noise.noise_3d_improve_xy(nseed, np)
+			n2 = noise.noise_3d_improve_xy(nseed, np * -2.0)
 			n = (n1 * 2 / 3) + (n2 * 0.5 * 1 / 3)
 			ni = u8(n * 127.995 + 127.995)
 			p[i] = {ni, u8(n1 * 127.74 + 127.74), u8(n2 * 127.74 + 127.74), 255}
@@ -69,12 +69,12 @@ dib_noise2 :: proc(dib: ^canvas) {
 	ofs: double2
 	scale: f64 : 0.01
 	for y in 0 ..< h {
-		ofs.y = f64(y)
+		ofs.y = f64(y) * scale
 		for x in 0 ..< w {
-			ofs.x = f64(x)
-			np := pp + ofs * scale
-			n1 = noise.noise_2d(nseed, noise.Vec2(np))
-			n2 = noise.noise_2d(nseed, noise.Vec2(np * -2.0))
+			ofs.x = f64(x) * scale
+			np := pp + ofs
+			n1 = noise.noise_2d(nseed, np)
+			n2 = noise.noise_2d(nseed, np * -2.0)
 			n = (n1 * 2 / 3) + (n2 * 0.5 * 1 / 3)
 			ni = u8(n * 127.995 + 127.995)
 			p[i] = {ni, ni, ni, 255}
@@ -102,7 +102,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM)
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
+	win32app.set_window_text(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }
 

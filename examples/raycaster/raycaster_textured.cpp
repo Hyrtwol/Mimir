@@ -84,7 +84,7 @@ int main(int /*argc*/, char */*argv*/[])
   std::vector<Uint32> texture[8];
   for(int i = 0; i < 8; i++) texture[i].resize(texWidth * texHeight);
 
-  screen(screenWidth,screenHeight, 0, "Raycaster");
+  screen(screenWidth, screenHeight, 0, "Raycaster");
 
   //generate some textures
 #if 0
@@ -123,9 +123,9 @@ int main(int /*argc*/, char */*argv*/[])
     for(int x = 0; x < w; x++)
     {
       //calculate ray position and direction
-      double cameraX = 2 * x / (double)w - 1; //x-coordinate in camera space
-      double rayDirX = dirX + planeX*cameraX;
-      double rayDirY = dirY + planeY*cameraX;
+      double cameraX = 2 * x / double(w) - 1; //x-coordinate in camera space
+      double rayDirX = dirX + planeX * cameraX;
+      double rayDirY = dirY + planeY * cameraX;
 
       //which box of the map we're in
       int mapX = int(posX);

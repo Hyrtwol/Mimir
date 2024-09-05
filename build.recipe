@@ -136,6 +136,6 @@
 		</Collection>
 	</ItemGroup>
 
-	<Import Project="$(ODIN_ROOT)\shared\msbuild\Odin.MSBuild\bin\Release\netstandard2.0\Odin.targets"/>
+	<Import Project="$(ODIN_SHARED)\msbuild\Odin.MSBuild\bin\Release\netstandard2.0\Odin.targets"/>
 
 </Project>

@@ -3,6 +3,7 @@ package main
 
 import "core:fmt"
 import "base:runtime"
+import "core:container/queue"
 import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"
@@ -12,9 +13,22 @@ import mu "vendor:microui"
 _ :: mud
 
 ZOOM :: 4
+FPS :: 5
+
+IDT_TIMER1: win32.UINT_PTR : 10001
+timer1_id: win32.UINT_PTR
 
 DIB :: win32app.DIB
 canvas :: cv.canvas
+
+mouse_event :: struct {
+	pos: win32app.int2,
+	mu_button: mu.Mouse,
+	state: i32,
+}
+
+char_queue:      queue.Queue(u8)
+mouse_queue:     queue.Queue(mouse_event)
 
 application :: struct {
 	mu_ctx:          mu.Context,
@@ -23,6 +37,8 @@ application :: struct {
 	log_buf_updated: bool,
 	bg:              mu.Color,
 	atlas_texture:   win32app.DIB,
+	//char_queue:      queue.Queue(u8),
+	//mouse_queue:     queue.Queue(mouse_event),
 }
 papp :: ^application
 
@@ -39,6 +55,15 @@ pvBits        : screen_buffer
 
 bg_brush: win32.HBRUSH
 
+mouse_pos : win32app.int2
+
+// mouse_buttons: win32app.MOUSE_KEY_STATE
+
+// buttons_to_key := [?]struct {
+// 	wi_button: win32app.MOUSE_KEY_STATE,
+// 	mu_button: mu.Mouse,
+// }{{{.MK_LBUTTON}, .LEFT}, {{.MK_RBUTTON}, .RIGHT}, {{.MK_MBUTTON}, .MIDDLE}}
+
 show_atlas := false
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
@@ -48,7 +73,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^applic
 convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {return (transmute(win32.COLORREF)mu_color) & 0xFFFFFF}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := win32app.get_createstruct_from_lparam(lparam)
+	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
 	settings := win32app.psettings(pcs.lpCreateParams)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
@@ -68,7 +93,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		color_byte_count :: 4
 		color_bit_count :: color_byte_count * 8
 		bmi_header := win32app.create_bmi_header(bitmap_size, true, color_bit_count)
-		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
+		bitmap_handle = win32.HGDIOBJ(win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bmi_header, .DIB_RGB_COLORS, &pvBits))
 	}
 
 	if pvBits != nil {
@@ -80,6 +105,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		bitmap_size = {0, 0}
 		bitmap_count = 0
 	}
+
+	timer1_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
+
 	return 0
 }
 
@@ -88,7 +116,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
 	// app := settings.app
 	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	// win32app.kill_timer(hwnd, &timer1_id)
+	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
 	bitmap_count = 0
@@ -96,6 +124,8 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	win32app.post_quit_message(0)
 	return 0
 }
+
+// first := 5
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	settings := win32app.get_settings(hwnd)
@@ -109,6 +139,11 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	defer win32.EndPaint(hwnd, &ps)
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
 	defer win32.DeleteDC(hdc_source)
+
+	// if first > 0 {
+	// 	fmt.println("rcPaint:", ps.rcPaint, win32app.get_rect_size(&ps.rcPaint), win32app.get_client_size(hwnd))
+	// 	first -= 1
+	// }
 
 	if bitmap_handle != nil {
 		//client_size := win32app.get_rect_size(&ps.rcPaint)
@@ -126,6 +161,50 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 		ctx := &app.mu_ctx
 		if ctx != nil {
+
+			mu.input_mouse_move(ctx, mouse_pos.x, mouse_pos.y)
+
+			for {
+				mv := queue.pop_front_safe(&mouse_queue) or_break
+				fmt.println(mv)
+				// mouse_event :: struct {
+				// 	pos: win32app.int2,
+				// 	mu_button: mu.Mouse,
+				// 	state: i32,
+				// }
+				if mv.state == -1 {
+					//mu.input_mouse_down(ctx, mouse_pos.x, mouse_pos.y, mv.mu_button)
+					mu.input_mouse_down(ctx, mv.pos.x, mv.pos.y, mv.mu_button)
+				}
+				if mv.state == 1 {
+					//mu.input_mouse_up(ctx, mouse_pos.x, mouse_pos.y, mv.mu_button)
+					mu.input_mouse_up(ctx, mv.pos.x, mv.pos.y, mv.mu_button)
+				}
+			}
+
+			for {
+				//ch, ok := queue.pop_front_safe(&app.char_queue)
+				ch := queue.pop_front_safe(&char_queue) or_break
+				fmt.println(ch)
+				/*
+				{ 	// text input
+					text_input: [512]byte = ---
+					text_input_offset := 0
+					for text_input_offset < len(text_input) {
+						ch := rl.GetCharPressed()
+						if ch == 0 {
+							break
+						}
+						b, w := utf8.encode_rune(ch)
+						copy(text_input[text_input_offset:], b[:w])
+						text_input_offset += w
+					}
+					mu.input_text(ctx, string(text_input[:text_input_offset]))
+				}
+				*/
+			}
+
+
 			mu.begin(ctx)
 			all_windows(ctx)
 			mu.end(ctx)
@@ -141,28 +220,123 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
+WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	settings := win32app.get_settings(hwnd)
+	type := win32app.WM_SIZE_WPARAM(wparam)
+	size := win32app.decode_lparam_as_int2(lparam)
+	if settings == nil {win32app.show_error_and_panicf("Missing settings in %v", #procedure);return 1}
+	//fmt.println(#procedure, hwnd, type, size)
+	settings.window_size = size
+	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
+	return 0
+}
+
+WM_SIZING :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	// wParam - The edge of the window that is being sized.
+	type := win32app.WM_SIZING_WPARAM(wparam)
+	// lParam - A pointer to a RECT structure with the screen coordinates of the drag rectangle. To change the size or position of the drag rectangle, an application must change the members of this structure.
+	rect := win32app.decode_lparam_as_rect(lparam)
+	size := win32app.get_rect_size(rect)
+	fmt.println(#procedure, hwnd, type, rect, size)
+	return 0
+}
+
+WM_ENTERSIZEMOVE :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	fmt.println(#procedure, hwnd)
+	return 0
+}
+
+WM_EXITSIZEMOVE :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	fmt.println(#procedure, hwnd)
+	//size := win32app.get_client_size(hwnd)
+	//fmt.println(#procedure, hwnd, size)
+	//first = 3
+	return 0
+}
+
+WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	win32app.redraw_window(hwnd)
+	//app := get_app(hwnd)
+	//fmt.println(#procedure, app.mu_ctx.frame)
+	return 0
+}
+
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b':	win32app.close_application(hwnd)
-	case:			fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(lparam), win32.LOWORD(lparam))
+	case '\x1b': win32app.close_application(hwnd)
+	//case ' ':    win32app.redraw_window(hwnd)
+	case:
+		fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(lparam), win32.LOWORD(lparam))
+		app := get_app(hwnd)
+		if app != nil {
+			//assert(&app.char_queue != nil)
+			//fmt.printfln("char_queue: %v", char_queue)
+			//queue.push_front(&app.char_queue, u8(wparam))
+			queue.push_front(&char_queue, u8(wparam))
+		}
 	}
+	return 0
+}
+
+handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM, updown: i32) -> win32.LRESULT {
+	//app := get_app(hwnd)
+	//mouse_buttons := win32app.decode_wparam_as_mouse_key_state(wparam)
+	mouse_pos = win32app.decode_lparam_as_int2(lparam)
+	//fmt.println(#procedure, mouse_buttons, updown, wparam)
+
+	// switch wparam {
+	// case 1:
+	// 	//win32.InvalidateRect(hwnd, nil, false)
+	// case 2:
+	// 	//win32.InvalidateRect(hwnd, nil, false)
+	// case 3:
+	// 	//win32.InvalidateRect(hwnd, nil, false)
+	// case 4:
+	// 	//fmt.printfln("input %d %v", wparam, decode_scrpos(lparam))
+	// case:
+	// 	fmt.printfln("input %d %v", wparam, mouse_pos)
+	// }
+
+
+	// if .MK_LBUTTON in mouse_buttons {
+	// 	queue.push_front(&mouse_queue, mouse_event{mouse_pos, .LEFT, updown})
+	// }
+	// if .MK_RBUTTON in mouse_buttons {
+	// 	queue.push_front(&mouse_queue, mouse_event{mouse_pos, .RIGHT, updown})
+	// }
+	// if .MK_MBUTTON in mouse_buttons {
+	// 	queue.push_front(&mouse_queue, mouse_event{mouse_pos, .MIDDLE, updown})
+	// }
+
 	return 0
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	switch msg {
-	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
-	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
-	case win32.WM_ERASEBKGND:	return 1
-	//case win32.WM_SETFOCUS:	return WM_SETFOCUS(hwnd, wparam)
-	//case win32.WM_KILLFOCUS:	return WM_KILLFOCUS(hwnd, wparam)
-	//case win32.WM_SIZE:		return WM_SIZE(hwnd, wparam)
-	case win32.WM_PAINT:		return WM_PAINT(hwnd)
-	//case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
-	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
-	//case win32.WM_TIMER:		return WM_TIMER(hwnd, wparam, lparam)
-	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
+	case win32.WM_CREATE:        return WM_CREATE(hwnd, lparam)
+	case win32.WM_DESTROY:       return WM_DESTROY(hwnd)
+	case win32.WM_ERASEBKGND:    return 1
+	//case win32.WM_SETFOCUS:    return WM_SETFOCUS(hwnd, wparam)
+	//case win32.WM_KILLFOCUS:   return WM_KILLFOCUS(hwnd, wparam)
+	case win32.WM_SIZE:          return WM_SIZE(hwnd, wparam, lparam)
+	//case win32.WM_SIZING:        return WM_SIZING(hwnd, wparam, lparam)
+	//case win32.WM_ENTERSIZEMOVE: return WM_ENTERSIZEMOVE(hwnd)
+	case win32.WM_EXITSIZEMOVE:  return WM_EXITSIZEMOVE(hwnd)
+	case win32.WM_PAINT:         return WM_PAINT(hwnd)
+	//case win32.WM_KEYUP:       return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_CHAR:          return WM_CHAR(hwnd, wparam, lparam)
+
+	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam, 0)
+	case win32.WM_LBUTTONDOWN:	{queue.push_front(&mouse_queue, mouse_event{win32app.decode_lparam_as_int2(lparam), .LEFT, -1});return 0}
+	case win32.WM_LBUTTONUP:	{queue.push_front(&mouse_queue, mouse_event{win32app.decode_lparam_as_int2(lparam), .LEFT, 1});return 0}
+	// case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam, -1)
+	// case win32.WM_RBUTTONUP:	return handle_input(hwnd, wparam, lparam, 1)
+	// case win32.WM_MBUTTONDOWN:	return handle_input(hwnd, wparam, lparam, -1)
+	// case win32.WM_MBUTTONUP:	return handle_input(hwnd, wparam, lparam, 1)
+
+	case win32.WM_TIMER:         return WM_TIMER(hwnd, wparam, lparam)
+	case:                        return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 }
 
@@ -172,6 +346,13 @@ main :: proc() {
 	//rl.InitWindow(960, 540, "microui-odin")
 	//defer rl.CloseWindow()
 
+	//queue.init(&state.char_queue)
+	//defer queue.destroy(&state.char_queue)
+	queue.init(&char_queue)
+	defer queue.destroy(&char_queue)
+	queue.init(&mouse_queue)
+	defer queue.destroy(&mouse_queue)
+
 	ctx := &state.mu_ctx
 	mu.init(ctx)
 
@@ -179,6 +360,7 @@ main :: proc() {
 	ctx.text_height = mu.default_atlas_text_height
 
 	settings := win32app.create_window_settings({800, 600}, wndproc)
+	settings.dwStyle = win32app.default_dwStyle | win32.WS_SIZEBOX
 	settings.app = &state
 	win32app.run(&settings)
 
@@ -512,6 +694,7 @@ all_windows :: proc(ctx: ^mu.Context) {
 		@(static)
 		colors := [mu.Color_Type]string {
 			.TEXT         = "text",
+			.SELECTION_BG = "selection bg",
 			.BORDER       = "border",
 			.WINDOW_BG    = "window bg",
 			.TITLE_BG     = "title bg",

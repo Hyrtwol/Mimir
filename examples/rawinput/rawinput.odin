@@ -77,7 +77,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
+	win32app.set_window_text(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
 	clip_cursor(hwnd, true)
 	return 0
 }
@@ -138,7 +138,6 @@ wm_focus :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32
 
 rawinput: win32.RAWINPUT = {}
 
-zero :: win32app.int2{0, 0}
 put_it := 0
 
 WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -163,7 +162,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 			//cs := transmute(win32app.int2)(settings.window_size - 1)
 			cs := settings.window_size - 1
 			mouse_pos = {clamp(mouse_pos.x, 0, cs.x), clamp(mouse_pos.y, 0, cs.y)}
-			//mouse_pos = clamp(mouse_pos, zero, cs)
+			//mouse_pos = clamp(mouse_pos, cv.float2_zero, cs)
 
 			button_flags := raw.data.mouse.usButtonFlags
 			if button_flags > 0 {

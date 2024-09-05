@@ -226,7 +226,7 @@ decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win3
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.println(#procedure, hwnd, win32app.get_createstruct_from_lparam(lparam))
+	fmt.println(#procedure, hwnd, win32app.decode_lparam_as_createstruct(lparam))
 
 	client_size := win32app.get_client_size(hwnd)
 
@@ -269,7 +269,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	size := win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
+	win32app.set_window_text(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }
 

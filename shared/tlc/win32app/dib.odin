@@ -13,7 +13,7 @@ DIB :: struct {
 
 @(private)
 dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
-	dib.hbitmap = win32.CreateDIBSection(hdc, pbmi, win32.DIB_RGB_COLORS, &dib.canvas.pvBits, nil, 0)
+	dib.hbitmap = create_dib_section(hdc, pbmi, .DIB_RGB_COLORS, &dib.canvas.pvBits)
 	if dib.hbitmap == nil || dib.canvas.pvBits == nil {
 		cv.canvas_zero(&dib.canvas)
 	}
@@ -35,12 +35,14 @@ dib_create_section :: proc {
 	dib_create_section_bitmap_info_header_v5,
 }
 
-dib_free_section :: proc(dib: ^DIB) {
+dib_free_section :: proc(dib: ^DIB, loc := #caller_location) {
 	if dib.hbitmap != nil {
-		win32.DeleteObject(win32.HGDIOBJ(dib.hbitmap))
+		if !win32.DeleteObject(win32.HGDIOBJ(dib.hbitmap)) {
+			//fmt.panicf("Unable to delete object %v", dib.hbitmap, loc = loc)
+			show_message_boxf("Error", "Unable to delete object %v", dib.hbitmap, loc)
+		}
 	}
 	dib.hbitmap = nil
-	cv.canvas_zero(&dib.canvas)
 }
 
 dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {
@@ -79,16 +81,15 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	return dib
 }
 
-draw_dib :: proc(hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, dib: ^DIB) {
-	draw_hgdiobj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
-}
-
-draw_hgdiobj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hgdiobj: win32.HGDIOBJ, dest_size: int2) -> win32.LRESULT {
+draw_hgdiobj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hgdiobj: win32.HGDIOBJ, dest_size: int2) {
 	hdc_source := win32.CreateCompatibleDC(hdc)
 	defer win32.DeleteDC(hdc_source)
 	select_object(hdc_source, hgdiobj)
-	ok := stretch_blt(hdc, hdc_size, hdc_source, dest_size)
-	return ok ? 0 : 1
+	stretch_blt(hdc, hdc_size, hdc_source, dest_size)
+}
+
+draw_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, dib: ^DIB) {
+	draw_hgdiobj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
 }
 
 @(private)

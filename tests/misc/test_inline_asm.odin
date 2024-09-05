@@ -47,7 +47,7 @@ can_i_call_rdtsc :: proc(t: ^testing.T) {
 
 @(test)
 call_asm_proc :: proc(t: ^testing.T) {
-	testing.expect(t, inline_asm(3, 7) == 10)
+	expect_value(t, inline_asm(3, 7), 10)
 }
 
 inline_asm :: proc "contextless" (x: u32, y: u32) -> u32 {
@@ -65,7 +65,7 @@ call_asm_that_call_a_proc :: proc(t: ^testing.T) {
 	g_res = 0
 	exp: u32 = 1
 	inline_asm_call()
-	testing.expect(t, g_res == exp, fmt.tprintf("inline_asm: %v (should be: %v)", g_res, exp))
+	expectf(t, g_res == exp, "inline_asm: %v (should be: %v)", g_res, exp)
 }
 
 g_res: u32 = 0

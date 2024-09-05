@@ -8,6 +8,10 @@ import "core:math/linalg"
 import "core:math/rand"
 
 _ :: fmt
+identity :: linalg.identity
+matrix2_rotate_f32 :: linalg.matrix2_rotate_f32
+matrix3_rotate_f32 :: linalg.matrix3_rotate_f32
+matrix4_rotate_f32 :: linalg.matrix4_rotate_f32
 
 to_float4 :: #force_inline proc "contextless" (v: float3, w: f32 = 1) -> float4 {
 	return float4{v.x, v.y, v.z, w}
@@ -29,37 +33,31 @@ to_int2_ceil :: #force_inline proc "contextless" (v: float2) -> int2 {
 	return to_int2(linalg.ceil(v))
 }
 
-@(require_results)
-create_rng :: #force_inline proc() -> (state: rand.Default_Random_State) {
-	return rand.create(u64(intrinsics.read_cycle_counter()))
-}
-
-
 @(private)
-random_position_int_xy :: #force_inline proc(x, y: i32) -> int2 {
+random_position_int2_from_i32 :: #force_inline proc(x, y: i32) -> int2 {
 	return {rand.int31_max(x), rand.int31_max(y)}
 }
 
 @(private)
-random_position_uint_xy :: #force_inline proc(x, y: u32) -> int2 {
-	return random_position_int_xy(i32(x), i32(y))
+random_position_int2_from_u32 :: #force_inline proc(x, y: u32) -> int2 {
+	return random_position_int2_from_i32(i32(x), i32(y))
 }
 
 @(private)
-random_position_int2 :: #force_inline proc(dim: int2) -> int2 {
-	return random_position_int_xy(dim.x, dim.y)
+random_position_int2_from_int2 :: #force_inline proc(dim: int2) -> int2 {
+	return random_position_int2_from_i32(dim.x, dim.y)
 }
 
 @(private)
-random_position_uint2 :: #force_inline proc(dim: uint2) -> int2 {
-	return random_position_uint_xy(dim.x, dim.y)
+random_position_int2_from_uint2 :: #force_inline proc(dim: uint2) -> int2 {
+	return random_position_int2_from_u32(dim.x, dim.y)
 }
 
 random_position :: proc {
-	random_position_int_xy,
-	random_position_uint_xy,
-	random_position_int2,
-	random_position_uint2,
+	random_position_int2_from_i32,
+	random_position_int2_from_u32,
+	random_position_int2_from_int2,
+	random_position_int2_from_uint2,
 }
 
 random_color_byte :: #force_inline proc() -> u8 {
@@ -97,28 +95,47 @@ get_direction8 :: #force_inline proc "contextless" (dir: i32) -> int2 {
 	return ((^int2)(&directions[dir & 7]))^
 }
 
-@(require_results)
-matrix4_rotate_x_f32 :: proc "c" (angle: f32) -> float4x4 {
-	return auto_cast linalg.matrix4_rotate_f32(angle, float3{1, 0, 0})
+get_random_direction4 :: #force_inline proc() -> int2 {
+	return get_direction4(rand.int31_max(4))
+}
+
+get_random_direction8 :: #force_inline proc() -> int2 {
+	return get_direction8(rand.int31_max(8))
 }
 
 @(require_results)
-matrix4_rotate_y_f32 :: proc "c" (angle: f32) -> float4x4 {
-	return auto_cast linalg.matrix4_rotate_f32(angle, float3{0, 1, 0})
+matrix4_rotate_x_f32 :: proc "contextless" (angle: f32) -> float4x4 {
+	return auto_cast linalg.matrix4_rotate_f32(angle, float3_xunit)
 }
 
 @(require_results)
-matrix4_rotate_z_f32 :: proc "c" (angle: f32) -> float4x4 {
-	return auto_cast linalg.matrix4_rotate_f32(angle, float3{0, 0, 1})
+matrix4_rotate_y_f32 :: proc "contextless" (angle: f32) -> float4x4 {
+	return auto_cast linalg.matrix4_rotate_f32(angle, float3_yunit)
 }
 
-create_viewport :: #force_inline proc "contextless" (x, y, w, h: f32) -> float4x4 {
+@(require_results)
+matrix4_rotate_z_f32 :: proc "contextless" (angle: f32) -> float4x4 {
+	return auto_cast linalg.matrix4_rotate_f32(angle, float3_zunit)
+}
+
+@(private)
+create_viewport_from_xywh :: #force_inline proc "contextless" (x, y, w, h: f32) -> float4x4 {
 	return {
 		w/2, 0  , 0  , x+w/2,
 		0  , h/2, 0  , y+h/2,
 		0  , 0  , 1  , 0    ,
 		0  , 0  , 0  , 1    ,
 	}
+}
+
+@(private)
+create_viewport_from_size :: #force_inline proc "contextless" (size: int2) -> float4x4 {
+	return create_viewport_from_xywh(0, 0, f32(size.x), f32(size.y))
+}
+
+create_viewport :: proc {
+	create_viewport_from_xywh,
+	create_viewport_from_size,
 }
 
 /*
@@ -207,4 +224,29 @@ viewport_transform :: #force_inline proc "contextless" (viewport: ^float4x4, v: 
 normalized_device_coordinates :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
 	return viewport^ * (v / v.w)
 	//return apply_viewport(viewport, perspective_divide(v))
+}
+
+/*
+// Check if two 2D vectors are equal.
+vec2_equal :: proc(v0: vec2, v1: vec2) -> bool ---
+// Multiply a 2D vector by a scalar.
+vec2_mul :: proc(f: f32, v: vec2) -> vec2 ---
+// Add two 2D vectors
+vec2_add :: proc(v0: vec2, v1: vec2) -> vec2 ---
+// Transforms a vector by an affine transformation represented as a 2x3 matrix.
+mat2x3_mul :: proc(m: mat2x3, p: vec2) -> vec2 ---
+// Multiply two affine transformations represented as 2x3 matrices. Both matrices are treated as 3x3 matrices with an implicit `(0, 0, 1)` bottom row
+mat2x3_mul_m :: proc(lhs: mat2x3, rhs: mat2x3) -> mat2x3 ---
+// Invert an affine transform represented as a 2x3 matrix.
+mat2x3_inv :: proc(x: mat2x3) -> mat2x3 ---
+// Return a 2x3 matrix representing a rotation.
+mat2x3_rotate :: proc(radians: f32) -> mat2x3 ---
+// Return a 2x3 matrix representing a translation.
+mat2x3_translate :: proc(x: f32, y: f32) -> mat2x3 ---
+*/
+
+@(require_results)
+fract :: proc "contextless" (x: $T) -> T where IS_FLOAT(ELEM_TYPE(T)) {
+	f := #force_inline math.floor(x)
+	return x - f
 }

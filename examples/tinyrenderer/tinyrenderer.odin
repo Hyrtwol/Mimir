@@ -51,12 +51,13 @@ proj_view, proj_view_model: mat4x4
 zbuffer: [width * height]f32
 flip_z_axis := true
 
-pics := #load("../raycaster/pics.dat")
+pics := #load("../raycaster/pics32.dat")
 pics_w: i32 : 32
 pics_h: i32 : pics_w
 pics_ps: i32 : size_of(cv.byte4)
-pics_size: i32 : pics_w * pics_h * pics_ps
-pics_count := i32(len(pics)) / pics_size
+pics_byte_size: i32 : pics_w * pics_h * pics_ps
+pics_count := i32(len(pics)) / pics_byte_size
+
 
 
 // odinfmt: disable
@@ -75,9 +76,7 @@ barycentric :: #force_inline proc "contextless" (abc: ^mat3x3, x, y: i32) -> vec
 vert_count :: 6
 vertices: [vert_count]cv.float3 = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
 vert: [vert_count]cv.float4
-
 triangles := [?]cv.int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
-
 models: [9]cv.Model
 shader: cv.IShader
 
@@ -100,7 +99,6 @@ ps_default :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
-
 	//d := lg.dot(shader.uniform_l, bn)
 	d := lg.dot(light_dir, bn)
 	d = clamp(d, 0, 1)
@@ -132,27 +130,28 @@ ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 }
 
 on_create :: proc(app: ca.papp) -> int {
-	pc := &ca.dib.canvas
-	width, height := cv.get_canvas_size_xy(pc)
+	canvas := &ca.dib.canvas
+	size := cv.get_canvas_size(canvas)
 	fov = fov90
-	aspect = f32(width) / f32(height)
-	fmt.println("width, height:", width, height)
-
-	viewport = cv.create_viewport(0, 0, f32(width), f32(height))
+	aspect = f32(size.x) / f32(size.y)
+	viewport = cv.create_viewport(size)
 	view = lg.matrix4_look_at_f32(eye, center, up, flip_z_axis)
 	proj = cv.matrix4_perspective_f32_01(fov, aspect, far, near, flip_z_axis)
 	rotate = lg.identity(mat4x4)
 	light_dir = lg.normalize(light_dir)
 
-	fmt.println("viewport:", viewport)
-	fmt.println("view    :", view)
-	fmt.println("proj    :", proj)
+	fmt.println("size      :", size)
+	fmt.println("viewport  :", viewport)
+	fmt.println("view      :", view)
+	fmt.println("proj      :", proj)
+	fmt.println("light_dir :", light_dir)
 
 	for y in -1 ..= 1 {for x in -1 ..= 1 {
-			models[x + y * 3 + 4] = cv.Model {
+			idx := y * 3 + x + 4 // 0..8
+			models[idx] = cv.Model {
 				trans = lg.matrix4_translate(cv.float3{f32(x), 0, f32(y)} * 2),
 				color = cv.color_hue_float4(rand.float32() * math.PI * 2, 0.3, 0.7),
-				tex   = rand.int31_max(pics_count),
+				tex   = i32(idx), // rand.int31_max(pics_count),
 			}
 		}}
 
@@ -166,8 +165,6 @@ on_create :: proc(app: ca.papp) -> int {
 }
 
 on_update :: proc(app: ca.papp) -> int {
-
-	pc := &ca.dib.canvas
 
 	if .MK_LBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_ndc(app)
@@ -199,8 +196,9 @@ on_update :: proc(app: ca.papp) -> int {
 		}
 	}
 
-	//cv.canvas_clear(pc, cv.COLOR_BLACK)
-	cv.canvas_clear(pc)
+	canvas := &ca.dib.canvas
+	//cv.canvas_clear(canvas, cv.COLOR_BLACK)
+	cv.canvas_clear(canvas)
 	mem.zero(&zbuffer, size_of(zbuffer))
 
 	view = lg.matrix4_look_at(eye, center, up)
@@ -251,7 +249,7 @@ on_update :: proc(app: ca.papp) -> int {
 			// transform the light vector to view coordinates
 			shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
 
-			cv.draw_triangle(pc, zbuffer[:], &viewport, {v0, v1, v2}, &shader)
+			cv.draw_triangle(canvas, zbuffer[:], &viewport, {v0, v1, v2}, &shader)
 		}
 	}
 

@@ -96,7 +96,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_textf(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -192,10 +192,10 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 		win32.DestroyWindow(hwnd)
 	case '0' ..= '9':
 		select = COLOR(u8(wparam) - u8('0'))
-	case ',':
-		select = COLOR((u8(select) - 1) % len(COLOR))
 	case '.':
 		select = COLOR((u8(select) + 1) % len(COLOR))
+	case ',':
+		select = COLOR((u8(select) - 1) % len(COLOR))
 	case:
 		fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
 	}

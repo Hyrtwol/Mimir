@@ -49,10 +49,9 @@
 			"command": "odin",
 			"args": [
 				"test",
-				"..\\${relativeFileDirname}",
-				"-resource:..\\doc\\odin.rc",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared"
+				".",
+				"${config:odin.shared}",
+				"${config:odin.libs}"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -60,7 +59,7 @@
 				"isDefault": false
 			},
 			"options": {
-				"cwd": "${workspaceFolder}/bin"
+				"cwd": "${relativeFileDirname}"
 			}
 		},
 		{
@@ -149,7 +148,7 @@
 		{
 			"label": "format",
 			"type": "process",
-			"command": "D:/dev/odin/shared/ols/odinfmt.exe",
+			"command": "${config:odin.odinfmt}",
 			"args": [
 				"-w",
 				"${workspaceFolder}\\${relativeFile}"
@@ -173,7 +172,14 @@
 				//"${workspaceFolder:src}",
 				"${cwd}",
 				"${relativeFile}",
-				"${relativeFileDirname}"
+				"${relativeFileDirname}",
+				"${env:ODIN_ROOT}",
+				"${env:ODIN_SHARED}",
+				"${config:editor.wordWrapColumn}",
+				"${config:cSpell.enableFiletypes}",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
+				"${config:odin.odinfmt}"
 			],
 			"group": {
 				"kind": "none",

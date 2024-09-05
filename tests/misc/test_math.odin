@@ -1,12 +1,13 @@
 package test_misc
 
+import "base:runtime"
 import "core:bytes"
 import "core:fmt"
 import "core:math"
+import "core:math/fixed"
 import "core:math/linalg"
-import "base:runtime"
 import "core:testing"
-import o "shared:ounit"
+import o "libs:ounit"
 
 int2 :: [2]i32
 
@@ -135,8 +136,7 @@ find_epsilon_for_f64 :: proc(t: ^testing.T) {
 }
 
 @(test)
-find_epsilon_for_f32 :: proc(t: ^testing.T) // The AMD CPU finds the same epsilon for both float and double
-{
+find_epsilon_for_f32 :: proc(t: ^testing.T) { // The AMD CPU finds the same epsilon for both float and double
 	epsilon, next, one, oneplusnext: f32
 	epsilon = 1
 	next = epsilon / 2
@@ -221,7 +221,7 @@ determinant_3x3 :: proc(t: ^testing.T) {
 	//if (lg.determinant(ABC)<1e-3) {return {-1,1,1}} // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
 	det := linalg.matrix3x3_determinant(ABC)
 	//fmt.println("det:", det)
-	o.expect_valuef(t, det, 10000, 0.0001)
+	o.expect_float(t, det, 10000, 0.0001)
 }
 
 @(test)
@@ -280,4 +280,42 @@ inverse_transpose_3x3 :: proc(t: ^testing.T) {
 	testing.expectf(t, [3]f32{0.0099999998, -0, -0.0099999998} == a[0], "a[0]=%v", a[0])
 	testing.expectf(t, [3]f32{-0.003, 0.0099999998, -0.0069999998} == a[1], "a[1]=%v", a[1])
 	testing.expectf(t, [3]f32{-0.34999999, -0.5, 1.8499999} == a[2], "a[2]=%v", a[2])
+}
+
+fixed_i8_7 :: fixed.Fixed(i8, 7)
+fixed_u8_8 :: fixed.Fixed(u8, 8)
+
+@(test)
+small_fixed_i8 :: proc(t: ^testing.T) {
+	fv : fixed_i8_7
+	// raw := i8(127)
+	// fv = transmute(fixed_i8_7)raw
+	fixed.init_from_parts(&fv, 0, 127)
+	testing.expect_value(t, fixed.to_f64(fv), 0.9921875)
+	fixed.init_from_f64(&fv, 0.9921875)
+	testing.expect_value(t, fixed.to_f64(fv), 0.9921875)
+	// fixed.init_from_parts(&fv, -1, 127)
+	// testing.expect_value(t, fixed.to_f64(fv), -0.9921875)
+}
+
+@(test)
+small_fixed_u8 :: proc(t: ^testing.T) {
+	fv : fixed_u8_8
+	// raw := u8(255)
+	// fv = transmute(fixed_u8_8)raw
+	fixed.init_from_parts(&fv, 0, 255)
+	testing.expect_value(t, fixed.to_f64(fv), 0.99609375)
+	// fixed.init_from_f64(&fv, 0.99609375)
+	// testing.expect_value(t, fixed.to_f64(fv), 0.99609375)
+}
+
+@(test)
+bit_shift :: proc(t: ^testing.T) {
+	v: u32 = 0b10101010
+	//testing.expect_value(t, v, 170)
+	o.expect_u32(t, v, 0xAA)
+	o.expect_u32(t, v >> 1, 0x55)
+	o.expect_u32(t, v / 2, 0x55)
+	o.expect_u32(t, v * 0b11110000, 0x00009F60)
+
 }

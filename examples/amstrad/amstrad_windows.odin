@@ -63,9 +63,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if settings == nil {win32app.show_error_and_panic("Missing settings");return 1}
 	app := (papp)(settings.app)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-
-	//fmt.println(#procedure, hwnd, pcs, app)
 	set_app(hwnd, app)
+	//fmt.println(#procedure, hwnd, pcs, app)
 
 	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
 
@@ -93,8 +92,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	{
 		hdc := win32.GetDC(hwnd)
 		defer win32.ReleaseDC(hwnd, hdc)
-
-		app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
+		app.hbitmap = win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
 	}
 
 	//fill_screen_with_image(app)
@@ -153,7 +151,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	if settings == nil {return 1}
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_textf(hwnd, "%s %v %v", settings.title, settings.window_size, type)
+	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
 	return 0
 }
 
@@ -287,8 +285,6 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-// odinfmt: enable
-
 total: z.zusize = 0
 reps := 0
 
@@ -301,7 +297,7 @@ run_app :: proc(app: papp) {
 
 	inst := win32app.get_instance()
 	atom := win32app.register_window_class(inst, settings.wndproc)
-	_/*hwnd:*/ = win32app.create_and_show_window(inst, atom, &settings)
+	_ = win32app.create_and_show_window(inst, atom, &settings)
 
 	for win32app.pull_messages() {
 		for running {
