@@ -1,7 +1,7 @@
 package main
 
 import "core:fmt"
-import newton "libs:newton_dynamics"
+import newton "shared:newton_dynamics"
 
 main :: proc() {
 	fmt.println("Newton Dynamics")

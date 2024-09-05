@@ -6,7 +6,7 @@ import "core:math"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:testing"
-import o "libs:ounit"
+import o "shared:ounit"
 
 EPSILON :: o.EPSILON
 expect_size :: o.expect_size

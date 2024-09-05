@@ -13,7 +13,6 @@ import xatlas          "shared:xatlas"
 import xterm           "shared:xterm"
 import z80             "shared:z80"
 
-import ounit           "libs:ounit"
 import canvas          "libs:tlc/canvas"
 import csharp          "libs:csharp"
 //import fft             "libs:fft"

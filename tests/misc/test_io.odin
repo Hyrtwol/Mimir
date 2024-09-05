@@ -6,7 +6,7 @@ import fp "core:path/filepath"
 import "core:slice"
 import "core:strings"
 import "core:testing"
-import "libs:ounit"
+import "shared:ounit"
 
 @(test)
 write_hello_txt :: proc(t: ^testing.T) {

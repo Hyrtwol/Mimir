@@ -2,7 +2,7 @@ package test_amstrad
 
 import "core:fmt"
 import "core:testing"
-import o "libs:ounit"
+import o "shared:ounit"
 import z80 "shared:z80"
 import z80d ".."
 

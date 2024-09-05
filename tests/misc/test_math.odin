@@ -7,7 +7,7 @@ import "core:math"
 import "core:math/fixed"
 import "core:math/linalg"
 import "core:testing"
-import o "libs:ounit"
+import o "shared:ounit"
 
 int2 :: [2]i32
 

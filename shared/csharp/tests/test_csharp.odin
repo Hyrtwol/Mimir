@@ -6,7 +6,7 @@ import "base:intrinsics"
 import _c "core:c"
 import win32 "core:sys/windows"
 import "core:testing"
-import o "libs:ounit"
+import o "shared:ounit"
 
 @(test)
 verify_type_sizes :: proc(t: ^testing.T) {

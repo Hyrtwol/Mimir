@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:testing"
-import "libs:ounit"
+import "shared:ounit"
 
 @(test)
 bit_sets :: proc(t: ^T) {

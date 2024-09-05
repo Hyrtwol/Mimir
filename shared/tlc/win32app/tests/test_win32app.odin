@@ -10,7 +10,7 @@ import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"
 import win32ex "libs:sys/windows"
-import ot "libs:ounit"
+import ot "shared:ounit"
 
 L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring

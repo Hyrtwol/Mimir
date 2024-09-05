@@ -3,7 +3,7 @@ package test_newton
 import oz ".."
 import "core:fmt"
 import "core:testing"
-import "libs:ounit"
+import "shared:ounit"
 
 expect_size :: ounit.expect_size
 expect_value :: ounit.expect_value
