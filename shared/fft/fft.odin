@@ -8,7 +8,8 @@ integer :: i32
 single :: f32
 double :: f64
 TFloat :: single
-TComplex :: complex32
+//TComplex :: complex32
+TComplex :: complex64
 
 cMinFloat :: 1.5E-45
 cMaxFloat :: 3.4E38
@@ -184,8 +185,9 @@ FFT_5 :: proc(Z: ^[^]TComplex) {
 
 	T5 = T1 + T2
 	Z[0] = Z[0] + T5
-	M1 = c51 * T5
-	M2 = c52 * (T1 - T2)
+	//M1 = c51 * T5 // M1   := ComplexScl(c51, T5);
+	M1 = complex(c51, 0) * T5
+	M2 = complex(c52, 0) * (T1 - T2)
 
 	// M3.Re = -c53 * (T3.Im + T4.Im)
 	// M3.Im = c53 * (T3.Re + T4.Re)
@@ -218,8 +220,8 @@ FFT_8 :: proc(Z: ^[]TComplex) {
 	A[2] = Z[4];B[2] = Z[5]
 	A[3] = Z[6];B[3] = Z[7]
 
-	FFT_4(&cast([]complex32)A)
-	FFT_4(&cast([]complex32)B)
+	FFT_4(&A[:])
+	FFT_4(&B[:])
 
 	Gem = c8 * (real(B[1]) + imag(B[1]))
 	//B[1].Im = c8 * (imag(B[1]) - B[1].Re)
@@ -230,9 +232,9 @@ FFT_8 :: proc(Z: ^[]TComplex) {
 	// B[2].Re = Gem
 	B[2] = complex(-real(B[2]), Gem)
 	Gem = c8 * (imag(B[3]) - real(B[3]))
-	// B[3].Im = -c8 * (real(zB[3]) + imag(B[3]))
+	// B[3].Im = -c8 * (real(B[3]) + imag(B[3]))
 	// B[3].Re = Gem
-	B[2] = complex(-c8 * (real(zB[3]) + imag(B[3])), Gem)
+	B[2] = complex(-c8 * (real(B[3]) + imag(B[3])), Gem)
 
 	Z[0] = A[0] + B[0];Z[4] = A[0] - B[0]
 	Z[1] = A[1] + B[1];Z[5] = A[1] - B[1]
@@ -249,8 +251,8 @@ FFT_10 :: proc(Z: ^[]TComplex) {
 	A[3] = Z[6];B[3] = Z[1]
 	A[4] = Z[8];B[4] = Z[3]
 
-	FFT_5(cast(^[]complex32)&A)
-	FFT_5(cast(^[]complex32)&B)
+	FFT_5(cast(^[]TComplex)&A)
+	FFT_5(cast(^[]TComplex)&B)
 
 	Z[0] = A[0] + B[0];Z[5] = A[0] - B[0]
 	Z[6] = A[1] + B[1];Z[1] = A[1] - B[1]
@@ -371,17 +373,17 @@ SynthesizeFFT :: proc(Sofar, Radix, Remain: integer, Y: ^[]TComplex) {
 
 			switch Radix {
 			case 2:
-				FFT_2(cast(^[]complex32)&Z)
+				FFT_2(cast(^[]TComplex)&Z)
 			case 3:
-				FFT_3(cast(^[]complex32)&Z)
+				FFT_3(cast(^[]TComplex)&Z)
 			case 4:
-				FFT_4(cast(^[]complex32)&Z)
+				FFT_4(cast(^[]TComplex)&Z)
 			case 5:
-				FFT_5(cast(^[]complex32)&Z)
+				FFT_5(cast(^[]TComplex)&Z)
 			case 8:
-				FFT_8(cast(^[]complex32)&Z)
+				FFT_8(cast(^[]TComplex)&Z)
 			case 10:
-				FFT_10(cast(^[]complex32)&Z)
+				FFT_10(cast(^[]TComplex)&Z)
 			case:
 				FFT_Prime(Radix) // Any larger prime number than 5 (so 7, 11, 13, etc, up to cMaxPrimeFactor)
 			}

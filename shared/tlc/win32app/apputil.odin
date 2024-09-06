@@ -170,7 +170,7 @@ window_settings :: struct {
 	dwStyle:     u32,
 	dwExStyle:   u32,
 	wndproc:     win32.WNDPROC,
-	run:         proc(this: ^window_settings) -> win32.HWND,
+	run:         proc(this: ^window_settings) -> int,
 	app:         rawptr,
 	sleep:       time.Duration,
 }
@@ -268,12 +268,13 @@ pull_messages :: proc() -> bool {
 	return true
 }
 
-loop_messages :: proc() {
+loop_messages :: proc() -> int {
 	msg: win32.MSG
 	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessageW(&msg)
 	}
+	return int(msg.wParam)
 }
 
 prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
@@ -287,10 +288,10 @@ prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom:
 	return
 }
 
-run :: proc(settings: ^window_settings) -> win32.HWND {
-	_, _, hwnd := prepare_run(settings)
-	loop_messages()
-	return hwnd
+run :: proc(settings: ^window_settings) -> int {
+	_, _, _ = prepare_run(settings)
+	exit_code := loop_messages()
+	return exit_code
 }
 
 // run :: proc(settings: ^window_settings, ) {

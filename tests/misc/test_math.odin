@@ -317,5 +317,13 @@ bit_shift :: proc(t: ^testing.T) {
 	o.expect_u32(t, v >> 1, 0x55)
 	o.expect_u32(t, v / 2, 0x55)
 	o.expect_u32(t, v * 0b11110000, 0x00009F60)
+}
 
+@(test)
+complex_mult :: proc(t: ^testing.T) {
+	v: complex32 = complex(1, 2)
+	ff: complex32 = complex(0.5, 0)
+	c := v * ff
+	e: complex32 = complex(0.5, 1.0)
+	testing.expect_value(t, c, e)
 }

@@ -327,43 +327,6 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-/*
-register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
-	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
-	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
-	if icon == nil {show_error_and_panic("Missing icon")}
-	cursor := win32.LoadCursorW(nil, wstring(win32._IDC_ARROW))
-	if cursor == nil {show_error_and_panic("Missing cursor")}
-	wcx := win32.WNDCLASSEXW {
-		cbSize        = size_of(win32.WNDCLASSEXW),
-		style         = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC,
-		lpfnWndProc   = wndproc,
-		cbClsExtra    = 0,
-		cbWndExtra    = 0,
-		hInstance     = instance,
-		hIcon         = icon,
-		hCursor       = cursor,
-		hbrBackground = nil,
-		lpszMenuName  = nil,
-		lpszClassName = L("OdinMainClass"),
-		hIconSm       = icon,
-	}
-	return win32.RegisterClassExW(&wcx)
-}
-
-unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
-	if atom == 0 {show_error_and_panic("atom is zero")}
-	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
-}
-
-adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
-	rect := win32.RECT{0, 0, size.x, size.y}
-	if win32.AdjustWindowRect(&rect, dwStyle, false) {
-		size^ = win32app.get_rect_size(&rect)
-	}
-}
-*/
-
 center_window :: proc(position: ^int2, size: int2) {
 	if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
 		dmsize := int2{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
@@ -384,14 +347,14 @@ create_window :: #force_inline proc(
 	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(uintptr(atom)), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
 
-message_loop :: proc() -> int {
-	msg: win32.MSG
-	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
-		win32.TranslateMessage(&msg)
-		win32.DispatchMessageW(&msg)
-	}
-	return int(msg.wParam)
-}
+// loop_messages :: proc() -> int {
+// 	msg: win32.MSG
+// 	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
+// 		win32.TranslateMessage(&msg)
+// 		win32.DispatchMessageW(&msg)
+// 	}
+// 	return int(msg.wParam)
+// }
 
 run :: proc() -> int {
 	window := Window {
@@ -436,7 +399,7 @@ run :: proc() -> int {
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)
 
-	return message_loop()
+	return win32app.loop_messages()
 }
 
 main :: proc() {
