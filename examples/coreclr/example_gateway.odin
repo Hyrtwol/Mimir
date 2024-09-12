@@ -5,7 +5,7 @@ import "core:os"
 import "base:runtime"
 import clr "shared:coreclr"
 
-CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.4"
+CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.8"
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
 	if hr != .ok {fmt.printfln("Error %v (0x%X8) @ %v", hr, u32(hr), loc)}
