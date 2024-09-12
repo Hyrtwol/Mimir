@@ -8,11 +8,12 @@
 			"args": [
 				"run",
 				"..\\${relativeFileDirname}",
-				"-resource:..\\doc\\odin.rc",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared",
+				"${config:odin.rc}",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
 				"-vet",
-				"-strict-style"
+				"-strict-style",
+				"-o:speed"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -30,9 +31,12 @@
 			"args": [
 				"build",
 				"..\\${relativeFileDirname}",
-				"-resource:..\\doc\\odin.rc",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared"
+				"${config:odin.rc}",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
+				"-vet",
+				"-strict-style",
+				"-o:speed"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -69,9 +73,11 @@
 			"args": [
 				"build",
 				"..\\${relativeFileDirname}",
-				"-resource:..\\doc\\odin.rc",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared",
+				"${config:odin.rc}",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
+				"-vet",
+				"-strict-style",
 				"-debug"
 			],
 			"problemMatcher": [],
@@ -90,10 +96,12 @@
 			"args": [
 				"check",
 				"..\\${relativeFileDirname}",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared",
-				"-no-entry-point",
-				"-vet"
+				"${config:odin.rc}",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
+				"-vet",
+				"-strict-style",
+				"-no-entry-point"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -111,8 +119,8 @@
 			"args": [
 				"strip-semicolon",
 				"..\\${relativeFileDirname}",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
 				"-no-entry-point"
 			],
 			"problemMatcher": [],
@@ -131,8 +139,8 @@
 			"args": [
 				"doc",
 				"..\\${relativeFileDirname}", //"-doc-format",
-				"-collection:shared=..\\..\\shared",
-				"-collection:libs=..\\shared",
+				"${config:odin.shared}",
+				"${config:odin.libs}",
 				">",
 				"${fileDirnameBasename}.txt"
 			],
@@ -179,7 +187,8 @@
 				"${config:cSpell.enableFiletypes}",
 				"${config:odin.shared}",
 				"${config:odin.libs}",
-				"${config:odin.odinfmt}"
+				"${config:odin.odinfmt}",
+				"${config:odin.flags}"
 			],
 			"group": {
 				"kind": "none",
