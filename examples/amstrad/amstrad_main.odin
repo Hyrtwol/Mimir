@@ -29,13 +29,6 @@ papp :: ^application
 main :: proc() {
 	fmt.println("Amstrad")
 
-	// snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
-	// fmt.printfln("reading %s", snapshot_path)
-	// ss: snapshot
-	// //ram: bank64kb
-	// err := a.load_snapshot(snapshot_path, &ss, memory[:])
-	// assert(err == 0)
-
 	cpu: Z80
 	init_cpu(&cpu)
 	app: application = {

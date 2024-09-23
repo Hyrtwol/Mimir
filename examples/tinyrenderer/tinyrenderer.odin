@@ -58,20 +58,10 @@ pics_ps: i32 : size_of(cv.byte4)
 pics_byte_size: i32 : pics_w * pics_h * pics_ps
 pics_count := i32(len(pics)) / pics_byte_size
 
-
-
-// odinfmt: disable
-
 light_dir := vec3{1, -1, 1} // light source
 eye       := vec3{1, -2.5, 3} // camera position
 center    := vec3{0, 0, 0} // camera direction
 up        := vec3{0, 1, 0} // camera up vector
-
-// odinfmt: enable
-
-barycentric :: #force_inline proc "contextless" (abc: ^mat3x3, x, y: i32) -> vec3 {
-	return lg.inverse_transpose(abc^) * vec3{f32(x), f32(y), 1}
-}
 
 vert_count :: 6
 vertices: [vert_count]cv.float3 = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
@@ -208,8 +198,6 @@ on_update :: proc(app: ca.papp) -> int {
 		rot_y += app.delta * 0.5
 		rotate = cv.matrix4_rotate_y_f32(rot_y)
 	}
-
-	// for i in 0..<vert_count {vert[i] = cv.to_float4(vertices[i])}
 
 	for &model in models {
 

@@ -183,8 +183,7 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	det := linalg.determinant(abc)
 	if det < 1e-3 {return}
 
-	cmax := canvas_max(pc)
-	cmin := int2{0, 0}
+	cmin, cmax := int2{0, 0}, canvas_max(pc)
 	bbmin, bbmax: int2 = cmax, cmin
 	for i in 0 ..< 3 {
 		min_max_int2_from_float4(&bbmin, &bbmax, pts2[i])

@@ -19,8 +19,6 @@ dib: win32app.DIB
 settings := win32app.create_window_settings(int2{640, 480}, wndproc)
 app_action :: #type proc(app: papp) -> int
 
-on_idle :: proc(app: papp) -> int {return 0}
-
 key_state_count :: 128
 key_state :: bool
 key_states :: [key_state_count]key_state
@@ -38,6 +36,8 @@ application :: struct {
 	char_queue:              queue.Queue(u8),
 }
 papp :: ^application
+
+on_idle :: proc(app: papp) -> int {return 0}
 
 app: application = {
 	size    = {320, 240},
@@ -211,7 +211,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	return 0
 }
 
-handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+handle_mouse_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app.mouse_pos = win32app.decode_lparam_as_int2(lparam)
 	app.mouse_buttons = win32app.decode_wparam_as_mouse_key_state(wparam)
 	return 0
@@ -221,18 +221,18 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	// odinfmt: disable
 	switch msg {
-	case win32.WM_CREATE:       return WM_CREATE(hwnd, lparam)
-	case win32.WM_DESTROY:      return WM_DESTROY(hwnd)
-	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_PAINT:        return WM_PAINT(hwnd)
+	case win32.WM_CREATE:       return WM_CREATE(hwnd, lparam) // 0x0001
+	case win32.WM_DESTROY:      return WM_DESTROY(hwnd) // 0x0002
+	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam) // 0x0005
+	case win32.WM_PAINT:        return WM_PAINT(hwnd) // 0x000f
 	case win32.WM_ERASEBKGND:   return 1 // 0x0014
 	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam) // 0x0102
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam) // 0x0113
-	case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
-	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
-	case win32.WM_MOUSEMOVE:    return handle_input(hwnd, wparam, lparam) // 0x0200
-	case win32.WM_LBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
-	case win32.WM_RBUTTONDOWN:  return handle_input(hwnd, wparam, lparam)
+	case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam) // 0x0100
+	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam) // 0x0101
+	case win32.WM_MOUSEMOVE:    return handle_mouse_input(hwnd, wparam, lparam) // 0x0200
+	case win32.WM_LBUTTONDOWN:  return handle_mouse_input(hwnd, wparam, lparam) // 0x0201
+	case win32.WM_RBUTTONDOWN:  return handle_mouse_input(hwnd, wparam, lparam) // 0x0204
 	case:                       return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable

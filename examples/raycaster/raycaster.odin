@@ -34,14 +34,14 @@ plane: vector2
 
 reciprocal_abs :: #force_inline proc "contextless" (v: scalar) -> scalar {return (v == 0) ? 1e30 : abs(1 / v)}
 
-on_create :: proc(app: ca.papp) -> int {
-	assert(pics_count > 0)
-	return 0
-}
+// on_create :: proc(app: ca.papp) -> int {
+// 	assert(pics_count > 0)
+// 	return 0
+// }
 
-on_destroy :: proc(app: ca.papp) -> int {
-	return 0
-}
+// on_destroy :: proc(app: ca.papp) -> int {
+// 	return 0
+// }
 
 handle_input :: proc(app: ca.papp) {
 	frameTime := scalar(app.delta)
