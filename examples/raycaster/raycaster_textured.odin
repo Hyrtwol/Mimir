@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package raycaster
 
 import "core:math"

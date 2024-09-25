@@ -1,4 +1,4 @@
-// +build windows
+#+build windows
 package sys_windows_ex
 
 import win32 "core:sys/windows"

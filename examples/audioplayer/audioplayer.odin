@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package audioplayer
 
 import "core:fmt"

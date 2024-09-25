@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package z80emulator
 
 import "core:fmt"

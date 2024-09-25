@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package raycaster
 
 import "base:intrinsics"
@@ -32,7 +32,20 @@ pos: vector2 = {22, 11.5}
 dir: vector2
 plane: vector2
 
-reciprocal_abs :: #force_inline proc "contextless" (v: scalar) -> scalar {return (v == 0) ? 1e30 : abs(1 / v)}
+@(private = "file")
+reciprocal_abs_scalar :: #force_inline proc "contextless" (v: scalar) -> scalar {
+	return (v == 0) ? 1e30 : abs(1 / v)
+}
+
+@(private = "file")
+reciprocal_abs_vector :: #force_inline proc "contextless" (v: vector2) -> vector2 {
+	return vector2{reciprocal_abs(v.x), reciprocal_abs(v.y)}
+}
+
+reciprocal_abs :: proc {
+	reciprocal_abs_scalar,
+	reciprocal_abs_vector,
+}
 
 // on_create :: proc(app: ca.papp) -> int {
 // 	assert(pics_count > 0)
@@ -76,8 +89,10 @@ main :: proc() {
 	//ca.app.update = on_update_raycaster_flat;worldMap = worldmap_flat
 	//ca.app.update = on_update_raycaster_textured;worldMap = worldmap_textured
 	//ca.app.update = on_update_raycaster_floor;worldMap = worldmap_floor
-	ca.app.create = on_create_raycaster_sprites
-	ca.app.update = on_update_raycaster_sprites;worldMap = worldmap_sprites
+	//ca.app.create = on_create_raycaster_sprites
+	//ca.app.update = on_update_raycaster_sprites;worldMap = worldmap_sprites
+	ca.app.create = on_create_raycaster_pitch
+	ca.app.update = on_update_raycaster_pitch;worldMap = worldmap_pitch
 	//ca.app.destroy = on_destroy
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.settings.sleep = time.Millisecond * 5

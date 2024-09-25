@@ -1,5 +1,5 @@
-// +build windows
-// +vet
+#+build windows
+#+vet
 package win32app
 
 import "base:intrinsics"

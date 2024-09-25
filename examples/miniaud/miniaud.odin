@@ -1,4 +1,4 @@
-// +vet
+#+vet
 // https://gist.github.com/p1xelHer0/abed4728096ea3a88af7802cbe46cf08
 // https://miniaud.io/docs/
 package main

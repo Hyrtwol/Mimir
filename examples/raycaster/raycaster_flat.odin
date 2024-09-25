@@ -1,4 +1,5 @@
-// +vet
+// https://lodev.org/cgtutor/raycasting.html
+#+vet
 package raycaster
 
 import cv "libs:tlc/canvas"

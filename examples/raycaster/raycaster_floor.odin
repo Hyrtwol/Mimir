@@ -1,4 +1,5 @@
-// +vet
+// https://lodev.org/cgtutor/raycasting2.html
+#+vet
 package raycaster
 
 import "core:math"

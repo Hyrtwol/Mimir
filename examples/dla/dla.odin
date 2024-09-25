@@ -1,4 +1,4 @@
-// +vet
+#+vet
 // https://en.wikipedia.org/wiki/Diffusion-limited_aggregation
 package dla
 

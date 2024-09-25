@@ -1,4 +1,4 @@
-// https://lodev.org/cgtutor/raycasting3.html
+// https://lodev.org/cgtutor/raycasting4.html
 #+vet
 package raycaster
 
@@ -8,7 +8,7 @@ import "core:math/linalg"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
-worldmap_sprites: worldMapT = {
+worldmap_pitch: worldMapT = {
 	{8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, 4, 6, 4, 4, 6, 4, 6, 4, 4, 4, 6, 4},
 	{8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4},
 	{8, 0, 3, 3, 0, 0, 0, 0, 0, 8, 8, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6},
@@ -35,55 +35,7 @@ worldmap_sprites: worldMapT = {
 	{2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 5, 5, 5, 5, 5, 5, 5, 5, 5},
 }
 
-Sprite :: struct {
-	pos: vector2,
-	texture: i32,
-}
-
-numSprites :: 19
-
-sprite: [numSprites]Sprite = {
-	{{20.5, 11.5}, 10}, //green light in front of playerstart
-	//green lights in every room
-	{{18.5, 4.5}, 10},
-	{{10.0, 4.5}, 10},
-	{{10.0, 12.5}, 10},
-	{{3.5, 6.5}, 10},
-	{{3.5, 20.5}, 10},
-	{{3.5, 14.5}, 10},
-	{{14.5, 20.5}, 10},
-
-	//row of pillars in front of wall: fisheye test
-	{{18.5, 10.5}, 9},
-	{{18.5, 11.5}, 9},
-	{{18.5, 12.5}, 9},
-
-	//some barrels around the map
-	{{21.5, 1.5}, 8},
-	{{15.5, 1.5}, 8},
-	{{16.0, 1.8}, 8},
-	{{16.2, 1.2}, 8},
-	{{3.5, 2.5}, 8},
-	{{9.5, 15.5}, 8},
-	{{10.0, 15.1}, 8},
-	{{10.5, 15.8}, 8},
-}
-
-//1D Zbuffer
-ZBuffer: [screenWidth]scalar
-
-//arrays used to sort the sprites
-sprite_index :: struct {
-	sprite: ^Sprite,
-	dist:  scalar,
-}
-sprite_order: [numSprites]sprite_index
-
-sprite_sort :: proc(l, r: sprite_index) -> bool {
-	return l.dist > r.dist
-}
-
-on_create_raycaster_sprites :: proc(app: ca.papp) -> int {
+on_create_raycaster_pitch :: proc(app: ca.papp) -> int {
 	assert(pics_count > 0)
 	for i in 0 ..< numSprites {
 		sprite_order[i] = {&sprite[i], 0}
@@ -91,7 +43,7 @@ on_create_raycaster_sprites :: proc(app: ca.papp) -> int {
 	return 0
 }
 
-on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
+on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 
 	rot := matrix2_rotate(heading)
 	dir = rot[0]
@@ -104,7 +56,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 	h_half := h / 2
 
 	// WALL CASTING
-	wm := scalar(w) - 1
+	wm := scalar(w) //- 1
 	for x in 0 ..< w {
 		// calculate ray position and direction
 		cameraX := (2 * scalar(x) / wm) - 1 //x-coordinate in camera space
@@ -125,11 +77,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		// unlike (dir.x, dir.y) is not 1, however this does not matter, only the
 		// ratio between deltaDistX and deltaDistY matters, due to the way the DDA
 		// stepping further below works. So the values can be computed as below.
-		//  Division through zero is prevented, even though technically that's not
-		//  needed in C++ with IEEE 754 floating point values.
-		// deltaDistX := reciprocal_abs(rayDir.x)
-		// deltaDistY := reciprocal_abs(rayDir.y)
-		deltaDist := vector2{reciprocal_abs(rayDir.x), reciprocal_abs(rayDir.y)}
+		deltaDist := reciprocal_abs(rayDir)
 		//perpWallDist: scalar
 
 		// what direction to step in x or y-direction (either +1 or -1)
@@ -139,14 +87,14 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		side: i32 // was a NS or a EW wall hit?
 
 		// calculate step and initial sideDist
-		if (rayDir.x < 0) {
+		if rayDir.x < 0 {
 			stepX = -1
 			sideDistX = (pos.x - scalar(mapX)) * deltaDist.x
 		} else {
 			stepX = 1
 			sideDistX = (scalar(mapX) + 1.0 - pos.x) * deltaDist.x
 		}
-		if (rayDir.y < 0) {
+		if rayDir.y < 0 {
 			stepY = -1
 			sideDistY = (pos.y - scalar(mapY)) * deltaDist.y
 		} else {
@@ -156,7 +104,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		//perform DDA
 		for hit == 0 {
 			//jump to next map square, either in x-direction, or in y-direction
-			if (sideDistX < sideDistY) {
+			if sideDistX < sideDistY {
 				sideDistX += deltaDist.x
 				mapX += stepX
 				side = 0
@@ -177,7 +125,6 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		perpWallDist: scalar = side == 0 ? sideDistX - deltaDist.x : sideDistY - deltaDist.y
 
 		//Calculate height of line to draw on screen
-		//lineHeight := (i32)(scalar(h) / perpWallDist)
 		lineHeight := scalar(h) / perpWallDist
 		lineHeight_half := lineHeight / 2
 
@@ -185,9 +132,9 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 
 		//calculate lowest and highest pixel to fill in current stripe
 		drawStart := i32(-lineHeight_half + scalar(h_half))
-		if (drawStart < 0) {drawStart = 0}
+		if drawStart < 0 {drawStart = 0}
 		drawEnd := i32(lineHeight_half + scalar(h_half))
-		if (drawEnd >= h) {drawEnd = h - 1}
+		if drawEnd >= h {drawEnd = h - 1}
 
 		//texturing calculations
 		texNum := worldMap[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
@@ -195,17 +142,17 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
-		if (side == 0) {wallX = pos.y + perpWallDist * rayDir.y} else {wallX = pos.x + perpWallDist * rayDir.x}
+		if side == 0 {wallX = pos.y + perpWallDist * rayDir.y} else {wallX = pos.x + perpWallDist * rayDir.x}
 		wallX -= math.floor(wallX)
 
 		//x coordinate on the texture
 		texX := i32(wallX * scalar(pics_w))
-		if (side == 0 && rayDir.x > 0) {texX = pics_wm - texX}
-		if (side == 1 && rayDir.y < 0) {texX = pics_wm - texX}
+		if side == 0 && rayDir.x > 0 {texX = pics_wm - texX}
+		if side == 1 && rayDir.y < 0 {texX = pics_wm - texX}
 
 		// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
 		// How much to increase the texture coordinate per screen pixel
-		step: scalar = scalar(pics_h) / scalar(lineHeight)
+		step : scalar = scalar(pics_h) / scalar(lineHeight)
 		// Starting texture coordinate
 		//texPos := (scalar(drawStart) - scalar(pitch) - scalar(h_half) + lineHeight_half) * step
 		texPos := (scalar(drawStart) - scalar(h_half) + lineHeight_half) * step

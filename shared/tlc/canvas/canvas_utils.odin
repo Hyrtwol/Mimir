@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package canvas
 
 import "base:intrinsics"

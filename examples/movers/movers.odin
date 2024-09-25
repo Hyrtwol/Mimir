@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package movers
 
 import "base:intrinsics"

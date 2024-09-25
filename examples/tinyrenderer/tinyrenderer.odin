@@ -17,6 +17,8 @@ import ca "libs:tlc/canvas_app"
 
 _ :: fmt
 
+USE_TRACKING_ALLOCATOR :: true
+
 vec2 :: lg.Vector2f32
 vec3 :: lg.Vector3f32
 vec4 :: lg.Vector4f32
@@ -245,11 +247,26 @@ on_update :: proc(app: ca.papp) -> int {
 }
 
 main :: proc() {
+
+	when USE_TRACKING_ALLOCATOR {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		defer mem.tracking_allocator_destroy(&track)
+		context.allocator = mem.tracking_allocator(&track)
+	}
+
 	ca.app.size = {width, height}
 	ca.app.create = on_create
 	ca.app.update = on_update
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
-	// fmt.println("app:", ca.app)
-	// fmt.println("z min/max:", cv.minz, cv.maxz)
+
+	when USE_TRACKING_ALLOCATOR {
+		for _, leak in track.allocation_map {
+			fmt.printf("%v leaked %m\n", leak.location, leak.size)
+		}
+		for bad_free in track.bad_free_array {
+			fmt.printf("%v allocation %p was freed badly\n", bad_free.location, bad_free.memory)
+		}
+	}
 }

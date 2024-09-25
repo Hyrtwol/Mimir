@@ -1,4 +1,4 @@
-// +vet
+#+vet
 package test_owin
 
 import _w		".."

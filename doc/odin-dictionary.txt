@@ -23,6 +23,7 @@ expectf
 flac
 fmod
 fmodex
+glfw
 glsl
 hbitmap
 hbrush
