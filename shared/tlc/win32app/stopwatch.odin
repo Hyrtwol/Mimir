@@ -20,14 +20,14 @@ stopwatch :: struct {
 }
 
 performance_frequency: stopwatch_tick = 0
-@(private="file")
+@(private = "file")
 ticks_to_seconds: stopwatch_time = 0
-@(private="file")
+@(private = "file")
 ticks_to_millisecond: stopwatch_time = 0
-@(private="file")
+@(private = "file")
 ticks_to_timespan: stopwatch_time = 0
 
-@(private="file")
+@(private = "file")
 stopwatch_start :: proc(this: ^stopwatch) {
 	win32.Sleep(0)
 	this.stop_tick = 0
@@ -36,23 +36,23 @@ stopwatch_start :: proc(this: ^stopwatch) {
 	this.last_tick = this.start_tick
 }
 
-@(private="file")
+@(private = "file")
 stopwatch_stop :: proc(this: ^stopwatch) {
 	win32.QueryPerformanceCounter(cast(^win32.LARGE_INTEGER)&this.stop_tick)
 	this.elapsed_ticks = this.stop_tick - this.start_tick
 }
 
-@(private="file")
+@(private = "file")
 stopwatch_get_elapsed_seconds :: proc(this: ^stopwatch) -> stopwatch_time {
 	return stopwatch_time(this.elapsed_ticks) * ticks_to_seconds
 }
 
-@(private="file")
+@(private = "file")
 stopwatch_get_elapsed_ms :: proc(this: ^stopwatch) -> stopwatch_time {
 	return stopwatch_time(this.elapsed_ticks) * ticks_to_millisecond
 }
 
-@(private="file")
+@(private = "file")
 stopwatch_get_delta_seconds :: proc(this: ^stopwatch) -> stopwatch_time {
 	tick: stopwatch_tick
 	win32.QueryPerformanceCounter(cast(^win32.LARGE_INTEGER)&tick)
@@ -85,7 +85,8 @@ create_stopwatch :: proc() -> stopwatch {
 	return sw
 }
 
-/*@(init, private)
+/*
+@(init, private)
 _initialization :: proc() {
 	if win32.QueryPerformanceFrequency(cast(^win32.LARGE_INTEGER)&performance_frequency) {
 		// fmt.println("QueryPerformanceFrequency:", performance_frequency)
@@ -94,4 +95,5 @@ _initialization :: proc() {
 		ticks_to_timespan = 10_000_000.0 / performance_frequency
 	}
 	// QueryPerformanceCounter
-}*/
+}
+*/

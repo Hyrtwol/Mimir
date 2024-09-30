@@ -12,7 +12,7 @@ import "base:runtime"
 //import "core:time"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 import f "shared:flac"
 
 _ :: f

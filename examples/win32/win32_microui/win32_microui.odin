@@ -7,7 +7,7 @@ import "core:container/queue"
 import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 import mu "vendor:microui"
 
 _ :: mud

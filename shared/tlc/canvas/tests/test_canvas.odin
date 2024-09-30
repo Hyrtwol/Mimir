@@ -96,7 +96,7 @@ verify_amstrad_colors :: proc(t: ^testing.T) {
 	expect_color(t, cv.get_color_amstrad(.BRIGHT_WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 }
 
-@(private)
+@(private = "file")
 print_map :: proc(m: [3][3]i32) {
 	prefix :: "// "
 	format :: "% 2d"

@@ -6,14 +6,8 @@ import "base:intrinsics"
 import "base:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 import z "shared:z80"
-
-// aliases
-L :: intrinsics.constant_utf16_cstring
-wstring :: win32.wstring
-utf8_to_wstring :: win32.utf8_to_wstring
-UINT_PTR :: win32.UINT_PTR
 
 // constants
 IDT_TIMER1: win32.UINT_PTR : 10001

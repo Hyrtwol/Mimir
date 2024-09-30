@@ -24,12 +24,12 @@ canvas_zero :: #force_inline proc "contextless" (cv: ^canvas) {
 	cv.pixel_count = 0
 }
 
-@(private)
+@(private = "file")
 canvas_clear_color :: #force_inline proc "contextless" (cv: ^canvas, col: byte4) {
 	fill_screen(cv.pvBits, cv.pixel_count, col)
 }
 
-@(private)
+@(private = "file")
 canvas_clear_fast :: #force_inline proc "contextless" (cv: ^canvas) {
 	mem.zero(raw_data(cv.pvBits), int(cv.pixel_count * 4))
 }
@@ -39,24 +39,24 @@ canvas_clear :: proc {
 	canvas_clear_fast,
 }
 
-@(private)
+@(private = "file")
 canvas_set_dot_xy :: #force_inline proc "contextless" (cv: ^canvas, #any_int x, y: u32, col: byte4) {
 	if x < u32(cv.size.x) && y < u32(cv.size.y) {
 		cv.pvBits[y * cv.size.x + x] = col
 	}
 }
 
-@(private)
+@(private = "file")
 canvas_set_dot_uint2 :: #force_inline proc "contextless" (cv: ^canvas, pos: uint2, col: byte4) {
 	canvas_set_dot_xy(cv, pos.x, pos.y, col)
 }
 
-@(private)
+@(private = "file")
 canvas_set_dot_int2 :: #force_inline proc "contextless" (cv: ^canvas, pos: int2, col: byte4) {
 	canvas_set_dot_xy(cv, u32(pos.x), u32(pos.y), col)
 }
 
-@(private)
+@(private = "file")
 canvas_set_dot_float2 :: #force_inline proc "contextless" (cv: ^canvas, pos: float2, col: byte4) {
 	canvas_set_dot_xy(cv, u32(pos.x), u32(pos.y), col)
 }
@@ -68,7 +68,7 @@ canvas_set_dot :: proc {
 	canvas_set_dot_float2,
 }
 
-@(private)
+@(private = "file")
 color_fade_to_black :: #force_inline proc "contextless" (cp: ^color) {
 	if transmute(u32)(cp^) > 0 {
 		if cp.r > 0 {cp.r -= 1}
@@ -78,7 +78,7 @@ color_fade_to_black :: #force_inline proc "contextless" (cp: ^color) {
 	}
 }
 
-@(private)
+@(private = "file")
 canvas_fade_to_black :: proc(cv: ^canvas) {
 	cc := cv.pixel_count
 	bp := cv.pvBits
@@ -112,14 +112,14 @@ canvas_aspect :: #force_inline proc "contextless" (cv: ^canvas) -> f32 {
 	return f32(cv.size.x) / f32(cv.size.y)
 }
 
-@(private)
+@(private = "file")
 min_max_int2_from_float4 :: #force_inline proc "contextless" (min, max: ^int2, v: float4) {
 	p := to_int2(v.xy)
 	min^ = linalg.min(min^, p)
 	max^ = linalg.max(max^, p)
 }
 
-@(private)
+@(private = "file")
 min_max_int2_from_float2 :: #force_inline proc "contextless" (min, max: ^int2, v: float2) {
 	p := to_int2(v)
 	min^ = linalg.min(min^, p)
@@ -198,7 +198,6 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	// inverse transpose abc
 	it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det) // linalg.matrix3x3_inverse_transpose(abc)
 
-	ps := shader.ps
 	iw := i32(pc.size.x)
 	bits := pc.pvBits
 	pp: float3 = {0, 0, 1}
@@ -222,11 +221,9 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			idx := iy + x
 			zp := &zbuffer[idx]
 			if frag_depth < zp^ {continue}
-			//if frag_depth < zbuffer[idx] {continue}
 
-            if ps(shader, bc_clip, &color) {continue} // fragment shader can discard current fragment
+            if shader->ps(bc_clip, &color) {continue} // fragment shader can discard current fragment
 
-			//zbuffer[idx] = frag_depth
 			zp^ = frag_depth
 			//bits[idx] = to_color(frag_depth)
 			//bits[idx] = to_color(bc_clip)

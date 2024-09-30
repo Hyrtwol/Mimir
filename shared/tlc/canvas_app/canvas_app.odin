@@ -8,7 +8,7 @@ import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 
 TimerTickPS :: 5
 

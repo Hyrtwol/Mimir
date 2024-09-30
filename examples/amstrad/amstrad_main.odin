@@ -7,7 +7,7 @@ import "core:os"
 import fp "core:path/filepath"
 import win32 "core:sys/windows"
 import a "libs:amstrad"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 
 ROM_PATH := fp.clean("../data/z80/")
 AMSTRAD_PATH := fp.clean("../examples/amstrad/data/")

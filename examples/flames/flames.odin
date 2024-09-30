@@ -1,4 +1,4 @@
-// vet
+#+vet
 package main
 
 import "core:fmt"
@@ -10,7 +10,7 @@ import "base:runtime"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: cv.byte4

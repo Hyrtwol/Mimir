@@ -30,25 +30,25 @@ float2 :: cv.float2
 float3 :: cv.float3
 float4 :: cv.float4
 float3x3 :: cv.float3x3
+//float3x4 :: cv.float3x4
 float4x4 :: cv.float4x4
 
 width: i32 : 160
 height: i32 : width * 3 / 4
 ZOOM :: 6
+FOV_ANGLE :: 90
 
 do_rotate := true
 rot_y: f32 = 0
 
-fov90: f32 : 90 * math.PI / 360
-fov: f32 = fov90
-aspect: f32 = f32(width) / f32(height)
+fov: f32
+aspect: f32
 near, far: f32 = 1, 10
 
 viewport: mat4x4
 proj, view: mat4x4
 rotate: mat4x4
 proj_view, proj_view_model: mat4x4
-
 
 zbuffer: [width * height]f32
 flip_z_axis := true
@@ -76,10 +76,13 @@ vs_default :: proc(shader: ^cv.IShader, pos: float4, gl_Position: ^float4) {
 	gl_Position^ = proj_view_model * pos
 }
 
+pics_size :: float2{f32(pics_w), f32(pics_h)}
+pics_tex_lookup :: int2{pics_w  * pics_ps, pics_ps}
+
 sample2D :: proc(uv: float2) -> cv.byte4 {
-	uvf := lg.fract(uv)
-	x, y := i32(uvf.x * f32(pics_w)), i32(uvf.y * f32(pics_h))
-	tidx := (((y * pics_w + x) * pics_ps) & 4095) + 4096 * shader.model.tex
+	uv := cv.to_int2(lg.fract(uv) * pics_size)
+	tidx := lg.dot(uv, pics_tex_lookup)
+	tidx += 4096 * shader.model.tex
 	return (^cv.byte4)(&pics[tidx])^
 }
 
@@ -124,7 +127,7 @@ ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 on_create :: proc(app: ca.papp) -> int {
 	canvas := &ca.dib.canvas
 	size := cv.get_canvas_size(canvas)
-	fov = fov90
+	fov = FOV_ANGLE * math.PI / 360
 	aspect = f32(size.x) / f32(size.y)
 	viewport = cv.create_viewport(size)
 	view = lg.matrix4_look_at_f32(eye, center, up, flip_z_axis)
@@ -207,18 +210,23 @@ on_update :: proc(app: ca.papp) -> int {
 		shader.model_view = rotate * model.trans * rotate
 		shader.it_model_view = lg.inverse_transpose(shader.model_view)
 		//shader.it_model_view3 = lg.inverse_transpose(float3x3(shader.model_view))
-		it_model_view3 := lg.inverse_transpose(float3x3(shader.model_view))
+
+		model_view_3x3 := float3x3(shader.model_view)
+		it_model_view_3x3 := lg.inverse_transpose(model_view_3x3)
 		proj_view_model = proj_view * shader.model_view
 
-		vs := shader.vs
 		for i in 0 ..< vert_count {
-			vs(&shader, cv.to_float4(vertices[i]), &vert[i])
+			shader->vs(cv.to_float4(vertices[i]), &vert[i])
 		}
 
+		v: cv.float4x3
+		n: float3x3
 		for t in triangles {
 
-			v0, v1, v2 := vert[t.x], vert[t.y], vert[t.z]
-			n0, n1, n2 := lg.normalize(vertices[t.x]), lg.normalize(vertices[t.y]), lg.normalize(vertices[t.z])
+			v[0], v[1], v[2] = vert[t.x], vert[t.y], vert[t.z]
+			n[0], n[1], n[2] = lg.normalize(vertices[t.x]), lg.normalize(vertices[t.y]), lg.normalize(vertices[t.z])
+
+			shader.varying_nrm = it_model_view_3x3 * n
 
 			shader.varying_uv[0] = vertices[t[0]].xy
 			shader.varying_uv[1] = vertices[t[1]].xy
@@ -228,45 +236,42 @@ on_update :: proc(app: ca.papp) -> int {
 			//   shader.varying_uv[vi] = vertices[t[vi]].xy
 			// }
 
-			shader.varying_nrm[0] = (it_model_view3 * n0)
-			shader.varying_nrm[1] = (it_model_view3 * n1)
-			shader.varying_nrm[2] = (it_model_view3 * n2)
-
-			shader.view_tri[0] = (shader.model_view * v0).xyz
-			shader.view_tri[1] = (shader.model_view * v1).xyz
-			shader.view_tri[2] = (shader.model_view * v2).xyz
+			mvv : cv.float4x3 = shader.model_view * v
+			shader.view_tri = cv.to_float3x3(&mvv)
 
 			// transform the light vector to view coordinates
 			shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
 
-			cv.draw_triangle(canvas, zbuffer[:], &viewport, {v0, v1, v2}, &shader)
+			//cv.draw_triangle(canvas, zbuffer[:], &viewport, {v0, v1, v2}, &shader)
+			cv.draw_triangle(canvas, zbuffer[:], &viewport, {v[0], v[1], v[2]}, &shader)
 		}
 	}
 
 	return 0
 }
 
-main :: proc() {
-
-	when USE_TRACKING_ALLOCATOR {
-		track: mem.Tracking_Allocator
-		mem.tracking_allocator_init(&track, context.allocator)
-		defer mem.tracking_allocator_destroy(&track)
-		context.allocator = mem.tracking_allocator(&track)
-	}
-
+run :: proc() {
 	ca.app.size = {width, height}
 	ca.app.create = on_create
 	ca.app.update = on_update
 	ca.settings.window_size = ca.app.size * ZOOM
 	ca.run()
+}
 
+main :: proc() {
 	when USE_TRACKING_ALLOCATOR {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		defer mem.tracking_allocator_destroy(&track)
+		context.allocator = mem.tracking_allocator(&track)
+		run()
 		for _, leak in track.allocation_map {
 			fmt.printf("%v leaked %m\n", leak.location, leak.size)
 		}
 		for bad_free in track.bad_free_array {
 			fmt.printf("%v allocation %p was freed badly\n", bad_free.location, bad_free.memory)
 		}
+	} else {
+		run()
 	}
 }

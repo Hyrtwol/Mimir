@@ -25,6 +25,7 @@ fmod
 fmodex
 glfw
 glsl
+graphviz
 hbitmap
 hbrush
 hcursor

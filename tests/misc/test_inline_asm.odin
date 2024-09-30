@@ -4,7 +4,7 @@ import "core:bytes"
 import "core:fmt"
 import "base:runtime"
 import "core:testing"
-import win32app "libs:tlc/win32app"
+import "libs:tlc/win32app"
 
 @(test)
 can_i_inline_asm :: proc(t: ^testing.T) {

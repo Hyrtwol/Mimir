@@ -21,6 +21,24 @@ to_float2 :: #force_inline proc "contextless" (v: int2) -> float2 {
 	return float2{f32(v.x), f32(v.y)}
 }
 
+
+@(private = "file")
+to_float3x3_from_float3x4 :: #force_inline proc "contextless" (m: ^float3x4) -> float3x3 {
+	return ((^float3x3)(m))^
+}
+
+@(private = "file")
+to_float3x3_from_float4x3 :: #force_inline proc "contextless" (m: ^float4x3) -> float3x3 {
+	m3x4 := float3x4(m^)
+	return to_float3x3_from_float3x4(&m3x4)
+}
+
+to_float3x3 :: proc {
+	to_float3x3_from_float3x4,
+	to_float3x3_from_float4x3,
+}
+
+
 to_int2 :: #force_inline proc "contextless" (v: float2) -> int2 {
 	return int2{i32(v.x), i32(v.y)}
 }
@@ -33,22 +51,22 @@ to_int2_ceil :: #force_inline proc "contextless" (v: float2) -> int2 {
 	return to_int2(linalg.ceil(v))
 }
 
-@(private)
+@(private = "file")
 random_position_int2_from_i32 :: #force_inline proc(x, y: i32) -> int2 {
 	return {rand.int31_max(x), rand.int31_max(y)}
 }
 
-@(private)
+@(private = "file")
 random_position_int2_from_u32 :: #force_inline proc(x, y: u32) -> int2 {
 	return random_position_int2_from_i32(i32(x), i32(y))
 }
 
-@(private)
+@(private = "file")
 random_position_int2_from_int2 :: #force_inline proc(dim: int2) -> int2 {
 	return random_position_int2_from_i32(dim.x, dim.y)
 }
 
-@(private)
+@(private = "file")
 random_position_int2_from_uint2 :: #force_inline proc(dim: uint2) -> int2 {
 	return random_position_int2_from_u32(dim.x, dim.y)
 }
@@ -68,7 +86,7 @@ random_color :: #force_inline proc(alpha: u8 = 255) -> byte4 {
 	return {random_color_byte(), random_color_byte(), random_color_byte(), alpha}
 }
 
-@(private)
+@(private = "file")
 directions: [9]i32 = {1, 0, -1, 0, 1, 1, -1, -1, 1}
 
 //    +---+---+---+
@@ -118,7 +136,7 @@ matrix4_rotate_z_f32 :: proc "contextless" (angle: f32) -> float4x4 {
 	return auto_cast linalg.matrix4_rotate_f32(angle, float3_zunit)
 }
 
-@(private)
+@(private = "file")
 create_viewport_from_xywh :: #force_inline proc "contextless" (x, y, w, h: f32) -> float4x4 {
 	return {
 		w/2, 0  , 0  , x+w/2,
@@ -128,7 +146,7 @@ create_viewport_from_xywh :: #force_inline proc "contextless" (x, y, w, h: f32) 
 	}
 }
 
-@(private)
+@(private = "file")
 create_viewport_from_size :: #force_inline proc "contextless" (size: int2) -> float4x4 {
 	return create_viewport_from_xywh(0, 0, f32(size.x), f32(size.y))
 }

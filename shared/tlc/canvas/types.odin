@@ -28,6 +28,8 @@ float2x2 :: matrix[2, 2]float
 float2x3 :: matrix[2, 3]float
 float3x2 :: matrix[3, 2]float
 float3x3 :: matrix[3, 3]float
+float3x4 :: matrix[3, 4]float
+float4x3 :: matrix[4, 3]float
 float4x4 :: matrix[4, 4]float
 
 color           :: byte4

@@ -49,8 +49,10 @@
 		}
 	},
 	"odin": {
-		"shared": "-collection:shared=${env:ODIN_SHARED}",
-		"libs": "-collection:libs=${workspaceFolder}${pathSeparator}shared",
+		"collection" : {
+			"shared": "-collection:shared=${env:ODIN_SHARED}",
+			"libs": "-collection:libs=${workspaceFolder}${pathSeparator}shared",
+		},
 		"rc": "-resource:${workspaceFolder}${pathSeparator}doc${pathSeparator}odin.rc",
 		"odinfmt": "${env:ODIN_SHARED}${pathSeparator}ols${pathSeparator}odinfmt.exe"
 	}

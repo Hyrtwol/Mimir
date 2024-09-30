@@ -309,7 +309,7 @@ WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARA
 	return 1
 }
 
-@(private)
+@(private = "file")
 redraw_window_now :: #force_inline proc(hwnd: HWND) -> BOOL {
 	return win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW | .RDW_NOCHILDREN)
 }
@@ -323,12 +323,12 @@ invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
 	win32.InvalidateRect(hwnd, nil, false)
 }
 
-@(private)
+@(private = "file")
 set_window_text_utf8 :: #force_inline proc(hwnd: HWND, text: string) -> BOOL {
 	return win32.SetWindowTextW(hwnd, utf8_to_wstring(text))
 }
 
-@(private)
+@(private = "file")
 set_window_textf :: #force_inline proc(hwnd: HWND, format: string, args: ..any) -> BOOL {
 	return set_window_text_utf8(hwnd, fmt.tprintf(format, ..args))
 }
@@ -398,7 +398,7 @@ create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.B
 	return win32.CreateDIBSection(hdc, pbmi, UINT(usage), ppvBits, hSection, offset)
 }
 
-@(private)
+@(private = "file")
 delete_object_hgdiobj :: #force_inline proc "contextless" (hgdiobj: ^HGDIOBJ) -> bool {
 	if hgdiobj^ != nil {
 		if win32.DeleteObject(hgdiobj^) {
@@ -409,7 +409,7 @@ delete_object_hgdiobj :: #force_inline proc "contextless" (hgdiobj: ^HGDIOBJ) ->
 	return false
 }
 
-@(private)
+@(private = "file")
 delete_object_hbitmap :: #force_inline proc "contextless" (hbitmap: ^HBITMAP) -> bool {
 	return delete_object_hgdiobj((^HGDIOBJ)(hbitmap))
 }
@@ -498,7 +498,7 @@ void Marker(LONG x, LONG y, HWND hwnd)
 }
 */
 
-@(private)
+@(private = "file")
 select_object_hbitmap :: #force_inline proc "contextless" (hdc: win32.HDC, hbitmap: win32.HBITMAP) -> win32.HGDIOBJ {
 	return win32.SelectObject(hdc, win32.HGDIOBJ(hbitmap))
 }
@@ -508,7 +508,7 @@ select_object :: proc {
 	select_object_hbitmap,
 }
 
-@(private)
+@(private = "file")
 stretch_blt_size :: #force_inline proc "contextless" (dest_hdc: HDC, dest_size: int2, src_hdc: HDC, src_size: int2, rop: win32.ROP = .SRCCOPY) -> BOOL {
 	return win32.StretchBlt(dest_hdc, 0, 0, dest_size.x, dest_size.y, src_hdc, 0, 0, src_size.x, src_size.y, win32.DWORD(rop))
 }
@@ -518,7 +518,7 @@ stretch_blt :: proc {
 	stretch_blt_size,
 }
 
-@(private)
+@(private = "file")
 bit_blt_size :: #force_inline proc "contextless" (dest_hdc: HDC, size: int2, src_hdc: HDC, rop: win32.ROP = .SRCCOPY) -> BOOL {
 	return win32.BitBlt(dest_hdc, 0, 0, size.x, size.y, src_hdc, 0, 0, win32.DWORD(rop))
 }

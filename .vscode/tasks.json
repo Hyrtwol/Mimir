@@ -9,8 +9,30 @@
 				"run",
 				"..${pathSeparator}${relativeFileDirname}",
 				"${config:odin.rc}",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
+				"-vet",
+				"-strict-style"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": "**/*.odin"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin run speed",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"run",
+				"..${pathSeparator}${relativeFileDirname}",
+				"${config:odin.rc}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				"-vet",
 				"-strict-style",
 				"-o:speed"
@@ -32,8 +54,8 @@
 				"build",
 				"..${pathSeparator}${relativeFileDirname}",
 				"${config:odin.rc}",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				"-vet",
 				"-strict-style",
 				"-o:speed"
@@ -54,8 +76,8 @@
 			"args": [
 				"test",
 				".",
-				"${config:odin.shared}",
-				"${config:odin.libs}"
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}"
 			],
 			"problemMatcher": [],
 			"group": {
@@ -74,8 +96,8 @@
 				"build",
 				"..${pathSeparator}${relativeFileDirname}",
 				"${config:odin.rc}",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				"-vet",
 				"-strict-style",
 				"-debug"
@@ -97,8 +119,8 @@
 				"check",
 				"..${pathSeparator}${relativeFileDirname}",
 				"${config:odin.rc}",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				"-vet",
 				"-strict-style",
 				"-no-entry-point"
@@ -119,8 +141,8 @@
 			"args": [
 				"strip-semicolon",
 				"..${pathSeparator}${relativeFileDirname}",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				"-no-entry-point"
 			],
 			"problemMatcher": [],
@@ -139,8 +161,8 @@
 			"args": [
 				"doc",
 				"..${pathSeparator}${relativeFileDirname}", //"-doc-format",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				">",
 				"${fileDirnameBasename}.txt"
 			],
@@ -167,7 +189,7 @@
 				"isDefault": false
 			},
 			"options": {
-				"cwd": "${workspaceFolder}\\${relativeFileDirname}"
+				"cwd": "${workspaceFolder}${pathSeparator}${relativeFileDirname}"
 			}
 		},
 		{
@@ -185,8 +207,8 @@
 				"${env:ODIN_SHARED}",
 				"${config:editor.wordWrapColumn}",
 				"${config:cSpell.enableFiletypes}",
-				"${config:odin.shared}",
-				"${config:odin.libs}",
+				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}",
 				"${config:odin.odinfmt}",
 				"${config:odin.flags}"
 			],

@@ -11,7 +11,7 @@ DIB :: struct {
 	hbitmap: win32.HBITMAP, // todo check if win32.HGDIOBJ is better here
 }
 
-@(private)
+@(private = "file")
 dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
 	dib.hbitmap = create_dib_section(hdc, pbmi, .DIB_RGB_COLORS, &dib.canvas.pvBits)
 	if dib.hbitmap == nil || dib.canvas.pvBits == nil {
@@ -19,12 +19,12 @@ dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.B
 	}
 }
 
-@(private)
+@(private = "file")
 dib_create_section_bitmap_info_header :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFOHEADER) {
 	dib_create_section_bitmap_info(dib, hdc, cast(^win32.BITMAPINFO)pbmi)
 }
 
-@(private)
+@(private = "file")
 dib_create_section_bitmap_info_header_v5 :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPV5HEADER) {
 	dib_create_section_bitmap_info(dib, hdc, cast(^win32.BITMAPINFO)pbmi)
 }
@@ -92,7 +92,7 @@ draw_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, 
 	draw_hgdiobj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
 }
 
-@(private)
+@(private = "file")
 _wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc := win32.BeginPaint(hwnd, &ps)
@@ -105,12 +105,12 @@ _wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2)
 	return 0
 }
 
-@(private)
+@(private = "file")
 _wm_paint_hbitmap :: #force_inline proc (hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2) -> win32.LRESULT {
 	return _wm_paint_hgdiobj(hwnd, win32.HGDIOBJ(hbitmap), size)
 }
 
-@(private)
+@(private = "file")
 _wm_paint_dib :: #force_inline proc (hwnd: win32.HWND, dib: DIB) -> win32.LRESULT {
 	return _wm_paint_hbitmap(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
 }

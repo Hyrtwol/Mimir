@@ -357,7 +357,7 @@ to_color :: proc {
 	to_color_byte4,
 }
 
-@(private)
+@(private = "file")
 two_pi_over_3 :: f32(2) * math.PI / 3.0
 
 color_hue_float4 :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> float4 {
