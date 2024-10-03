@@ -1,11 +1,13 @@
 package main
 
 import oz "shared:objzero"
+import "base:intrinsics"
 import "core:fmt"
 import "core:io"
 import "core:os"
 import "core:path/filepath"
 import "core:strings"
+import "libs:obug"
 
 //input_path :: "../data/models/cube.obj"
 input_path :: "../data/models/gazebo.obj"
@@ -75,7 +77,7 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	wprintfln(w, "%d triangles", model.numIndices / 3)
 }
 
-main :: proc() {
+run :: proc() {
 	fmt.println("objzero Reader")
 
 	clean_path := filepath.clean(input_path, context.temp_allocator)
@@ -103,4 +105,12 @@ main :: proc() {
 	printModel(w, obj)
 
 	fmt.println("Done.")
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		obug.tracked_run(run)
+	} else {
+		run()
+	}
 }

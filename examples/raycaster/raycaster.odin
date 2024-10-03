@@ -8,6 +8,7 @@ import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
+import "libs:obug"
 
 byte4 :: cv.byte4
 vector2 :: cv.float2
@@ -81,7 +82,7 @@ handle_input :: proc(app: ca.papp) {
 	}
 }
 
-main :: proc() {
+run :: proc() {
 	fmt.println("Raycaster")
 	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", pics_count, pics_w, pics_h, pics_ps * 8, pics_byte_size, pics_count * pics_byte_size)
 	ca.app.size = {screenWidth, screenHeight}
@@ -98,4 +99,12 @@ main :: proc() {
 	ca.settings.sleep = time.Millisecond * 5
 	ca.run()
 	fmt.println("Done.")
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		obug.tracked_run(run)
+	} else {
+		run()
+	}
 }

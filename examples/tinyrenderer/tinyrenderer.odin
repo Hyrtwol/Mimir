@@ -14,10 +14,9 @@ import "core:mem"
 //import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
+import "libs:obug"
 
 _ :: fmt
-
-USE_TRACKING_ALLOCATOR :: true
 
 vec2 :: lg.Vector2f32
 vec3 :: lg.Vector3f32
@@ -259,18 +258,8 @@ run :: proc() {
 }
 
 main :: proc() {
-	when USE_TRACKING_ALLOCATOR {
-		track: mem.Tracking_Allocator
-		mem.tracking_allocator_init(&track, context.allocator)
-		defer mem.tracking_allocator_destroy(&track)
-		context.allocator = mem.tracking_allocator(&track)
-		run()
-		for _, leak in track.allocation_map {
-			fmt.printf("%v leaked %m\n", leak.location, leak.size)
-		}
-		for bad_free in track.bad_free_array {
-			fmt.printf("%v allocation %p was freed badly\n", bad_free.location, bad_free.memory)
-		}
+	when intrinsics.is_package_imported("obug") {
+		obug.tracked_run(run)
 	} else {
 		run()
 	}

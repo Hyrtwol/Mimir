@@ -11,6 +11,7 @@ import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
 import "libs:tlc/win32app"
+import "libs:obug"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: cv.byte4
@@ -273,7 +274,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-main :: proc() {
+run :: proc() {
 	calc_col :: proc(n: f64) -> u8 {return u8(n * (256 - (1 / 255)))}
 	for i in 0 ..< 256 {
 		f := (f64(i) / 255)
@@ -294,4 +295,12 @@ main :: proc() {
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())
 	//fmt.println("settings:", settings)
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		obug.tracked_run(run)
+	} else {
+		run()
+	}
 }
