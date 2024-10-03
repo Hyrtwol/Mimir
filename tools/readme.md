@@ -4,7 +4,7 @@
 
 `ildasm.exe` is from `runtime.win-x64.microsoft.netcore.ildasm.8.0.0.nupkg`
 
-<https://learn.microsoft.com/en-us/nuget/install-nuget-client-tools>
+## Resources
 
-<https://dist.nuget.org/win-x86-commandline/latest/nuget.exe>
-
+* <https://learn.microsoft.com/en-us/nuget/install-nuget-client-tools>
+* <https://dist.nuget.org/win-x86-commandline/latest/nuget.exe>

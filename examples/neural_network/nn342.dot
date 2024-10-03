@@ -1,0 +1,65 @@
+digraph D {
+    rankdir = LR;
+    splines = line;
+    fontname="Arial";
+    subgraph input_layer {
+        cluster = true;
+        label = "Input Layer";
+        i1 [shape = circle;style=filled;fillcolor="#AAFFAA"]
+        i2 [shape = circle;style=filled;fillcolor="#AAFFAA"]
+        i3 [shape = circle;style=filled;fillcolor="#AAFFAA"]
+    }
+
+    subgraph hidden_layer {
+        cluster = true;
+        label = "Hidden Layer";
+        h1 [shape = circle;style=filled;fillcolor="#AAAAFF"];
+        h2 [shape = circle;style=filled;fillcolor="#AAAAFF"];
+        h3 [shape = circle;style=filled;fillcolor="#AAAAFF"];
+        h4 [shape = circle;style=filled;fillcolor="#AAAAFF"];
+        edge [style=invis]
+    }
+
+    subgraph output_layer {
+        cluster = true;
+        label = "Output Layer";
+        o1 [shape = circle;style=filled;fillcolor="#FFAAAA"];
+        o2 [shape = circle;style=filled;fillcolor="#FFAAAA"];
+    }
+
+    // rankdir = TB;
+
+    // edge [style=invis]
+    // i1->i2->i3
+    // h1->h2->h3->h4
+    // o1->o2
+
+    // rankdir = LR;
+
+    // edge [style=filled]
+
+    i1 -> h1 [arrowsize = 0.5;];
+    i1 -> h2 [arrowsize = 0.5;];
+    i1 -> h3 [arrowsize = 0.5;];
+    i1 -> h4 [arrowsize = 0.5;];
+
+    i2 -> h1 [arrowsize = 0.5;];
+    i2 -> h2 [arrowsize = 0.5;];
+    i2 -> h3 [arrowsize = 0.5;];
+    i2 -> h4 [arrowsize = 0.5;];
+
+    i3 -> h1 [arrowsize = 0.5;];
+    i3 -> h2 [arrowsize = 0.5;];
+    i3 -> h3 [arrowsize = 0.5;];
+    i3 -> h4 [arrowsize = 0.5;];
+
+    h1 -> o1 [arrowsize = 0.5;];
+    h2 -> o1 [arrowsize = 0.5;];
+    h3 -> o1 [arrowsize = 0.5;];
+    h4 -> o1 [arrowsize = 0.5;];
+
+    h1 -> o2 [arrowsize = 0.5;];
+    h2 -> o2 [arrowsize = 0.5;];
+    h3 -> o2 [arrowsize = 0.5;];
+    h4 -> o2 [arrowsize = 0.5;];
+}

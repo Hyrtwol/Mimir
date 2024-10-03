@@ -14,13 +14,15 @@ output_formats :: enum {
 	svg,
 }
 
-execute_dot :: proc(dot_path: string, output_format: output_formats) {
+execute_dot :: proc(dot_path: string, output_format: output_formats, output_file: string) {
 	full_exe, err := win32app.expand_environment_strings(DOT_EXE)
 	if err != 0 {fmt.panicf("expand_environment_strings error: %v", err)}
 
 	desc: os2.Process_Desc = {
-		command = {full_exe, fmt.tprintf("-T%v", output_format), "-O",
-		"-Gsize=3,5\\!", "-Gdpi=200",
+		command = {full_exe, fmt.tprintf("-T%v", output_format),
+		//"-O",
+		fmt.tprintf("-o%s", output_file),
+		//"-Gsize=3,5\\!", "-Gdpi=200",
 		//"-v",
 		dot_path},
 	}

@@ -2,13 +2,16 @@ package main
 
 import "base:intrinsics"
 import "core:fmt"
+import "core:path/filepath"
 import "libs:graphviz"
 import "libs:obug"
 
 run :: proc() {
 	fmt.println("Graphviz")
-	//graphviz.execute_dot("-?")
-	graphviz.execute_dot("D:\\dev\\odin\\Mimir\\examples\\graphviz\\nn342.dot", .png)
+
+	dot_path := filepath.clean("../examples/neural_network/nn342.dot", context.temp_allocator)
+	output_file := filepath.clean("../examples/neural_network/nn342.svg", context.temp_allocator)
+	graphviz.execute_dot(dot_path, .svg, output_file)
 }
 
 main :: proc() {
