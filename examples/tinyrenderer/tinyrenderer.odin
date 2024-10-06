@@ -1,4 +1,3 @@
-//
 // https://en.wikipedia.org/wiki/Camera_matrix
 // https://github.com/ssloy/tinyrenderer/wiki/Lesson-5-Moving-the-camera
 // https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-coordinates
@@ -14,7 +13,7 @@ import "core:mem"
 //import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
-import "libs:obug"
+import "shared:obug"
 
 _ :: fmt
 

@@ -7,7 +7,7 @@ import "core:io"
 import "core:os"
 import "core:path/filepath"
 import "core:strings"
-import "libs:obug"
+import "shared:obug"
 
 //input_path :: "../data/models/cube.obj"
 input_path :: "../data/models/gazebo.obj"
@@ -109,7 +109,7 @@ run :: proc() {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.tracked_run(run)
+		os.exit(obug.tracked_run(run))
 	} else {
 		run()
 	}

@@ -1,17 +1,18 @@
 #+vet
 package main
 
-import "core:fmt"
 import "base:intrinsics"
+import "base:runtime"
+import "core:fmt"
 import "core:math"
 import "core:math/noise"
 import "core:math/rand"
-import "base:runtime"
+import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
 import "libs:tlc/win32app"
-import "libs:obug"
+import "shared:obug"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: cv.byte4
@@ -28,7 +29,7 @@ HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
 ZOOM :: 8
 
-settings : win32app.window_settings
+settings: win32app.window_settings
 
 stopwatch := win32app.create_stopwatch()
 fps: f64 = 0
@@ -299,7 +300,7 @@ run :: proc() {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.tracked_run(run)
+		os.exit(obug.tracked_run(run))
 	} else {
 		run()
 	}

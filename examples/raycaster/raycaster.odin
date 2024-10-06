@@ -4,11 +4,12 @@ package raycaster
 import "base:intrinsics"
 import "core:fmt"
 import "core:math/linalg"
+import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
-import "libs:obug"
+import "shared:obug"
 
 byte4 :: cv.byte4
 vector2 :: cv.float2
@@ -103,7 +104,7 @@ run :: proc() {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.tracked_run(run)
+		os.exit(obug.tracked_run(run))
 	} else {
 		run()
 	}

@@ -2,9 +2,10 @@ package main
 
 import "base:intrinsics"
 import "core:fmt"
+import "core:os"
 import "core:path/filepath"
 import "libs:graphviz"
-import "libs:obug"
+import "shared:obug"
 
 run :: proc() {
 	fmt.println("Graphviz")
@@ -16,7 +17,7 @@ run :: proc() {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.tracked_run(run)
+		os.exit(obug.tracked_run(run))
 	} else {
 		run()
 	}

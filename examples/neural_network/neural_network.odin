@@ -12,35 +12,43 @@ import "core:fmt"
 //    i3
 //           h4
 
-input_layer    : [3]f32
-hidden_layer   : [4]f32
-output_layer   : [2]f32
-input_weights  : matrix[len(input_layer), len(hidden_layer)]f32
-hidden_weights : matrix[len(hidden_layer), len(output_layer)]f32
+input_node_count :: 3
+hidden_node_count :: 4
+output_node_count :: 2
 
-calculate_network :: proc() {
-	hidden_layer = input_layer * input_weights
-	output_layer = hidden_layer * hidden_weights
+neural_network :: struct {
+	input_layer    : [input_node_count]f32,
+	hidden_layer   : [hidden_node_count]f32,
+	output_layer   : [output_node_count]f32,
+	input_weights  : matrix[input_node_count, hidden_node_count]f32,
+	hidden_weights : matrix[hidden_node_count, output_node_count]f32,
 }
 
-dump_network :: proc() {
+calculate_network :: proc(nn: ^neural_network) {
+	nn.hidden_layer = nn.input_layer * nn.input_weights
+	nn.output_layer = nn.hidden_layer * nn.hidden_weights
+}
+
+dump_network :: proc(nn: ^neural_network) {
 	fmt.println("----------------------------------------")
-	fmt.printfln("input_layer    : %v", input_layer)
-	fmt.printfln("input_weights  : %v", input_weights)
-	fmt.printfln("hidden_layer   : %v", hidden_layer)
-	fmt.printfln("hidden_weights : %v", hidden_weights)
-	fmt.printfln("output_layer   : %v", output_layer)
+	fmt.printfln("input_layer    : %v", nn.input_layer)
+	fmt.printfln("input_weights  : %v", nn.input_weights)
+	fmt.printfln("hidden_layer   : %v", nn.hidden_layer)
+	fmt.printfln("hidden_weights : %v", nn.hidden_weights)
+	fmt.printfln("output_layer   : %v", nn.output_layer)
 }
 
 main :: proc() {
 	fmt.println("neural network")
 
-	random_vector(&input_layer)
-	random_matrix(&input_weights)
-	random_matrix(&hidden_weights)
-	dump_network()
-	calculate_network()
-	dump_network()
+	nn: neural_network
+
+	random_vector(&nn.input_layer)
+	random_matrix(&nn.input_weights)
+	random_matrix(&nn.hidden_weights)
+	dump_network(&nn)
+	calculate_network(&nn)
+	dump_network(&nn)
 }
 
 /* output

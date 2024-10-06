@@ -105,7 +105,7 @@ get_instance :: proc() -> HINSTANCE {
 get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_allocator) -> string {
 	wname: [512]win32.WCHAR
 	cc := win32.GetModuleFileNameW(module, &wname[0], len(wname) - 1)
-	if cc != 0 {
+	if cc > 0 {
 		name, err := wstring_to_utf8(&wname[0], int(cc), allocator)
 		if err == .None {
 			return name
@@ -116,15 +116,24 @@ get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_all
 
 IDI_ICON1 :: 101
 
-register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
-
+load_icon :: proc(instance: HINSTANCE) -> win32.HICON {
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(IDI_ICON1))
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
+	return icon
+}
 
+load_cursor :: proc() -> win32.HCURSOR {
 	cursor: win32.HCURSOR = win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
 	if cursor == nil {show_error_and_panic("Missing cursor")}
+	return cursor
+}
+
+register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
+
+	icon := load_icon(instance)
+	cursor := load_cursor()
 
 	wcx := win32.WNDCLASSEXW {
 		cbSize        = size_of(win32.WNDCLASSEXW),

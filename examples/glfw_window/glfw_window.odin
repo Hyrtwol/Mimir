@@ -12,7 +12,9 @@ WINDOW_HEIGHT 	:: WINDOW_WIDTH * 3 / 4
 
 // @note You might need to lower this to 3.3 depending on how old your graphics card is.
 GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 5
+GL_MINOR_VERSION :: 6
+
+running: b32 = true
 
 // https://github.com/bg-thompson/OpenGL-Tutorials-In-Odin/blob/main/Rotating-Cube/rotating-cube.odin
 
@@ -33,6 +35,10 @@ main :: proc() {
 
 	// Load OpenGL context or the "state" of OpenGL.
 	glfw.MakeContextCurrent(window_handle)
+	glfw.SwapInterval(1)
+
+	glfw.SetKeyCallback(window_handle, key_callback)
+
 	// Load OpenGL function pointers with the specficed OpenGL major and minor version.
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
 
@@ -89,16 +95,19 @@ main :: proc() {
 	// high precision timer
 	start_tick := time.tick_now()
 
-	for !glfw.WindowShouldClose(window_handle) {
+	ui_transform := &uniforms["u_transform"]
+
+	for !glfw.WindowShouldClose(window_handle) && running {
 		duration := time.tick_since(start_tick)
 		t := f32(time.duration_seconds(duration))
 
 		// Process all incoming events like keyboard press, window resize, and etc.
 		glfw.PollEvents()
 
+		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+
 		gl.ClearColor(0.5, 0.0, 1.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-
 
 		pos := glm.vec3{
 			glm.cos(t*2),
@@ -117,32 +126,36 @@ main :: proc() {
 			0  , 0,   0,   1,
 		}
 
-		// matrix indexing and array short with `.x`
-		model[0, 3] = -pos.x
-		model[1, 3] = -pos.y
-		model[2, 3] = -pos.z
+		// // matrix indexing and array short with `.x`
+		// model[0, 3] = -pos.x
+		// model[1, 3] = -pos.y
+		// model[2, 3] = -pos.z
 
 		// native swizzling support for arrays
 		model[3].yzx = pos.yzx
 
-		model = model * glm.mat4Rotate({0, 1, 1}, t)
-
 		view := glm.mat4LookAt({0, -1, +1}, {0, 0, 0}, {0, 0, 1})
 		proj := glm.mat4Perspective(45, 1.3, 0.1, 100.0)
+		proj_view := proj * view
 
-		// matrix multiplication
-		u_transform := proj * view * model
+		model = model * glm.mat4Rotate({0, 1, 1}, t)
+		u_transform := proj_view * model
+		gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
+		gl.DrawElements(gl.TRIANGLES, i32(len(indices)), gl.UNSIGNED_SHORT, nil)
 
-		// matrix types in Odin are stored in column-major format but written as you'd normal write them
-		gl.UniformMatrix4fv(uniforms["u_transform"].location, 1, false, &u_transform[0, 0])
-
-		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-		//gl.ClearColor(0.5, 0.7, 1.0, 1.0)
-		//gl.Clear(gl.COLOR_BUFFER_BIT)
-
+		model = model * glm.mat4Rotate({1, 1, 1}, t)
+		u_transform = proj_view * model
+		gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
 		gl.DrawElements(gl.TRIANGLES, i32(len(indices)), gl.UNSIGNED_SHORT, nil)
 
 		glfw.SwapBuffers(window_handle)
+	}
+}
+
+key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods: i32) {
+	// Exit program on escape pressed
+	if key == glfw.KEY_ESCAPE {
+		running = false
 	}
 }
 
