@@ -1,3 +1,4 @@
+// Based off Minimal D3D11 pt2 https://gist.github.com/d7samurai/aee35fd5d132c51e8b0a78699cbaa1e4
 package minimal_d3d11_pt2
 
 import "core:fmt"
@@ -8,8 +9,6 @@ import "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-
-// Based off Minimal D3D11 pt2 https://gist.github.com/d7samurai/aee35fd5d132c51e8b0a78699cbaa1e4
 
 TITLE :: "Minimal D3D11 pt2"
 WIDTH :: 1920 / 2

@@ -1,3 +1,4 @@
+// Based off Minimal D3D11 pt3 https://gist.github.com/d7samurai/abab8a580d0298cb2f34a44eec41d39d
 package minimal_d3d11_pt3
 
 import "base:intrinsics"
@@ -9,8 +10,6 @@ import "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-
-// Based off Minimal D3D11 pt3 https://gist.github.com/d7samurai/abab8a580d0298cb2f34a44eec41d39d
 
 TITLE :: "Minimal D3D11 pt3"
 WIDTH :: 1920 / 2
