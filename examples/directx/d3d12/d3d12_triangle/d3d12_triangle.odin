@@ -1,10 +1,12 @@
 // Based off Simple d3d12 triangle example in Odin https://gist.github.com/jakubtomsu/ecd83e61976d974c7730f9d7ad3e1fd0
 package d3d12_triangle
 
+import "base:intrinsics"
 import "core:fmt"
 import "core:mem"
 import "core:os"
-import "core:sys/windows"
+import win32 "core:sys/windows"
+import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
@@ -26,7 +28,7 @@ check :: proc(res: d3d12.HRESULT, message: string) {
 	os.exit(-1)
 }
 
-main :: proc() {
+run :: proc() {
 	// Init SDL and create window
 
 	if err := sdl.Init({.VIDEO}); err != 0 {
@@ -320,15 +322,15 @@ main :: proc() {
 	// This fence is used to wait for frames to finish
 	fence_value: u64
 	fence: ^d3d12.IFence
-	fence_event: windows.HANDLE
+	fence_event: win32.HANDLE
 
 	{
 		hr = device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence))
 		check(hr, "Failed to create fence")
 		fence_value += 1
-		manual_reset: windows.BOOL = false
-		initial_state: windows.BOOL = false
-		fence_event = windows.CreateEventW(nil, manual_reset, initial_state, nil)
+		manual_reset: win32.BOOL = false
+		initial_state: win32.BOOL = false
+		fence_event = win32.CreateEventW(nil, manual_reset, initial_state, nil)
 		if fence_event == nil {
 			fmt.println("Failed to create fence event")
 			return
@@ -433,7 +435,7 @@ main :: proc() {
 						if completed < current_fence_value {
 							hr = fence->SetEventOnCompletion(current_fence_value, fence_event)
 							check(hr, "Failed to set event on completion flag")
-							windows.WaitForSingleObject(fence_event, windows.INFINITE)
+							win32.WaitForSingleObject(fence_event, win32.INFINITE)
 						}
 
 						frame_index = swapchain->GetCurrentBackBufferIndex()
@@ -445,3 +447,11 @@ main :: proc() {
 }
 
 shaders_hlsl := #load(SHADER_FILE)
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		obug.exit(obug.tracked_run(run))
+	} else {
+		run()
+	}
+}

@@ -1,9 +1,9 @@
 // Based off Minimal D3D11 https://gist.github.com/d7samurai/261c69490cce0620d0bfc93003cd1052
 package minimal_d3d11_pt1
 
+import "base:runtime"
 import "core:fmt"
 import glm "core:math/linalg/glsl"
-import "base:runtime"
 //import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
 import "libs:tlc/win32app"

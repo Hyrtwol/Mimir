@@ -10,6 +10,7 @@ import "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
+import "shared:obug"
 
 TITLE :: "Minimal D3D11 pt3"
 WIDTH :: 1920 / 2
@@ -41,7 +42,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		win32app.post_quit_message(0)
+		win32app.post_quit_message(666)
 		return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
@@ -58,9 +59,15 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	}
 }
 
-main :: proc() {
+run :: proc() {
 
-	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+	//settings: window_settings
+	//settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+	settings := win32app.default_window_settings()
+	settings.window_size = {WIDTH, HEIGHT}
+	settings.title = TITLE
+	settings.wndproc = wndproc
+
 	hwnd := win32app.register_and_create_window(&settings)
 	assert(hwnd != nil)
 
@@ -320,8 +327,7 @@ main :: proc() {
 
 	//-- Main Loop --//
 
-	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
-	win32.UpdateWindow(hwnd)
+	win32app.show_and_update_window(hwnd)
 
 	for win32app.pull_messages() {
 
@@ -395,8 +401,6 @@ main :: proc() {
 
 shaders_hlsl := #load(SHADER_FILE)
 
-
-
 // odinfmt: disable
 
 // pos.x, pos.y, pos.z, tex.u, tex.v, ...
@@ -411,3 +415,11 @@ vertexData := [?]f32{
 	 0.58, 0.58, -0.58, 0  , 0,
 }
 // odinfmt: enable
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		obug.exit(obug.tracked_run(run))
+	} else {
+		run()
+	}
+}

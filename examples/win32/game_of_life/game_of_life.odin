@@ -347,15 +347,6 @@ create_window :: #force_inline proc(
 	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(uintptr(atom)), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
 
-// loop_messages :: proc() -> int {
-// 	msg: win32.MSG
-// 	for win32.GetMessageW(&msg, nil, 0, 0) > 0 {
-// 		win32.TranslateMessage(&msg)
-// 		win32.DispatchMessageW(&msg)
-// 	}
-// 	return int(msg.wParam)
-// }
-
 run :: proc() -> int {
 	window := Window {
 		name          = L("Game Of Life"),
@@ -379,7 +370,6 @@ run :: proc() -> int {
 
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {show_error_and_panic("No instance")}
-	//atom := register_class(instance)
 	atom := win32app.register_window_class(instance, wndproc)
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
 	defer win32app.unregister_window_class(atom, instance)
@@ -388,7 +378,7 @@ run :: proc() -> int {
 	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
 
 	size := window.size
-	position := int2{i32(win32.CW_USEDEFAULT), i32(win32.CW_USEDEFAULT)}
+	position := win32app.default_window_position
 	win32app.adjust_size_for_style(&size, dwStyle)
 	if .CENTER in window.control_flags {
 		center_window(&position, size)
@@ -396,8 +386,7 @@ run :: proc() -> int {
 	hwnd := create_window(atom, window.name, dwStyle, dwExStyle, position, size, instance, &game)
 	if hwnd == nil {show_error_and_panic("Failed to create window")}
 
-	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
-	win32.UpdateWindow(hwnd)
+	win32app.show_and_update_window(hwnd)
 
 	return win32app.loop_messages()
 }

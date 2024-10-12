@@ -2,6 +2,8 @@ package graphviz
 
 import "core:fmt"
 import "core:os/os2"
+import "core:path/filepath"
+import "core:reflect"
 import "core:time"
 import "libs:tlc/win32app"
 
@@ -14,17 +16,27 @@ output_formats :: enum {
 	svg,
 }
 
-execute_dot :: proc(dot_path: string, output_format: output_formats, output_file: string) {
+execute_dot :: proc(dot_path: string, output_file: string) {
 	full_exe, err := win32app.expand_environment_strings(DOT_EXE)
 	if err != 0 {fmt.panicf("expand_environment_strings error: %v", err)}
 
+	ext := filepath.ext(output_file)
+	if len(ext) > 0 && ext[0] == '.' {
+		ext = ext[1:]
+	}
+	output_format, ok := reflect.enum_from_name(output_formats, ext)
+	fmt.printfln("output_format: %v", output_format)
+	if !ok {return}
+
 	desc: os2.Process_Desc = {
-		command = {full_exe, fmt.tprintf("-T%v", output_format),
-		//"-O",
-		fmt.tprintf("-o%s", output_file),
-		//"-Gsize=3,5\\!", "-Gdpi=200",
-		//"-v",
-		dot_path},
+		command = {
+			full_exe,
+			fmt.tprintf("-T%v", output_format),
+			fmt.tprintf("-o%s", output_file),
+			//"-Gsize=3,5\\!", "-Gdpi=200",
+			//"-v",
+			dot_path,
+		},
 	}
 
 	fmt.printfln("process_start: %v", desc)

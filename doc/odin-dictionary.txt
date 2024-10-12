@@ -62,6 +62,7 @@ microui
 miniaudio
 mipmaps
 newtek
+obug
 odinfmt
 origo
 ounit

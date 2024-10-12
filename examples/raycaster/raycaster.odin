@@ -1,10 +1,10 @@
+// https://lodev.org/cgtutor/raycasting.html
 #+vet
 package raycaster
 
 import "base:intrinsics"
 import "core:fmt"
 import "core:math/linalg"
-import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
@@ -104,7 +104,7 @@ run :: proc() {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		os.exit(obug.tracked_run(run))
+		obug.exit(obug.tracked_run(run))
 	} else {
 		run()
 	}

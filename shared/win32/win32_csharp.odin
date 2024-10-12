@@ -1,7 +1,9 @@
 package owin
+/*
+https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types
 
-// https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types
-
+C#         Odin       C#           C#
+*/
 sbyte	:: i8     	; SByte		:: sbyte
 byte	:: u8     	; Byte		:: byte
 short	:: i16    	; Int16		:: short
