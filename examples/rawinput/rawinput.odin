@@ -8,7 +8,7 @@ import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import "libs:tlc/win32app"
 
-L :: intrinsics.constant_utf16_cstring
+L :: win32app.L
 
 TITLE :: "Raw Input"
 ZOOM :: 24

@@ -7,10 +7,10 @@ import "core:fmt"
 import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
 import "libs:tlc/win32app"
+import "shared:obug"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import "shared:obug"
 
 TITLE :: "Minimal D3D11 pt3"
 WIDTH :: 1920 / 2
@@ -42,8 +42,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		win32app.post_quit_message(666)
-		return 0
+		win32app.post_quit_message();return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
@@ -68,38 +67,39 @@ run :: proc() {
 	settings.title = TITLE
 	settings.wndproc = wndproc
 
-	hwnd := win32app.register_and_create_window(&settings)
-	assert(hwnd != nil)
+	_, _, hwnd := win32app.register_and_create_window(&settings)
+	if hwnd == nil {win32app.show_error_and_panic("CreateWindowEx failed")}
+	hr: win32.HRESULT
 
 	//-- Create Device --//
 
 	feature_levels := [?]d3d11.FEATURE_LEVEL{._11_1}
 	base_device: ^d3d11.IDevice
 	base_device_context: ^d3d11.IDeviceContext
-	hr := d3d11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), d3d11.SDK_VERSION, &base_device, nil, &base_device_context)
-	assert(hr == 0);assert(base_device != nil);assert(base_device_context != nil)
+	hr = d3d11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), d3d11.SDK_VERSION, &base_device, nil, &base_device_context)
+	assert(hr == win32.NO_ERROR);assert(base_device != nil);assert(base_device_context != nil)
 
 	device: ^d3d11.IDevice
 	hr = base_device->QueryInterface(d3d11.IDevice_UUID, (^rawptr)(&device))
-	assert(hr == 0);assert(device != nil)
+	assert(hr == win32.NO_ERROR);assert(device != nil)
 
 	device_context: ^d3d11.IDeviceContext
 	hr = base_device_context->QueryInterface(d3d11.IDeviceContext_UUID, (^rawptr)(&device_context))
-	assert(hr == 0);assert(device_context != nil)
+	assert(hr == win32.NO_ERROR);assert(device_context != nil)
 
 	//-- Adapter Factory --//
 
 	dxgi_device: ^dxgi.IDevice
 	hr = device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device))
-	assert(hr == 0);assert(dxgi_device != nil)
+	assert(hr == win32.NO_ERROR);assert(dxgi_device != nil)
 
 	dxgi_adapter: ^dxgi.IAdapter
 	hr = dxgi_device->GetAdapter(&dxgi_adapter)
-	assert(hr == 0);assert(dxgi_adapter != nil)
+	assert(hr == win32.NO_ERROR);assert(dxgi_adapter != nil)
 
 	dxgi_factory: ^dxgi.IFactory2
 	hr = dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory))
-	assert(hr == 0);assert(dxgi_factory != nil)
+	assert(hr == win32.NO_ERROR);assert(dxgi_factory != nil)
 
 	//-- Swap Chain --//
 
@@ -118,14 +118,14 @@ run :: proc() {
 	}
 	swap_chain: ^dxgi.ISwapChain1
 	hr = dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swap_chain_desc, nil, nil, &swap_chain)
-	assert(hr == 0);assert(swap_chain != nil)
+	assert(hr == win32.NO_ERROR);assert(swap_chain != nil)
 	//defer swap_chain->Release()
 
 	//-- Frame Buffer --//
 
 	frame_buffer_tex: ^d3d11.ITexture2D
 	hr = swap_chain->GetBuffer(0, d3d11.ITexture2D_UUID, (^rawptr)(&frame_buffer_tex))
-	assert(hr == 0);assert(frame_buffer_tex != nil)
+	assert(hr == win32.NO_ERROR);assert(frame_buffer_tex != nil)
 
 	frame_buffer_desc: d3d11.RENDER_TARGET_VIEW_DESC = {
 		Format        = .B8G8R8A8_UNORM_SRGB, // ... so do this to get _SRGB swap chain (rendertarget view)
@@ -134,7 +134,7 @@ run :: proc() {
 
 	frame_buffer_rtv: ^d3d11.IRenderTargetView
 	hr = device->CreateRenderTargetView(frame_buffer_tex, &frame_buffer_desc, &frame_buffer_rtv)
-	assert(hr == 0);assert(frame_buffer_rtv != nil)
+	assert(hr == win32.NO_ERROR);assert(frame_buffer_rtv != nil)
 
 	//-- Frame Depth Buffer --//
 
@@ -145,11 +145,11 @@ run :: proc() {
 
 	depth_buffer_tex: ^d3d11.ITexture2D
 	hr = device->CreateTexture2D(&depth_buffer_desc, nil, &depth_buffer_tex)
-	assert(hr == 0);assert(depth_buffer_tex != nil)
+	assert(hr == win32.NO_ERROR);assert(depth_buffer_tex != nil)
 
 	depth_buffer_dsv: ^d3d11.IDepthStencilView
 	hr = device->CreateDepthStencilView(depth_buffer_tex, nil, &depth_buffer_dsv)
-	assert(hr == 0);assert(depth_buffer_dsv != nil)
+	assert(hr == win32.NO_ERROR);assert(depth_buffer_dsv != nil)
 
 	//-- Shadowmap Depth Buffer --//
 
@@ -166,7 +166,7 @@ run :: proc() {
 	//fmt.println("shadowmapDepthDesc:", shadowmapDepthDesc)
 	shadowmapDepthTexture: ^d3d11.ITexture2D
 	hr = device->CreateTexture2D(&shadowmapDepthDesc, nil, &shadowmapDepthTexture)
-	assert(hr == 0);assert(shadowmapDepthTexture != nil)
+	assert(hr == win32.NO_ERROR);assert(shadowmapDepthTexture != nil)
 
 	shadowmapDSVdesc: d3d11.DEPTH_STENCIL_VIEW_DESC = {
 		Format        = .D32_FLOAT,
@@ -175,7 +175,7 @@ run :: proc() {
 	//fmt.println("shadowmapDSVdesc:", shadowmapDSVdesc)
 	shadowmapDSV: ^d3d11.IDepthStencilView
 	hr = device->CreateDepthStencilView(shadowmapDepthTexture, &shadowmapDSVdesc, &shadowmapDSV)
-	assert(hr == 0);assert(shadowmapDSV != nil)
+	assert(hr == win32.NO_ERROR);assert(shadowmapDSV != nil)
 
 	shadowmapSRVdesc: d3d11.SHADER_RESOURCE_VIEW_DESC = {
 		Format = .R32_FLOAT,
@@ -185,7 +185,7 @@ run :: proc() {
 
 	shadowmapSRV: ^d3d11.IShaderResourceView
 	hr = device->CreateShaderResourceView(shadowmapDepthTexture, &shadowmapSRVdesc, &shadowmapSRV)
-	assert(hr == 0);assert(shadowmapSRV != nil)
+	assert(hr == win32.NO_ERROR);assert(shadowmapSRV != nil)
 
 	//-- Constant Buffer --//
 
@@ -198,7 +198,7 @@ run :: proc() {
 
 	constantBuffer: ^d3d11.IBuffer
 	hr = device->CreateBuffer(&constantBufferDesc, nil, &constantBuffer)
-	assert(hr == 0);assert(constantBuffer != nil)
+	assert(hr == win32.NO_ERROR);assert(constantBuffer != nil)
 
 	//-- Vertex Buffer --//
 
@@ -217,7 +217,7 @@ run :: proc() {
 
 	vertexBuffer: ^d3d11.IBuffer
 	hr = device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &vertexBuffer)
-	assert(hr == 0);assert(vertexBuffer != nil)
+	assert(hr == win32.NO_ERROR);assert(vertexBuffer != nil)
 
 	vertexBufferSRVdesc: d3d11.SHADER_RESOURCE_VIEW_DESC = {
 		Format = .UNKNOWN,
@@ -227,7 +227,7 @@ run :: proc() {
 
 	vertexBufferSRV: ^d3d11.IShaderResourceView
 	hr = device->CreateShaderResourceView(vertexBuffer, &vertexBufferSRVdesc, &vertexBufferSRV)
-	assert(hr == 0);assert(vertexBufferSRV != nil)
+	assert(hr == win32.NO_ERROR);assert(vertexBufferSRV != nil)
 
 	//-- Depth Stencil --//
 
@@ -238,7 +238,7 @@ run :: proc() {
 	}
 	depthStencilState: ^d3d11.IDepthStencilState
 	hr = device->CreateDepthStencilState(&depthStencilDesc, &depthStencilState)
-	assert(hr == 0);assert(depthStencilState != nil)
+	assert(hr == win32.NO_ERROR);assert(depthStencilState != nil)
 
 	//-- Rasterizer States --//
 
@@ -248,62 +248,65 @@ run :: proc() {
 	}
 	cullBackRS: ^d3d11.IRasterizerState
 	hr = device->CreateRasterizerState(&rasterizerDesc, &cullBackRS)
-	assert(hr == 0);assert(cullBackRS != nil)
+	assert(hr == win32.NO_ERROR);assert(cullBackRS != nil)
 
 	rasterizerDesc.CullMode = .FRONT
 	cullFrontRS: ^d3d11.IRasterizerState
 	hr = device->CreateRasterizerState(&rasterizerDesc, &cullFrontRS)
-	assert(hr == 0);assert(cullFrontRS != nil)
+	assert(hr == win32.NO_ERROR);assert(cullFrontRS != nil)
+
+
+	compile_flags: u32 = 0
 
 	//-- framebuffer_vs --//
 
-	framebufferVSBlob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "framebuffer_vs", "vs_5_0", 0, 0, &framebufferVSBlob, nil)
-	assert(hr == 0);assert(framebufferVSBlob != nil)
+	framebufferVSBlob: ^d3d11.IBlob = nil
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "framebuffer_vs", "vs_5_0", compile_flags, 0, &framebufferVSBlob, nil)
+	assert(hr == win32.NO_ERROR);assert(framebufferVSBlob != nil)
 
-	framebufferVS: ^d3d11.IVertexShader
+	framebufferVS: ^d3d11.IVertexShader = nil
 	hr = device->CreateVertexShader(framebufferVSBlob->GetBufferPointer(), framebufferVSBlob->GetBufferSize(), nil, &framebufferVS)
-	assert(hr == 0);assert(framebufferVS != nil)
+	assert(hr == win32.NO_ERROR);assert(framebufferVS != nil)
 
 	//-- framebuffer_ps --//
 
-	framebufferPSBlob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "framebuffer_ps", "ps_5_0", 0, 0, &framebufferPSBlob, nil)
-	assert(hr == 0);assert(framebufferPSBlob != nil)
+	framebufferPSBlob: ^d3d11.IBlob = nil
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "framebuffer_ps", "ps_5_0", compile_flags, 0, &framebufferPSBlob, nil)
+	assert(hr == win32.NO_ERROR);assert(framebufferPSBlob != nil)
 
-	framebufferPS: ^d3d11.IPixelShader
+	framebufferPS: ^d3d11.IPixelShader = nil
 	hr = device->CreatePixelShader(framebufferPSBlob->GetBufferPointer(), framebufferPSBlob->GetBufferSize(), nil, &framebufferPS)
-	assert(hr == 0);assert(framebufferPS != nil)
+	assert(hr == win32.NO_ERROR);assert(framebufferPS != nil)
 
 	//-- shadowmap_vs --//
 
-	shadowmapVSBlob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "shadowmap_vs", "vs_5_0", 0, 0, &shadowmapVSBlob, nil)
-	assert(hr == 0);assert(shadowmapVSBlob != nil)
+	shadowmapVSBlob: ^d3d11.IBlob = nil
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "shadowmap_vs", "vs_5_0", compile_flags, 0, &shadowmapVSBlob, nil)
+	assert(hr == win32.NO_ERROR);assert(shadowmapVSBlob != nil)
 
-	shadowmapVS: ^d3d11.IVertexShader
+	shadowmapVS: ^d3d11.IVertexShader = nil
 	hr = device->CreateVertexShader(shadowmapVSBlob->GetBufferPointer(), shadowmapVSBlob->GetBufferSize(), nil, &shadowmapVS)
-	assert(hr == 0);assert(shadowmapVS != nil)
+	assert(hr == win32.NO_ERROR);assert(shadowmapVS != nil)
 
 	//-- debug_vs --//
 
-	debug_vs_blob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_vs", "vs_5_0", 0, 0, &debug_vs_blob, nil)
-	assert(hr == 0);assert(debug_vs_blob != nil)
+	debug_vs_blob: ^d3d11.IBlob = nil
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_vs", "vs_5_0", compile_flags, 0, &debug_vs_blob, nil)
+	assert(hr == win32.NO_ERROR);assert(debug_vs_blob != nil)
 
-	debug_vs: ^d3d11.IVertexShader
+	debug_vs: ^d3d11.IVertexShader = nil
 	hr = device->CreateVertexShader(debug_vs_blob->GetBufferPointer(), debug_vs_blob->GetBufferSize(), nil, &debug_vs)
-	assert(hr == 0);assert(debug_vs != nil)
+	assert(hr == win32.NO_ERROR);assert(debug_vs != nil)
 
 	//-- debug_ps --//
 
-	debug_ps_blob: ^d3d11.IBlob
-	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_ps", "ps_5_0", 0, 0, &debug_ps_blob, nil)
-	assert(hr == 0);assert(debug_ps_blob != nil)
+	debug_ps_blob: ^d3d11.IBlob = nil
+	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_ps", "ps_5_0", compile_flags, 0, &debug_ps_blob, nil)
+	assert(hr == win32.NO_ERROR);assert(debug_ps_blob != nil)
 
-	debug_ps: ^d3d11.IPixelShader
+	debug_ps: ^d3d11.IPixelShader = nil
 	hr = device->CreatePixelShader(debug_ps_blob->GetBufferPointer(), debug_ps_blob->GetBufferSize(), nil, &debug_ps)
-	assert(hr == 0);assert(debug_ps != nil)
+	assert(hr == win32.NO_ERROR);assert(debug_ps != nil)
 
 	//-- Viewport --//
 
@@ -337,7 +340,7 @@ run :: proc() {
 		{
 			mappedSubresource: d3d11.MAPPED_SUBRESOURCE
 			hr = device_context->Map(constantBuffer, 0, .WRITE_DISCARD, {}, &mappedSubresource)
-			assert(hr == 0)
+			assert(hr == win32.NO_ERROR)
 			(^Constants)(mappedSubresource.pData)^ = constants
 			device_context->Unmap(constantBuffer, 0)
 		}
@@ -400,6 +403,7 @@ run :: proc() {
 }
 
 shaders_hlsl := #load(SHADER_FILE)
+
 
 // odinfmt: disable
 

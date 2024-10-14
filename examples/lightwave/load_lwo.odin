@@ -4,7 +4,6 @@ import "core:fmt"
 import "core:os"
 import lw "shared:newtek_lightwave"
 
-newline :: "\r\n"
 output_path :: "lightwave.txt"
 
 wln :: proc(fd: os.Handle, args: ..any) {

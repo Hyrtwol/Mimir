@@ -16,6 +16,10 @@ L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
 utf8_to_wstring :: win32.utf8_to_wstring
 
+expect_flags :: ot.expect_flags
+expect_size :: ot.expect_size
+expect_value :: ot.expect_any_int
+
 @(test)
 make_lresult_from_false :: proc(t: ^testing.T) {
 	exp: win32.LRESULT = 0
@@ -31,17 +35,59 @@ make_lresult_from_true :: proc(t: ^testing.T) {
 }
 
 @(test)
+verify_error_helpers :: proc(t: ^testing.T) {
+	expect_value(t, win32app.SUCCEEDED(-1), 0x00000000)
+	expect_value(t, win32app.SUCCEEDED(0), 0x00000001)
+	expect_value(t, win32app.SUCCEEDED(1), 0x00000001)
+
+	expect_value(t, win32app.FAILED(-1), 0x00000001)
+	expect_value(t, win32app.FAILED(0), 0x00000000)
+	expect_value(t, win32app.FAILED(1), 0x00000000)
+
+	expect_value(t, win32app.IS_ERROR(-1), 0x00000001)
+	expect_value(t, win32app.IS_ERROR(0), 0x00000000)
+	expect_value(t, win32app.IS_ERROR(1), 0x00000000)
+
+	expect_value(t, win32app.HRESULT_CODE(0xFFFFCCCC), 0x0000CCCC)
+	expect_value(t, win32app.HRESULT_FACILITY(0xFFFFCCCC), 0x00001FFF)
+	expect_value(t, win32app.HRESULT_SEVERITY(0x12345678), 0x00000000)
+	expect_value(t, win32app.HRESULT_SEVERITY(0x87654321), 0x00000001)
+
+	expect_value(t, u32(win32app.MAKE_HRESULT(1, 2, 3)), 0x80020003)
+}
+
+// @(test)
+// decode_hresult :: proc(t: ^testing.T) {
+// 	s, f, c := win32app.DECODE_HRESULT(win32.E_INVALIDARG)
+// 	expect_value(t, s, win32app.SEVERITY.ERROR)
+// 	expect_value(t, f, win32app.FACILITY.WIN32)
+// 	expect_value(t, c, win32.System_Error.INVALID_PARAMETER)
+// }
+
+@(test)
+get_hresult_details :: proc(t: ^testing.T) {
+	hr := win32app.HRESULT(win32.E_INVALIDARG);
+	testing.expect_value(t, hr.IsError, true)
+	testing.expect_value(t, hr.R, false)
+	testing.expect_value(t, hr.Customer, false)
+	testing.expect_value(t, hr.N, false)
+	testing.expect_value(t, hr.X, false)
+	testing.expect_value(t, hr.Facility, win32app.FACILITY.WIN32)
+	expect_value(t, hr.Code, win32.System_Error.INVALID_PARAMETER)
+	ot.expect_value_str(t, fmt.tprintf("%v", hr), "HRESULT{Code = 87, Facility = WIN32, X = false, N = false, Customer = false, R = false, IsError = true}")
+}
+
+@(test)
 min_max_msg :: proc(t: ^testing.T) {
 
 	p := min_max_msg
 	ot.expect_any_int(t, min(win32app.WM_MSG), 0x0001)
-	ot.expect_any_int(t, max(win32app.WM_MSG), 0x0204)
-	ot.expect_any_int(t, max(win32app.WM_MSG), 516)
+	ot.expect_any_int(t, max(win32app.WM_MSG), 0x0214)
 	ot.expect_value(t, size_of(p), 8)
-	ot.expect_value(t, int(max(win32app.WM_MSG)) * size_of(p), 4128)
+	ot.expect_value(t, int(max(win32app.WM_MSG)) * size_of(p), 4256)
 
 	ot.expect_value(t, min(win32app.WM_MSG), win32app.WM_MSG.WM_CREATE)
-	ot.expect_value(t, max(win32app.WM_MSG), win32app.WM_MSG.WM_RBUTTONDOWN)
+	ot.expect_value(t, max(win32app.WM_MSG), win32app.WM_MSG.WM_SIZING)
 }
 
 @(test)
@@ -130,4 +176,44 @@ check_mouse_key_state_flags :: proc(t: ^testing.T) {
 verify_sizes :: proc(t: ^testing.T) {
 	ot.expect_size(t, win32app.DWORD, 4)
 	ot.expect_size(t, win32app.MOUSE_KEY_STATE, 4)
+}
+
+@(test)
+verify_winnt :: proc(t: ^testing.T) {
+	// winnt.h
+	expect_size(t, win32app.DWORD, 4)
+	expect_size(t, win32app.BYTE, 1)
+	expect_size(t, win32app.BOOL, 4)
+	expect_size(t, win32app.WORD, 2)
+	expect_size(t, win32app.LONG, 4)
+	expect_size(t, win32app.WCHAR, 2)
+	expect_size(t, win32app.HANDLE, 8)
+	expect_size(t, win32app.HRESULT, 4)
+	//expect_size(t, win32app.HRESULT_DETAILS, 4)
+}
+
+@(test)
+verify_ws_ex_style :: proc(t: ^testing.T) {
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_DLGMODALFRAME}, 0x00000001)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_NOPARENTNOTIFY}, 0x00000004)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_TOPMOST}, 0x00000008)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_ACCEPTFILES}, 0x00000010)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_TRANSPARENT}, 0x00000020)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_MDICHILD}, 0x00000040)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_TOOLWINDOW}, 0x00000080)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_WINDOWEDGE}, 0x00000100)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_CLIENTEDGE}, 0x00000200)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_CONTEXTHELP}, 0x00000400)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_RIGHT}, 0x00001000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_RTLREADING}, 0x00002000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_LEFTSCROLLBAR}, 0x00004000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_CONTROLPARENT}, 0x00010000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_STATICEDGE}, 0x00020000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_APPWINDOW}, 0x00040000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_LAYERED}, 0x00080000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_NOINHERITLAYOUT}, 0x00100000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_NOREDIRECTIONBITMAP}, 0x00200000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_LAYOUTRTL}, 0x00400000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_COMPOSITED}, 0x02000000)
+	expect_flags(t, win32app.WS_EX_STYLES{.WS_EX_NOACTIVATE}, 0x08000000)
 }

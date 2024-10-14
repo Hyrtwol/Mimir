@@ -12,6 +12,7 @@ import ca "libs:tlc/canvas_app"
 import "shared:obug"
 
 byte4 :: cv.byte4
+int2 :: cv.int2
 vector2 :: cv.float2
 scalar :: cv.float
 matrix2_rotate :: linalg.matrix2_rotate_f32
@@ -33,6 +34,10 @@ heading: scalar = cv.PI
 pos: vector2 = {22, 11.5}
 dir: vector2
 plane: vector2
+
+pitch: scalar = 0 // looking up/down, expressed in screen pixels the horizon shifts
+posZ: scalar = 0 // vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
+
 
 @(private = "file")
 reciprocal_abs_scalar :: #force_inline proc "contextless" (v: scalar) -> scalar {
@@ -81,24 +86,53 @@ handle_input :: proc(app: ca.papp) {
 		if (worldMap[int(pos.x + move.x)][int(pos.y)] == 0) {pos.x += move.x}
 		if (worldMap[int(pos.x)][int(pos.y + move.y)] == 0) {pos.y += move.y}
 	}
+
+	if keys[win32.VK_A] {
+		pitch -= 1
+	}
+	if keys[win32.VK_Z] {
+		pitch += 1
+	}
+	if keys[win32.VK_S] {
+		posZ -= 1
+	}
+	if keys[win32.VK_X] {
+		posZ += 1
+	}
 }
+
+run_mode : enum {flat, textured, floor, sprites, pitch} : .pitch
 
 run :: proc() {
 	fmt.println("Raycaster")
 	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", pics_count, pics_w, pics_h, pics_ps * 8, pics_byte_size, pics_count * pics_byte_size)
-	ca.app.size = {screenWidth, screenHeight}
-	//ca.app.create = on_create
-	//ca.app.update = on_update_raycaster_flat;worldMap = worldmap_flat
-	//ca.app.update = on_update_raycaster_textured;worldMap = worldmap_textured
-	//ca.app.update = on_update_raycaster_floor;worldMap = worldmap_floor
-	//ca.app.create = on_create_raycaster_sprites
-	//ca.app.update = on_update_raycaster_sprites;worldMap = worldmap_sprites
-	ca.app.create = on_create_raycaster_pitch
-	ca.app.update = on_update_raycaster_pitch;worldMap = worldmap_pitch
-	//ca.app.destroy = on_destroy
-	ca.settings.window_size = ca.app.size * ZOOM
-	ca.settings.sleep = time.Millisecond * 5
-	ca.run()
+	app :=  ca.default_application
+	app.size = {screenWidth, screenHeight}
+	when run_mode == .flat {
+		//app.create = on_create
+		app.update = on_update_raycaster_flat
+		worldMap = worldmap_flat
+	} else when run_mode == .textured {
+		//app.create = on_create
+		app.update = on_update_raycaster_textured
+		worldMap = worldmap_textured
+	} else when run_mode == .floor {
+		//app.create = on_create
+		app.update = on_update_raycaster_floor
+		worldMap = worldmap_floor
+	} else when run_mode == .sprites {
+		app.create = on_create_raycaster_sprites
+		app.update = on_update_raycaster_sprites
+		worldMap = worldmap_sprites
+	} else when run_mode == .pitch {
+		app.create = on_create_raycaster_pitch
+		app.update = on_update_raycaster_pitch
+		worldMap = worldmap_pitch
+	}
+	//app.destroy = on_destroy
+	app.settings.window_size = app.size * ZOOM
+	app.settings.sleep = time.Millisecond * 5
+	ca.run(&app)
 	fmt.println("Done.")
 }
 

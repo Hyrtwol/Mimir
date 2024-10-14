@@ -20,7 +20,7 @@ SCREEN_SIZE :: screen_sizes_overscan[2]
 FPS :: 10
 
 // globals
-SOX, SOY: i32 = (WIDTH - SCREEN_WIDTH) / 2, (HEIGHT - SCREEN_HEIGHT)
+screen_offset: int2 = {(WIDTH - SCREEN_WIDTH) / 2, (HEIGHT - SCREEN_HEIGHT)}
 
 bkgnd_brush: win32.HBRUSH
 
@@ -30,11 +30,20 @@ BITMAPINFO :: struct {
 }
 
 set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
 }
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 	app := (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	return app
+}
+
+get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
+	pcs := win32app.decode_lparam_as_createstruct(lparam)
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
+	app := papp(pcs.lpCreateParams)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
 }
@@ -53,12 +62,9 @@ amstrad_colors := cv.AMSTRAD_COLORS
 amstrad_ink := cv.AMSTRAD_INK
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings := win32app.get_settings_from_lparam(lparam)
-	if settings == nil {win32app.show_error_and_panic("Missing settings");return 1}
-	app := (papp)(settings.app)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	app := get_app_from_lparam(lparam)
 	set_app(hwnd, app)
-	//fmt.println(#procedure, hwnd, pcs, app)
+	//fmt.println(#procedure, hwnd, app)
 
 	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
 
@@ -141,8 +147,9 @@ WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings := win32app.get_settings(hwnd)
-	if settings == nil {return 1}
+	app := get_app(hwnd)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	settings := app.settings
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
@@ -162,8 +169,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		defer win32.DeleteDC(hdc_source)
 
 		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
-		//client_size := win32app.get_rect_size(&ps.rcPaint)
-		win32.StretchBlt(hdc, SOX, SOY, SCREEN_WIDTH, SCREEN_HEIGHT * 2, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
+		win32.StretchBlt(hdc, screen_offset.x, screen_offset.y, SCREEN_WIDTH, SCREEN_HEIGHT * 2, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
 	}
 
 	return 0
@@ -266,7 +272,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:	return WM_ERASEBKGND(hwnd, wparam)
 	case win32.WM_SETFOCUS:		return WM_SETFOCUS(hwnd, wparam)
 	case win32.WM_KILLFOCUS:	return WM_KILLFOCUS(hwnd, wparam)
-	//case win32.WM_SIZE:	return WM_SIZE(hwnd, wparam)
+	case win32.WM_SIZE:	        return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	//case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam)
 	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam)
@@ -283,15 +289,7 @@ total: z.zusize = 0
 reps := 0
 
 run_app :: proc(app: papp) {
-
-	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE, wndproc)
-	settings.app = app
-
-	app.settings = settings
-
-	inst := win32app.get_instance()
-	atom := win32app.register_window_class(inst, settings.wndproc)
-	_ = win32app.create_and_show_window(inst, atom, &settings)
+	win32app.prepare_run(app)
 
 	for win32app.pull_messages() {
 		for running {

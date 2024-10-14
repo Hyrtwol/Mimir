@@ -16,6 +16,7 @@ expect_scalar :: ounit.expect_scalar
 expect_int :: ounit.expect_int
 expect_any_int :: ounit.expect_any_int
 expect_flags :: ounit.expect_flags
+expect_size :: ounit.expect_size
 
 get_version :: proc() -> (res: int, err: bool) {
 	return 666, false

@@ -249,11 +249,12 @@ on_update :: proc(app: ca.papp) -> int {
 }
 
 run :: proc() {
-	ca.app.size = {width, height}
-	ca.app.create = on_create
-	ca.app.update = on_update
-	ca.settings.window_size = ca.app.size * ZOOM
-	ca.run()
+	app :=  ca.default_application
+	app.size = {width, height}
+	app.create = on_create
+	app.update = on_update
+	app.settings.window_size = app.size * ZOOM
+	ca.run(&app)
 }
 
 main :: proc() {

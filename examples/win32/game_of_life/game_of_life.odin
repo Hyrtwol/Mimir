@@ -337,7 +337,7 @@ center_window :: proc(position: ^int2, size: int2) {
 create_window :: #force_inline proc(
 	atom: win32.ATOM,
 	window_name: win32.LPCTSTR,
-	style, ex_style: win32.DWORD,
+	style: win32.WS_STYLES, ex_style: win32.WS_EX_STYLES,
 	position: int2,
 	size: int2,
 	instance: win32.HINSTANCE,
@@ -374,8 +374,8 @@ run :: proc() -> int {
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
 	defer win32app.unregister_window_class(atom, instance)
 
-	dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
-	dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
+	dwStyle :: win32app.default_dwStyle
+	dwExStyle :: win32app.default_dwExStyle
 
 	size := window.size
 	position := win32app.default_window_position

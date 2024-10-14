@@ -20,6 +20,8 @@ pics_byte_size: i32 : pics_w * pics_h * pics_ps
 pics_buf_size :: pics_w * pics_h
 pics_buf :: [pics_buf_size]byte4
 
+pics_size :: vector2{scalar(pics_w), scalar(pics_h)}
+
 #assert(pics_ps == 4)
 when pics_w == 64 {
 	pics := #load("pics64.dat")
@@ -50,3 +52,8 @@ textures: []pics_buf = slice.from_ptr((^pics_buf)(&pics[0]), int(pics_count))
 // 	tidx := (y & pics_hm) * pics_w + (x & pics_wm)
 // 	return (^byte4)(&tex[tidx])^
 // }
+
+texture_index :: proc(uv : vector2) -> i32 {
+	return (i32(uv.x * pics_size.x) & pics_wm) +
+	       (i32(uv.y * pics_size.y) & pics_hm) * pics_w
+}

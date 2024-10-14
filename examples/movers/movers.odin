@@ -33,14 +33,10 @@ on_create :: proc(app: ca.papp) -> int {
 on_update :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
 	pp: ^ cv.int2
-	//dir:  cv.int2
 	mx, my := cv.canvas_max_xy(pc)
 	for &d in dudes {
 		pp = &d.pos
-		//dir = cv.get_random_direction4()
-		//pp^ += dir
 		d.dir += rand.int31_max(3) - 1
-		//pp^ += cv.get_direction8(d.dir >> 3)
 		pp^ += dirs[(d.dir >> 1) & 7]
 		if pp.x < 0 {pp.x = mx} else if pp.x > mx {pp.x = 0}
 		if pp.y < 0 {pp.y = my} else if pp.y > my {pp.y = 0}
@@ -51,9 +47,10 @@ on_update :: proc(app: ca.papp) -> int {
 }
 
 main :: proc() {
-	ca.app.size = {WIDTH, HEIGHT}
-	ca.app.create = on_create
-	ca.app.update = on_update
-	ca.settings.window_size = ca.app.size * ZOOM
-	ca.run()
+	app :=  ca.default_application
+	app.size = {WIDTH, HEIGHT}
+	app.create = on_create
+	app.update = on_update
+	app.settings.window_size = app.size * ZOOM
+	ca.run(&app)
 }

@@ -7,6 +7,7 @@ import "core:math"
 import "core:math/rand"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
+import "shared:obug"
 
 int2 :: cv.int2
 uint2 :: cv.uint2
@@ -192,12 +193,21 @@ on_update :: proc(app: ca.papp) -> int {
 	return 0
 }
 
+run :: proc() {
+	app :=  ca.default_application
+	app.size = {WIDTH, HEIGHT}
+	app.create = on_create
+	app.update = on_update
+	app.destroy = on_destroy
+	app.settings.window_size = app.size * ZOOM
+	app.settings.title = "Diffusion Limited Aggregation"
+	ca.run(&app)
+}
+
 main :: proc() {
-	ca.app.size = {WIDTH, HEIGHT}
-	ca.app.create = on_create
-	ca.app.update = on_update
-	ca.app.destroy = on_destroy
-	ca.settings.title = "Diffusion Limited Aggregation"
-	ca.settings.window_size = ca.app.size * ZOOM
-	ca.run()
+	when intrinsics.is_package_imported("obug") {
+		obug.exit(obug.tracked_run(run))
+	} else {
+		run()
+	}
 }

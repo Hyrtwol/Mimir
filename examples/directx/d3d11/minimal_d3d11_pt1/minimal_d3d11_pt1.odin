@@ -31,7 +31,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		{win32app.post_quit_message(0);return 0}
+		win32app.post_quit_message();return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
@@ -50,39 +50,39 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 main :: proc() {
 
 	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
-	hwnd := win32app.register_and_create_window(&settings)
+	_, _, hwnd := win32app.register_and_create_window(&settings)
 	if hwnd == nil {win32app.show_error_and_panic("CreateWindowEx failed")}
-	//assert(hwnd != nil)
+	hr: win32.HRESULT
 
 	//-- Create Device --//
 
 	feature_levels := [?]d3d11.FEATURE_LEVEL{._11_1}
 	base_device: ^d3d11.IDevice
 	base_device_context: ^d3d11.IDeviceContext
-	hr := d3d11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), d3d11.SDK_VERSION, &base_device, nil, &base_device_context)
-	assert(hr == 0);assert(base_device != nil);assert(base_device_context != nil)
+	hr = d3d11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), d3d11.SDK_VERSION, &base_device, nil, &base_device_context)
+	assert(hr == win32.NO_ERROR);assert(base_device != nil);assert(base_device_context != nil)
 
 	device: ^d3d11.IDevice
 	hr = base_device->QueryInterface(d3d11.IDevice_UUID, (^rawptr)(&device))
-	assert(hr == 0);assert(device != nil)
+	assert(hr == win32.NO_ERROR);assert(device != nil)
 
 	device_context: ^d3d11.IDeviceContext
 	hr = base_device_context->QueryInterface(d3d11.IDeviceContext_UUID, (^rawptr)(&device_context))
-	assert(hr == 0);assert(device_context != nil)
+	assert(hr == win32.NO_ERROR);assert(device_context != nil)
 
 	//-- Adapter Factory --//
 
 	dxgi_device: ^dxgi.IDevice
 	hr = device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device))
-	assert(hr == 0);assert(dxgi_device != nil)
+	assert(hr == win32.NO_ERROR);assert(dxgi_device != nil)
 
 	dxgi_adapter: ^dxgi.IAdapter
 	hr = dxgi_device->GetAdapter(&dxgi_adapter)
-	assert(hr == 0);assert(dxgi_adapter != nil)
+	assert(hr == win32.NO_ERROR);assert(dxgi_adapter != nil)
 
 	dxgi_factory: ^dxgi.IFactory2
 	hr = dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory))
-	assert(hr == 0);assert(dxgi_factory != nil)
+	assert(hr == win32.NO_ERROR);assert(dxgi_factory != nil)
 
 	//-- Swap Chain --//
 
@@ -101,18 +101,18 @@ main :: proc() {
 	}
 	swap_chain: ^dxgi.ISwapChain1
 	hr = dxgi_factory->CreateSwapChainForHwnd(device, hwnd, &swap_chain_desc, nil, nil, &swap_chain)
-	assert(hr == 0);assert(swap_chain != nil)
+	assert(hr == win32.NO_ERROR);assert(swap_chain != nil)
 	//defer swap_chain->Release()
 
 	//-- Frame Buffer --//
 
 	frame_buffer_tex: ^d3d11.ITexture2D
 	hr = swap_chain->GetBuffer(0, d3d11.ITexture2D_UUID, (^rawptr)(&frame_buffer_tex))
-	assert(hr == 0);assert(frame_buffer_tex != nil)
+	assert(hr == win32.NO_ERROR);assert(frame_buffer_tex != nil)
 
 	frame_buffer_rtv: ^d3d11.IRenderTargetView
 	hr = device->CreateRenderTargetView(frame_buffer_tex, nil, &frame_buffer_rtv)
-	assert(hr == 0);assert(frame_buffer_rtv != nil)
+	assert(hr == win32.NO_ERROR);assert(frame_buffer_rtv != nil)
 
 	//-- Frame Depth Buffer --//
 
@@ -123,11 +123,11 @@ main :: proc() {
 
 	depth_buffer_tex: ^d3d11.ITexture2D
 	hr = device->CreateTexture2D(&depth_buffer_desc, nil, &depth_buffer_tex)
-	assert(hr == 0);assert(depth_buffer_tex != nil)
+	assert(hr == win32.NO_ERROR);assert(depth_buffer_tex != nil)
 
 	depth_buffer_dsv: ^d3d11.IDepthStencilView
 	hr = device->CreateDepthStencilView(depth_buffer_tex, nil, &depth_buffer_dsv)
-	assert(hr == 0);assert(depth_buffer_dsv != nil)
+	assert(hr == win32.NO_ERROR);assert(depth_buffer_dsv != nil)
 
 	//-- framebuffer_vs --//
 
@@ -153,7 +153,7 @@ main :: proc() {
 
 	ps_blob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "ps_main", "ps_5_0", 0, 0, &ps_blob, nil)
-	assert(hr == 0);assert(ps_blob != nil)
+	assert(hr == win32.NO_ERROR);assert(ps_blob != nil)
 
 	pixel_shader: ^d3d11.IPixelShader
 	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nil, &pixel_shader)
@@ -162,21 +162,21 @@ main :: proc() {
 
 	debug_vs_blob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_vs", "vs_5_0", 0, 0, &debug_vs_blob, nil)
-	assert(hr == 0);assert(debug_vs_blob != nil)
+	assert(hr == win32.NO_ERROR);assert(debug_vs_blob != nil)
 
 	debug_vs: ^d3d11.IVertexShader
 	hr = device->CreateVertexShader(debug_vs_blob->GetBufferPointer(), debug_vs_blob->GetBufferSize(), nil, &debug_vs)
-	assert(hr == 0);assert(debug_vs != nil)
+	assert(hr == win32.NO_ERROR);assert(debug_vs != nil)
 
 	//-- debug_ps --//
 
 	debug_ps_blob: ^d3d11.IBlob
 	hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "debug_ps", "ps_5_0", 0, 0, &debug_ps_blob, nil)
-	assert(hr == 0);assert(debug_ps_blob != nil)
+	assert(hr == win32.NO_ERROR);assert(debug_ps_blob != nil)
 
 	debug_ps: ^d3d11.IPixelShader
 	hr = device->CreatePixelShader(debug_ps_blob->GetBufferPointer(), debug_ps_blob->GetBufferSize(), nil, &debug_ps)
-	assert(hr == 0);assert(debug_ps != nil)
+	assert(hr == win32.NO_ERROR);assert(debug_ps != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -252,11 +252,11 @@ main :: proc() {
 
 	texture: ^d3d11.ITexture2D
 	hr = device->CreateTexture2D(&texture_desc, &texture_data, &texture)
-	assert(hr == 0);assert(texture != nil)
+	assert(hr == win32.NO_ERROR);assert(texture != nil)
 
 	texture_view: ^d3d11.IShaderResourceView
 	hr = device->CreateShaderResourceView(texture, nil, &texture_view)
-	assert(hr == 0);assert(texture_view != nil)
+	assert(hr == win32.NO_ERROR);assert(texture_view != nil)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 

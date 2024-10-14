@@ -5,6 +5,8 @@ package win32app
 import "base:intrinsics"
 import win32 "core:sys/windows"
 
+int2 :: [2]i32
+
 L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
 utf8_to_wstring :: win32.utf8_to_wstring
@@ -36,11 +38,14 @@ LPRECT :: win32.LPRECT
 HANDLE :: win32.HANDLE
 HMODULE :: win32.HMODULE
 HINSTANCE :: win32.HINSTANCE
+HMENU :: win32.HMENU
 HWND :: win32.HWND
 HDC :: win32.HDC
 HRGN :: win32.HRGN
 HGDIOBJ :: win32.HGDIOBJ
 HBITMAP :: win32.HBITMAP
+HPEN :: win32.HPEN
+HBRUSH :: win32.HBRUSH
 
 LPARAM :: win32.LPARAM
 WPARAM :: win32.WPARAM
@@ -48,8 +53,35 @@ LRESULT :: win32.LRESULT
 
 POINT :: win32.POINT
 RECT :: win32.RECT
+
 CREATESTRUCTW :: win32.CREATESTRUCTW
 PCREATESTRUCTW :: ^CREATESTRUCTW
+
+RAWINPUT_CODE :: win32.RAWINPUT_CODE
+
+WS_STYLES :: win32.WS_STYLES
+WS_EX_STYLES :: win32.WS_EX_STYLES
+
+WS_EX_LEFT             : WS_EX_STYLES : {}
+WS_EX_RIGHTSCROLLBAR   : WS_EX_STYLES : {}
+WS_EX_LTRREADING       : WS_EX_STYLES : {}
+WS_EX_OVERLAPPEDWINDOW : WS_EX_STYLES : {.WS_EX_WINDOWEDGE, .WS_EX_CLIENTEDGE}
+WS_EX_PALETTEWINDOW    : WS_EX_STYLES : {.WS_EX_WINDOWEDGE, .WS_EX_TOOLWINDOW, .WS_EX_TOPMOST}
+
+CREATESTRUCT :: struct {
+	lpCreateParams: LPVOID,
+	hInstance:      HINSTANCE,
+	hMenu:          HMENU,
+	hwndParent:     HWND,
+	cy:             i32,
+	cx:             i32,
+	y:              i32,
+	x:              i32,
+	style:          WS_STYLES,
+	lpszName:       LPCWSTR,
+	lpszClass:      LPCWSTR,
+	dwExStyle:      WS_EX_STYLES,
+}
 
 WM_SIZE_WPARAM :: enum WPARAM {
 	RESTORED  = win32.SIZE_RESTORED,
@@ -87,13 +119,6 @@ WM_MSG :: enum UINT {
 }
 
 WNDPROC :: #type proc "system" (hwnd: HWND, msg: WM_MSG, wparam: WPARAM, lparam: LPARAM) -> LRESULT
-
-HPEN_NULL :: win32.HPEN(uintptr(win32.PS_NULL))
-HBRUSH_NULL :: win32.HBRUSH(uintptr(win32.BS_NULL))
-HGDIOBJ_PS_NULL :: win32.HGDIOBJ(HPEN_NULL)
-HGDIOBJ_BS_NULL :: win32.HGDIOBJ(HBRUSH_NULL)
-
-LANGID_NEUTRAL_DEFAULT := win32.MAKELANGID(win32.LANG_NEUTRAL, win32.SUBLANG_DEFAULT)
 
 // Key State Masks for Mouse Messages
 

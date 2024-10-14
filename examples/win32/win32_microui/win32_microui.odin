@@ -512,7 +512,7 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 			old_brush := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush))
 			old_color := win32.SetDCBrushColor(hdc, convert_mu_color(cmd.color))
 			//old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(hPen));
-			old_pen := win32.SelectObject(hdc, win32app.HGDIOBJ_PS_NULL)
+			old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(win32app.HPEN_NULL))
 			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
 			//win32.FillRect(hdc, &cmd.rect, win32.HBRUSH(dc_brush))
 			win32.SelectObject(hdc, old_pen)

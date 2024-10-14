@@ -3,94 +3,9 @@
 package win32app
 
 import "core:fmt"
-import "core:time"
 import fp "core:path/filepath"
 import win32 "core:sys/windows"
 //import ow "shared:owin"
-
-int2 :: [2]i32
-
-IDT_TIMER1: win32.UINT_PTR : 10001
-IDT_TIMER2: win32.UINT_PTR : 10002
-IDT_TIMER3: win32.UINT_PTR : 10003
-IDT_TIMER4: win32.UINT_PTR : 10004
-
-show_message_box :: #force_inline proc(caption: string, text: string, type: UINT = win32.MB_ICONSTOP | win32.MB_OK) {
-	win32.MessageBoxW(nil, utf8_to_wstring(text), utf8_to_wstring(caption), type)
-}
-
-show_message_boxf :: #force_inline proc(caption: string, format: string, args: ..any) {
-	show_message_box(caption, fmt.tprintf(format, ..args))
-}
-
-show_error :: #force_inline proc(msg: string, loc := #caller_location) {
-	show_message_boxf("Panic", "%s\nLast error: %x\n%v\n", msg, win32.GetLastError(), loc)
-}
-
-show_error_and_panic :: proc(msg: string, loc := #caller_location) {
-	show_error(msg, loc = loc)
-	fmt.panicf("%s (Last error: %x)", msg, win32.GetLastError(), loc = loc)
-}
-
-show_error_and_panicf :: proc(format: string, args: ..any, loc := #caller_location) {
-	show_error_and_panic(fmt.tprintf(format, ..args), loc = loc)
-}
-
-show_last_error :: proc(caption: string, loc := #caller_location) {
-	fmt.eprintln(caption)
-	last_error := win32.GetLastError()
-	error_text: [512]win32.WCHAR
-	error_wstring := wstring(&error_text)
-	cch := win32.FormatMessageW(win32.FORMAT_MESSAGE_FROM_SYSTEM | win32.FORMAT_MESSAGE_IGNORE_INSERTS, nil, last_error, LANGID_NEUTRAL_DEFAULT, error_wstring, len(error_text) - 1, nil)
-	if (cch != 0) {return}
-	error_string, err := wstring_to_utf8(&error_wstring[0], int(cch))
-	if err == .None {
-		fmt.eprintln(error_string)
-	} else {
-		fmt.eprintfln("Last error code: %d (0x%8X)", last_error)
-	}
-}
-
-show_last_errorf :: #force_inline proc(format: string, args: ..any, loc := #caller_location) {
-	show_last_error(fmt.tprintf(format, ..args), loc = loc)
-}
-
-get_rect_size :: #force_inline proc "contextless" (rect: ^RECT) -> int2 {
-	return {(rect.right - rect.left), (rect.bottom - rect.top)}
-}
-
-get_client_size :: proc "contextless" (hwnd: HWND) -> int2 {
-	rect: RECT
-	win32.GetClientRect(hwnd, &rect)
-	return get_rect_size(&rect)
-}
-
-adjust_window_size :: proc "contextless" (size: int2, dwStyle, dwExStyle: u32) -> int2 {
-	rect := RECT{0, 0, size.x, size.y}
-	if win32.AdjustWindowRectEx(&rect, dwStyle, false, dwExStyle) {
-		return get_rect_size(&rect)
-	}
-	return size
-}
-
-adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
-	rect := RECT{0, 0, size.x, size.y}
-	if win32.AdjustWindowRect(&rect, dwStyle, false) {
-		size^ = get_rect_size(&rect)
-	}
-}
-
-default_window_position : int2 : {win32.CW_USEDEFAULT, win32.CW_USEDEFAULT}
-
-get_window_position :: proc(size: int2, center: bool) -> int2 {
-	if center {
-		if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
-			dmsize: int2 = {i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
-			return (dmsize - size) / 2
-		}
-	}
-	return default_window_position
-}
 
 get_module_handle :: proc(lpModuleName: wstring = nil) -> HMODULE {
 	module_handle := win32.GetModuleHandleW(lpModuleName)
@@ -98,11 +13,7 @@ get_module_handle :: proc(lpModuleName: wstring = nil) -> HMODULE {
 	return module_handle
 }
 
-get_instance :: proc() -> HINSTANCE {
-	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
-	if (instance == nil) {show_error_and_panic("No instance")}
-	return instance
-}
+// get_instance :: proc() -> HINSTANCE {return win32.HINSTANCE(get_module_handle())}
 
 get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_allocator) -> string {
 	wname: [512]win32.WCHAR
@@ -115,8 +26,6 @@ get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_all
 	}
 	return "?"
 }
-
-IDI_ICON1 :: 101
 
 load_icon :: proc(instance: HINSTANCE) -> win32.HICON {
 	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(IDI_ICON1))
@@ -162,122 +71,34 @@ unregister_window_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
 	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
 }
 
-create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, dwStyle, dwExStyle: u32, settings: ^window_settings) -> win32.HWND {
+create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^window_settings) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 
-	size := adjust_window_size(settings.window_size, dwStyle, dwExStyle)
+	if settings.dwStyle == {} {settings.dwStyle = default_dwStyle}
+	if settings.dwExStyle == {} {settings.dwExStyle = default_dwExStyle}
+
+	size := adjust_window_size(settings.window_size, settings.dwStyle, settings.dwExStyle)
 	position := get_window_position(size, settings.center)
 
-	return win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
-}
-
-default_dwStyle :: win32.WS_OVERLAPPED | win32.WS_CAPTION | win32.WS_SYSMENU
-default_dwExStyle :: win32.WS_EX_OVERLAPPEDWINDOW
-
-window_settings :: struct {
-	title:       string,
-	window_size: int2,
-	center:      bool,
-	dwStyle:     u32,
-	dwExStyle:   u32,
-	wndproc:     win32.WNDPROC,
-	run:         proc(this: ^window_settings) -> int,
-	app:         rawptr,
-	sleep:       time.Duration,
-}
-psettings :: ^window_settings
-
-set_settings :: #force_inline proc(hwnd: win32.HWND, settings: psettings) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(settings)))}
-get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {return (psettings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
-
-default_window_settings :: proc() -> window_settings {
-	return window_settings {
-		center      = true,
-		dwStyle     = default_dwStyle,
-		dwExStyle   = default_dwExStyle,
-		sleep       = time.Millisecond * 10,
-	}
-}
-
-@(private = "file")
-create_window_settings_sw :: proc(size: int2, wndproc: win32.WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
-	settings: window_settings = {
-		window_size = size,
-		center      = true,
-		wndproc     = wndproc,
-		dwStyle     = default_dwStyle,
-		dwExStyle   = default_dwExStyle,
-		run         = run,
-		sleep       = time.Millisecond * 10,
-	}
-	return settings
-}
-
-@(private = "file")
-create_window_settings_tsw :: proc(title: string, size: int2, wndproc: win32.WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
-	settings := create_window_settings_sw(size, wndproc)
-	settings.title = title
-	return settings
-}
-
-@(private = "file")
-create_window_settings_twhw :: #force_inline proc(title: string, width: i32, height: i32, wndproc: win32.WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
-	return create_window_settings_tsw(title, {width, height}, wndproc)
-}
-
-@(private = "file")
-create_window_settings_sw2 :: #force_inline proc(size: int2, wndproc: WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
-	return create_window_settings_sw(size, win32.WNDPROC(wndproc))
-}
-
-@(private = "file")
-create_window_settings_tsw2 :: #force_inline proc(title: string, size: int2, wndproc: WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
-	return create_window_settings_tsw(title, size, win32.WNDPROC(wndproc))
-}
-
-create_window_settings :: proc {
-	create_window_settings_sw,
-	create_window_settings_tsw,
-	create_window_settings_twhw,
-	create_window_settings_sw2,
-	create_window_settings_tsw2,
-}
-
-register_and_create_window :: proc(settings: ^window_settings) -> win32.HWND {
-	instance := get_instance()
-	assert(instance != nil)
-
-	atom := register_window_class(instance, settings.wndproc)
-	assert(atom != 0)
-
-	if settings.dwStyle == 0 {settings.dwStyle = default_dwStyle}
-	if settings.dwExStyle == 0 {settings.dwExStyle = default_dwExStyle}
-	hwnd := create_window(instance, atom, settings.dwStyle, settings.dwExStyle, settings)
-	assert(hwnd != nil)
+	hwnd := win32.CreateWindowExW(settings.dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), settings.dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
+	if hwnd == nil {show_error_and_panic("create_window failed")}
 	return hwnd
+}
+
+register_and_create_window :: proc(settings: ^window_settings) -> (instance: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
+	module_handle := get_module_handle()
+	if settings.title == "" {
+		settings.title = fp.stem(get_module_filename(module_handle))
+	}
+	instance = win32.HINSTANCE(module_handle)
+	atom = register_window_class(instance, settings.wndproc)
+	hwnd = create_window(instance, atom, settings)
+	return
 }
 
 show_and_update_window :: proc(hwnd: win32.HWND, nCmdShow: win32.INT = win32.SW_SHOWDEFAULT) {
 	win32.ShowWindow(hwnd, nCmdShow)
 	win32.UpdateWindow(hwnd)
-}
-
-create_and_show_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^window_settings) -> win32.HWND {
-	if settings.dwStyle == 0 {settings.dwStyle = default_dwStyle}
-	if settings.dwExStyle == 0 {settings.dwExStyle = default_dwExStyle}
-	hwnd: win32.HWND = create_window(instance, atom, settings.dwStyle, settings.dwExStyle, settings)
-	if hwnd == nil {
-		show_error_and_panic("create_window failed")
-	}
-
-	show_and_update_window(hwnd)
-
-	return hwnd
 }
 
 pull_messages :: proc(hwnd: HWND = nil) -> bool {
@@ -305,13 +126,8 @@ loop_messages :: proc(hwnd: HWND = nil) -> int {
 }
 
 prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
-	module_handle := get_module_handle()
-	if settings.title == "" {
-		settings.title = fp.stem(get_module_filename(module_handle))
-	}
-	inst = win32.HINSTANCE(module_handle)
-	atom = register_window_class(inst, settings.wndproc)
-	hwnd = create_and_show_window(inst, atom, settings)
+	inst, atom, hwnd = register_and_create_window(settings)
+	show_and_update_window(hwnd)
 	return
 }
 
@@ -320,16 +136,6 @@ run :: proc(settings: ^window_settings) -> int {
 	exit_code := loop_messages()
 	return exit_code
 }
-
-// run :: proc(settings: ^window_settings, ) {
-// 	_, _, hwnd := win32app.prepare_run(&settings)
-// 	for win32app.pull_messages() {
-
-// 		//delta = stopwatch->get_delta_seconds()
-// 		//frame_time += delta
-// 		//res = app.update(&app)
-// 	}
-// }
 
 // default no draw background erase
 WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {

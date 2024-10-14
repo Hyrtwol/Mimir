@@ -152,7 +152,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 	fmt.println("waveOutOpen pre")
 	hr := win32.waveOutOpen(&waveout, win32.WAVE_MAPPER, &WaveFormatEx, win32.DWORD_PTR(uintptr(hwnd)), 0, win32.CALLBACK_WINDOW | win32.WAVE_ALLOWSYNC)
 
-	if hr != win32.MMSYSERR_NOERROR {
+	if hr != .MMSYSERR_NOERROR {
 		win32app.show_last_errorf("waveOutOpen %v\n%v", hr, WaveFormatEx)
 		return
 	}
@@ -171,7 +171,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 		header.dwFlags = win32.WHDR_DONE
 
 		hr = win32.waveOutPrepareHeader(waveout, header, size_of(win32.WAVEHDR))
-		if hr != 0 {
+		if hr != .MMSYSERR_NOERROR {
 			win32app.show_last_errorf("header[%d]=%v", i, header)
 			return
 		}
@@ -188,7 +188,7 @@ CloseFile :: proc() {
 	Closing = true
 
 	hr := win32.waveOutReset(waveout)
-	assert(hr == 0)
+	assert(win32.SUCCEEDED(hr))
 
 	for i in 0 ..< NUM_BUFFERS {
 		header := &Headers[i]
@@ -198,12 +198,12 @@ CloseFile :: proc() {
 		//delete(p^)
 		data = win32.GlobalFree(data)
 		assert(data == nil)
-		assert(hr == 0)
+		assert(hr == .MMSYSERR_NOERROR)
 	}
 
 	fmt.printfln("waveOutClose waveout=%v", waveout)
 	hr = win32.waveOutClose(waveout)
-	assert(hr == 0)
+	assert(hr == .MMSYSERR_NOERROR)
 	waveout = nil
 }
 
@@ -214,7 +214,7 @@ WriteBuffer :: proc() {
 	DoBuffer(header)
 
 	hr := win32.waveOutWrite(waveout, header, size_of(win32.WAVEHDR))
-	assert(hr == 0)
+	assert(hr == .MMSYSERR_NOERROR)
 	CurrentBuffer = (CurrentBuffer + 1) % NUM_BUFFERS
 	// win32.PostMessage(Handle, WM_PREPARE_NEXT_BUFFER, CurrentBuffer, 0);
 	//fmt.printfln("WB %d", CurrentBuffer)
@@ -393,7 +393,7 @@ list_audio_devices :: proc() {
 	fmt.printfln("Audio Devices (%d)", num_devs)
 	woc: win32.WAVEOUTCAPSW
 	for i in 0 ..< num_devs {
-		if win32.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32.WAVEOUTCAPSW)) == 0 {
+		if win32.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32.WAVEOUTCAPSW)) == .MMSYSERR_NOERROR {
 			fmt.printfln("Device ID #%d: '%s'", i, woc.szPname)
 		}
 	}

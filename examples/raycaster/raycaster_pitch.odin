@@ -128,12 +128,14 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		lineHeight := scalar(h) / perpWallDist
 		lineHeight_half := lineHeight / 2
 
-		pitch :: 0.5 //100
+		// pitch :: 0.5 //100
 
 		//calculate lowest and highest pixel to fill in current stripe
-		drawStart := i32(-lineHeight_half + scalar(h_half))
+		//drawStart := i32(-lineHeight_half + scalar(h_half))
+		drawStart := i32(-lineHeight_half + scalar(h_half) + pitch + (posZ / perpWallDist))
 		if drawStart < 0 {drawStart = 0}
-		drawEnd := i32(lineHeight_half + scalar(h_half))
+		//drawEnd := i32(lineHeight_half + scalar(h_half))
+		drawEnd := i32(lineHeight_half + scalar(h_half) + pitch + (posZ / perpWallDist))
 		if drawEnd >= h {drawEnd = h - 1}
 
 		//texturing calculations
@@ -155,7 +157,8 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		step : scalar = scalar(pics_h) / scalar(lineHeight)
 		// Starting texture coordinate
 		//texPos := (scalar(drawStart) - scalar(pitch) - scalar(h_half) + lineHeight_half) * step
-		texPos := (scalar(drawStart) - scalar(h_half) + lineHeight_half) * step
+		//texPos := (scalar(drawStart) - pitch - scalar(h_half) + lineHeight_half) * step
+		texPos := (scalar(drawStart) - pitch - (posZ / perpWallDist) - scalar(h_half) + lineHeight_half) * step
 		texPos += 0.01
 		for y in drawStart ..= drawEnd {
 			// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
@@ -169,23 +172,19 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		}
 
 		//FLOOR CASTING
-		floorXWall, floorYWall: scalar //x, y position of the floor texel at the bottom of the wall
+		floorWall: vector2 //x, y position of the floor texel at the bottom of the wall
 		//4 different wall directions possible
 		if (side == 0) {
 			if (rayDir.x > 0) {
-				floorXWall = scalar(mapX)
-				floorYWall = scalar(mapY) + wallX
+				floorWall = {scalar(mapX), scalar(mapY) + wallX}
 			} else {
-				floorXWall = scalar(mapX) + 1.0
-				floorYWall = scalar(mapY) + wallX
+				floorWall = {scalar(mapX) + 1.0, scalar(mapY) + wallX}
 			}
 		} else {
 			if (rayDir.y > 0) {
-				floorXWall = scalar(mapX) + wallX
-				floorYWall = scalar(mapY)
+				floorWall = {scalar(mapX) + wallX, scalar(mapY)}
 			} else {
-				floorXWall = scalar(mapX) + wallX
-				floorYWall = scalar(mapY) + 1.0
+				floorWall = {scalar(mapX) + wallX, scalar(mapY) + 1.0}
 			}
 		}
 
@@ -196,30 +195,33 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 
 		if (drawEnd < 0) {drawEnd = h} 	//becomes < 0 when the integer overflows
 
-		//draw the floor from drawEnd to the bottom of the screen
-		for y in drawEnd + 1 ..< h {
-			currentDist = scalar(h) / scalar(2 * y - h) //you could make a small lookup table for this instead
+		currentFloor : vector2
+
+		for y in 0 ..< drawStart {
+			currentDist = (scalar(h) - (2 * posZ)) / (scalar(h) - 2 * (scalar(y) - pitch))
 
 			weight: scalar = (currentDist - distPlayer) / (distWall - distPlayer)
 
-			currentFloorX: scalar = weight * floorXWall + (1.0 - weight) * pos.x
-			currentFloorY: scalar = weight * floorYWall + (1.0 - weight) * pos.y
+			currentFloor = linalg.lerp(pos, floorWall, weight)
+			texIdx := texture_index(currentFloor)
 
-			checkerBoardPattern: i32 = (i32(currentFloorX) + i32(currentFloorY)) & 1
+			//ceiling
+			cv.canvas_set_dot(canvas, x, y, textures[6][texIdx])
+		}
+
+		for y in drawEnd + 1 ..< h {
+			currentDist = (scalar(h) + (2 * posZ)) / (2 * (scalar(y) - pitch) - scalar(h))
+
+			weight: scalar = (currentDist - distPlayer) / (distWall - distPlayer)
+
+			currentFloor = linalg.lerp(pos, floorWall, weight)
+			texIdx := texture_index(currentFloor)
+
+			checkerBoardPattern: i32 = (i32(currentFloor.x) + i32(currentFloor.y)) & 1
 			floorTexture: i32 = checkerBoardPattern == 0 ? 3 : 4
-
-			floorTexX, floorTexY: i32
-			floorTexX = i32(currentFloorX * scalar(pics_w)) & pics_wm
-			floorTexY = i32(currentFloorY * scalar(pics_h)) & pics_hm
-			texIdx := pics_w * floorTexY + floorTexX
 
 			//floor
 			cv.canvas_set_dot(canvas, x, y, textures[floorTexture][texIdx] / 2)
-			//ceiling (symmetrical)
-			cv.canvas_set_dot(canvas, x, h - y, textures[6][texIdx])
-
-			// cv.canvas_set_dot(canvas, x, y, sample(&textures[floorTexture], currentFloorX, currentFloorY) / 2)
-			// cv.canvas_set_dot(canvas, x, h - y, sample(&textures[6], currentFloorX, currentFloorY))
 		}
 
 		//SET THE ZBUFFER FOR THE SPRITE CASTING
@@ -246,18 +248,18 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		// [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
 		// [ planeY   dirY ]                                          [ -planeY  planeX ]
 
-		invDet := 1 / (plane.x * dir.y - dir.x * plane.y) //required for correct matrix multiplication
+		invDet := 1 / scalar(plane.x * dir.y - dir.x * plane.y) //required for correct matrix multiplication
 
-		transformX := invDet * (dir.y * sprpos.x - dir.x * sprpos.y)
-		transformY := invDet * (-plane.y * sprpos.x + plane.x * sprpos.y) //this is actually the depth inside the screen, that what Z is in 3D, the distance of sprite to player, matching sqrt(spriteDistance[i])
+		transformX := scalar(invDet * (dir.y * sprpos.x - dir.x * sprpos.y))
+		transformY := scalar(invDet * (-plane.y * sprpos.x + plane.x * sprpos.y)) //this is actually the depth inside the screen, that what Z is in 3D, the distance of sprite to player, matching sqrt(spriteDistance[i])
 
 		spriteScreenX := i32((scalar(w) / 2) * (1 + transformX / transformY))
 
 		//parameters for scaling and moving the sprites
 		uDiv :: 1
 		vDiv :: 1
-		vMove :: 0.0
-		vMoveScreen :: 0 // = vMove / transformY
+		vMove :: 0
+		vMoveScreen := i32(vMove / transformY + pitch + posZ / transformY)
 
 		//calculate height of the sprite on screen
 		spriteHeight: i32 = abs(i32(scalar(h) / transformY)) / vDiv //using "transformY" instead of the real distance prevents fisheye
@@ -280,10 +282,12 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 			texX &= pics_wm // avoid random crash
 			//the conditions in the if are:
 			//1) it's in front of camera plane so you don't see things behind you
-			//2) ZBuffer, with perpendicular distance
-			if (transformY > 0 && transformY < ZBuffer[stripe]) {
+			//2) it's on the screen (left)
+			//3) it's on the screen (right)
+			//4) ZBuffer, with perpendicular distance
+			if (transformY > 0 && stripe > 0 && stripe < w && transformY < ZBuffer[stripe]) {
 				for y in drawStartY ..< drawEndY { 	//for every pixel of the current stripe
-					d := (y /*- vMoveScreen*/) * 256 - h * 128 + spriteHeight * 128 //256 and 128 factors to avoid floats
+					d := (y - vMoveScreen) * 256 - h * 128 + spriteHeight * 128 //256 and 128 factors to avoid floats
 					texY := ((d * pics_h) / spriteHeight) / 256
 					texY &= pics_hm // avoid random crash
 					color := sprimg[pics_w * texY + texX] //get current color from the texture

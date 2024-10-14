@@ -16,7 +16,6 @@ int2 :: cv.int2
 color: cv.color
 dib: win32app.DIB
 
-settings := win32app.create_window_settings(int2{640, 480}, wndproc)
 app_action :: #type proc(app: papp) -> int
 
 key_state_count :: 128
@@ -24,6 +23,7 @@ key_state :: bool
 key_states :: [key_state_count]key_state
 
 application :: struct {
+	#subtype settings:       win32app.window_settings,
 	pause:                   bool,
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
@@ -39,11 +39,19 @@ papp :: ^application
 
 on_idle :: proc(app: papp) -> int {return 0}
 
-app: application = {
-	size    = {320, 240},
-	create  = on_idle,
-	update  = on_idle,
-	destroy = on_idle,
+default_application :: application {
+	settings = win32app.window_settings {
+		center      = true,
+		dwStyle     = win32app.default_dwStyle,
+		dwExStyle   = win32app.default_dwExStyle,
+		sleep       = win32app.default_sleep,
+		window_size = {640, 480},
+		wndproc = wndproc,
+	},
+	size     = {320, 240},
+	create   = on_idle,
+	update   = on_idle,
+	destroy  = on_idle,
 }
 
 frame_stats: struct {
@@ -62,17 +70,25 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 	return app
 }
 
-get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
+get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
-	settings := win32app.psettings(pcs.lpCreateParams)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
-	return settings
+	app := papp(pcs.lpCreateParams)
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	return app
 }
+
+// get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
+// 	pcs := win32app.decode_lparam_as_createstruct(lparam)
+// 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
+// 	settings := win32app.psettings(pcs.lpCreateParams)
+// 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
+// 	return settings
+// }
 
 // 0..1
 decode_mouse_pos_01 :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
-	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(settings.window_size)
+	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(app.settings.window_size)
 	return linalg.clamp(normalized_mouse_pos, cv.float2_zero, cv.float2_one)
 }
 
@@ -83,8 +99,9 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: papp) -> cv.float
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	settings := get_settings(lparam)
-	app := (papp)(settings.app)
+	//settings := get_settings(lparam)
+	//app := (papp)(settings.app)
+	app := get_app_from_lparam(lparam)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	set_app(hwnd, app)
 
@@ -116,14 +133,15 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, frame_stats.fps)
+	app := get_app(hwnd)
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, frame_stats.fps)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//app := get_app(hwnd)
+	app := get_app(hwnd)
 	type, size := win32app.decode_wm_size_params(wparam, lparam)
 	fmt.println(#procedure, hwnd, type, size)
-	settings.window_size = size
+	app.settings.window_size = size
 	set_window_text(hwnd)
 	return 0
 }
@@ -139,8 +157,8 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 }
 
 draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
-	//app := get_app(hwnd)
-	win32app.draw_dib(hwnd, hdc, settings.window_size, &dib)
+	app := get_app(hwnd)
+	win32app.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
 }
 
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
@@ -212,6 +230,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 }
 
 handle_mouse_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	app := get_app(hwnd)
 	app.mouse_pos = win32app.decode_lparam_as_int2(lparam)
 	app.mouse_buttons = win32app.decode_wparam_as_mouse_key_state(wparam)
 	return 0
@@ -238,14 +257,17 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-run :: proc() {
+sleep :: proc(duration: time.Duration) {
+	if duration >= 0 {
+		time.accurate_sleep(duration)
+	}
+}
+
+run :: proc(app: papp) {
 	// queue.init(&app.char_queue)
 	// defer queue.destroy(&app.char_queue)
-
-	settings.app = &app
-	_, _, hwnd := win32app.prepare_run(&settings)
+	_, _, hwnd := win32app.prepare_run(app)
 	res: int
-
 	stopwatch := win32app.create_stopwatch()
 	stopwatch->start()
 	for win32app.pull_messages() {
@@ -255,12 +277,10 @@ run :: proc() {
 		frame_stats.frame_counter += 1
 		app.tick += 1
 
-		res = app.update(&app)
+		res = app.update(app)
 		if res != 0 {break}
 		draw_frame(hwnd)
-		if settings.sleep >= 0 {
-			time.accurate_sleep(settings.sleep)
-		}
+		sleep(app.settings.sleep)
 	}
 	stopwatch->stop()
 }

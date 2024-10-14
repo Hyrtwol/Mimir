@@ -8,6 +8,7 @@ import fp "core:path/filepath"
 import win32 "core:sys/windows"
 import a "libs:amstrad"
 import "libs:tlc/win32app"
+import "shared:obug"
 
 ROM_PATH := fp.clean("../data/z80/")
 AMSTRAD_PATH := fp.clean("../examples/amstrad/data/")
@@ -26,12 +27,13 @@ application :: struct {
 }
 papp :: ^application
 
-main :: proc() {
+run :: proc() {
 	fmt.println("Amstrad")
 
 	cpu: Z80
 	init_cpu(&cpu)
 	app: application = {
+		settings = win32app.create_window_settings(TITLE, WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE, wndproc),
 		//screen_size = {WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE},
 		cpu = &cpu,
 	}
@@ -59,4 +61,12 @@ main :: proc() {
 	fmt.printfln("total %v (%v)", total, reps)
 
 	fmt.println("Done.")
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		obug.exit(obug.tracked_run(run))
+	} else {
+		run()
+	}
 }
