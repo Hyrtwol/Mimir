@@ -380,6 +380,6 @@ main :: proc() {
 	title = fmt.aprintf("%s Version : %d.%d.%d (0x%x)", TITLE, fmod_version.Major, fmod_version.Minor, fmod_version.Development, transmute(u32)fmod_version)
 	defer delete(title)
 
-	settings := win32app.create_window_settings(title, WIDTH, HEIGHT, wndproc)
+	settings := win32app.create_window_settings({WIDTH, HEIGHT}, title, wndproc)
 	win32app.run(&settings)
 }

@@ -22,7 +22,7 @@ WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
 ZOOM :: 4
 
-settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
 timer_id: win32.UINT_PTR
 dib: DIB
 npos1: double3 = {0, 0, 0}

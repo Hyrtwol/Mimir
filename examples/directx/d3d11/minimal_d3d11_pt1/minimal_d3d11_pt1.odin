@@ -49,7 +49,10 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 main :: proc() {
 
-	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+	settings := win32app.default_window_settings()
+	settings.window_size = {WIDTH, HEIGHT}
+	settings.title = TITLE
+	settings.wndproc = wndproc
 	_, _, hwnd := win32app.register_and_create_window(&settings)
 	if hwnd == nil {win32app.show_error_and_panic("CreateWindowEx failed")}
 	hr: win32.HRESULT

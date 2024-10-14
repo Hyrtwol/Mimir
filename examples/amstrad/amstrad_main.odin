@@ -33,8 +33,15 @@ run :: proc() {
 	cpu: Z80
 	init_cpu(&cpu)
 	app: application = {
-		settings = win32app.create_window_settings(TITLE, WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE, wndproc),
-		//screen_size = {WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE},
+		settings = win32app.window_settings {
+			center = true,
+			dwStyle = win32app.default_dwStyle,
+			dwExStyle = win32app.default_dwExStyle,
+			sleep = win32app.default_sleep,
+			window_size = {WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE},
+			wndproc = wndproc,
+			title = TITLE,
+		},
 		cpu = &cpu,
 	}
 	cpu.context_ = &app

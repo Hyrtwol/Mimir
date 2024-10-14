@@ -401,6 +401,6 @@ list_audio_devices :: proc() {
 
 main :: proc() {
 	list_audio_devices()
-	settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
 	win32app.run(&settings)
 }

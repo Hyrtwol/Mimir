@@ -359,7 +359,9 @@ main :: proc() {
 	ctx.text_width = mu.default_atlas_text_width
 	ctx.text_height = mu.default_atlas_text_height
 
-	settings := win32app.create_window_settings({800, 600}, wndproc)
+	settings := win32app.default_window_settings
+	settings.window_size = {800, 600}
+	settings.wndproc = wndproc
 	settings.dwStyle = win32app.default_dwStyle | win32.WS_SIZEBOX
 	settings.app = &state
 	win32app.run(&settings)

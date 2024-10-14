@@ -52,44 +52,23 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 run :: proc() {
 
-	hr: d3d12.HRESULT
-
-	settings := win32app.default_window_settings()
+	settings := win32app.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-
 	_, _, hwnd := win32app.register_and_create_window(&settings)
-
-	assert(hwnd != nil)
+	if hwnd == nil {win32app.show_error_and_panic("register_and_create_window failed")}
+	hr: win32.HRESULT
 
 	// Init DXGI factory. DXGI is the link between the window and DirectX
 	factory: ^dxgi.IFactory7
 
 	{
 		flags: dxgi.CREATE_FACTORY = {}
-
-		when ODIN_DEBUG {
-			flags |= {.DEBUG}
-		}
-
+		when ODIN_DEBUG {flags |= {.DEBUG}}
 		hr = dxgi.CreateDXGIFactory2(flags, dxgi.IFactory7_UUID, cast(^rawptr)&factory)
 		check(hr, "Failed creating factory")
 	}
-
-	//error_not_found := dxgi.HRESULT(-142213123)
-	// error_not_found := dxgi.ERROR_NOT_FOUND
-	// s,f,e := win32.DECODE_HRESULT(error_not_found)
-	// fmt.printfln("error_not_found: 0x%X %v, %d (0x%X), 0x%X", u32(error_not_found), s, u32(f), u32(f),u32(e))
-	// enf := win32.MAKE_HRESULT(win32.SEVERITY.ERROR, 1, 0x1785, 0xFFFD)
-	// fmt.printfln("error_not_found: 0x%X", u32(enf))
-	// fmt.printfln("in32.FACILITY.DXGI: %d 0x%X", u32(win32.FACILITY.DXGI), u32(win32.FACILITY.DXGI))
-	//assert(error_not_found == dxgi.ERROR_NOT_FOUND)
-
-	// res2 := factory->EnumAdapters1(10, &adapter)
-	// s, f, e := win32.DECODE_HRESULT(res2)
-	// fmt.printfln("EnumAdapters1: 0x%X %v, %v (0x%X), 0x%X", u32(res2), s, f, u32(f),u32(e))
-	// assert(res2 == dxgi.ERROR_NOT_FOUND)
 
 	// Find the DXGI adapter (GPU)
 	MINIMUM_FEATURE_LEVEL :: d3d12.FEATURE_LEVEL._12_0
@@ -97,9 +76,7 @@ run :: proc() {
 	for i: u32 = 0; factory->EnumAdapters1(i, &adapter) != dxgi.ERROR_NOT_FOUND; i += 1 {
 		desc: dxgi.ADAPTER_DESC1
 		adapter->GetDesc1(&desc)
-		if .SOFTWARE in desc.Flags {
-			continue
-		}
+		if .SOFTWARE in desc.Flags {continue}
 
 		hr = d3d12.CreateDevice((^dxgi.IUnknown)(adapter), MINIMUM_FEATURE_LEVEL, dxgi.IDevice_UUID, nil)
 		if win32.SUCCEEDED(hr) {
@@ -133,10 +110,9 @@ run :: proc() {
 	swap_chain: ^dxgi.ISwapChain3
 
 	{
-		window_size := settings.window_size
 		swap_chain_desc := dxgi.SWAP_CHAIN_DESC1 {
-			Width = u32(window_size.x),
-			Height = u32(window_size.y),
+			Width = u32(settings.window_size.x),
+			Height = u32(settings.window_size.y),
 			Format = .R8G8B8A8_UNORM,
 			SampleDesc = {Count = 1, Quality = 0},
 			BufferUsage = {.RENDER_TARGET_OUTPUT},
@@ -363,14 +339,6 @@ run :: proc() {
 	win32app.show_and_update_window(hwnd)
 	for win32app.pull_messages() {
 
-		//main_loop: for {
-		//	for e: sdl.Event; sdl.PollEvent(&e); {
-		// #partial switch e.type {
-		// case .QUIT:
-		// 	break main_loop
-		// case .WINDOWEVENT:
-		// This is equivalent to WM_PAINT in win32 API
-		//if e.window.event == .EXPOSED {
 		hr = command_allocator->Reset()
 		check(hr, "Failed resetting command allocator")
 
@@ -420,7 +388,7 @@ run :: proc() {
 		cmdlist->OMSetRenderTargets(1, &rtv_handle, false, nil)
 
 		// clear backbuffer
-		clearcolor := [?]f32{0.05, 0.05, 0.05, 1.0}
+		clearcolor := [4]f32{0.05, 0.05, 0.05, 1.0}
 		cmdlist->ClearRenderTargetView(rtv_handle, &clearcolor, 0, nil)
 
 		// draw call
@@ -443,9 +411,8 @@ run :: proc() {
 
 		// present
 		{
-			flags: dxgi.PRESENT = {}
 			params: dxgi.PRESENT_PARAMETERS
-			hr = swap_chain->Present1(1, flags, &params)
+			hr = swap_chain->Present1(1, {}, &params)
 			check(hr, "Present failed")
 		}
 
@@ -467,9 +434,7 @@ run :: proc() {
 
 			frame_index = swap_chain->GetCurrentBackBufferIndex()
 		}
-		//}
 	}
-	//}
 }
 
 shaders_hlsl := #load(SHADER_FILE)

@@ -15,7 +15,7 @@ ZOOM :: 24
 WIDTH :: ZOOM * 32
 HEIGHT :: WIDTH
 
-settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
+settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
 
 dib: win32app.DIB
 selected_color: i32 = 1

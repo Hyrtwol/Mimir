@@ -282,7 +282,10 @@ run :: proc() {
 		palette[i] = {calc_col(math.pow(f, 0.5)), calc_col(math.pow(f, 1.25)), calc_col(math.pow(f, 3.0)), 255}
 	}
 
-	settings = win32app.create_window_settings(TITLE, WIDTH * ZOOM, HEIGHT * ZOOM, wndproc)
+	settings = win32app.default_window_settings
+	settings.window_size = {WIDTH * ZOOM, HEIGHT * ZOOM}
+	settings.title = TITLE
+	settings.wndproc = wndproc
 	settings.sleep = time.Millisecond * 4
 	_, _, hwnd := win32app.prepare_run(&settings)
 	stopwatch->start()
@@ -295,7 +298,6 @@ run :: proc() {
 	}
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())
-	//fmt.println("settings:", settings)
 }
 
 main :: proc() {

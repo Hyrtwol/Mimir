@@ -101,12 +101,29 @@ show_and_update_window :: proc(hwnd: win32.HWND, nCmdShow: win32.INT = win32.SW_
 	win32.UpdateWindow(hwnd)
 }
 
+translate_and_dispatch_message :: #force_inline proc "contextless" (msg: ^win32.MSG) {
+	win32.TranslateMessage(msg)
+	win32.DispatchMessageW(msg)
+}
+
 pull_messages :: proc(hwnd: HWND = nil) -> bool {
 	msg: win32.MSG
 	for win32.PeekMessageW(&msg, hwnd, 0, 0, win32.PM_REMOVE) {
 
-		win32.TranslateMessage(&msg)
-		win32.DispatchMessageW(&msg)
+		translate_and_dispatch_message(&msg)
+
+		if (msg.message == win32.WM_QUIT) {
+			//fmt.printfln("msg.wParam=", msg.wParam)
+			return false
+		}
+	}
+	return true
+}
+
+pull_messages_msg :: proc(msg: ^win32.MSG, hwnd: HWND = nil) -> bool {
+	for win32.PeekMessageW(msg, hwnd, 0, 0, win32.PM_REMOVE) {
+
+		translate_and_dispatch_message(msg)
 
 		if (msg.message == win32.WM_QUIT) {
 			//fmt.printfln("msg.wParam=", msg.wParam)

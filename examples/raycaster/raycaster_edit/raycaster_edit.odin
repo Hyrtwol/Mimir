@@ -23,9 +23,12 @@ COLOR :: cv.W95_COLOR
 clear_color: COLOR = .BLACK
 select: COLOR = .WHITE
 
-application :: struct {}
+application :: struct {
+	#subtype settings: win32app.window_settings,
+}
 papp :: ^application
-settings: win32app.window_settings
+//settings: win32app.window_settings
+app: application
 dib: win32app.DIB
 // frame buffers
 fbc :: 2
@@ -96,11 +99,11 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, fps)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings.window_size = win32app.decode_lparam_as_int2(lparam)
+	app.settings.window_size = win32app.decode_lparam_as_int2(lparam)
 	set_window_text(hwnd)
 	// win32app.clip_cursor(hwnd, true)
 	return 0
@@ -226,14 +229,21 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 main :: proc() {
 
-	app: application = {}
-	settings = win32app.create_window_settings({WIDTH, HEIGHT}, wndproc)
-	settings.app = &app
+	app = {
+		settings = win32app.window_settings {
+			center      = true,
+			dwStyle     = win32app.default_dwStyle,
+			dwExStyle   = win32app.default_dwExStyle,
+			sleep       = win32app.default_sleep,
+			window_size = {WIDTH, HEIGHT},
+			wndproc = wndproc,
+		},
+	}
 
 	stopwatch = win32app.create_stopwatch()
 	stopwatch->start()
 
-	win32app.run(&settings)
+	win32app.run(&app)
 
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())

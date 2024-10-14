@@ -60,15 +60,12 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 run :: proc() {
 
-	//settings: window_settings
-	//settings := win32app.create_window_settings(TITLE, WIDTH, HEIGHT, wndproc)
-	settings := win32app.default_window_settings()
+	settings := win32app.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-
 	_, _, hwnd := win32app.register_and_create_window(&settings)
-	if hwnd == nil {win32app.show_error_and_panic("CreateWindowEx failed")}
+	if hwnd == nil {win32app.show_error_and_panic("register_and_create_window failed")}
 	hr: win32.HRESULT
 
 	//-- Create Device --//
@@ -77,7 +74,7 @@ run :: proc() {
 	base_device: ^d3d11.IDevice
 	base_device_context: ^d3d11.IDeviceContext
 	hr = d3d11.CreateDevice(nil, .HARDWARE, nil, {.BGRA_SUPPORT}, &feature_levels[0], len(feature_levels), d3d11.SDK_VERSION, &base_device, nil, &base_device_context)
-	assert(hr == win32.NO_ERROR);assert(base_device != nil);assert(base_device_context != nil)
+	assert(win32.SUCCEEDED(hr));assert(base_device != nil);assert(base_device_context != nil)
 
 	device: ^d3d11.IDevice
 	hr = base_device->QueryInterface(d3d11.IDevice_UUID, (^rawptr)(&device))

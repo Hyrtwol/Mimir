@@ -266,7 +266,7 @@ main :: proc() {
 	stopwatch := win32app.create_stopwatch()
 	stopwatch->start()
 
-	settings := win32app.create_window_settings(TITLE, win32app.int2{WIDTH, HEIGHT}, wndproc)
+	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
 	settings.app = &app
 	win32app.run(&settings)
 
