@@ -3,8 +3,6 @@
 package raycaster
 
 import "core:math"
-import "core:slice"
-import "core:math/linalg"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
@@ -42,7 +40,7 @@ Sprite :: struct {
 
 numSprites :: 19
 
-sprite: [numSprites]Sprite = {
+sprites: [numSprites]Sprite = {
 	{{20.5, 11.5}, 10}, //green light in front of playerstart
 	//green lights in every room
 	{{18.5, 4.5}, 10},
@@ -72,22 +70,9 @@ sprite: [numSprites]Sprite = {
 //1D Zbuffer
 ZBuffer: [screenWidth]scalar
 
-//arrays used to sort the sprites
-sprite_index :: struct {
-	sprite: ^Sprite,
-	dist:  scalar,
-}
-sprite_order: [numSprites]sprite_index
-
-sprite_sort :: proc(l, r: sprite_index) -> bool {
-	return l.dist > r.dist
-}
-
 on_create_raycaster_sprites :: proc(app: ca.papp) -> int {
 	assert(pics_count > 0)
-	for i in 0 ..< numSprites {
-		sprite_order[i] = {&sprite[i], 0}
-	}
+	init_sprites()
 	return 0
 }
 
@@ -280,19 +265,14 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 	}
 
 	//SPRITE CASTING
-	//sort sprites from far to close
-	for &spr_idx in sprite_order {
-		dif := pos - spr_idx.sprite.pos
-		spr_idx.dist = linalg.dot(dif, dif)
-	}
-	slice.stable_sort_by(sprite_order[:], sprite_sort)
+	sort_sprites_from_far_to_close()
 
 	//after sorting the sprites, do the projection and draw them
 	for &spr_idx in sprite_order {
 		//translate sprite position to relative to camera
 		spr := spr_idx.sprite
 		sprimg := textures[spr.texture]
-		sprpos := spr.pos - pos
+		sprpos := spr.pos - pos.xy
 
 		//transform sprite with the inverse camera matrix
 		// [ planeX   dirX ] -1                                       [ dirY      -dirX ]

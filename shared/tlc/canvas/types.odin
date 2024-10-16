@@ -81,6 +81,11 @@ float4_yunit :: float4{0, 1, 0, 0}
 float4_zunit :: float4{0, 0, 1, 0}
 float4_wunit :: float4{0, 0, 0, 1}
 
+int2_zero  :: int2{0, 0}
+int2_one   :: int2{1, 1}
+int2_xunit :: int2{1, 0}
+int2_yunit :: int2{0, 1}
+
 PI :: math.PI
 TwoPI :: math.PI * 2
 HalfPI :: math.PI / 2

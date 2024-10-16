@@ -13,10 +13,10 @@ get_module_handle :: proc(lpModuleName: wstring = nil) -> HMODULE {
 	return module_handle
 }
 
-// get_instance :: proc() -> HINSTANCE {return win32.HINSTANCE(get_module_handle())}
+// get_instance :: proc() -> HINSTANCE {return HINSTANCE(get_module_handle())}
 
-get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_allocator) -> string {
-	wname: [512]win32.WCHAR
+get_module_filename :: proc(module: HMODULE, allocator := context.temp_allocator) -> string {
+	wname: [512]WCHAR
 	cc := win32.GetModuleFileNameW(module, &wname[0], len(wname) - 1)
 	if cc > 0 {
 		name, err := wstring_to_utf8(&wname[0], int(cc), allocator)
@@ -27,21 +27,21 @@ get_module_filename :: proc(module: win32.HMODULE, allocator := context.temp_all
 	return "?"
 }
 
-load_icon :: proc(instance: HINSTANCE) -> win32.HICON {
-	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(IDI_ICON1))
-	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
-	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))}
+load_icon :: proc(instance: HINSTANCE) -> HICON {
+	icon: HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(IDI_ICON1))
+	if icon == nil {icon = win32.LoadIconW(nil, wstring(win32._IDI_APPLICATION))}
+	if icon == nil {icon = win32.LoadIconW(nil, wstring(win32._IDI_QUESTION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
 	return icon
 }
 
-load_cursor :: proc() -> win32.HCURSOR {
-	cursor: win32.HCURSOR = win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
+load_cursor :: proc() -> HCURSOR {
+	cursor: HCURSOR = win32.LoadCursorW(nil, wstring(win32._IDC_ARROW))
 	if cursor == nil {show_error_and_panic("Missing cursor")}
 	return cursor
 }
 
-register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> win32.ATOM {
+register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> ATOM {
 
 	icon := load_icon(instance)
 	cursor := load_cursor()
@@ -61,17 +61,17 @@ register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> wi
 		hIconSm       = icon,
 	}
 
-	atom: win32.ATOM = win32.RegisterClassExW(&wcx)
+	atom := win32.RegisterClassExW(&wcx)
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
 	return atom
 }
 
-unregister_window_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
+unregister_window_class :: proc(atom: ATOM, instance: HINSTANCE) {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
 }
 
-create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^window_settings) -> win32.HWND {
+create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_settings) -> HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 
 	if settings.dwStyle == {} {settings.dwStyle = default_dwStyle}
@@ -85,7 +85,7 @@ create_window :: proc(instance: win32.HINSTANCE, atom: win32.ATOM, settings: ^wi
 	return hwnd
 }
 
-register_and_create_window :: proc(settings: ^window_settings) -> (instance: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
+register_and_create_window :: proc(settings: ^window_settings) -> (instance: HINSTANCE, atom: ATOM, hwnd: HWND) {
 	module_handle := get_module_handle()
 	if settings.title == "" {
 		settings.title = fp.stem(get_module_filename(module_handle))
@@ -96,7 +96,7 @@ register_and_create_window :: proc(settings: ^window_settings) -> (instance: win
 	return
 }
 
-show_and_update_window :: proc(hwnd: win32.HWND, nCmdShow: win32.INT = win32.SW_SHOWDEFAULT) {
+show_and_update_window :: proc(hwnd: HWND, nCmdShow: win32.INT = win32.SW_SHOWDEFAULT) {
 	win32.ShowWindow(hwnd, nCmdShow)
 	win32.UpdateWindow(hwnd)
 }
@@ -142,7 +142,7 @@ loop_messages :: proc(hwnd: HWND = nil) -> int {
 	return int(msg.wParam)
 }
 
-prepare_run :: proc(settings: ^window_settings) -> (inst: win32.HINSTANCE, atom: win32.ATOM, hwnd: win32.HWND) {
+prepare_run :: proc(settings: ^window_settings) -> (inst: HINSTANCE, atom: ATOM, hwnd: HWND) {
 	inst, atom, hwnd = register_and_create_window(settings)
 	show_and_update_window(hwnd)
 	return
@@ -155,7 +155,7 @@ run :: proc(settings: ^window_settings) -> int {
 }
 
 // default no draw background erase
-WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+WM_ERASEBKGND_NODRAW :: #force_inline proc(hwnd: HWND, wparam: WPARAM) -> LRESULT {
 	return 1
 }
 
@@ -169,7 +169,7 @@ redraw_window :: proc {
 	redraw_window_now,
 }
 
-invalidate :: #force_inline proc "contextless" (hwnd: win32.HWND) {
+invalidate_window :: #force_inline proc "contextless" (hwnd: HWND) {
 	win32.InvalidateRect(hwnd, nil, false)
 }
 
@@ -189,13 +189,13 @@ set_window_text :: proc {
 	set_window_textf,
 }
 
-set_timer :: proc(hwnd: win32.HWND, id_event: UINT_PTR, elapse: win32.UINT) -> win32.UINT_PTR {
+set_timer :: proc(hwnd: HWND, id_event: UINT_PTR, elapse: UINT) -> UINT_PTR {
 	timer_id := win32.SetTimer(hwnd, id_event, elapse, nil)
 	if timer_id == 0 {show_error_and_panic("No timer")}
 	return timer_id
 }
 
-kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR, loc := #caller_location) {
+kill_timer :: proc(hwnd: HWND, timer_id: ^UINT_PTR, loc := #caller_location) {
 	if timer_id^ != 0 {
 		if win32.KillTimer(hwnd, timer_id^) {
 			timer_id^ = 0
@@ -205,7 +205,7 @@ kill_timer :: proc(hwnd: win32.HWND, timer_id: ^win32.UINT_PTR, loc := #caller_l
 	}
 }
 
-close_application :: #force_inline proc "contextless" (hwnd: win32.HWND) {
+close_application :: #force_inline proc "contextless" (hwnd: HWND) {
 	win32.PostMessageW(hwnd, win32.WM_CLOSE, 0, 0)
 }
 
@@ -240,8 +240,8 @@ create_bmi_header :: proc(size: int2, top_down: bool, color_bit_count: win32.WOR
 }
 
 dib_usage :: enum UINT {
-	DIB_RGB_COLORS = 0,
-	DIB_PAL_COLORS = 1,
+	DIB_RGB_COLORS = win32.DIB_RGB_COLORS,
+	DIB_PAL_COLORS = win32.DIB_PAL_COLORS,
 }
 
 create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
@@ -271,15 +271,6 @@ delete_object :: proc {
 
 /*key_input :: struct {
 }*/
-
-get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> psettings {
-	return psettings(pcs.lpCreateParams) if pcs != nil else nil
-}
-
-get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psettings {
-	pcs := decode_lparam_as_createstruct(lparam)
-	return get_settings_from_createstruct(pcs)
-}
 
 show_cursor :: #force_inline proc "contextless" (show: bool) -> INT {
 	return win32.ShowCursor(win32.BOOL(show))

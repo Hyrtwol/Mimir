@@ -4,6 +4,7 @@ package main
 import "core:fmt"
 import "base:intrinsics"
 import "base:runtime"
+import "core:math/linalg"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import "libs:tlc/win32app"
@@ -159,11 +160,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		{
 			mouse_delta: win32app.int2 = {raw.data.mouse.lLastX, raw.data.mouse.lLastY}
 			mouse_pos += mouse_delta
-			//cs := transmute(win32app.int2)(settings.window_size - 1)
-			cs := settings.window_size - 1
-			mouse_pos = {clamp(mouse_pos.x, 0, cs.x), clamp(mouse_pos.y, 0, cs.y)}
-			//mouse_pos = clamp(mouse_pos, cv.float2_zero, cs)
-
+			mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, settings.window_size - 1)
 			button_flags := raw.data.mouse.usButtonFlags
 			if button_flags > 0 {
 				switch button_flags {

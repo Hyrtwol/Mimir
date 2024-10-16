@@ -4,6 +4,7 @@ package raycaster
 
 import "base:intrinsics"
 import "core:fmt"
+import "core:slice"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:time"
@@ -14,6 +15,7 @@ import "shared:obug"
 byte4 :: cv.byte4
 int2 :: cv.int2
 vector2 :: cv.float2
+vector3 :: cv.float3
 scalar :: cv.float
 matrix2_rotate :: linalg.matrix2_rotate_f32
 
@@ -25,19 +27,19 @@ screenHeight: i32 : screenWidth * 3 / 4
 
 mapWidth: i32 : 24
 mapHeight: i32 : 24
-worldMapT :: [mapWidth][mapHeight]i32
+worldMapT :: [mapWidth][mapHeight]u8
 worldMap: worldMapT
 
 plane_scale: scalar = 0.66
 
 heading: scalar = cv.PI
-pos: vector2 = {22, 11.5}
+//pos: vector2 = {22, 11.5}
+pos: vector3 = {22, 11.5, 0.5}
 dir: vector2
 plane: vector2
 
 pitch: scalar = 0 // looking up/down, expressed in screen pixels the horizon shifts
-posZ: scalar = 0 // vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
-
+//posZ: scalar = 0.5 // vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
 
 @(private = "file")
 reciprocal_abs_scalar :: #force_inline proc "contextless" (v: scalar) -> scalar {
@@ -52,6 +54,30 @@ reciprocal_abs_vector :: #force_inline proc "contextless" (v: vector2) -> vector
 reciprocal_abs :: proc {
 	reciprocal_abs_scalar,
 	reciprocal_abs_vector,
+}
+
+//arrays used to sort the sprites
+sprite_index :: struct {
+	sprite: ^Sprite,
+	dist:  scalar,
+}
+sprite_order: [numSprites]sprite_index
+
+init_sprites :: proc() {
+	for i in 0 ..< numSprites {
+		sprite_order[i] = {&sprites[i], 0}
+	}
+}
+
+sort_sprites_from_far_to_close :: proc() {
+	sprite_sort_by_dist :: proc(l, r: sprite_index) -> bool {
+		return l.dist > r.dist
+	}
+	for &spr_idx in sprite_order {
+		dif := pos.xy - spr_idx.sprite.pos
+		spr_idx.dist = linalg.dot(dif, dif)
+	}
+	slice.stable_sort_by(sprite_order[:], sprite_sort_by_dist)
 }
 
 // on_create :: proc(app: ca.papp) -> int {
@@ -94,10 +120,10 @@ handle_input :: proc(app: ca.papp) {
 		pitch += 1
 	}
 	if keys[win32.VK_S] {
-		posZ -= 1
+		pos.z -= 1
 	}
 	if keys[win32.VK_X] {
-		posZ += 1
+		pos.z += 1
 	}
 }
 

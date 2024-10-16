@@ -13,13 +13,27 @@ window_settings :: struct {
 	dwExStyle:   WS_EX_STYLES,
 	wndproc:     win32.WNDPROC,
 	run:         proc(this: ^window_settings) -> int,
-	app:         rawptr,
+	//app:         rawptr,
 	sleep:       time.Duration,
 }
 psettings :: ^window_settings
 
-set_settings :: #force_inline proc(hwnd: win32.HWND, settings: psettings) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(settings)))}
-get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {return (psettings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
+set_settings :: #force_inline proc(hwnd: win32.HWND, settings: psettings) {
+	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(settings)))
+}
+
+get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {
+	return (psettings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
+}
+
+get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> psettings {
+	return psettings(pcs.lpCreateParams) if pcs != nil else nil
+}
+
+get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psettings {
+	pcs := decode_lparam_as_createstruct(lparam)
+	return get_settings_from_createstruct(pcs)
+}
 
 default_window_settings :: window_settings {
 	center      = true,
@@ -29,8 +43,7 @@ default_window_settings :: window_settings {
 }
 
 @(private = "file")
-create_window_settings_wndproc :: proc(size: int2, title: string, wndproc: win32.WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
+create_window_settings_wndproc :: proc "contextless" (size: int2, title: string, wndproc: win32.WNDPROC) -> window_settings {
 	settings := default_window_settings
 	settings.window_size = size
 	settings.wndproc = wndproc
@@ -40,8 +53,7 @@ create_window_settings_wndproc :: proc(size: int2, title: string, wndproc: win32
 }
 
 @(private = "file")
-create_window_settings_wndproc2 :: #force_inline proc(size: int2, title: string, wndproc: WNDPROC) -> window_settings {
-	//fmt.println(#procedure)
+create_window_settings_wndproc2 :: #force_inline proc "contextless" (size: int2, title: string, wndproc: WNDPROC) -> window_settings {
 	return create_window_settings(size, title, win32.WNDPROC(wndproc))
 }
 

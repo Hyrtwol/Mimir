@@ -96,10 +96,7 @@ update_screen_1 :: proc(app: papp) {
 	}
 }
 
-cursor_x, cursor_y: u32 = 0, 0
-ci: u8 = 0
-
-
+cursor_x, cursor_y, column_count: u32 = 0, 0, 80
 
 poke_char :: proc(pvBits: screen_buffer, char: u8) {
 	ch := i32(char) * 8
@@ -110,7 +107,7 @@ poke_char :: proc(pvBits: screen_buffer, char: u8) {
 		ch += 1
 	}
 	cursor_x += 1
-	if cursor_x >= 80 {
+	if cursor_x >= column_count {
 		cursor_x = 0
 		cursor_y += 1
 		if cursor_y >= 25 {
@@ -121,7 +118,7 @@ poke_char :: proc(pvBits: screen_buffer, char: u8) {
 
 put_char :: proc(pvBits: screen_buffer, char: u8) {
 	if char == 13 {
-		cursor_x = 80
+		cursor_x = column_count
 	} else {
 
 		ch := i32(char) * 8
@@ -134,7 +131,7 @@ put_char :: proc(pvBits: screen_buffer, char: u8) {
 
 		cursor_x += 1
 	}
-	if cursor_x >= 80 {
+	if cursor_x >= column_count {
 		cursor_x = 0
 		cursor_y += 1
 		if cursor_y >= 25 {

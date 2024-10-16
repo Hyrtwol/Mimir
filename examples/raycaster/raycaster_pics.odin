@@ -53,7 +53,12 @@ textures: []pics_buf = slice.from_ptr((^pics_buf)(&pics[0]), int(pics_count))
 // 	return (^byte4)(&tex[tidx])^
 // }
 
-texture_index :: proc(uv : vector2) -> i32 {
+texture_index :: #force_inline proc "contextless" (uv : vector2) -> i32 {
 	return (i32(uv.x * pics_size.x) & pics_wm) +
 	       (i32(uv.y * pics_size.y) & pics_hm) * pics_w
+}
+
+sample :: #force_inline proc "contextless" (tex: ^pics_buf, uv : vector2) -> byte4 {
+	tidx := texture_index(uv)
+	return (^byte4)(&tex[tidx])^
 }

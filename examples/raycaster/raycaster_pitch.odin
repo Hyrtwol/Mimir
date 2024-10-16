@@ -3,7 +3,6 @@
 package raycaster
 
 import "core:math"
-import "core:slice"
 import "core:math/linalg"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
@@ -37,9 +36,7 @@ worldmap_pitch: worldMapT = {
 
 on_create_raycaster_pitch :: proc(app: ca.papp) -> int {
 	assert(pics_count > 0)
-	for i in 0 ..< numSprites {
-		sprite_order[i] = {&sprite[i], 0}
-	}
+	init_sprites()
 	return 0
 }
 
@@ -53,13 +50,13 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 	cv.canvas_clear(canvas)
 
 	w, h := app.size.x, app.size.y
-	h_half := h / 2
+	h_half := scalar(h) / 2
 
 	// WALL CASTING
-	wm := scalar(w) //- 1
+	wm := scalar(w)
 	for x in 0 ..< w {
 		// calculate ray position and direction
-		cameraX := (2 * scalar(x) / wm) - 1 //x-coordinate in camera space
+		cameraX := (2 * scalar(x) / wm) - 1 // x-coordinate in camera space -1 to 1
 		rayDir := dir + (plane * cameraX)
 
 		// which box of the map we're in
@@ -78,13 +75,9 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		// ratio between deltaDistX and deltaDistY matters, due to the way the DDA
 		// stepping further below works. So the values can be computed as below.
 		deltaDist := reciprocal_abs(rayDir)
-		//perpWallDist: scalar
 
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
-
-		hit: i32 = 0 // was there a wall hit?
-		side: i32 // was a NS or a EW wall hit?
 
 		// calculate step and initial sideDist
 		if rayDir.x < 0 {
@@ -92,17 +85,19 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 			sideDistX = (pos.x - scalar(mapX)) * deltaDist.x
 		} else {
 			stepX = 1
-			sideDistX = (scalar(mapX) + 1.0 - pos.x) * deltaDist.x
+			sideDistX = (scalar(mapX) + 1 - pos.x) * deltaDist.x
 		}
 		if rayDir.y < 0 {
 			stepY = -1
 			sideDistY = (pos.y - scalar(mapY)) * deltaDist.y
 		} else {
 			stepY = 1
-			sideDistY = (scalar(mapY) + 1.0 - pos.y) * deltaDist.y
+			sideDistY = (scalar(mapY) + 1 - pos.y) * deltaDist.y
 		}
+
+		side: i32 // was a NS or a EW wall hit?
 		//perform DDA
-		for hit == 0 {
+		for hit: i32 = 0; hit == 0; {
 			//jump to next map square, either in x-direction, or in y-direction
 			if sideDistX < sideDistY {
 				sideDistX += deltaDist.x
@@ -125,17 +120,13 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		perpWallDist: scalar = side == 0 ? sideDistX - deltaDist.x : sideDistY - deltaDist.y
 
 		//Calculate height of line to draw on screen
-		lineHeight := scalar(h) / perpWallDist
-		lineHeight_half := lineHeight / 2
-
-		// pitch :: 0.5 //100
+		line_height := scalar(h) / perpWallDist
+		line_height_half := line_height / 2
 
 		//calculate lowest and highest pixel to fill in current stripe
-		//drawStart := i32(-lineHeight_half + scalar(h_half))
-		drawStart := i32(-lineHeight_half + scalar(h_half) + pitch + (posZ / perpWallDist))
+		drawStart := i32(-line_height_half + h_half + pitch + (pos.z / perpWallDist))
 		if drawStart < 0 {drawStart = 0}
-		//drawEnd := i32(lineHeight_half + scalar(h_half))
-		drawEnd := i32(lineHeight_half + scalar(h_half) + pitch + (posZ / perpWallDist))
+		drawEnd := i32(line_height_half + h_half + pitch + (pos.z / perpWallDist))
 		if drawEnd >= h {drawEnd = h - 1}
 
 		//texturing calculations
@@ -154,12 +145,9 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 
 		// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
 		// How much to increase the texture coordinate per screen pixel
-		step : scalar = scalar(pics_h) / scalar(lineHeight)
+		step : scalar = scalar(pics_h) / line_height
 		// Starting texture coordinate
-		//texPos := (scalar(drawStart) - scalar(pitch) - scalar(h_half) + lineHeight_half) * step
-		//texPos := (scalar(drawStart) - pitch - scalar(h_half) + lineHeight_half) * step
-		texPos := (scalar(drawStart) - pitch - (posZ / perpWallDist) - scalar(h_half) + lineHeight_half) * step
-		texPos += 0.01
+		texPos := (scalar(drawStart) - pitch - (pos.z / perpWallDist) - h_half + line_height_half) * step
 		for y in drawStart ..= drawEnd {
 			// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
 			texY := i32(texPos) & pics_hm
@@ -198,11 +186,11 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		currentFloor : vector2
 
 		for y in 0 ..< drawStart {
-			currentDist = (scalar(h) - (2 * posZ)) / (scalar(h) - 2 * (scalar(y) - pitch))
+			currentDist = (scalar(h) - (2 * pos.z)) / (scalar(h) - 2 * (scalar(y) - pitch))
 
 			weight: scalar = (currentDist - distPlayer) / (distWall - distPlayer)
 
-			currentFloor = linalg.lerp(pos, floorWall, weight)
+			currentFloor = linalg.lerp(pos.xy, floorWall, weight)
 			texIdx := texture_index(currentFloor)
 
 			//ceiling
@@ -210,11 +198,11 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		}
 
 		for y in drawEnd + 1 ..< h {
-			currentDist = (scalar(h) + (2 * posZ)) / (2 * (scalar(y) - pitch) - scalar(h))
+			currentDist = (scalar(h) + (2 * pos.z)) / (2 * (scalar(y) - pitch) - scalar(h))
 
 			weight: scalar = (currentDist - distPlayer) / (distWall - distPlayer)
 
-			currentFloor = linalg.lerp(pos, floorWall, weight)
+			currentFloor = linalg.lerp(pos.xy, floorWall, weight)
 			texIdx := texture_index(currentFloor)
 
 			checkerBoardPattern: i32 = (i32(currentFloor.x) + i32(currentFloor.y)) & 1
@@ -229,26 +217,26 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 	}
 
 	//SPRITE CASTING
-	//sort sprites from far to close
-	for &spr_idx in sprite_order {
-		dif := pos - spr_idx.sprite.pos
-		spr_idx.dist = linalg.dot(dif, dif)
-	}
-	slice.stable_sort_by(sprite_order[:], sprite_sort)
+	sort_sprites_from_far_to_close()
+	// for &spr_idx in sprite_order {
+	// 	dif := pos.xy - spr_idx.sprite.pos
+	// 	spr_idx.dist = linalg.dot(dif, dif)
+	// }
+	// slice.stable_sort_by(sprite_order[:], sprite_sort_by_dist)
 
 	//after sorting the sprites, do the projection and draw them
 	for &spr_idx in sprite_order {
 		//translate sprite position to relative to camera
 		spr := spr_idx.sprite
 		sprimg := textures[spr.texture]
-		sprpos := spr.pos - pos
+		sprpos := spr.pos - pos.xy
 
 		//transform sprite with the inverse camera matrix
 		// [ planeX   dirX ] -1                                       [ dirY      -dirX ]
 		// [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
 		// [ planeY   dirY ]                                          [ -planeY  planeX ]
 
-		invDet := 1 / scalar(plane.x * dir.y - dir.x * plane.y) //required for correct matrix multiplication
+		invDet := scalar(1) / scalar(plane.x * dir.y - dir.x * plane.y) //required for correct matrix multiplication
 
 		transformX := scalar(invDet * (dir.y * sprpos.x - dir.x * sprpos.y))
 		transformY := scalar(invDet * (-plane.y * sprpos.x + plane.x * sprpos.y)) //this is actually the depth inside the screen, that what Z is in 3D, the distance of sprite to player, matching sqrt(spriteDistance[i])
@@ -259,7 +247,7 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 		uDiv :: 1
 		vDiv :: 1
 		vMove :: 0
-		vMoveScreen := i32(vMove / transformY + pitch + posZ / transformY)
+		vMoveScreen := i32(vMove / transformY + pitch + pos.z / transformY)
 
 		//calculate height of the sprite on screen
 		spriteHeight: i32 = abs(i32(scalar(h) / transformY)) / vDiv //using "transformY" instead of the real distance prevents fisheye

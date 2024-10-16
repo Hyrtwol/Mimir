@@ -30,11 +30,9 @@ timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
 application :: struct {
-	// title: string,
-	// size : [2]i32,
-	// center: bool,
+	#subtype settings: win32app.window_settings,
 }
-papp :: ^application
+//papp :: ^application
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	pos := win32app.decode_lparam_as_int2(lparam) / ZOOM
@@ -57,10 +55,10 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := win32app.psettings(pcs.lpCreateParams)
+	settings := win32app.get_settings_from_createstruct(pcs)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	app := papp(settings.app)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	// app := papp(settings.app)
+	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.set_settings(hwnd, settings)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
@@ -93,8 +91,8 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	settings := win32app.get_settings(hwnd)
 	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	app := settings.app
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	// app := settings.app
+	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
 	win32app.delete_object(&bitmap_handle)
@@ -215,7 +213,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 set_dot_invalidate :: proc(hwnd: win32.HWND, pos: win32app.int2, col: cv.byte4) {
 	set_dot(pos, col)
-	win32app.invalidate(hwnd)
+	win32app.invalidate_window(hwnd)
 }
 
 decode_set_dot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
@@ -260,15 +258,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.
 main :: proc() {
 
 	app: application = {
-		//size = {WIDTH, HEIGHT},
+		settings = win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
 	}
 
 	stopwatch := win32app.create_stopwatch()
 	stopwatch->start()
 
-	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	settings.app = &app
-	win32app.run(&settings)
+	win32app.run(&app)
 
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())

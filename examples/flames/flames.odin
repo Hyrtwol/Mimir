@@ -178,6 +178,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
 	win32app.dib_free_section(&dib)
+	assert(dib.hbitmap == nil)
 	win32app.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
 	win32app.post_quit_message(0)
