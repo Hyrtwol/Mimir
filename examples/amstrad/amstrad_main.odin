@@ -27,7 +27,7 @@ application :: struct {
 }
 papp :: ^application
 
-run :: proc() {
+run :: proc() -> (exit_code: int) {
 	fmt.println("Amstrad")
 
 	cpu: Z80
@@ -68,12 +68,13 @@ run :: proc() {
 	fmt.printfln("total %v (%v)", total, reps)
 
 	fmt.println("Done.")
+	return
 }
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.exit(obug.tracked_run(run))
+		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

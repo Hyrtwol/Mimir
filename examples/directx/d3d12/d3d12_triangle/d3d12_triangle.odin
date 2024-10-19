@@ -50,7 +50,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	}
 }
 
-run :: proc() {
+run :: proc() -> (exit_code: int) {
 
 	settings := win32app.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
@@ -435,14 +435,16 @@ run :: proc() {
 			frame_index = swap_chain->GetCurrentBackBufferIndex()
 		}
 	}
+
+	return
 }
 
 shaders_hlsl := #load(SHADER_FILE)
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.exit(obug.tracked_run(run))
+		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

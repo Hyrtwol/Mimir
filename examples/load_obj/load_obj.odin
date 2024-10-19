@@ -77,7 +77,7 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	wprintfln(w, "%d triangles", model.numIndices / 3)
 }
 
-run :: proc() {
+run :: proc() -> (exit_code: int) {
 	fmt.println("objzero Reader")
 
 	clean_path := filepath.clean(input_path, context.temp_allocator)
@@ -97,6 +97,7 @@ run :: proc() {
 	obj := oz.objz_load(obj_file)
 	if obj == nil {
 		fmt.println("error:", oz.objz_getError())
+		exit_code = -1
 		return
 	}
 	defer oz.objz_destroy(obj)
@@ -105,12 +106,13 @@ run :: proc() {
 	printModel(w, obj)
 
 	fmt.println("Done.")
+	return
 }
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
 		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

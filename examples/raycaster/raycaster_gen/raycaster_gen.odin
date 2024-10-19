@@ -1,6 +1,7 @@
 #+vet
 package main
 
+import "base:intrinsics"
 import "core:bytes"
 import "core:fmt"
 import "core:image"
@@ -11,6 +12,8 @@ import fp "core:path/filepath"
 import "core:strings"
 import xt "shared:xterm"
 import si "vendor:stb/image"
+//
+import "shared:obug"
 
 texWidth :: 64
 
@@ -79,7 +82,7 @@ print_and_write_image :: proc(path: string, fd: ^os.Handle, img: ^image.Image) {
 }
 
 print_image :: proc(image_path: string, fd: ^os.Handle) {
-	path := fp.clean(image_path)
+	path := fp.clean(image_path, context.temp_allocator)
 	img, err := image.load_from_file(path)
 	if img == nil || err != nil {
 		fmt.println("Image load error:", err, path)
@@ -189,18 +192,44 @@ gen_pics_from_list :: proc(output_name: string) -> int {
 	return gen_pics(output_name, image_paths)
 }
 
-main :: proc() {
-	mode :: 2
-	pics_path = fp.abs(fp.join({"..", "examples", "raycaster", "pics"}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
+run :: proc() -> (exit_code: int) {
+	mode: enum {nop, scan, from_filelist, from_list} : .from_list
+	pics_path = fp.abs(fp.join({"..", "data", "images", "pics"}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
 	output_name := fmt.tprintf("pics%d.dat", texWidth)
-	when mode == 0 {
+
+	// when mode == .scan {
+	// 	pattern := "*.png" if len(os.args) <= 1 else os.args[1]
+	// 	exit_code = gen_pics_scan(output_name, pattern)
+	// } else when mode == .from_filelist {
+	// 	exit_code = gen_pics_from_filelist(output_name, "texture_list.txt")
+	// } else when mode == .from_list {
+	// 	exit_code = gen_pics_from_list(output_name)
+	// } else {
+	// 	fmt.println("Invalid mode", mode, output_name)
+	// 	exit_code = -1
+	// }
+
+	#partial switch mode {
+	case .scan:
 		pattern := "*.png" if len(os.args) <= 1 else os.args[1]
-		exit_code := gen_pics_scan(output_name, pattern)
-	} else when mode == 1 {
-		exit_code := gen_pics_from_filelist(output_name, "texture_list.txt")
-	} else {
-		exit_code := gen_pics_from_list(output_name)
+		exit_code = gen_pics_scan(output_name, pattern)
+	case .from_filelist:
+		exit_code = gen_pics_from_filelist(output_name, "texture_list.txt")
+	case .from_list:
+		exit_code = gen_pics_from_list(output_name)
+	case:
+		fmt.println("Invalid mode", mode, output_name)
+		exit_code = -1
 	}
+
 	fmt.println("Done.", exit_code)
-	os.exit(exit_code)
+	return
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		os.exit(obug.tracked_run(run))
+	} else {
+		os.exit(run())
+	}
 }

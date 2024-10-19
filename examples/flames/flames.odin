@@ -276,7 +276,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-run :: proc() {
+run :: proc() -> (exit_code: int) {
 	calc_col :: proc(n: f64) -> u8 {return u8(n * (256 - (1 / 255)))}
 	for i in 0 ..< 256 {
 		f := (f64(i) / 255)
@@ -299,12 +299,13 @@ run :: proc() {
 	}
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())
+	return
 }
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
 		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

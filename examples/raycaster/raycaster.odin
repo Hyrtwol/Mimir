@@ -1,11 +1,13 @@
-// https://lodev.org/cgtutor/raycasting.html
 #+vet
+// https://lodev.org/cgtutor/raycasting.html
+
 package raycaster
 
 import "base:intrinsics"
 import "core:fmt"
-import "core:slice"
 import "core:math/linalg"
+import "core:os"
+import "core:slice"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
@@ -59,7 +61,7 @@ reciprocal_abs :: proc {
 //arrays used to sort the sprites
 sprite_index :: struct {
 	sprite: ^Sprite,
-	dist:  scalar,
+	dist:   scalar,
 }
 sprite_order: [numSprites]sprite_index
 
@@ -127,12 +129,12 @@ handle_input :: proc(app: ca.papp) {
 	}
 }
 
-run_mode : enum {flat, textured, floor, sprites, pitch} : .pitch
+run_mode: enum {flat, textured, floor, sprites, pitch} : .sprites
 
-run :: proc() {
+run :: proc() -> (exit_code: int) {
 	fmt.println("Raycaster")
 	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", pics_count, pics_w, pics_h, pics_ps * 8, pics_byte_size, pics_count * pics_byte_size)
-	app :=  ca.default_application
+	app := ca.default_application
 	app.size = {screenWidth, screenHeight}
 	when run_mode == .flat {
 		//app.create = on_create
@@ -160,12 +162,13 @@ run :: proc() {
 	app.settings.sleep = time.Millisecond * 5
 	ca.run(&app)
 	fmt.println("Done.")
+	return
 }
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.exit(obug.tracked_run(run))
+		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

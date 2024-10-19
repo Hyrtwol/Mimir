@@ -5,6 +5,7 @@ package dla
 import "base:intrinsics"
 import "core:math"
 import "core:math/rand"
+import "core:os"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 import "shared:obug"
@@ -193,8 +194,8 @@ on_update :: proc(app: ca.papp) -> int {
 	return 0
 }
 
-run :: proc() {
-	app :=  ca.default_application
+run :: proc() -> (exit_code: int) {
+	app := ca.default_application
 	app.size = {WIDTH, HEIGHT}
 	app.create = on_create
 	app.update = on_update
@@ -202,12 +203,13 @@ run :: proc() {
 	app.settings.window_size = app.size * ZOOM
 	app.settings.title = "Diffusion Limited Aggregation"
 	ca.run(&app)
+	return
 }
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.exit(obug.tracked_run(run))
+		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

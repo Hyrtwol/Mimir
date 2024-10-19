@@ -4,6 +4,7 @@ package minimal_d3d11_pt3
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
+import "core:os"
 import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
 import "libs:tlc/win32app"
@@ -58,7 +59,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	}
 }
 
-run :: proc() {
+run :: proc() -> (exit_code: int) {
 
 	settings := win32app.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
@@ -396,7 +397,8 @@ run :: proc() {
 	}
 
 	fmt.println("Done.")
-	//os.exit(int(msg.wParam))
+	//exit_code = int(msg.wParam)
+	return
 }
 
 shaders_hlsl := #load(SHADER_FILE)
@@ -419,8 +421,8 @@ vertexData := [?]f32{
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.exit(obug.tracked_run(run))
+		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }

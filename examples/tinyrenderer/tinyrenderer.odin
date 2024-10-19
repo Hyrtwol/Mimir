@@ -10,7 +10,7 @@ import "core:math"
 import lg "core:math/linalg"
 import "core:math/rand"
 import "core:mem"
-//import win32 "core:sys/windows"
+import "core:os"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 import "shared:obug"
@@ -75,7 +75,7 @@ vs_default :: proc(shader: ^cv.IShader, pos: float4, gl_Position: ^float4) {
 }
 
 pics_size :: float2{f32(pics_w), f32(pics_h)}
-pics_tex_lookup :: int2{pics_w  * pics_ps, pics_ps}
+pics_tex_lookup :: int2{pics_w * pics_ps, pics_ps}
 
 sample2D :: proc(uv: float2) -> cv.byte4 {
 	uv := cv.to_int2(lg.fract(uv) * pics_size)
@@ -234,13 +234,12 @@ on_update :: proc(app: ca.papp) -> int {
 			//   shader.varying_uv[vi] = vertices[t[vi]].xy
 			// }
 
-			mvv : cv.float4x3 = shader.model_view * v
+			mvv: cv.float4x3 = shader.model_view * v
 			shader.view_tri = cv.to_float3x3(&mvv)
 
 			// transform the light vector to view coordinates
 			shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
 
-			//cv.draw_triangle(canvas, zbuffer[:], &viewport, {v0, v1, v2}, &shader)
 			cv.draw_triangle(canvas, zbuffer[:], &viewport, {v[0], v[1], v[2]}, &shader)
 		}
 	}
@@ -248,19 +247,20 @@ on_update :: proc(app: ca.papp) -> int {
 	return 0
 }
 
-run :: proc() {
-	app :=  ca.default_application
+run :: proc() -> (exit_code: int) {
+	app := ca.default_application
 	app.size = {width, height}
 	app.create = on_create
 	app.update = on_update
 	app.settings.window_size = app.size * ZOOM
 	ca.run(&app)
+	return
 }
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		obug.tracked_run(run)
+		os.exit(obug.tracked_run(run))
 	} else {
-		run()
+		os.exit(run())
 	}
 }
