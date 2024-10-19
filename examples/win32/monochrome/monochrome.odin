@@ -266,18 +266,18 @@ unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
 adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
 	rect := win32.RECT{0, 0, size.x, size.y}
 	if win32.AdjustWindowRect(&rect, dwStyle, false) {
-		size^ = {i32(rect.right - rect.left), i32(rect.bottom - rect.top)}
+		size^ = {rect.right - rect.left, rect.bottom - rect.top}
 	}
 }
 
 center_window :: proc(position: ^int2, size: int2) {
 	if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
-		dmsize := int2{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
+		dmsize := int2{i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)}
 		position^ = (dmsize - size) / 2
 	}
 }
 
-create_window :: #force_inline proc(atom: win32.ATOM, window_name: win32.LPCTSTR, style, ex_style: win32.DWORD, position: int2, size: int2, instance: win32.HINSTANCE, lpParam: win32.LPVOID) -> win32.HWND {
+create_window :: #force_inline proc(atom: win32.ATOM, window_name: win32.LPCTSTR, style: win32.WS_STYLES, ex_style: win32.WS_EX_STYLES, position: int2, size: int2, instance: win32.HINSTANCE, lpParam: win32.LPVOID) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(uintptr(atom)), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }

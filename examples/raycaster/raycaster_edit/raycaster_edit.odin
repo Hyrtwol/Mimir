@@ -51,6 +51,10 @@ show_cursor :: proc(show: bool) {
 	fmt.println(#procedure, cursor_state)
 }
 
+set_window_text :: #force_inline proc(hwnd: win32.HWND) {
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, fps)
+}
+
 decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> cv.int2 {
 	return win32app.decode_lparam_as_int2(lparam) / ZOOM
 }
@@ -58,7 +62,6 @@ decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> cv.i
 set_dot :: #force_inline proc "contextless" (pos: cv.int2, col: COLOR) {
 	cv.canvas_set_dot(&dib.canvas, pos, cv.get_color(col))
 }
-
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure)
@@ -96,10 +99,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	}
 	win32app.post_quit_message()
 	return 0
-}
-
-set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, fps)
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -162,7 +161,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
-	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
+	win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
 
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
@@ -174,18 +173,6 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	bitmap_size := transmute(cv.int2)fb.canvas.size
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
 
-	return 0
-}
-
-handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	switch wparam {
-	case 1:
-		pos := decode_scrpos(lparam)
-		set_dot(pos, select)
-	case 2:
-		pos := decode_scrpos(lparam)
-		set_dot(pos, clear_color)
-	}
 	return 0
 }
 
@@ -201,6 +188,18 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 		select = COLOR((u8(select) - 1) % len(COLOR))
 	case:
 		fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(u32(lparam)), win32.LOWORD(u32(lparam)))
+	}
+	return 0
+}
+
+handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	switch wparam {
+	case 1:
+		pos := decode_scrpos(lparam)
+		set_dot(pos, select)
+	case 2:
+		pos := decode_scrpos(lparam)
+		set_dot(pos, clear_color)
 	}
 	return 0
 }

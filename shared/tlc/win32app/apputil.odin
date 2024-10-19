@@ -325,17 +325,11 @@ draw_grid :: proc(hdc: HDC, p, cell, dim: int2) {
 */
 
 /*
-void Marker(LONG x, LONG y, HWND hwnd)
-{
-    HDC hdc;
-
-    hdc = GetDC(hwnd);
-        MoveToEx(hdc, (int) x - 10, (int) y, nil);
-        LineTo(hdc, (int) x + 10, (int) y);
-        MoveToEx(hdc, (int) x, (int) y - 10, nil);
-        LineTo(hdc, (int) x, (int) y + 10);
-
-    ReleaseDC(hwnd, hdc);
+Marker :: proc(hdc: HDC, x, y: LONG) {
+	MoveToEx(hdc, (int) x - 10, (int) y, nil);
+	LineTo(hdc, (int) x + 10, (int) y);
+	MoveToEx(hdc, (int) x, (int) y - 10, nil);
+	LineTo(hdc, (int) x, (int) y + 10);
 }
 */
 

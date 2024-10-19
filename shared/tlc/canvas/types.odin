@@ -16,13 +16,16 @@ double   :: f64
 byte4    :: [4]byte
 int2     :: [2]integer
 int3     :: [3]integer
+int4     :: [4]integer
 uint2    :: [2]cardinal
 uint3    :: [3]cardinal
+uint4    :: [4]cardinal
 float2   :: [2]float
 float3   :: [3]float
 float4   :: [4]float
 double2  :: [2]double
 double3  :: [3]double
+double4  :: [4]double
 
 float2x2 :: matrix[2, 2]float
 float2x3 :: matrix[2, 3]float
@@ -63,19 +66,19 @@ circle2i :: struct {
 	radius: integer,
 }
 
-float2_zero :: float2{0, 0}
-float2_one :: float2{1, 1}
+float2_zero  :: float2{0, 0}
+float2_one   :: float2{1, 1}
 float2_xunit :: float2{1, 0}
 float2_yunit :: float2{0, 1}
 
-float3_zero :: float3{0, 0, 0}
-float3_one :: float3{1, 1, 1}
+float3_zero  :: float3{0, 0, 0}
+float3_one   :: float3{1, 1, 1}
 float3_xunit :: float3{1, 0, 0}
 float3_yunit :: float3{0, 1, 0}
 float3_zunit :: float3{0, 0, 1}
 
-float4_zero :: float4{0, 0, 0, 0}
-float4_one :: float4{1, 1, 1, 1}
+float4_zero  :: float4{0, 0, 0, 0}
+float4_one   :: float4{1, 1, 1, 1}
 float4_xunit :: float4{1, 0, 0, 0}
 float4_yunit :: float4{0, 1, 0, 0}
 float4_zunit :: float4{0, 0, 1, 0}
@@ -85,6 +88,19 @@ int2_zero  :: int2{0, 0}
 int2_one   :: int2{1, 1}
 int2_xunit :: int2{1, 0}
 int2_yunit :: int2{0, 1}
+
+int3_zero  :: int3{0, 0, 0}
+int3_one   :: int3{1, 1, 1}
+int3_xunit :: int3{1, 0, 0}
+int3_yunit :: int3{0, 1, 0}
+int3_zunit :: int3{0, 0, 1}
+
+int4_zero  :: int4{0, 0, 0, 0}
+int4_one   :: int4{1, 1, 1, 1}
+int4_xunit :: int4{1, 0, 0, 0}
+int4_yunit :: int4{0, 1, 0, 0}
+int4_zunit :: int4{0, 0, 1, 0}
+int4_wunit :: int4{0, 0, 0, 1}
 
 PI :: math.PI
 TwoPI :: math.PI * 2

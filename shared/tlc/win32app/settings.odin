@@ -12,8 +12,6 @@ window_settings :: struct {
 	dwStyle:     WS_STYLES,
 	dwExStyle:   WS_EX_STYLES,
 	wndproc:     win32.WNDPROC,
-	run:         proc(this: ^window_settings) -> int,
-	//app:         rawptr,
 	sleep:       time.Duration,
 }
 psettings :: ^window_settings
@@ -47,7 +45,7 @@ create_window_settings_wndproc :: proc "contextless" (size: int2, title: string,
 	settings := default_window_settings
 	settings.window_size = size
 	settings.wndproc = wndproc
-	settings.run = run
+	//settings.run = run
 	settings.title = title
 	return settings
 }

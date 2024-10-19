@@ -66,7 +66,7 @@ verify_error_helpers :: proc(t: ^testing.T) {
 
 @(test)
 get_hresult_details :: proc(t: ^testing.T) {
-	hr := win32app.HRESULT(win32.E_INVALIDARG);
+	hr := win32app.HRESULT_DETAILS(u32(win32.E_INVALIDARG))
 	testing.expect_value(t, hr.IsError, true)
 	testing.expect_value(t, hr.R, false)
 	testing.expect_value(t, hr.Customer, false)

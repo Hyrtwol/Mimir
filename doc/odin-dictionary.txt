@@ -2,6 +2,7 @@
 adjugate
 amstrad
 aprintf
+bgra
 bitmapinfo
 bresenham
 codepage

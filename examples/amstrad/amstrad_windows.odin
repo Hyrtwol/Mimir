@@ -58,9 +58,6 @@ fill_screen_with_image :: proc(app: papp) {
 	}
 }
 
-amstrad_colors := cv.AMSTRAD_COLORS
-amstrad_ink := cv.AMSTRAD_INK
-
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app_from_lparam(lparam)
 	set_app(hwnd, app)
@@ -80,13 +77,18 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		},
 	}
 
-	bs: i32 = bitmap_info.bmiHeader.bV5Width * -bitmap_info.bmiHeader.bV5Height * i32(bitmap_info.bmiHeader.bV5BitCount) / 8
-	fmt.printfln("dib byte size=%d ~ %d", bs, bs - 16384)
+	#assert(size_of(win32.BITMAPV5HEADER) == 124)
+	#assert(size_of(bitmap_info.bmiHeader) == 124)
+	#assert(size_of(color_palette) == 64)
+	#assert(size_of(bitmap_info) == 124 + 64)
+
+	{
+		bs: i32 = bitmap_info.bmiHeader.bV5Width * -bitmap_info.bmiHeader.bV5Height * i32(bitmap_info.bmiHeader.bV5BitCount) / 8
+		fmt.printfln("dib byte size=%d ~ %d", bs, bs - 16384)
+	}
 
 	for i in 0 ..< min(palette_count, 16) {
-		ink := amstrad_ink[i]
-		//ink := rand.int31_max(27)
-		bitmap_info.bmiColors[i] = amstrad_colors[ink].bgra
+		bitmap_info.bmiColors[i] = cv.get_amstrad_ink_color(i)
 	}
 
 	{

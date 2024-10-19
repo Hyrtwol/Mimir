@@ -160,20 +160,13 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	defer win32.DeleteDC(hdc_source)
 
 	client_size := win32app.get_rect_size(&ps.rcPaint)
-	//win32.SelectObject(hdc_source, bitmap_handle)
-	//win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
-
 	brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
-
 	col, org_color: win32.COLORREF
 
 	col = win32.RGB(50, 100, 150)
 	org_color = win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))
 	win32.FillRect(ps.hdc, &ps.rcPaint, brush)
 	win32.SetDCBrushColor(ps.hdc, org_color)
-
-	//original := win32.SelectObject(ps.hdc, win32.GetStockObject(win32.DC_PEN))
-	//defer win32.SelectObject(ps.hdc, original)
 
 	col = win32.RGB(150, 100, 50)
 	org_color = win32.SetDCBrushColor(ps.hdc, win32.COLORREF(col))

@@ -99,8 +99,6 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: papp) -> cv.float
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	//settings := get_settings(lparam)
-	//app := (papp)(settings.app)
 	app := get_app_from_lparam(lparam)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	set_app(hwnd, app)

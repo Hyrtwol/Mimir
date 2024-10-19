@@ -375,3 +375,7 @@ color_hue_float4 :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, 
 color_hue :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> byte4 {
 	return to_color(color_hue_float4(hue, scale, bias))
 }
+
+get_amstrad_ink_color :: #force_inline proc "contextless" (ink: int) -> byte4 {
+	return AMSTRAD_COLORS[AMSTRAD_INK[ink]].bgra
+}
