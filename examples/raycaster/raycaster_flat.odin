@@ -5,7 +5,7 @@ package raycaster
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
-worldmap_flat: worldMapT =
+worldmap_flat: World_Map =
 {
 	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -49,7 +49,7 @@ on_update_raycaster_flat :: proc(app: ca.papp) -> int {
 	wm := scalar(w) - 1
 	for x in 0 ..< w {
 		// calculate ray position and direction
-		cameraX := 2 * scalar(x) / wm - 1 //x-coordinate in camera space
+		cameraX := (2 * scalar(x) / wm) - 1 //x-coordinate in camera space
 		ray_dir := dir + (plane * cameraX)
 
 		// which box of the map we're in
@@ -66,33 +66,32 @@ on_update_raycaster_flat :: proc(app: ca.papp) -> int {
 		// unlike (dir.x, dir.y) is not 1, however this does not matter, only the
 		// ratio between deltaDistX and deltaDistY matters, due to the way the DDA
 		// stepping further below works. So the values can be computed as below.
-		deltaDist := reciprocal_abs(ray_dir)
+		deltaDist := cv.reciprocal_abs(ray_dir)
 
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
 
-		hit: i32 = 0 // was there a wall hit?
-		side: i32 // was a NS or a EW wall hit?
-
 		// calculate step and initial sideDist
-		if (ray_dir.x < 0) {
+		if ray_dir.x < 0 {
 			stepX = -1
 			sideDistX = (pos.x - scalar(mapX)) * deltaDist.x
 		} else {
 			stepX = 1
-			sideDistX = (scalar(mapX) + 1.0 - pos.x) * deltaDist.x
+			sideDistX = (scalar(mapX) + 1 - pos.x) * deltaDist.x
 		}
-		if (ray_dir.y < 0) {
+		if ray_dir.y < 0 {
 			stepY = -1
 			sideDistY = (pos.y - scalar(mapY)) * deltaDist.y
 		} else {
 			stepY = 1
-			sideDistY = (scalar(mapY) + 1.0 - pos.y) * deltaDist.y
+			sideDistY = (scalar(mapY) + 1 - pos.y) * deltaDist.y
 		}
+
+		side: i32 // was a NS or a EW wall hit?
 		//perform DDA
-		for hit == 0 {
+		for hit: i32 = 0; hit == 0; {
 			//jump to next map square, either in x-direction, or in y-direction
-			if (sideDistX < sideDistY) {
+			if sideDistX < sideDistY {
 				sideDistX += deltaDist.x
 				mapX += stepX
 				side = 0
@@ -102,7 +101,7 @@ on_update_raycaster_flat :: proc(app: ca.papp) -> int {
 				side = 1
 			}
 			//Check if ray has hit a wall
-			if (worldMap[mapX][mapY] > 0) {hit = 1}
+			if (world_map[mapX][mapY] > 0) {hit = 1}
 		}
 		//Calculate distance projected on camera direction. This is the shortest distance from the point where the wall is
 		//hit to the camera plane. Euclidean to center camera point would give fisheye effect!
@@ -120,12 +119,12 @@ on_update_raycaster_flat :: proc(app: ca.papp) -> int {
 		drawStart, drawEnd: i32
 		drawStart = -line_height_half + h_half
 		drawEnd = line_height_half + h_half
-		if (drawStart < 0) {drawStart = 0}
-		if (drawEnd >= h) {drawEnd = h - 1}
+		if drawStart < 0 {drawStart = 0}
+		if drawEnd >= h {drawEnd = h - 1}
 
 		//choose wall color
 		color: byte4
-		switch (worldMap[mapX][mapY])
+		switch (world_map[mapX][mapY])
 		{
 		case 1:
 			color = cv.COLOR_RED
@@ -140,7 +139,7 @@ on_update_raycaster_flat :: proc(app: ca.papp) -> int {
 		}
 
 		//give x and y sides different brightness
-		if (side == 1) {color = color / 2}
+		if side == 1 {color = color / 2}
 
 		//draw the pixels of the stripe as a vertical line
 		cv.draw_vline(canvas, x, drawStart, drawEnd, color)

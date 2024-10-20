@@ -18,12 +18,12 @@ CENTER  :: true
 ZOOM  	:: 8
 
 screen_buffer  :: cv.screen_buffer
+//pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
 bitmap_size   : win32app.int2
 bitmap_count  : i32
 pvBits        : screen_buffer
-pixel_size    : win32app.int2 : {ZOOM, ZOOM}
 
 dib           : win32app.DIB
 timer1_id     : win32.UINT_PTR
@@ -32,7 +32,8 @@ timer2_id     : win32.UINT_PTR
 application :: struct {
 	#subtype settings: win32app.window_settings,
 }
-//papp :: ^application
+
+// TODO GetKeyboardState
 
 decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
 	pos := win32app.decode_lparam_as_int2(lparam) / ZOOM
@@ -55,11 +56,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := win32app.get_settings_from_createstruct(pcs)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	// app := papp(settings.app)
-	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
-	win32app.set_settings(hwnd, settings)
+	app := win32app.get_application_from_createstruct(pcs, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	win32app.set_settings(hwnd, app)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
 
@@ -89,10 +88,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	settings := win32app.get_settings(hwnd)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	// app := settings.app
-	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	app := win32app.get_application(hwnd, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
 	win32app.delete_object(&bitmap_handle)
@@ -129,11 +126,11 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	size := win32app.decode_lparam_as_int2(lparam)
-	settings := win32app.get_settings(hwnd)
-	if settings == nil {return 1}
+	app := win32app.get_application(hwnd, application)
+	if app == nil {return 1}
 	fmt.println(#procedure, hwnd, type, size)
-	settings.window_size = size
-	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, bitmap_size)
+	app.settings.window_size = size
+	win32app.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, bitmap_size)
 	return 0
 }
 

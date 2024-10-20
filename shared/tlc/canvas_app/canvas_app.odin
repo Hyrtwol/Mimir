@@ -145,7 +145,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	//fmt.println(#procedure, hwnd, wparam)
+	// fmt.println(#procedure, hwnd, wparam)
 	// app := get_app(hwnd)
 	frame_stats.fps = f32(frame_stats.frame_counter) / frame_stats.frame_time
 	frame_stats.frame_counter = 0
@@ -161,6 +161,7 @@ draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
 
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
+	assert(hdc != nil)
 	defer win32.ReleaseDC(hwnd, hdc)
 	draw_dib(hwnd, hdc)
 	return 0
@@ -170,10 +171,9 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	ps: win32.PAINTSTRUCT
 	hdc := win32.BeginPaint(hwnd, &ps)
-	if hdc != nil {
-		defer win32.EndPaint(hwnd, &ps)
-		draw_dib(hwnd, hdc)
-	}
+	assert(hdc != nil)
+	defer win32.EndPaint(hwnd, &ps)
+	draw_dib(hwnd, hdc)
 	return 0
 }
 
@@ -243,13 +243,15 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam) // 0x0005
 	case win32.WM_PAINT:        return WM_PAINT(hwnd) // 0x000f
 	case win32.WM_ERASEBKGND:   return 1 // 0x0014
-	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam) // 0x0102
 	case win32.WM_TIMER:        return WM_TIMER(hwnd, wparam, lparam) // 0x0113
+
+	case win32.WM_CHAR:         return WM_CHAR(hwnd, wparam, lparam) // 0x0102
 	case win32.WM_KEYDOWN:		return handle_key_input(hwnd, wparam, lparam) // 0x0100
 	case win32.WM_KEYUP:		return handle_key_input(hwnd, wparam, lparam) // 0x0101
 	case win32.WM_MOUSEMOVE:    return handle_mouse_input(hwnd, wparam, lparam) // 0x0200
 	case win32.WM_LBUTTONDOWN:  return handle_mouse_input(hwnd, wparam, lparam) // 0x0201
 	case win32.WM_RBUTTONDOWN:  return handle_mouse_input(hwnd, wparam, lparam) // 0x0204
+
 	case:                       return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable

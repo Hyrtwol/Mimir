@@ -93,6 +93,7 @@ srgb
 struct
 sublang
 subresource
+texcoord
 tprintf
 trianglelist
 trunc

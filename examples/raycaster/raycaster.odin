@@ -27,43 +27,23 @@ ZOOM :: 4
 screenWidth: i32 : (640 * 2) / ZOOM
 screenHeight: i32 : screenWidth * 3 / 4
 
-mapWidth: i32 : 24
-mapHeight: i32 : 24
-worldMapT :: [mapWidth][mapHeight]u8
-worldMap: worldMapT
+mapWidth, mapHeight: i32 : 24, 24
+World_Map :: [mapWidth][mapHeight]u8 // World_Map
+world_map: World_Map
 
 plane_scale: scalar = 0.66
-
 heading: scalar = cv.PI
-//pos: vector2 = {22, 11.5}
-pos: vector3 = {22, 11.5, 0.5}
+pos: vector3 = {22, 11.5, 0.5} // pos.z = vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
 dir: vector2
 plane: vector2
-
 pitch: scalar = 0 // looking up/down, expressed in screen pixels the horizon shifts
-//posZ: scalar = 0.5 // vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
-
-@(private = "file")
-reciprocal_abs_scalar :: #force_inline proc "contextless" (v: scalar) -> scalar {
-	return (v == 0) ? 1e30 : abs(1 / v)
-}
-
-@(private = "file")
-reciprocal_abs_vector :: #force_inline proc "contextless" (v: vector2) -> vector2 {
-	return vector2{reciprocal_abs(v.x), reciprocal_abs(v.y)}
-}
-
-reciprocal_abs :: proc {
-	reciprocal_abs_scalar,
-	reciprocal_abs_vector,
-}
 
 //arrays used to sort the sprites
-sprite_index :: struct {
+Sprite_Index :: struct { // Sprite_Index
 	sprite: ^Sprite,
 	dist:   scalar,
 }
-sprite_order: [numSprites]sprite_index
+sprite_order: [numSprites]Sprite_Index
 
 init_sprites :: proc() {
 	for i in 0 ..< numSprites {
@@ -72,7 +52,7 @@ init_sprites :: proc() {
 }
 
 sort_sprites_from_far_to_close :: proc() {
-	sprite_sort_by_dist :: proc(l, r: sprite_index) -> bool {
+	sprite_sort_by_dist :: proc(l, r: Sprite_Index) -> bool {
 		return l.dist > r.dist
 	}
 	for &spr_idx in sprite_order {
@@ -83,7 +63,7 @@ sort_sprites_from_far_to_close :: proc() {
 }
 
 // on_create :: proc(app: ca.papp) -> int {
-// 	assert(pics_count > 0)
+// 	assert(len(textures) > 0)
 // 	return 0
 // }
 
@@ -106,13 +86,13 @@ handle_input :: proc(app: ca.papp) {
 	}
 	if keys[win32.VK_UP] {
 		move := dir * moveSpeed
-		if (worldMap[int(pos.x + move.x)][int(pos.y)] == 0) {pos.x += move.x}
-		if (worldMap[int(pos.x)][int(pos.y + move.y)] == 0) {pos.y += move.y}
+		if (world_map[int(pos.x + move.x)][int(pos.y)] == 0) {pos.x += move.x}
+		if (world_map[int(pos.x)][int(pos.y + move.y)] == 0) {pos.y += move.y}
 	}
 	if keys[win32.VK_DOWN] {
 		move := dir * -moveSpeed
-		if (worldMap[int(pos.x + move.x)][int(pos.y)] == 0) {pos.x += move.x}
-		if (worldMap[int(pos.x)][int(pos.y + move.y)] == 0) {pos.y += move.y}
+		if (world_map[int(pos.x + move.x)][int(pos.y)] == 0) {pos.x += move.x}
+		if (world_map[int(pos.x)][int(pos.y + move.y)] == 0) {pos.y += move.y}
 	}
 
 	if keys[win32.VK_A] {
@@ -129,37 +109,45 @@ handle_input :: proc(app: ca.papp) {
 	}
 }
 
-run_mode: enum {flat, textured, floor, sprites, pitch} : .sprites
+run_mode: enum {
+	flat,
+	textured,
+	floor,
+	sprites,
+	pitch,
+} : .pitch
 
 run :: proc() -> (exit_code: int) {
 	fmt.println("Raycaster")
-	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", pics_count, pics_w, pics_h, pics_ps * 8, pics_byte_size, pics_count * pics_byte_size)
+	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", len(textures), pics_w, pics_h, pics_pixel_byte_size * 8, pics_buf_byte_size, len(textures) * int(pics_buf_byte_size))
 	app := ca.default_application
 	app.size = {screenWidth, screenHeight}
+	app.settings.window_size = app.size * ZOOM
+	app.settings.sleep = time.Millisecond * 5
+	app.settings.title = fmt.tprintf("Raycaster %v", run_mode)
+
 	when run_mode == .flat {
 		//app.create = on_create
 		app.update = on_update_raycaster_flat
-		worldMap = worldmap_flat
+		world_map = worldmap_flat
 	} else when run_mode == .textured {
 		//app.create = on_create
 		app.update = on_update_raycaster_textured
-		worldMap = worldmap_textured
+		world_map = worldmap_textured
 	} else when run_mode == .floor {
 		//app.create = on_create
 		app.update = on_update_raycaster_floor
-		worldMap = worldmap_floor
+		world_map = worldmap_floor
 	} else when run_mode == .sprites {
 		app.create = on_create_raycaster_sprites
 		app.update = on_update_raycaster_sprites
-		worldMap = worldmap_sprites
+		world_map = worldmap_sprites
 	} else when run_mode == .pitch {
 		app.create = on_create_raycaster_pitch
 		app.update = on_update_raycaster_pitch
-		worldMap = worldmap_pitch
+		world_map = worldmap_pitch
 	}
 	//app.destroy = on_destroy
-	app.settings.window_size = app.size * ZOOM
-	app.settings.sleep = time.Millisecond * 5
 	ca.run(&app)
 	fmt.println("Done.")
 	return

@@ -244,27 +244,23 @@ normalized_device_coordinates :: #force_inline proc "contextless" (viewport: ^fl
 	//return apply_viewport(viewport, perspective_divide(v))
 }
 
-/*
-// Check if two 2D vectors are equal.
-vec2_equal :: proc(v0: vec2, v1: vec2) -> bool ---
-// Multiply a 2D vector by a scalar.
-vec2_mul :: proc(f: f32, v: vec2) -> vec2 ---
-// Add two 2D vectors
-vec2_add :: proc(v0: vec2, v1: vec2) -> vec2 ---
-// Transforms a vector by an affine transformation represented as a 2x3 matrix.
-mat2x3_mul :: proc(m: mat2x3, p: vec2) -> vec2 ---
-// Multiply two affine transformations represented as 2x3 matrices. Both matrices are treated as 3x3 matrices with an implicit `(0, 0, 1)` bottom row
-mat2x3_mul_m :: proc(lhs: mat2x3, rhs: mat2x3) -> mat2x3 ---
-// Invert an affine transform represented as a 2x3 matrix.
-mat2x3_inv :: proc(x: mat2x3) -> mat2x3 ---
-// Return a 2x3 matrix representing a rotation.
-mat2x3_rotate :: proc(radians: f32) -> mat2x3 ---
-// Return a 2x3 matrix representing a translation.
-mat2x3_translate :: proc(x: f32, y: f32) -> mat2x3 ---
-*/
-
 @(require_results)
 fract :: proc "contextless" (x: $T) -> T where IS_FLOAT(ELEM_TYPE(T)) {
 	f := #force_inline math.floor(x)
 	return x - f
+}
+
+@(private = "file")
+reciprocal_abs_scalar :: #force_inline proc "contextless" (v: float) -> float {
+	return (v == 0) ? 1e30 : abs(1 / v)
+}
+
+@(private = "file")
+reciprocal_abs_vector2 :: #force_inline proc "contextless" (v: float2) -> float2 {
+	return float2{reciprocal_abs(v.x), reciprocal_abs(v.y)}
+}
+
+reciprocal_abs :: proc {
+	reciprocal_abs_scalar,
+	reciprocal_abs_vector2,
 }

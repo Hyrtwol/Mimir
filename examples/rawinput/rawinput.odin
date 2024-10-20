@@ -1,9 +1,9 @@
 #+vet
 package main
 
-import "core:fmt"
 import "base:intrinsics"
 import "base:runtime"
+import "core:fmt"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
@@ -123,17 +123,13 @@ WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 	if is_active == active {return 0}
 	is_active = active
 	clip_cursor(hwnd, active)
-	// if active {
-	// } else {
-	// }
-	// sc := win32.ShowCursor(!is_active)
-	// fmt.printf("ShowCursor:", sc)
 	return 0
 }
 
+// wparam: A handle to the window that has lost the keyboard focus. This parameter can be NULL.
 wm_focus :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32.LRESULT {
 	is_focused = focused
-	fmt.println(#procedure, /*hwnd, wparam,*/ is_focused)
+	fmt.println(#procedure, "hwnd=", hwnd, "wparam=", wparam, "is_focused=", is_focused)
 	return 0
 }
 
@@ -141,27 +137,32 @@ rawinput: win32.RAWINPUT = {}
 
 put_it := 0
 
+get_raw_input_data :: proc(hRawInput: win32.HRAWINPUT) -> bool {
+	dwSize: win32.UINT
+	win32.GetRawInputData(hRawInput, win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
+	if dwSize == 0 {
+		win32app.show_error_and_panic("dwSize is zero");return false
+	}
+	if dwSize > size_of(win32.RAWINPUT) {
+		win32app.show_error_and_panic("dwSize too big");return false
+	}
+	if win32.GetRawInputData(hRawInput, win32.RID_INPUT, &rawinput, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
+		win32app.show_error_and_panic("GetRawInputData Failed");return false
+	}
+	return true
+}
+
 WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	assert(win32.GET_RAWINPUT_CODE_WPARAM(wparam) == .RIM_INPUT)
-	dwSize: win32.UINT
-	win32.GetRawInputData(win32.HRAWINPUT(lparam), win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
-	if dwSize == 0 {return 0}
-	if dwSize > size_of(win32.RAWINPUT) {win32app.show_error_and_panic("dwSize too big");return 0}
+	get_raw_input_data(win32.HRAWINPUT(lparam))
 
-	raw := &rawinput
-
-	if win32.GetRawInputData(win32.HRAWINPUT(lparam), win32.RID_INPUT, raw, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
-		win32app.show_error_and_panic("GetRawInputData Failed")
-		return 0
-	}
-
-	switch raw.header.dwType {
+	switch rawinput.header.dwType {
 	case win32.RIM_TYPEMOUSE:
 		{
-			mouse_delta: win32app.int2 = {raw.data.mouse.lLastX, raw.data.mouse.lLastY}
+			mouse_delta: win32app.int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
 			mouse_pos += mouse_delta
 			mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, settings.window_size - 1)
-			button_flags := raw.data.mouse.usButtonFlags
+			button_flags := rawinput.data.mouse.usButtonFlags
 			if button_flags > 0 {
 				switch button_flags {
 				case win32.RI_MOUSE_BUTTON_1_DOWN:
@@ -185,17 +186,17 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 		}
 	case win32.RIM_TYPEKEYBOARD:
 		{
-			switch raw.data.keyboard.VKey {
+			switch rawinput.data.keyboard.VKey {
 			case win32.VK_ESCAPE:
 				win32app.close_application(hwnd)
 			case win32.VK_0 ..= win32.VK_9:
-				selected_color = i32(raw.data.keyboard.VKey - win32.VK_0)
+				selected_color = i32(rawinput.data.keyboard.VKey - win32.VK_0)
 			case:
-				fmt.println("keyboard:", raw.data.keyboard)
+				fmt.println("keyboard:", rawinput.data.keyboard)
 			}
 		}
 	case:
-		fmt.println("dwType:", raw.header.dwType)
+		fmt.println("dwType:", rawinput.header.dwType)
 	}
 
 	return 0
@@ -214,7 +215,16 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	//case win32.WM_ACTIVATE: return WM_ACTIVATE(hwnd, wparam, lparam)
 	case win32.WM_SETFOCUS:		return wm_focus(hwnd, wparam, true)
 	case win32.WM_KILLFOCUS:	return wm_focus(hwnd, wparam, false)
+
 	case win32.WM_INPUT:		return WM_INPUT(hwnd, wparam, lparam)
+
+	case win32.WM_CHAR:         panic("WM_CHAR")
+	case win32.WM_KEYDOWN:      panic("WM_KEYDOWN")
+	case win32.WM_KEYUP:        panic("WM_KEYUP")
+	case win32.WM_MOUSEMOVE:    panic("WM_MOUSEMOVE")
+	case win32.WM_LBUTTONDOWN:  panic("WM_LBUTTONDOWN")
+	case win32.WM_RBUTTONDOWN:  panic("WM_RBUTTONDOWN")
+
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable

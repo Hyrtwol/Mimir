@@ -1,8 +1,8 @@
 // vet
 package canvas
 
-import "core:mem"
 import "core:math/linalg"
+import "core:mem"
 
 screen_buffer :: [^]color
 
@@ -146,36 +146,48 @@ barycentric :: #force_inline proc "contextless" (abc: ^float3x3, pp: float3) -> 
 draw_triangle_epsilon :: 1e-3
 draw_triangle_epsilon3 :: float3{draw_triangle_epsilon, draw_triangle_epsilon, draw_triangle_epsilon}
 
-vertex_shader :: #type proc(shader: ^IShader, pos: float4, gl_Position: ^float4)
+VS_INPUT :: struct {
+	position: float3,
+	normal:   float3,
+	texcoord: float2,
+}
+
+VS_OUTPUT :: struct {
+	position: float4,
+	normal:   float3,
+	texcoord: float2,
+}
+
+vertex_shader :: #type proc(shader: ^IShader, input: ^VS_INPUT, output: ^VS_OUTPUT)
 pixel_shader :: #type proc(shader: ^IShader, bc_clip: float3, color: ^byte4) -> bool
 
 Model :: struct {
 	trans: float4x4,
 	color: float4,
-	tex: i32,
+	tex:   i32,
 }
 IShader :: struct {
-	model: ^Model,
-	model_view, it_model_view: float4x4,
-
-	uniform_l: float3,     // light direction in view coordinates
-    varying_uv: float2x3,  // triangle uv coordinates, written by the vertex shader, read by the fragment shader
-    varying_nrm: float3x3, // normal per vertex to be interpolated by FS
-    view_tri: float3x3,    // triangle in view coordinates
-
-	vs: vertex_shader,
-	ps: pixel_shader,
+	model:           ^Model,
+	model_view:      float4x4,
+	proj_view_model: float4x4,
+	//it_model_view: float4x4,
+	it_model_view:   float3x3,
+	uniform_l:       float3, // light direction in view coordinates
+	varying_uv:      float2x3, // triangle uv coordinates, written by the vertex shader, read by the fragment shader
+	varying_nrm:     float3x3, // normal per vertex to be interpolated by FS
+	view_tri:        float3x3, // triangle in view coordinates
+	vs:              vertex_shader,
+	ps:              pixel_shader,
 }
 
-
-draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: [3]float4, shader: ^IShader) {
+draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: ^float4x3, shader: ^IShader) {
 
 	clip_z := float3{clip_verts[0].z, clip_verts[1].z, clip_verts[2].z}
 	if clip_z.x < 0 && clip_z.y < 0 && clip_z.z < 0 {return}
 	if clip_z.x > 1 && clip_z.y > 1 && clip_z.z > 1 {return}
 
 	// triangle screen coordinates before persp. division
-	pts: [3]float4 = {viewport^ * clip_verts[0], viewport^ * clip_verts[1], viewport^ * clip_verts[2]}
+	pts := viewport^ * clip_verts^
 	// triangle screen coordinates after perps. division
 	pts2: [3]float4 = {pts[0] / pts[0].w, pts[1] / pts[1].w, pts[2] / pts[2].w}
 
@@ -183,7 +195,7 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	det := linalg.determinant(abc)
 	if det < 1e-3 {return}
 
-	cmin, cmax := int2{0, 0}, canvas_max(pc)
+	cmin, cmax: int2 = {0, 0}, canvas_max(pc)
 	bbmin, bbmax: int2 = cmax, cmin
 	for i in 0 ..< 3 {
 		min_max_int2_from_float4(&bbmin, &bbmax, pts2[i])
@@ -222,7 +234,7 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			zp := &zbuffer[idx]
 			if frag_depth < zp^ {continue}
 
-            if shader->ps(bc_clip, &color) {continue} // fragment shader can discard current fragment
+			if shader->ps(bc_clip, &color) {continue} 	// fragment shader can discard current fragment
 
 			zp^ = frag_depth
 			//bits[idx] = to_color(frag_depth)
@@ -236,7 +248,7 @@ draw_hline :: #force_inline proc "contextless" (cv: ^canvas, #any_int x1, x2, y:
 	if x1 < u32(cv.size.x) && x2 < u32(cv.size.x) && y < u32(cv.size.y) {
 		w := cv.size.x
 		i := y * w + x1
-		for _ in x1..=x2 {
+		for _ in x1 ..= x2 {
 			cv.pvBits[i] = col
 			i += 1
 		}
@@ -247,7 +259,7 @@ draw_vline :: #force_inline proc "contextless" (cv: ^canvas, #any_int x, y1, y2:
 	if x < u32(cv.size.x) && y1 < u32(cv.size.y) && y2 < u32(cv.size.y) {
 		w := cv.size.x
 		i := y1 * w + x
-		for _ in y1..=y2 {
+		for _ in y1 ..= y2 {
 			cv.pvBits[i] = col
 			i += w
 		}

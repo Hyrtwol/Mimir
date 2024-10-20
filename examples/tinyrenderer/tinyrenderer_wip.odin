@@ -73,6 +73,6 @@ ps_texture_wip :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> b
 	//col = lg.clamp(col, 0, 1)
 	color^ = cv.to_color(col)
 
-	//color^ = (^cv.byte4)(&pics[tidx])^
+	//color^ = (^cv.byte4)(&pics_data[tidx])^
 	return false
 }

@@ -1,9 +1,9 @@
 #+vet
 package main
 
-import "core:fmt"
 import "base:runtime"
 import "core:container/queue"
+import "core:fmt"
 import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"
@@ -22,15 +22,16 @@ DIB :: win32app.DIB
 canvas :: cv.canvas
 
 mouse_event :: struct {
-	pos: win32app.int2,
+	pos:       win32app.int2,
 	mu_button: mu.Mouse,
-	state: i32,
+	state:     i32,
 }
 
-char_queue:      queue.Queue(u8)
-mouse_queue:     queue.Queue(mouse_event)
+char_queue: queue.Queue(u8)
+mouse_queue: queue.Queue(mouse_event)
 
 application :: struct {
+	#subtype settings: win32app.window_settings,
 	mu_ctx:          mu.Context,
 	log_buf:         [1 << 16]byte,
 	log_buf_len:     int,
@@ -42,20 +43,18 @@ application :: struct {
 }
 papp :: ^application
 
-state: application = {
-	bg = {90, 95, 100, 255},
-}
+state: application
 
 screen_buffer :: cv.screen_buffer
 
-bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
-bitmap_size   : win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
-bitmap_count  : i32
-pvBits        : screen_buffer
+bitmap_handle: win32.HGDIOBJ // win32.HBITMAP
+bitmap_size: win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
+bitmap_count: i32
+pvBits: screen_buffer
 
 bg_brush: win32.HBRUSH
 
-mouse_pos : win32app.int2
+mouse_pos: win32app.int2
 
 // mouse_buttons: win32app.MOUSE_KEY_STATE
 
@@ -75,12 +74,9 @@ convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {re
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
-	settings := win32app.psettings(pcs.lpCreateParams)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	win32app.set_settings(hwnd, settings)
-
-	app := (papp)(settings.app)
+	app := win32app.get_application_from_createstruct(pcs, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	win32app.set_settings(hwnd, app)
 
 	//client_size := win32app.get_client_size(hwnd)
 	//bitmap_size = client_size / ZOOM
@@ -112,10 +108,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	settings := win32app.get_settings(hwnd)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-	// app := settings.app
-	// if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	app := win32app.get_application(hwnd, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
@@ -128,10 +122,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 // first := 5
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	settings := win32app.get_settings(hwnd)
-	if settings == nil {win32app.show_error_and_panic("Missing settings!");return 1}
-
-	app := (papp)(settings.app)
+	app := win32app.get_application(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 
 	ps: win32.PAINTSTRUCT
@@ -221,13 +212,14 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings := win32app.get_settings(hwnd)
+	app := win32app.get_application(hwnd, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	size := win32app.decode_lparam_as_int2(lparam)
-	if settings == nil {win32app.show_error_and_panicf("Missing settings in %v", #procedure);return 1}
+	if app == nil {win32app.show_error_and_panicf("Missing app in %v", #procedure);return 1}
 	//fmt.println(#procedure, hwnd, type, size)
-	settings.window_size = size
-	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
+	app.settings.window_size = size
+	win32app.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
 	return 0
 }
 
@@ -346,6 +338,14 @@ main :: proc() {
 	//rl.InitWindow(960, 540, "microui-odin")
 	//defer rl.CloseWindow()
 
+	state = {
+		settings = win32app.default_window_settings,
+		bg       = {90, 95, 100, 255},
+	}
+	state.settings.window_size = {800, 600}
+	state.settings.wndproc = wndproc
+	state.settings.dwStyle = win32app.default_dwStyle | win32.WS_SIZEBOX
+
 	//queue.init(&state.char_queue)
 	//defer queue.destroy(&state.char_queue)
 	queue.init(&char_queue)
@@ -359,12 +359,7 @@ main :: proc() {
 	ctx.text_width = mu.default_atlas_text_width
 	ctx.text_height = mu.default_atlas_text_height
 
-	settings := win32app.default_window_settings
-	settings.window_size = {800, 600}
-	settings.wndproc = wndproc
-	settings.dwStyle = win32app.default_dwStyle | win32.WS_SIZEBOX
-	settings.app = &state
-	win32app.run(&settings)
+	win32app.run(&state)
 
 
 	// image := rl.Image {
@@ -529,11 +524,11 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 			win32.AlphaBlend(hdc, x, y, rect.w, rect.h, hdc_source, rect.x, rect.y, rect.w, rect.h, ftn)
 
 		case ^mu.Command_Clip:
-			// rl.EndScissorMode()
-			// rl.BeginScissorMode(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h)
-			// https://learn.microsoft.com/en-us/windows/win32/gdi/clipping-output
-			// To remove a device-context's clipping region, specify a NULL region handle.
-			//fmt.printfln("clip: %v", cmd.rect)
+		// rl.EndScissorMode()
+		// rl.BeginScissorMode(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h)
+		// https://learn.microsoft.com/en-us/windows/win32/gdi/clipping-output
+		// To remove a device-context's clipping region, specify a NULL region handle.
+		//fmt.printfln("clip: %v", cmd.rect)
 
 		case ^mu.Command_Jump:
 			unreachable()
@@ -545,8 +540,7 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 u8_slider :: proc(ctx: ^mu.Context, val: ^u8, lo, hi: u8) -> (res: mu.Result_Set) {
 	mu.push_id(ctx, uintptr(val))
 
-	@(static)
-	tmp: mu.Real
+	@(static) tmp: mu.Real
 	tmp = mu.Real(val^)
 	res = mu.slider(ctx, &tmp, mu.Real(lo), mu.Real(hi), 0, "%.0f", {.ALIGN_CENTER})
 	val^ = u8(tmp)
@@ -570,8 +564,7 @@ reset_log :: proc() {
 
 
 all_windows :: proc(ctx: ^mu.Context) {
-	@(static)
-	opts := mu.Options{.NO_CLOSE}
+	@(static) opts := mu.Options{.NO_CLOSE}
 
 	if mu.window(ctx, "Demo Window", {40, 40, 300, 450}, opts) {
 		if .ACTIVE in mu.header(ctx, "Window Info") {
@@ -628,8 +621,7 @@ all_windows :: proc(ctx: ^mu.Context) {
 				if .SUBMIT in mu.button(ctx, "Button 6") {write_log("Pressed button 6")}
 			}
 			if .ACTIVE in mu.treenode(ctx, "Test 3") {
-				@(static)
-				checks := [3]bool{true, false, true}
+				@(static) checks := [3]bool{true, false, true}
 				mu.checkbox(ctx, "Checkbox 1", &checks[0])
 				mu.checkbox(ctx, "Checkbox 2", &checks[1])
 				mu.checkbox(ctx, "Checkbox 3", &checks[2])
@@ -673,10 +665,8 @@ all_windows :: proc(ctx: ^mu.Context) {
 		}
 		mu.end_panel(ctx)
 
-		@(static)
-		buf: [128]byte
-		@(static)
-		buf_len: int
+		@(static) buf: [128]byte
+		@(static) buf_len: int
 		submitted := false
 		mu.layout_row(ctx, {-70, -1})
 		if .SUBMIT in mu.textbox(ctx, buf[:], &buf_len) {
@@ -693,8 +683,7 @@ all_windows :: proc(ctx: ^mu.Context) {
 	}
 
 	if mu.window(ctx, "Style Window", {350, 250, 300, 240}) {
-		@(static)
-		colors := [mu.Color_Type]string {
+		@(static) colors := [mu.Color_Type]string {
 			.TEXT         = "text",
 			.SELECTION_BG = "selection bg",
 			.BORDER       = "border",

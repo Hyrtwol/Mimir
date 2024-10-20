@@ -6,8 +6,7 @@ import "core:math"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
-worldmap_textured: worldMapT =
-{
+worldmap_textured: World_Map = {
 	{4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,7,7,7,7,7,7,7,7},
 	{4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
 	{4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
@@ -67,33 +66,32 @@ on_update_raycaster_textured :: proc(app: ca.papp) -> int {
 		// unlike (dir.x, dir.y) is not 1, however this does not matter, only the
 		// ratio between deltaDistX and deltaDistY matters, due to the way the DDA
 		// stepping further below works. So the values can be computed as below.
-		deltaDist := reciprocal_abs(ray_dir)
+		deltaDist := cv.reciprocal_abs(ray_dir)
 
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
 
-		hit: i32 = 0 // was there a wall hit?
-		side: i32 // was a NS or a EW wall hit?
-
 		// calculate step and initial sideDist
-		if (ray_dir.x < 0) {
+		if ray_dir.x < 0 {
 			stepX = -1
 			sideDistX = (pos.x - scalar(mapX)) * deltaDist.x
 		} else {
 			stepX = 1
-			sideDistX = (scalar(mapX) + 1.0 - pos.x) * deltaDist.x
+			sideDistX = (scalar(mapX) + 1 - pos.x) * deltaDist.x
 		}
-		if (ray_dir.y < 0) {
+		if ray_dir.y < 0 {
 			stepY = -1
 			sideDistY = (pos.y - scalar(mapY)) * deltaDist.y
 		} else {
 			stepY = 1
-			sideDistY = (scalar(mapY) + 1.0 - pos.y) * deltaDist.y
+			sideDistY = (scalar(mapY) + 1 - pos.y) * deltaDist.y
 		}
+
+		side: i32 // was a NS or a EW wall hit?
 		//perform DDA
-		for hit == 0 {
+		for hit: i32 = 0; hit == 0; {
 			//jump to next map square, either in x-direction, or in y-direction
-			if (sideDistX < sideDistY) {
+			if sideDistX < sideDistY {
 				sideDistX += deltaDist.x
 				mapX += stepX
 				side = 0
@@ -103,7 +101,7 @@ on_update_raycaster_textured :: proc(app: ca.papp) -> int {
 				side = 1
 			}
 			//Check if ray has hit a wall
-			if (worldMap[mapX][mapY] > 0) {hit = 1}
+			if (world_map[mapX][mapY] > 0) {hit = 1}
 		}
 		//Calculate distance projected on camera direction. This is the shortest distance from the point where the wall is
 		//hit to the camera plane. Euclidean to center camera point would give fisheye effect!
@@ -123,22 +121,22 @@ on_update_raycaster_textured :: proc(app: ca.papp) -> int {
 		drawStart, drawEnd: i32
 		drawStart = -line_height_half + h_half
 		drawEnd = line_height_half + h_half
-		if (drawStart < 0) {drawStart = 0}
-		if (drawEnd >= h) {drawEnd = h - 1}
+		if drawStart < 0 {drawStart = 0}
+		if drawEnd >= h {drawEnd = h - 1}
 
 		//texturing calculations
-		texNum := worldMap[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
-		tex := textures[texNum]
+		texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
+		tex := get_texture(texNum)
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
-		if (side == 0) {wallX = pos.y + perpendicular_wall_distance * ray_dir.y} else {wallX = pos.x + perpendicular_wall_distance * ray_dir.x}
+		if side == 0 {wallX = pos.y + perpendicular_wall_distance * ray_dir.y} else {wallX = pos.x + perpendicular_wall_distance * ray_dir.x}
 		wallX -= math.floor(wallX)
 
 		//x coordinate on the texture
 		texX := i32(wallX * scalar(pics_w))
-		if (side == 0 && ray_dir.x > 0) {texX = pics_w - texX - 1}
-		if (side == 1 && ray_dir.y < 0) {texX = pics_w - texX - 1}
+		if side == 0 && ray_dir.x > 0 {texX = pics_wm - texX}
+		if side == 1 && ray_dir.y < 0 {texX = pics_wm - texX}
 
 		// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
 		// How much to increase the texture coordinate per screen pixel

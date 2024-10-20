@@ -7,6 +7,7 @@ import "core:fmt"
 import "core:image"
 import "core:image/png"
 import "core:image/tga"
+import "core:reflect"
 import "core:os"
 import fp "core:path/filepath"
 import "core:strings"
@@ -192,22 +193,22 @@ gen_pics_from_list :: proc(output_name: string) -> int {
 	return gen_pics(output_name, image_paths)
 }
 
+run_mode :: enum {nop, scan, from_filelist, from_list}
+
 run :: proc() -> (exit_code: int) {
-	mode: enum {nop, scan, from_filelist, from_list} : .from_list
+	mode: run_mode = .from_list
+	if len(os.args) > 1 {
+		m, ok := reflect.enum_from_name(run_mode, os.args[1])
+		if !ok {
+			fmt.println("Invalid arg", os.args[1])
+			exit_code = -1
+			return
+		}
+		mode = m
+	}
+
 	pics_path = fp.abs(fp.join({"..", "data", "images", "pics"}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
 	output_name := fmt.tprintf("pics%d.dat", texWidth)
-
-	// when mode == .scan {
-	// 	pattern := "*.png" if len(os.args) <= 1 else os.args[1]
-	// 	exit_code = gen_pics_scan(output_name, pattern)
-	// } else when mode == .from_filelist {
-	// 	exit_code = gen_pics_from_filelist(output_name, "texture_list.txt")
-	// } else when mode == .from_list {
-	// 	exit_code = gen_pics_from_list(output_name)
-	// } else {
-	// 	fmt.println("Invalid mode", mode, output_name)
-	// 	exit_code = -1
-	// }
 
 	#partial switch mode {
 	case .scan:

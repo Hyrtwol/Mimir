@@ -3,10 +3,11 @@
 package raycaster
 
 import "core:math"
+import "core:math/linalg"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
-worldmap_sprites: worldMapT = {
+worldmap_sprites: World_Map = {
 	{8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, 4, 6, 4, 4, 6, 4, 6, 4, 4, 4, 6, 4},
 	{8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4},
 	{8, 0, 3, 3, 0, 0, 0, 0, 0, 8, 8, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6},
@@ -71,7 +72,7 @@ sprites: [numSprites]Sprite = {
 z_buffer: [screenWidth]scalar
 
 on_create_raycaster_sprites :: proc(app: ca.papp) -> int {
-	assert(pics_count > 0)
+	assert(len(textures) > 0)
 	init_sprites()
 	return 0
 }
@@ -92,7 +93,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 	wm := scalar(w) - 1
 	for x in 0 ..< w {
 		// calculate ray position and direction
-		cameraX := (2 * scalar(x) / wm) - 1 //x-coordinate in camera space
+		cameraX := (2 * scalar(x) / wm) - 1 // x-coordinate in camera space -1 to 1
 		ray_dir := dir + (plane * cameraX)
 
 		// which box of the map we're in
@@ -109,7 +110,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		// unlike (dir.x, dir.y) is not 1, however this does not matter, only the
 		// ratio between deltaDistX and deltaDistY matters, due to the way the DDA
 		// stepping further below works. So the values can be computed as below.
-		deltaDist := reciprocal_abs(ray_dir)
+		deltaDist := cv.reciprocal_abs(ray_dir)
 
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
@@ -144,7 +145,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 				side = 1
 			}
 			//Check if ray has hit a wall
-			if (worldMap[mapX][mapY] > 0) {hit = 1}
+			if (world_map[mapX][mapY] > 0) {hit = 1}
 		}
 		//Calculate distance projected on camera direction. This is the shortest distance from the point where the wall is
 		//hit to the camera plane. Euclidean to center camera point would give fisheye effect!
@@ -168,8 +169,8 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		if drawEnd >= h {drawEnd = h - 1}
 
 		//texturing calculations
-		texNum := worldMap[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
-		tex := textures[texNum]
+		texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
+		tex := get_texture(texNum)
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
@@ -198,23 +199,19 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		}
 
 		//FLOOR CASTING
-		floorXWall, floorYWall: scalar //x, y position of the floor texel at the bottom of the wall
+		floor_wall: vector2 //x, y position of the floor texel at the bottom of the wall
 		//4 different wall directions possible
 		if (side == 0) {
 			if (ray_dir.x > 0) {
-				floorXWall = scalar(mapX)
-				floorYWall = scalar(mapY) + wallX
+				floor_wall = {scalar(mapX), scalar(mapY) + wallX}
 			} else {
-				floorXWall = scalar(mapX) + 1.0
-				floorYWall = scalar(mapY) + wallX
+				floor_wall = {scalar(mapX) + 1, scalar(mapY) + wallX}
 			}
 		} else {
 			if (ray_dir.y > 0) {
-				floorXWall = scalar(mapX) + wallX
-				floorYWall = scalar(mapY)
+				floor_wall = {scalar(mapX) + wallX, scalar(mapY)}
 			} else {
-				floorXWall = scalar(mapX) + wallX
-				floorYWall = scalar(mapY) + 1.0
+				floor_wall = {scalar(mapX) + wallX, scalar(mapY) + 1}
 			}
 		}
 
@@ -225,30 +222,22 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 
 		if (drawEnd < 0) {drawEnd = h} 	//becomes < 0 when the integer overflows
 
+		currentFloor: vector2
+
 		//draw the floor from drawEnd to the bottom of the screen
 		for y in drawEnd + 1 ..< h {
 			currentDist = scalar(h) / scalar(2 * y - h) //you could make a small lookup table for this instead
 
-			weight: scalar = (currentDist - distPlayer) / (distWall - distPlayer)
-
-			currentFloorX: scalar = weight * floorXWall + (1.0 - weight) * pos.x
-			currentFloorY: scalar = weight * floorYWall + (1.0 - weight) * pos.y
-
-			checkerBoardPattern: i32 = (i32(currentFloorX) + i32(currentFloorY)) & 1
-			floorTexture: i32 = checkerBoardPattern == 0 ? 3 : 4
-
-			floorTexX, floorTexY: i32
-			floorTexX = i32(currentFloorX * scalar(pics_w)) & pics_wm
-			floorTexY = i32(currentFloorY * scalar(pics_h)) & pics_hm
-			texIdx := pics_w * floorTexY + floorTexX
+			weight := (currentDist - distPlayer) / (distWall - distPlayer)
+			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
+			texIdx := texture_index(currentFloor)
+			checkerBoardPattern: i32 = (i32(currentFloor.x) + i32(currentFloor.y)) & 1
+			floorTexture: i32 = checkerBoardPattern + 3
 
 			//floor
-			cv.canvas_set_dot(canvas, x, y, textures[floorTexture][texIdx] / 2)
+			cv.canvas_set_dot(canvas, x, y, get_texture_color(floorTexture, texIdx) / 2)
 			//ceiling (symmetrical)
-			cv.canvas_set_dot(canvas, x, h - y, textures[6][texIdx])
-
-			// cv.canvas_set_dot(canvas, x, y, sample(&textures[floorTexture], currentFloorX, currentFloorY) / 2)
-			// cv.canvas_set_dot(canvas, x, h - y, sample(&textures[6], currentFloorX, currentFloorY))
+			cv.canvas_set_dot(canvas, x, h - y, get_texture_color(6, texIdx))
 		}
 
 		//SET THE ZBUFFER FOR THE SPRITE CASTING
@@ -262,7 +251,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 	for &spr_idx in sprite_order {
 		//translate sprite position to relative to camera
 		spr := spr_idx.sprite
-		sprimg := textures[spr.texture]
+		sprimg := get_texture(spr.texture)
 		sprpos := spr.pos - pos.xy
 
 		//transform sprite with the inverse camera matrix
@@ -280,7 +269,7 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 		//parameters for scaling and moving the sprites
 		uDiv :: 1
 		vDiv :: 1
-		vMove :: 0.0
+		vMove :: 0
 		vMoveScreen :: 0 // = vMove / transformY
 
 		//calculate height of the sprite on screen
@@ -305,14 +294,14 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 			//the conditions in the if are:
 			//1) it's in front of camera plane so you don't see things behind you
 			//2) z_buffer, with perpendicular distance
-			if (transformY > 0 && transformY < z_buffer[stripe]) {
+			if transformY > 0 && transformY < z_buffer[stripe] {
 				for y in drawStartY ..< drawEndY { 	//for every pixel of the current stripe
 					d := (y /*- vMoveScreen*/) * 256 - h * 128 + spriteHeight * 128 //256 and 128 factors to avoid floats
 					texY := ((d * pics_h) / spriteHeight) / 256
 					texY &= pics_hm // avoid random crash
 					color := sprimg[pics_w * texY + texX] //get current color from the texture
 					//paint pixel if it isn't black, black is the invisible color
-					if color.a > 0 {
+					if color.a > 127 {
 						cv.canvas_set_dot(canvas, stripe, y, color)
 					}
 				}

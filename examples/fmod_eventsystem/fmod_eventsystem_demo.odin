@@ -137,8 +137,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
+	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
 	bitmap_count = 0

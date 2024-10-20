@@ -2,6 +2,7 @@
 #+vet
 package win32app
 
+import "base:intrinsics"
 import win32 "core:sys/windows"
 import "core:time"
 
@@ -16,19 +17,27 @@ window_settings :: struct {
 }
 psettings :: ^window_settings
 
-set_settings :: #force_inline proc(hwnd: win32.HWND, settings: psettings) {
+set_settings :: #force_inline proc "contextless" (hwnd: win32.HWND, settings: ^window_settings) {
 	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(settings)))
 }
 
-get_settings :: #force_inline proc(hwnd: win32.HWND) -> psettings {
-	return (psettings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
+get_settings :: #force_inline proc "contextless" (hwnd: win32.HWND) -> ^window_settings {
+	return (^window_settings)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
 }
 
-get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> psettings {
-	return psettings(pcs.lpCreateParams) if pcs != nil else nil
+get_application :: #force_inline proc "contextless" (hwnd: win32.HWND, $T: typeid) -> ^T where intrinsics.type_is_subtype_of(T, window_settings) {
+	return (^T)(get_settings(hwnd))
 }
 
-get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> psettings {
+get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW) -> ^window_settings {
+	return (^window_settings)(pcs.lpCreateParams) if pcs != nil else nil
+}
+
+get_application_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATESTRUCTW, $T: typeid) -> ^T where intrinsics.type_is_subtype_of(T, window_settings) {
+	return (^T)(get_settings_from_createstruct(pcs))
+}
+
+get_settings_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> ^window_settings {
 	pcs := decode_lparam_as_createstruct(lparam)
 	return get_settings_from_createstruct(pcs)
 }

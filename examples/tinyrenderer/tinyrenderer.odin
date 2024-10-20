@@ -11,6 +11,7 @@ import lg "core:math/linalg"
 import "core:math/rand"
 import "core:mem"
 import "core:os"
+import "core:slice"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 import "shared:obug"
@@ -44,44 +45,54 @@ aspect: f32
 near, far: f32 = 1, 10
 
 viewport: mat4x4
-proj, view: mat4x4
 rotate: mat4x4
-proj_view, proj_view_model: mat4x4
+proj, view: mat4x4
 
 zbuffer: [width * height]f32
 flip_z_axis := true
 
-pics := #load("../raycaster/pics32.dat")
 pics_w: i32 : 32
 pics_h: i32 : pics_w
-pics_ps: i32 : size_of(cv.byte4)
-pics_byte_size: i32 : pics_w * pics_h * pics_ps
-pics_count := i32(len(pics)) / pics_byte_size
+pics_pixel_byte_size: i32 : size_of(cv.byte4)
+pics_buf_pixel_count: i32 : pics_w * pics_h
+pics_buf_byte_size: i32 : pics_buf_pixel_count * pics_pixel_byte_size
+pics_buf :: [pics_buf_pixel_count]cv.byte4
+pics_size :: float2{f32(pics_w), f32(pics_h)}
+pics_tex_lookup :: int2{pics_w, 1}
+
+pics_data := #load("../raycaster/pics32.dat")
+pics_count := i32(len(pics_data)) / pics_buf_byte_size
+textures: []pics_buf = slice.from_ptr((^pics_buf)(&pics_data[0]), int(pics_count))
 
 light_dir := vec3{1, -1, 1} // light source
-eye       := vec3{1, -2.5, 3} // camera position
-center    := vec3{0, 0, 0} // camera direction
-up        := vec3{0, 1, 0} // camera up vector
+eye := vec3{1, -2.5, 3} // camera position
+center := vec3{0, 0, 0} // camera direction
+up := vec3{0, 1, 0} // camera up vector
 
 vert_count :: 6
-vertices: [vert_count]cv.float3 = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
-vert: [vert_count]cv.float4
+vertices: [vert_count]cv.VS_INPUT = {
+	{{-1, 0, 0}, {-1, 0, 0}, {0.0, 0.5}},
+	{{ 1, 0, 0}, { 1, 0, 0}, {1.0, 0.5}},
+	{{ 0,-1, 0}, { 0,-1, 0}, {0.5, 0.5}},
+	{{ 0, 1, 0}, { 0, 1, 0}, {0.5, 0.5}},
+	{{ 0, 0,-1}, { 0, 0,-1}, {0.5, 0.0}},
+	{{ 0, 0, 1}, { 0, 0, 1}, {0.5, 1.0}},
+}
+vert: [vert_count]cv.VS_OUTPUT
 triangles := [?]cv.int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
 models: [9]cv.Model
 shader: cv.IShader
 
-vs_default :: proc(shader: ^cv.IShader, pos: float4, gl_Position: ^float4) {
-	gl_Position^ = proj_view_model * pos
+vs_default :: proc(shader: ^cv.IShader, input: ^cv.VS_INPUT, output: ^cv.VS_OUTPUT) {
+	output.position = shader.proj_view_model * cv.to_float4(input.position)
+	output.normal = lg.normalize(input.normal)
+	output.texcoord = input.texcoord
 }
-
-pics_size :: float2{f32(pics_w), f32(pics_h)}
-pics_tex_lookup :: int2{pics_w * pics_ps, pics_ps}
 
 sample2D :: proc(uv: float2) -> cv.byte4 {
 	uv := cv.to_int2(lg.fract(uv) * pics_size)
 	tidx := lg.dot(uv, pics_tex_lookup)
-	tidx += 4096 * shader.model.tex
-	return (^cv.byte4)(&pics[tidx])^
+	return textures[shader.model.tex][tidx]
 }
 
 ps_default :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
@@ -89,34 +100,50 @@ ps_default :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 	return false
 }
 
-ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
-	// per-vertex normal interpolation
+ps_normal_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
-	//d := lg.dot(shader.uniform_l, bn)
-	d := lg.dot(light_dir, bn)
-	d = clamp(d, 0, 1)
-	c := d * 0.8 + 0.2
-	col := float4{c, c, c, 0}
-	color^ = cv.to_color(shader.model.color * col)
+	color^ = cv.to_color(bn * 0.5 + 0.5)
 	return false
 }
 
-ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+ps_uv_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+	uv := lg.fract(float2(shader.varying_uv * bc_clip))
+	color^ = cv.to_color(float3{uv.x, uv.y, 0})
+	return false
+}
+
+ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
-	// tex coord interpolation
-	uv: float2 = shader.varying_uv * bc_clip
-
-	texcol := sample2D(uv)
-	if texcol.a == 0 {return true}
 
 	//d := lg.dot(shader.uniform_l, bn)
 	d := lg.dot(light_dir, bn)
 	d = clamp(d, 0.2, 1)
 
-	col := cv.to_color_byte4(texcol)
-	col *= shader.model.color
+	col := shader.model.color
 	col *= d
+	color^ = cv.to_color(col)
+
+	return false
+}
+
+ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+	// tex coord interpolation
+	//uv := lg.fract(shader.varying_uv * bc_clip)
+	uv := shader.varying_uv
+	texcol := sample2D(uv * bc_clip)
+	if texcol.a == 0 {return true}
+
+	// per-vertex normal interpolation
+	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
+
+	//d := lg.dot(shader.uniform_l, bn)
+	d := lg.dot(light_dir, bn)
+	d = clamp(d, 0.2, 1)
+
+	col := shader.model.color
+	col *= d
+	col *= cv.to_color(texcol)
 	color^ = cv.to_color(col)
 
 	return false
@@ -184,6 +211,10 @@ on_update :: proc(app: ca.papp) -> int {
 			shader.ps = ps_texture
 		case '4':
 			shader.ps = ps_texture_wip
+		case '5':
+			shader.ps = ps_normal_color
+		case '6':
+			shader.ps = ps_uv_color
 		case:
 			fmt.println("ch:", ch)
 		}
@@ -195,52 +226,47 @@ on_update :: proc(app: ca.papp) -> int {
 	mem.zero(&zbuffer, size_of(zbuffer))
 
 	view = lg.matrix4_look_at(eye, center, up)
-	proj_view = proj * view
+	proj_view := proj * view
 
 	if do_rotate {
 		rot_y += app.delta * 0.5
 		rotate = cv.matrix4_rotate_y_f32(rot_y)
 	}
 
+	update_shader :: #force_inline proc "contextless" (triangle: cv.int3, clip_verts: ^cv.float4x3, shader: ^cv.IShader) {
+		update_vs_output :: #force_inline proc "contextless" (vso: ^cv.VS_OUTPUT, pos: ^cv.float4, nrm: ^cv.float3, uv: ^cv.float2) {
+			pos^, nrm^, uv^ = vso.position, vso.normal, vso.texcoord
+		}
+		nrm: cv.float3x3
+		update_vs_output(&vert[triangle[0]], &clip_verts[0], &nrm[0], &shader.varying_uv[0])
+		update_vs_output(&vert[triangle[1]], &clip_verts[1], &nrm[1], &shader.varying_uv[1])
+		update_vs_output(&vert[triangle[2]], &clip_verts[2], &nrm[2], &shader.varying_uv[2])
+		// #unroll for vi in 0..<3 {
+		//   update_vs_output(&vert[triangle[vi]], &clip_verts[vi], &nrm[vi], &shader.varying_uv[vi])
+		// }
+
+		shader.varying_nrm = shader.it_model_view * nrm
+		mvv: cv.float4x3 = shader.model_view * clip_verts^
+		shader.view_tri = cv.to_float3x3(&mvv)
+		// transform the light vector to view coordinates
+		shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
+	}
+
 	for &model in models {
 
 		shader.model = &model
 		shader.model_view = rotate * model.trans * rotate
-		shader.it_model_view = lg.inverse_transpose(shader.model_view)
-		//shader.it_model_view3 = lg.inverse_transpose(float3x3(shader.model_view))
-
-		model_view_3x3 := float3x3(shader.model_view)
-		it_model_view_3x3 := lg.inverse_transpose(model_view_3x3)
-		proj_view_model = proj_view * shader.model_view
+		shader.it_model_view = lg.inverse_transpose(float3x3(shader.model_view))
+		shader.proj_view_model = proj_view * shader.model_view
 
 		for i in 0 ..< vert_count {
-			shader->vs(cv.to_float4(vertices[i]), &vert[i])
+			shader->vs(&vertices[i], &vert[i])
 		}
 
-		v: cv.float4x3
-		n: float3x3
+		clip_verts: cv.float4x3
 		for t in triangles {
-
-			v[0], v[1], v[2] = vert[t.x], vert[t.y], vert[t.z]
-			n[0], n[1], n[2] = lg.normalize(vertices[t.x]), lg.normalize(vertices[t.y]), lg.normalize(vertices[t.z])
-
-			shader.varying_nrm = it_model_view_3x3 * n
-
-			shader.varying_uv[0] = vertices[t[0]].xy
-			shader.varying_uv[1] = vertices[t[1]].xy
-			shader.varying_uv[2] = vertices[t[2]].xy
-
-			// #unroll for vi in 0..<3 {
-			//   shader.varying_uv[vi] = vertices[t[vi]].xy
-			// }
-
-			mvv: cv.float4x3 = shader.model_view * v
-			shader.view_tri = cv.to_float3x3(&mvv)
-
-			// transform the light vector to view coordinates
-			shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
-
-			cv.draw_triangle(canvas, zbuffer[:], &viewport, {v[0], v[1], v[2]}, &shader)
+			update_shader(t, &clip_verts, &shader)
+			cv.draw_triangle(canvas, zbuffer[:], &viewport, &clip_verts, &shader)
 		}
 	}
 
