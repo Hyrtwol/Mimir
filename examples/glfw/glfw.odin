@@ -21,7 +21,7 @@ main :: proc() {
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
 	if (!glfw.Init()) {
-		fmt.println("Failed to initialize GLFW")
+		fmt.eprintln("Failed to initialize GLFW")
 		return
 	}
 	defer glfw.Terminate()

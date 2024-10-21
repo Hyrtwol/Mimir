@@ -20,7 +20,7 @@ running: b32 = true
 
 main :: proc() {
 	if !bool(glfw.Init()) {
-		fmt.eprintln("GLFW has failed to load.")
+		fmt.eprintln("Failed to initialize GLFW")
 		return
 	}
 	defer glfw.Terminate()
@@ -120,10 +120,10 @@ main :: proc() {
 		// matrix support
 		// model matrix which a default scale of 0.5
 		model := glm.mat4{
-			0.5, 0,   0,   0,
-			0  , 0.5, 0,   0,
-			0  , 0,   0.5, 0,
-			0  , 0,   0,   1,
+			0.5, 0.0, 0.0, 0.0,
+			0.0, 0.5, 0.0, 0.0,
+			0.0, 0.0, 0.5, 0.0,
+			0.0, 0.0, 0.0, 1.0,
 		}
 
 		// // matrix indexing and array short with `.x`

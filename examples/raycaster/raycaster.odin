@@ -125,13 +125,12 @@ run :: proc() -> (exit_code: int) {
 	app.settings.window_size = app.size * ZOOM
 	app.settings.sleep = time.Millisecond * 5
 	app.settings.title = fmt.tprintf("Raycaster %v", run_mode)
-
+	//app.create = on_create
+	//app.destroy = on_destroy
 	when run_mode == .flat {
-		//app.create = on_create
 		app.update = on_update_raycaster_flat
 		world_map = worldmap_flat
 	} else when run_mode == .textured {
-		//app.create = on_create
 		app.update = on_update_raycaster_textured
 		world_map = worldmap_textured
 	} else when run_mode == .floor {
@@ -147,7 +146,6 @@ run :: proc() -> (exit_code: int) {
 		app.update = on_update_raycaster_pitch
 		world_map = worldmap_pitch
 	}
-	//app.destroy = on_destroy
 	ca.run(&app)
 	fmt.println("Done.")
 	return
