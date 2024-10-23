@@ -117,12 +117,26 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
+// Sent when a window belonging to a different application than the active window is about to be activated. The message is sent to the application whose window is being activated and to the application whose window is being deactivated.
+// * wParam: Indicates whether the window is being activated or deactivated. This parameter is TRUE if the window is being activated; it is FALSE if the window is being deactivated.
+// * lParam: The thread identifier. If the wParam parameter is TRUE, lParam is the identifier of the thread that owns the window being deactivated. If wParam is FALSE, lParam is the identifier of the thread that owns the window being activated.
+// * Return: If an application processes this message, it should return zero.
 WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	active := wparam != 0
 	fmt.println(#procedure, active, cursor_state)
 	if is_active == active {return 0}
 	is_active = active
 	clip_cursor(hwnd, active)
+	return 0
+}
+
+// Sent to both the window being activated and the window being deactivated. If the windows use the same input queue, the message is sent synchronously, first to the window procedure of the top-level window being deactivated, then to the window procedure of the top-level window being activated. If the windows use different input queues, the message is sent asynchronously, so the window is activated immediately.
+// * wParam: The low-order word specifies whether the window is being activated or deactivated. This parameter can be one of the following values. The high-order word specifies the minimized state of the window being activated or deactivated. A nonzero value indicates the window is minimized.
+// * lParam: A handle to the window being activated or deactivated, depending on the value of the wParam parameter. If the low-order word of wParam is WA_INACTIVE, lParam is the handle to the window being activated. If the low-order word of wParam is WA_ACTIVE or WA_CLICKACTIVE, lParam is the handle to the window being deactivated. This handle can be NULL.
+// * Return: If an application processes this message, it should return zero.
+WM_ACTIVATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	activate := win32app.WM_ACTIVATE_WPARAM(wparam)
+	fmt.println(#procedure, activate, lparam)
 	return 0
 }
 
@@ -141,13 +155,13 @@ get_raw_input_data :: proc(hRawInput: win32.HRAWINPUT) -> bool {
 	dwSize: win32.UINT
 	win32.GetRawInputData(hRawInput, win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
 	if dwSize == 0 {
-		win32app.show_error_and_panic("dwSize is zero");return false
+		win32app.show_error_and_panic("dwSize is zero")
 	}
 	if dwSize > size_of(win32.RAWINPUT) {
-		win32app.show_error_and_panic("dwSize too big");return false
+		win32app.show_error_and_panic("dwSize too big")
 	}
 	if win32.GetRawInputData(hRawInput, win32.RID_INPUT, &rawinput, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
-		win32app.show_error_and_panic("GetRawInputData Failed");return false
+		win32app.show_error_and_panic("GetRawInputData Failed")
 	}
 	return true
 }
@@ -212,7 +226,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
 	case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
-	//case win32.WM_ACTIVATE: return WM_ACTIVATE(hwnd, wparam, lparam)
+	case win32.WM_ACTIVATE:     return WM_ACTIVATE(hwnd, wparam, lparam)
 	case win32.WM_SETFOCUS:		return wm_focus(hwnd, wparam, true)
 	case win32.WM_KILLFOCUS:	return wm_focus(hwnd, wparam, false)
 
@@ -235,14 +249,6 @@ main :: proc() {
 	icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
 	fmt.println("icon:", icon)
 
-	rid := [2]win32.RAWINPUTDEVICE {
-		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_MOUSE, dwFlags = win32.RIDEV_NOLEGACY, hwndTarget = nil},
-		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_KEYBOARD, dwFlags = win32.RIDEV_NOLEGACY, hwndTarget = nil},
-	}
-
-	if (!win32.RegisterRawInputDevices(&rid[0], len(rid), size_of(rid[0]))) {
-		win32app.show_error_and_panic("RegisterRawInputDevices Failed")
-	}
-
+	win32app.register_raw_input()
 	win32app.run(&settings)
 }

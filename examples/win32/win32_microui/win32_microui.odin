@@ -73,9 +73,9 @@ convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {re
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
 	app := win32app.get_application_from_createstruct(pcs, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.set_settings(hwnd, app)
 
 	//client_size := win32app.get_client_size(hwnd)
@@ -109,7 +109,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := win32app.get_application(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
@@ -123,7 +123,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := win32app.get_application(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
@@ -213,10 +213,10 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := win32app.get_application(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	size := win32app.decode_lparam_as_int2(lparam)
-	if app == nil {win32app.show_error_and_panicf("Missing app in %v", #procedure);return 1}
+	if app == nil {win32app.show_error_and_panicf("Missing app in %v", #procedure)}
 	//fmt.println(#procedure, hwnd, type, size)
 	app.settings.window_size = size
 	win32app.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)

@@ -55,9 +55,9 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return 1}
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
 	app := win32app.get_application_from_createstruct(pcs, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.set_settings(hwnd, app)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
 	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
@@ -89,7 +89,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := win32app.get_application(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
 	win32app.delete_object(&bitmap_handle)

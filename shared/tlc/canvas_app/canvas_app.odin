@@ -72,7 +72,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 
 get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
 	app := papp(pcs.lpCreateParams)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
@@ -80,7 +80,7 @@ get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
 
 // get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
 // 	pcs := win32app.decode_lparam_as_createstruct(lparam)
-// 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
+// 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
 // 	settings := win32app.psettings(pcs.lpCreateParams)
 // 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
 // 	return settings
@@ -100,14 +100,14 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: papp) -> cv.float
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := get_app_from_lparam(lparam)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	set_app(hwnd, app)
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
 	dib = win32app.dib_create_v5(hdc, app.size)
-	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB");return 1}
+	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB")}
 	cv.canvas_clear(&dib, cv.COLOR_BLACK)
 
 	app->create()

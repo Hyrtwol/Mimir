@@ -194,7 +194,6 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 			weight := (currentDist - distPlayer) / (distWall - distPlayer)
 			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
 			texIdx := texture_index(currentFloor)
-
 			cv.canvas_set_dot(canvas, x, y, get_texture_color(6, texIdx))
 		}
 
@@ -203,11 +202,9 @@ on_update_raycaster_pitch :: proc(app: ca.papp) -> int {
 			currentDist = (scalar(h) + (2 * pos.z)) / (2 * (scalar(y) - pitch) - scalar(h))
 			weight := (currentDist - distPlayer) / (distWall - distPlayer)
 			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
-			texIdx := texture_index(currentFloor)
 			// currentFloor *= 2
-			checkerBoardPattern: i32 = (i32(currentFloor.x) + i32(currentFloor.y)) & 1
-			floorTexture: i32 = checkerBoardPattern + 3
-
+			floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3 // checkerBoardPattern
+			texIdx := texture_index(currentFloor)
 			cv.canvas_set_dot(canvas, x, y, get_texture_color(floorTexture, texIdx) / 2)
 		}
 

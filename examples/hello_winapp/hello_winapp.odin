@@ -16,7 +16,7 @@ CENTER :: true
 
 hbrGray: win32.HBRUSH
 
-show_error_and_panic :: proc(msg: string, type: win32.UINT = win32.MB_ICONSTOP | win32.MB_OK, loc := #caller_location) {
+show_error_and_panic :: proc(msg: string, type: win32.UINT = win32.MB_ICONSTOP | win32.MB_OK, loc := #caller_location) -> ! {
 	win32.MessageBoxW(nil, win32.utf8_to_wstring(msg), L("Panic"), type)
 	fmt.panicf("%s (Last error: %x)", msg, win32.GetLastError(), loc = loc)
 }

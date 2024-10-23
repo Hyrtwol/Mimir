@@ -270,6 +270,20 @@
 			"options": {
 				"cwd": "${workspaceFolder}/bin"
 			}
+		},
+		{
+			"label": "build recipe",
+			"type": "shell",
+			"command": "build",
+			"args": [],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		}
 	]
 }

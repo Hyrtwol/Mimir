@@ -24,6 +24,18 @@
 			<Flavour>Odin</Flavour>
 			<OutputType>Exe</OutputType>
 		</Project>
+		<Project Include="examples\directx\d3d11\minimal_d3d11_pt1">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\directx\d3d11\minimal_d3d11_pt2">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\directx\d3d11\minimal_d3d11_pt3">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\directx\d3d12\d3d12_triangle">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\dla">
 			<Flavour>Odin</Flavour>
 		</Project>
@@ -45,6 +57,12 @@
 			<Flavour>Odin</Flavour>
 			<SubSystem>windows</SubSystem>
 		</Project>
+		<Project Include="examples\glwin32">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\graphviz">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\hello">
 			<Flavour>Odin</Flavour>
 			<SubSystem>console</SubSystem>
@@ -58,22 +76,19 @@
 		<Project Include="examples\lightwave">
 			<Flavour>Odin</Flavour>
 		</Project>
+		<Project Include="examples\load_obj">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\microui">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\miniaud">
 			<Flavour>Odin</Flavour>
 		</Project>
-		<Project Include="examples\minimal_d3d11_pt1">
-			<Flavour>Odin</Flavour>
-		</Project>
-		<Project Include="examples\minimal_d3d11_pt2">
-			<Flavour>Odin</Flavour>
-		</Project>
-		<Project Include="examples\minimal_d3d11_pt3">
-			<Flavour>Odin</Flavour>
-		</Project>
 		<Project Include="examples\movers">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\neural_network">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\newton_dynamics">
@@ -85,6 +100,9 @@
 		<Project Include="examples\plugins">
 			<Flavour>Odin</Flavour>
 		</Project>
+		<Project Include="examples\raster3d">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\rawinput">
 			<Flavour>Odin</Flavour>
 		</Project>
@@ -94,7 +112,13 @@
 		<Project Include="examples\raycaster\raycaster_edit">
 			<Flavour>Odin</Flavour>
 		</Project>
+		<Project Include="examples\raycaster\raycaster_gen">
+			<Flavour>Odin</Flavour>
+		</Project>
 		<Project Include="examples\raylib">
+			<Flavour>Odin</Flavour>
+		</Project>
+		<Project Include="examples\tinyrenderer">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\win32\game_of_life">
@@ -122,15 +146,18 @@
 		<Project Include="tests\misc">
 			<Flavour>OdinTest</Flavour>
 		</Project>
-		<Project Include="tests\tlc\canvas">
+		<Project Include="shared\tlc\canvas\tests">
 			<Flavour>OdinTest</Flavour>
 		</Project>
-		<Project Include="tests\win32app">
+		<Project Include="shared\tlc\win32app\tests">
 			<Flavour>OdinTest</Flavour>
 		</Project>
 	</ItemGroup>
 
 	<ItemGroup>
+		<Collection Include="$(ODIN_SHARED)">
+			<Alias>shared</Alias>
+		</Collection>
 		<Collection Include="shared">
 			<Alias>libs</Alias>
 		</Collection>

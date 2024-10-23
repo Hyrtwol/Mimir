@@ -3,6 +3,7 @@ package test_misc
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "core:path/filepath"
 import _t "core:testing"
 import "shared:ounit"
 
@@ -17,6 +18,12 @@ expect_int :: ounit.expect_int
 expect_any_int :: ounit.expect_any_int
 expect_flags :: ounit.expect_flags
 expect_size :: ounit.expect_size
+
+@(test)
+odin_pragma :: proc(t: ^T) {
+	expect_value(t, filepath.base(#file), "test_misc.odin")
+	expect_value(t, #procedure, "odin_pragma")
+}
 
 get_version :: proc() -> (res: int, err: bool) {
 	return 666, false

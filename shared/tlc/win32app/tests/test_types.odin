@@ -56,17 +56,22 @@ verify_error_helpers :: proc(t: ^testing.T) {
 	expect_value(t, u32(win32app.MAKE_HRESULT(1, 2, 3)), 0x80020003)
 }
 
-// @(test)
-// decode_hresult :: proc(t: ^testing.T) {
-// 	s, f, c := win32app.DECODE_HRESULT(win32.E_INVALIDARG)
-// 	expect_value(t, s, win32app.SEVERITY.ERROR)
-// 	expect_value(t, f, win32app.FACILITY.WIN32)
-// 	expect_value(t, c, win32.System_Error.INVALID_PARAMETER)
-// }
+@(test)
+decode_hresult :: proc(t: ^testing.T) {
+	hr := win32app.DECODE_HRESULT(win32.E_INVALIDARG)
+	expect_value(t, hr.IsError, true)
+	expect_value(t, hr.R, false)
+	expect_value(t, hr.Customer, false)
+	expect_value(t, hr.N, false)
+	expect_value(t, hr.X, false)
+	expect_value(t, hr.Facility, win32app.FACILITY.WIN32)
+	expect_value(t, hr.Code, win32.System_Error.INVALID_PARAMETER)
+}
 
 @(test)
 get_hresult_details :: proc(t: ^testing.T) {
-	hr := win32app.HRESULT_DETAILS(u32(win32.E_INVALIDARG))
+	hr : win32app.HRESULT_DETAILS
+	hr = transmute(win32app.HRESULT_DETAILS)(u32(win32.E_INVALIDARG))
 	testing.expect_value(t, hr.IsError, true)
 	testing.expect_value(t, hr.R, false)
 	testing.expect_value(t, hr.Customer, false)
@@ -163,6 +168,7 @@ check_mouse_key_state_flags :: proc(t: ^testing.T) {
 	expect_state :: proc(t: ^testing.T, val: win32app.MOUSE_KEY_STATE, exp: u32) {
 		testing.expect_value(t, transmute(u32)val, exp)
 	}
+	expect_size(t, win32app.MOUSE_KEY_STATE, 4)
 	expect_state(t, {.MK_LBUTTON}, win32.MK_LBUTTON)
 	expect_state(t, {.MK_RBUTTON}, win32.MK_RBUTTON)
 	expect_state(t, {.MK_SHIFT}, win32.MK_SHIFT)
@@ -174,22 +180,22 @@ check_mouse_key_state_flags :: proc(t: ^testing.T) {
 
 @(test)
 verify_sizes :: proc(t: ^testing.T) {
-	ot.expect_size(t, win32app.DWORD, 4)
-	ot.expect_size(t, win32app.MOUSE_KEY_STATE, 4)
+	expect_size(t, win32app.CREATESTRUCTW, 80)
+	expect_size(t, win32app.CREATESTRUCT, 80)
 }
 
 @(test)
 verify_winnt :: proc(t: ^testing.T) {
 	// winnt.h
-	expect_size(t, win32app.DWORD, 4)
 	expect_size(t, win32app.BYTE, 1)
 	expect_size(t, win32app.BOOL, 4)
 	expect_size(t, win32app.WORD, 2)
 	expect_size(t, win32app.LONG, 4)
+	expect_size(t, win32app.DWORD, 4)
 	expect_size(t, win32app.WCHAR, 2)
 	expect_size(t, win32app.HANDLE, 8)
 	expect_size(t, win32app.HRESULT, 4)
-	//expect_size(t, win32app.HRESULT_DETAILS, 4)
+	expect_size(t, win32app.HRESULT_DETAILS, 4)
 }
 
 @(test)

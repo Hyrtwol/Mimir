@@ -5,12 +5,10 @@ package win32app
 import "core:path/filepath"
 import win32 "core:sys/windows"
 
-DOT_EXE :: "%GRAPHVIZ%\\dot.exe"
-
 expand_environment_strings :: proc(path: string, allocator := context.temp_allocator) -> (res: string, err: int) {
 	wpath := win32.utf8_to_wstring(path, context.temp_allocator)
 
-	INFO_BUFFER_SIZE :: 32767
+	INFO_BUFFER_SIZE :: 0x4000
 	infoBuf: [INFO_BUFFER_SIZE]win32.WCHAR
 	bufCharCount := win32.ExpandEnvironmentStringsW(wpath, &infoBuf[0], INFO_BUFFER_SIZE)
 	if (bufCharCount > INFO_BUFFER_SIZE) {

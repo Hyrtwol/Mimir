@@ -20,9 +20,9 @@ bit_fields :: proc(t: ^T) {
 	}
 
 	v := Foo{}
-	v.x = 7 // truncates the value to fit into 3 bits
+	v.x = 3
 
 	expect_size(t, Foo, 2)
 	expect_value(t, v.x, 3)
-	//expect_value(t, v, 3)
+	expect_value(t, v, Foo(3))
 }

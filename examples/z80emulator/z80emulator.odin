@@ -55,10 +55,10 @@ z_out :: proc(zc: zcontext, address: z80.zuint16, value: z80.zuint8) {
 	switch port {
 	case 1:
 		switch value {
-			case '\n': fmt.println(flush = true) /* Line Feed */
-			case '\f': /*skip Form Feed*/
-			case '\r': /*skip Carriage Return*/
-			case: fmt.print(rune(value))
+		case '\n': fmt.println(flush = true) /* Line Feed */
+		case '\f': /*skip Form Feed*/
+		case '\r': /*skip Carriage Return*/
+		case: fmt.print(rune(value))
 		}
 	case:
 		fmt.printf("out[0x%2X]=0x%2X", port, value)

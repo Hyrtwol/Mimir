@@ -42,7 +42,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 
 get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!");return nil}
+	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
 	app := papp(pcs.lpCreateParams)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
@@ -115,7 +115,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	//fmt.println(#procedure, hwnd, app)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &app.timer_id)
 	if !win32app.delete_object(&app.hbitmap) {win32app.show_message_box("Unable to delete hbitmap", "Error")}
 	win32app.post_quit_message(0) // exit code
@@ -150,7 +150,7 @@ WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	if app == nil {win32app.show_error_and_panic("Missing app!");return 1}
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	settings := app.settings
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	settings.window_size = win32app.decode_lparam_as_int2(lparam)

@@ -231,9 +231,8 @@ on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
 			weight := (currentDist - distPlayer) / (distWall - distPlayer)
 			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
 			texIdx := texture_index(currentFloor)
-			checkerBoardPattern: i32 = (i32(currentFloor.x) + i32(currentFloor.y)) & 1
-			floorTexture: i32 = checkerBoardPattern + 3
-
+			// checkerBoardPattern
+			floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3
 			//floor
 			cv.canvas_set_dot(canvas, x, y, get_texture_color(floorTexture, texIdx) / 2)
 			//ceiling (symmetrical)
