@@ -18,18 +18,14 @@ import "shared:obug"
 
 _ :: fmt
 
-vec2 :: lg.Vector2f32
-vec3 :: lg.Vector3f32
-vec4 :: lg.Vector4f32
-mat3x3 :: lg.Matrix3x3f32
-mat4x4 :: lg.Matrix4x4f32
 byte4 :: cv.byte4
 int2 :: cv.int2
+int3 :: cv.int3
 float2 :: cv.float2
 float3 :: cv.float3
 float4 :: cv.float4
 float3x3 :: cv.float3x3
-//float3x4 :: cv.float3x4
+float4x3 :: cv.float4x3
 float4x4 :: cv.float4x4
 
 width: i32 : 160
@@ -44,19 +40,17 @@ fov: f32
 aspect: f32
 near, far: f32 = 1, 10
 
-viewport: mat4x4
-rotate: mat4x4
-proj, view: mat4x4
+viewport, proj, view, rotate: float4x4
 
 zbuffer: [width * height]f32
 flip_z_axis := true
 
 pics_w: i32 : 32
 pics_h: i32 : pics_w
-pics_pixel_byte_size: i32 : size_of(cv.byte4)
+pics_pixel_byte_size: i32 : size_of(byte4)
 pics_buf_pixel_count: i32 : pics_w * pics_h
 pics_buf_byte_size: i32 : pics_buf_pixel_count * pics_pixel_byte_size
-pics_buf :: [pics_buf_pixel_count]cv.byte4
+pics_buf :: [pics_buf_pixel_count]byte4
 pics_size :: float2{f32(pics_w), f32(pics_h)}
 pics_tex_lookup :: int2{pics_w, 1}
 
@@ -64,10 +58,10 @@ pics_data := #load("../raycaster/pics32.dat")
 pics_count := i32(len(pics_data)) / pics_buf_byte_size
 textures: []pics_buf = slice.from_ptr((^pics_buf)(&pics_data[0]), int(pics_count))
 
-light_dir := vec3{1, -1, 1} // light source
-eye := vec3{1, -2.5, 3} // camera position
-center := vec3{0, 0, 0} // camera direction
-up := vec3{0, 1, 0} // camera up vector
+light_dir := float3{1, -1, 1} // light source
+eye := float3{1, -2.5, 3} // camera position
+center := float3{0, 0, 0} // camera direction
+up := float3{0, 1, 0} // camera up vector
 
 vert_count :: 6
 vertices: [vert_count]cv.VS_INPUT = {
@@ -79,7 +73,7 @@ vertices: [vert_count]cv.VS_INPUT = {
 	{{ 0, 0, 1}, { 0, 0, 1}, {0.5, 1.0}},
 }
 vert: [vert_count]cv.VS_OUTPUT
-triangles := [?]cv.int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
+triangles := [?]int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
 models: [9]cv.Model
 shader: cv.IShader
 
@@ -89,10 +83,10 @@ vs_default :: proc(shader: ^cv.IShader, input: ^cv.VS_INPUT, output: ^cv.VS_OUTP
 	output.texcoord = input.texcoord
 }
 
-sample2D :: proc(uv: float2) -> cv.byte4 {
+sample2D :: proc(uv: float2) -> byte4 {
 	uv := cv.to_int2(lg.fract(uv) * pics_size)
-	tidx := lg.dot(uv, pics_tex_lookup)
-	return textures[shader.model.tex][tidx]
+	tex_idx := lg.dot(uv, pics_tex_lookup)
+	return textures[shader.model.tex][tex_idx]
 }
 
 ps_default :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
@@ -131,8 +125,8 @@ ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 	// tex coord interpolation
 	//uv := lg.fract(shader.varying_uv * bc_clip)
 	uv := shader.varying_uv
-	texcol := sample2D(uv * bc_clip)
-	if texcol.a == 0 {return true}
+	tex_col := sample2D(uv * bc_clip)
+	if tex_col.a == 0 {return true}
 
 	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
@@ -143,7 +137,7 @@ ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 
 	col := shader.model.color
 	col *= d
-	col *= cv.to_color(texcol)
+	col *= cv.to_color(tex_col)
 	color^ = cv.to_color(col)
 
 	return false
@@ -157,7 +151,7 @@ on_create :: proc(app: ca.papp) -> int {
 	viewport = cv.create_viewport(size)
 	view = lg.matrix4_look_at_f32(eye, center, up, flip_z_axis)
 	proj = cv.matrix4_perspective_f32_01(fov, aspect, far, near, flip_z_axis)
-	rotate = lg.identity(mat4x4)
+	rotate = lg.identity(float4x4)
 	light_dir = lg.normalize(light_dir)
 
 	fmt.println("size      :", size)
@@ -169,7 +163,7 @@ on_create :: proc(app: ca.papp) -> int {
 	for y in -1 ..= 1 {for x in -1 ..= 1 {
 			idx := y * 3 + x + 4 // 0..8
 			models[idx] = cv.Model {
-				trans = lg.matrix4_translate(cv.float3{f32(x), 0, f32(y)} * 2),
+				trans = lg.matrix4_translate(float3{f32(x), 0, f32(y)} * 2),
 				color = cv.color_hue_float4(rand.float32() * math.PI * 2, 0.3, 0.7),
 				tex   = i32(idx), // rand.int31_max(pics_count),
 			}
@@ -233,11 +227,11 @@ on_update :: proc(app: ca.papp) -> int {
 		rotate = cv.matrix4_rotate_y_f32(rot_y)
 	}
 
-	update_shader :: #force_inline proc "contextless" (triangle: cv.int3, clip_verts: ^cv.float4x3, shader: ^cv.IShader) {
-		update_vs_output :: #force_inline proc "contextless" (vso: ^cv.VS_OUTPUT, pos: ^cv.float4, nrm: ^cv.float3, uv: ^cv.float2) {
+	update_shader :: #force_inline proc "contextless" (triangle: int3, clip_verts: ^float4x3, shader: ^cv.IShader) {
+		update_vs_output :: #force_inline proc "contextless" (vso: ^cv.VS_OUTPUT, pos: ^float4, nrm: ^float3, uv: ^float2) {
 			pos^, nrm^, uv^ = vso.position, vso.normal, vso.texcoord
 		}
-		nrm: cv.float3x3
+		nrm: float3x3
 		update_vs_output(&vert[triangle[0]], &clip_verts[0], &nrm[0], &shader.varying_uv[0])
 		update_vs_output(&vert[triangle[1]], &clip_verts[1], &nrm[1], &shader.varying_uv[1])
 		update_vs_output(&vert[triangle[2]], &clip_verts[2], &nrm[2], &shader.varying_uv[2])
@@ -246,7 +240,7 @@ on_update :: proc(app: ca.papp) -> int {
 		// }
 
 		shader.varying_nrm = shader.it_model_view * nrm
-		mvv: cv.float4x3 = shader.model_view * clip_verts^
+		mvv: float4x3 = shader.model_view * clip_verts^
 		shader.view_tri = cv.to_float3x3(&mvv)
 		// transform the light vector to view coordinates
 		shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
@@ -263,7 +257,7 @@ on_update :: proc(app: ca.papp) -> int {
 			shader->vs(&vertices[i], &vert[i])
 		}
 
-		clip_verts: cv.float4x3
+		clip_verts: float4x3
 		for t in triangles {
 			update_shader(t, &clip_verts, &shader)
 			cv.draw_triangle(canvas, zbuffer[:], &viewport, &clip_verts, &shader)

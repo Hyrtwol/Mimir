@@ -56,10 +56,8 @@ main :: proc() {
 
 		for layer := obj.layer; layer != nil; layer = layer.next {
 			wln(fd, "layer:", layer)
-
 			wln(fd, "  name:", layer.name)
 			wln(fd, "  flags:", layer.flags)
-
 			wln(fd, "  point.count:", layer.point.count)
 			wln(fd, "  point.offset:", layer.point.offset)
 
