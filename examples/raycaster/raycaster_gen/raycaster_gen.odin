@@ -9,7 +9,7 @@ import "core:image/png"
 import "core:image/tga"
 import "core:reflect"
 import "core:os"
-import fp "core:path/filepath"
+import "core:path/filepath"
 import "core:strings"
 import xt "shared:xterm"
 import si "vendor:stb/image"
@@ -83,7 +83,7 @@ print_and_write_image :: proc(path: string, fd: ^os.Handle, img: ^image.Image) {
 }
 
 print_image :: proc(image_path: string, fd: ^os.Handle) {
-	path := fp.clean(image_path, context.temp_allocator)
+	path := filepath.clean(image_path, context.temp_allocator) or_else panic("filepath.clean")
 	img, err := image.load_from_file(path)
 	if img == nil || err != nil {
 		fmt.println("Image load error:", err, path)
@@ -104,9 +104,7 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 		img2.depth = img.depth
 		img2.which = img.which
 
-		if resize(&img2.pixels.buf, img2.width * img2.height * 4) != nil {
-			panic("resize")
-		}
+		resize(&img2.pixels.buf, img2.width * img2.height * 4) or_else panic("resize")
 
 		pix := ([^]u8)(&img.pixels.buf[0])
 
@@ -137,7 +135,7 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 }
 
 gen_pics :: proc(output_name: string, image_paths: []string) -> int {
-	output_path := fp.abs(fp.join({"..", "examples", "raycaster", output_name}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
+	output_path := filepath.abs(filepath.join({"..", "examples", "raycaster", output_name}, context.temp_allocator), context.temp_allocator) or_else panic("filepath.abs")
 	fmt.printfln("writing %s", output_path)
 	fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
 	if fe != os.ERROR_NONE {
@@ -155,20 +153,20 @@ gen_pics :: proc(output_name: string, image_paths: []string) -> int {
 }
 
 gen_pics_scan :: proc(output_name: string, pattern: string) -> int {
-	image_paths := fp.glob(fp.join({pics_path, pattern}, context.temp_allocator), context.temp_allocator) or_else panic("glob")
+	image_paths := filepath.glob(filepath.join({pics_path, pattern}, context.temp_allocator), context.temp_allocator) or_else panic("filepath.glob")
 	return gen_pics(output_name, image_paths)
 }
 
 join_pics_path :: proc(image_paths: []string, allocator := context.allocator) {
 	for i in 0 ..< len(image_paths) {
-		image_paths[i] = fp.join({pics_path, image_paths[i]}, allocator)
+		image_paths[i] = filepath.join({pics_path, image_paths[i]}, allocator)
 	}
 }
 
 gen_pics_from_filelist :: proc(output_name: string, input_file: string) -> int {
-	data := os.read_entire_file_from_filename(input_file, context.temp_allocator) or_else panic("read_entire_file_from_filename")
+	data := os.read_entire_file_from_filename(input_file, context.temp_allocator) or_else panic("os.read_entire_file_from_filename")
 	newline :: "\r\n"
-	image_paths := strings.split(string(data), newline, context.temp_allocator) or_else panic("split")
+	image_paths := strings.split(string(data), newline, context.temp_allocator) or_else panic("strings.split")
 	join_pics_path(image_paths, context.temp_allocator)
 	return gen_pics(output_name, image_paths)
 }
@@ -207,7 +205,7 @@ run :: proc() -> (exit_code: int) {
 		mode = m
 	}
 
-	pics_path = fp.abs(fp.join({"..", "data", "images", "pics"}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
+	pics_path = filepath.abs(filepath.join({"..", "data", "images", "pics"}, context.temp_allocator), context.temp_allocator) or_else panic("abs")
 	output_name := fmt.tprintf("pics%d.dat", texWidth)
 
 	#partial switch mode {

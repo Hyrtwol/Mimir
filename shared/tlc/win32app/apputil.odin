@@ -106,27 +106,15 @@ translate_and_dispatch_message :: #force_inline proc "contextless" (msg: ^win32.
 	win32.DispatchMessageW(msg)
 }
 
-pull_messages :: proc(hwnd: HWND = nil) -> bool {
+pull_messages :: proc "contextless" (hwnd: HWND = nil) -> bool {
 	msg: win32.MSG
-	for win32.PeekMessageW(&msg, hwnd, 0, 0, win32.PM_REMOVE) {
-
-		translate_and_dispatch_message(&msg)
-
-		if (msg.message == win32.WM_QUIT) {
-			//fmt.printfln("msg.wParam=", msg.wParam)
-			return false
-		}
-	}
-	return true
+	return pull_messages_msg(&msg, hwnd)
 }
 
-pull_messages_msg :: proc(msg: ^win32.MSG, hwnd: HWND = nil) -> bool {
+pull_messages_msg :: #force_inline proc "contextless" (msg: ^win32.MSG, hwnd: HWND = nil) -> bool {
 	for win32.PeekMessageW(msg, hwnd, 0, 0, win32.PM_REMOVE) {
-
 		translate_and_dispatch_message(msg)
-
 		if (msg.message == win32.WM_QUIT) {
-			//fmt.printfln("msg.wParam=", msg.wParam)
 			return false
 		}
 	}

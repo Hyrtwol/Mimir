@@ -80,9 +80,9 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 run :: proc() -> (exit_code: int) {
 	fmt.println("objzero Reader")
 
-	clean_path := filepath.clean(input_path, context.temp_allocator)
-	clean_path, _ = filepath.abs(clean_path, context.temp_allocator)
-	obj_file := strings.clone_to_cstring(clean_path, context.temp_allocator)
+	clean_path := filepath.clean(input_path, context.temp_allocator) or_else panic("filepath.clean")
+	clean_path = filepath.abs(clean_path, context.temp_allocator) or_else panic("filepath.abs")
+	obj_file := strings.clone_to_cstring(clean_path, context.temp_allocator) or_else panic("strings.clone_to_cstring")
 
 	fmt.printfln("writing %s", output_path)
 	fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)

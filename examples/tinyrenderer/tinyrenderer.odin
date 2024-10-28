@@ -164,7 +164,7 @@ on_create :: proc(app: ca.papp) -> int {
 			idx := y * 3 + x + 4 // 0..8
 			models[idx] = cv.Model {
 				trans = lg.matrix4_translate(float3{f32(x), 0, f32(y)} * 2),
-				color = cv.color_hue_float4(rand.float32() * math.PI * 2, 0.3, 0.7),
+				color = cv.color_hue_float4(rand.float32() * math.TAU, 0.3, 0.7),
 				tex   = i32(idx), // rand.int31_max(pics_count),
 			}
 		}}

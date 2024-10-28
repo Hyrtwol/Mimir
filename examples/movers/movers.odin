@@ -18,7 +18,7 @@ dude :: struct {
 }
 dudes: [dude_count]dude
 
-dirs: [8]cv.int2 = {{1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}, {0,-1}, {1,-1}}
+dirs: [8]cv.int2 = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}}
 
 on_create :: proc(app: ca.papp) -> int {
 	size := ca.dib.canvas.size
@@ -32,7 +32,7 @@ on_create :: proc(app: ca.papp) -> int {
 
 on_update :: proc(app: ca.papp) -> int {
 	pc := &ca.dib.canvas
-	pp: ^ cv.int2
+	pp: ^cv.int2
 	mx, my := cv.canvas_max_xy(pc)
 	for &d in dudes {
 		pp = &d.pos
@@ -47,7 +47,7 @@ on_update :: proc(app: ca.papp) -> int {
 }
 
 main :: proc() {
-	app :=  ca.default_application
+	app := ca.default_application
 	app.size = {WIDTH, HEIGHT}
 	app.create = on_create
 	app.update = on_update

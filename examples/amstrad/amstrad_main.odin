@@ -4,14 +4,14 @@ package main
 import "base:intrinsics"
 import "core:fmt"
 import "core:os"
-import fp "core:path/filepath"
+import "core:path/filepath"
 import win32 "core:sys/windows"
 import a "libs:amstrad"
 import "libs:tlc/win32app"
 import "shared:obug"
 
-ROM_PATH := fp.clean("../data/z80/")
-AMSTRAD_PATH := fp.clean("../examples/amstrad/data/")
+ROM_PATH := filepath.clean("../data/z80/") or_else panic("filepath.clean")
+AMSTRAD_PATH := filepath.clean("../examples/amstrad/data/") or_else panic("filepath.clean")
 
 application :: struct {
 	#subtype settings: win32app.window_settings,
@@ -48,7 +48,7 @@ run :: proc() -> (exit_code: int) {
 
 	//z.z80_power(&cpu, true)
 
-	snapshot_path := fp.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
+	snapshot_path := filepath.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
 	fmt.printfln("loading snapshot %s", snapshot_path)
 	ss: snapshot
 	err := a.load_snapshot(snapshot_path, &ss, memory[:])
@@ -58,7 +58,7 @@ run :: proc() -> (exit_code: int) {
 	// cpu.sp = ss.SP
 	// fmt.printfln("CPU %v", cpu)
 
-	rom_path := fp.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
+	rom_path := filepath.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
 	load_rom(rom_path)
 
 	running = true

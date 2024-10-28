@@ -8,8 +8,8 @@ import "libs:graphviz"
 import "shared:obug"
 
 generate_graph :: proc(dot, output: string) {
-	dot_path := filepath.clean(dot, context.temp_allocator)
-	output_file := filepath.clean(output, context.temp_allocator)
+	dot_path := filepath.clean(dot, context.temp_allocator) or_else panic("filepath.clean")
+	output_file := filepath.clean(output, context.temp_allocator) or_else panic("filepath.clean")
 	graphviz.execute_dot(dot_path, output_file)
 }
 

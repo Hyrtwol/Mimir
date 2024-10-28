@@ -4,7 +4,7 @@ import am ".."
 import "core:encoding/json"
 import "core:fmt"
 import "core:os"
-import fp "core:path/filepath"
+import "core:path/filepath"
 import "core:strings"
 import "core:testing"
 import o "shared:ounit"
@@ -32,7 +32,7 @@ size_up :: proc(t: ^testing.T) {
 
 //@(test)
 load_disk_image :: proc(t: ^testing.T) {
-	path := fp.clean("../examples/amstrad/data/pinup.dsk", context.temp_allocator)
+	path := filepath.clean("../examples/amstrad/data/pinup.dsk", context.temp_allocator) or_else panic("filepath.clean")
 	fmt.printfln("reading %s", path)
 	fd, err := os.open(path)
 	testing.expect(t, err == 0)
@@ -111,7 +111,7 @@ load_disk_image :: proc(t: ^testing.T) {
 
 @(test)
 load_snapshot :: proc(t: ^testing.T) {
-	path := fp.clean("../../../examples/amstrad/data/pinup.sna", context.temp_allocator)
+	path := filepath.clean("../../../examples/amstrad/data/pinup.sna", context.temp_allocator) or_else panic("filepath.clean")
 	fmt.printfln("reading %s", path)
 
 	ss: am.snapshot
@@ -154,7 +154,7 @@ load_snapshot :: proc(t: ^testing.T) {
 	// o.expect_value(t, ps.PC, 0x1CE3)
 	o.expect_value(t, ps.interrupt_mode, 1)
 	o.expect_value(t, ps.memory_dump_size, 64)
-	o.expect_value(t, ps.cpc_type, 2)
+	o.expect_value(t, ps.cpc_type, am.cpu_type.CPC6128)
 	o.expect_value(t, ps.pen, 15)
 	//o.expect_value(t, ps.multi_conf, 0x89)
 	o.expect_value(t, ps.ram_conf, 0)

@@ -69,6 +69,7 @@ origo
 ounit
 overscan
 owin
+paintstruct
 panicf
 pixelshader
 polyline

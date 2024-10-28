@@ -78,14 +78,6 @@ get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
 	return app
 }
 
-// get_settings :: #force_inline proc(lparam: win32.LPARAM) -> win32app.psettings {
-// 	pcs := win32app.decode_lparam_as_createstruct(lparam)
-// 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
-// 	settings := win32app.psettings(pcs.lpCreateParams)
-// 	if settings == nil {win32app.show_error_and_panic("Missing settings!")}
-// 	return settings
-// }
-
 // 0..1
 decode_mouse_pos_01 :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
 	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(app.settings.window_size)
@@ -194,8 +186,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
-	switch (vk_code)
-	{
+	switch (vk_code) {
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
 	case win32.VK_MENU:
@@ -207,8 +198,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	switch vk_code {
 	case win32.VK_ESCAPE:
 		if is_key_released {win32app.close_application(hwnd)}
-	// case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t",
-	// 	vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
+	// case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
 
 	keys := &app.keys
