@@ -38,8 +38,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return 1 // skip
 	case win32.WM_CHAR:
 		switch wparam {
-		case '\x1b':
-			//win32.DestroyWindow(hwnd) // ESC
+		case '\x1b': // ESC
 			win32app.close_application(hwnd)
 		// case 's':
 		// 	show_shadowmap = !show_shadowmap

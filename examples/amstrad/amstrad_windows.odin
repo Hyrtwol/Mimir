@@ -118,7 +118,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &app.timer_id)
 	if !win32app.delete_object(&app.hbitmap) {win32app.show_message_box("Unable to delete hbitmap", "Error")}
-	win32app.post_quit_message(0) // exit code
+	win32app.post_quit_message(0)
 	return 0
 }
 
@@ -221,12 +221,10 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
-	switch (vk_code)
-	{
+	switch vk_code {
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
-	case win32.VK_MENU:
-		// converts to VK_LMENU or VK_RMENU
+	case win32.VK_MENU: // converts to VK_LMENU or VK_RMENU
 		vk_code = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scan_code), win32.MAPVK_VSC_TO_VK_EX))
 		break
 	}

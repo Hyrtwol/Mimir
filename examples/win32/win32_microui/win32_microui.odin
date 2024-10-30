@@ -111,7 +111,9 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := win32app.get_application(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &timer1_id)
-	win32app.delete_object(&bitmap_handle)
+	if !win32app.delete_object(&bitmap_handle) {
+		win32app.show_message_box("Unable to delete hbitmap", "Error")
+	}
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil

@@ -365,7 +365,7 @@ run :: proc() -> (exit_code: int) {
 
 		//-- Render Frame --//
 
-		device_context->ClearRenderTargetView(frame_buffer_rtv, (^[4]f32)(&frame_buffer_clear_color))
+		device_context->ClearRenderTargetView(frame_buffer_rtv, &frame_buffer_clear_color)
 		device_context->ClearDepthStencilView(depth_buffer_dsv, {.DEPTH}, 1, 0)
 
 		device_context->OMSetRenderTargets(1, &frame_buffer_rtv, depth_buffer_dsv)

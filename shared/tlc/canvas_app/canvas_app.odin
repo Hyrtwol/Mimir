@@ -118,7 +118,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	win32app.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
 	win32app.post_quit_message(0)
-
 	return 0
 }
 
@@ -186,7 +185,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
 	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
 
-	switch (vk_code) {
+	switch vk_code {
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
 	case win32.VK_MENU:

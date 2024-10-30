@@ -37,7 +37,7 @@ dib_create_section :: proc {
 
 dib_free_section :: proc(dib: ^DIB, loc := #caller_location) {
 	if dib.hbitmap != nil {
-		if !win32.DeleteObject(win32.HGDIOBJ(dib.hbitmap)) {
+		if !delete_object(&dib.hbitmap) {
 			//fmt.panicf("Unable to delete object %v", dib.hbitmap, loc = loc)
 			show_message_boxf("Error", "Unable to delete object %v", dib.hbitmap, loc)
 		}
@@ -93,7 +93,7 @@ draw_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, 
 }
 
 @(private = "file")
-_wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) -> win32.LRESULT {
+_wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2) -> win32.LRESULT {
 	ps: win32.PAINTSTRUCT
 	hdc := win32.BeginPaint(hwnd, &ps)
 	if hdc == nil {return 1}
@@ -106,12 +106,12 @@ _wm_paint_hgdiobj :: proc (hwnd: win32.HWND, hgdiobj: win32.HGDIOBJ, size: int2)
 }
 
 @(private = "file")
-_wm_paint_hbitmap :: #force_inline proc (hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2) -> win32.LRESULT {
+_wm_paint_hbitmap :: #force_inline proc "contextless" (hwnd: win32.HWND, hbitmap: win32.HBITMAP, size: int2) -> win32.LRESULT {
 	return _wm_paint_hgdiobj(hwnd, win32.HGDIOBJ(hbitmap), size)
 }
 
 @(private = "file")
-_wm_paint_dib :: #force_inline proc (hwnd: win32.HWND, dib: DIB) -> win32.LRESULT {
+_wm_paint_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, dib: DIB) -> win32.LRESULT {
 	return _wm_paint_hbitmap(hwnd, dib.hbitmap, transmute(int2)dib.canvas.size)
 }
 

@@ -114,12 +114,11 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc_source := win32.CreateCompatibleDC(hdc_target)
 	defer win32.DeleteDC(hdc_source)
 
-	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
+	win32app.select_object(hdc_source, dib.hbitmap)
 
 	client_size := win32app.get_rect_size(&ps.rcPaint)
 	dib_size := transmute(int2)dib.canvas.size
-	win32.StretchBlt(hdc_target, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib_size.x, dib_size.y, win32.SRCCOPY)
-
+	win32app.stretch_blt(hdc_target, client_size, hdc_source, dib_size)
 	return 0
 }
 
@@ -132,7 +131,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	// odinfmt: disable
 	switch wparam {
-	case '\x1b':	win32app.close_application(hwnd) // win32.DestroyWindow(hwnd)
+	case '\x1b':	win32app.close_application(hwnd)
 	case '1':	    noise_func = dib_noise1
 	case '2':	    noise_func = dib_noise2
 	}

@@ -172,42 +172,35 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 	switch rawinput.header.dwType {
 	case win32.RIM_TYPEMOUSE:
-		{
-			mouse_delta: win32app.int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
-			mouse_pos += mouse_delta
-			mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, settings.window_size - 1)
-			button_flags := rawinput.data.mouse.usButtonFlags
-			if button_flags > 0 {
-				switch button_flags {
-				case win32.RI_MOUSE_BUTTON_1_DOWN:
-					put_it = 1
-				case win32.RI_MOUSE_BUTTON_1_UP:
-					put_it = 0
-				case win32.RI_MOUSE_BUTTON_2_DOWN:
-					put_it = 2
-				case win32.RI_MOUSE_BUTTON_2_UP:
-					put_it = 0
-				}
-			}
-			switch put_it {
-			case 1:
-				set_dot(mouse_pos / ZOOM, cols[selected_color])
-			case 2:
-				set_dot(mouse_pos / ZOOM, cols[0])
-			}
-
-			win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+		mouse_delta: win32app.int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
+		mouse_pos += mouse_delta
+		mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, settings.window_size - 1)
+		button_flags := rawinput.data.mouse.usButtonFlags
+		switch button_flags {
+		case win32.RI_MOUSE_BUTTON_1_DOWN:
+			put_it = 1
+		case win32.RI_MOUSE_BUTTON_1_UP:
+			put_it = 0
+		case win32.RI_MOUSE_BUTTON_2_DOWN:
+			put_it = 2
+		case win32.RI_MOUSE_BUTTON_2_UP:
+			put_it = 0
 		}
+		switch put_it {
+		case 1:
+			set_dot(mouse_pos / ZOOM, cols[selected_color])
+		case 2:
+			set_dot(mouse_pos / ZOOM, cols[0])
+		}
+		win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	case win32.RIM_TYPEKEYBOARD:
-		{
-			switch rawinput.data.keyboard.VKey {
-			case win32.VK_ESCAPE:
-				win32app.close_application(hwnd)
-			case win32.VK_0 ..= win32.VK_9:
-				selected_color = i32(rawinput.data.keyboard.VKey - win32.VK_0)
-			case:
-				fmt.println("keyboard:", rawinput.data.keyboard)
-			}
+		switch rawinput.data.keyboard.VKey {
+		case win32.VK_ESCAPE:
+			win32app.close_application(hwnd)
+		case win32.VK_0 ..= win32.VK_9:
+			selected_color = i32(rawinput.data.keyboard.VKey - win32.VK_0)
+		case:
+			fmt.println("keyboard:", rawinput.data.keyboard)
 		}
 	case:
 		fmt.println("dwType:", rawinput.header.dwType)

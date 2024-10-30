@@ -132,11 +132,11 @@ update_world :: #force_inline proc(world: ^World, next_world: ^World) {
 			index := y * world.width + x
 			switch neighbors {
 			case 2:
-				{next_world.alive[index] = world.alive[index]}
+				next_world.alive[index] = world.alive[index]
 			case 3:
-				{next_world.alive[index] = 1}
+				next_world.alive[index] = 1
 			case:
-				{next_world.alive[index] = 0}
+				next_world.alive[index] = 0
 			}
 		}
 	}
@@ -214,9 +214,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		for i in 0 ..< palette_count {
 			w = scale * f32(i)
 			when COLOR_MODE == 1 {
-				rbg = [3]f32{rand.float32(), rand.float32(), rand.float32()}
+				rbg = {rand.float32(), rand.float32(), rand.float32()}
 			} else {
-				rbg = [3]f32{w, w, w}
+				rbg = {w, w, w}
 			}
 			rbg *= 255
 			bitmap_info.bmiColors[i] = color{u8(rbg.b), u8(rbg.g), u8(rbg.r), 0}
@@ -257,9 +257,9 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		hdc_source := win32.CreateCompatibleDC(hdc)
 		defer win32.DeleteDC(hdc_source)
 
-		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
+		win32app.select_object(hdc_source, app.hbitmap)
 		client_size := get_rect_size(&ps.rcPaint)
-		win32.StretchBlt(hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bwidth, bheight, win32.SRCCOPY)
+		win32app.stretch_blt(hdc, client_size, hdc_source, {bwidth, bheight})
 	}
 
 	if show_help {

@@ -86,8 +86,7 @@ print_image :: proc(image_path: string, fd: ^os.Handle) {
 	path := filepath.clean(image_path, context.temp_allocator) or_else panic("filepath.clean")
 	img, err := image.load_from_file(path)
 	if img == nil || err != nil {
-		fmt.println("Image load error:", err, path)
-		return
+		fmt.panicf("Image load error:", err, path)
 	}
 	defer image.destroy(img)
 
