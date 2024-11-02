@@ -33,7 +33,7 @@ worldmap_flat: World_Map =
 	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 }
 
-on_update_raycaster_flat :: proc(app: ca.papp) -> int {
+on_update_raycaster_flat :: proc(app: ^ca.application) -> int {
 
 	rot := matrix2_rotate(heading)
 	dir = rot[0]

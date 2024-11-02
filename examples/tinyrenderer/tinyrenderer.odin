@@ -143,7 +143,7 @@ ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool 
 	return false
 }
 
-on_create :: proc(app: ca.papp) -> int {
+on_create :: proc(app: ^ca.application) -> int {
 	canvas := &ca.dib.canvas
 	size := cv.get_canvas_size(canvas)
 	fov = FOV_ANGLE * math.PI / 360
@@ -178,7 +178,7 @@ on_create :: proc(app: ca.papp) -> int {
 	return 0
 }
 
-on_update :: proc(app: ca.papp) -> int {
+on_update :: proc(app: ^ca.application) -> int {
 
 	if .MK_LBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_ndc(app)

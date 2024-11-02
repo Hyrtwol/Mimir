@@ -16,7 +16,7 @@ int2 :: cv.int2
 color: cv.color
 dib: win32app.DIB
 
-app_action :: #type proc(app: papp) -> int
+app_action :: #type proc(app: ^application) -> int
 
 key_state_count :: 128
 key_state :: bool
@@ -35,9 +35,8 @@ application :: struct {
 	keys:                    key_states,
 	char_queue:              queue.Queue(u8),
 }
-papp :: ^application
 
-on_idle :: proc(app: papp) -> int {return 0}
+on_idle :: proc(app: ^application) -> int {return 0}
 
 default_application :: application {
 	settings = win32app.window_settings {
@@ -60,32 +59,32 @@ frame_stats: struct {
 	frame_time:    f32,
 }
 
-set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
+set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {
 	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
 }
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
-	app := (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
+	app := (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
 }
 
-get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
+get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> ^application {
 	pcs := win32app.decode_lparam_as_createstruct(lparam)
 	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
-	app := papp(pcs.lpCreateParams)
+	app := (^application)(pcs.lpCreateParams)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
 }
 
 // 0..1
-decode_mouse_pos_01 :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
+decode_mouse_pos_01 :: #force_inline proc "contextless" (app: ^application) -> cv.float2 {
 	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(app.settings.window_size)
 	return linalg.clamp(normalized_mouse_pos, cv.float2_zero, cv.float2_one)
 }
 
 // normalized device coordinates -1..1
-decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: papp) -> cv.float2 {
+decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^application) -> cv.float2 {
 	return decode_mouse_pos_01(app) * 2 - 1
 }
 
@@ -252,7 +251,7 @@ sleep :: proc(duration: time.Duration) {
 	}
 }
 
-run :: proc(app: papp) {
+run :: proc(app: ^application) {
 	// queue.init(&app.char_queue)
 	// defer queue.destroy(&app.char_queue)
 	_, _, hwnd := win32app.prepare_run(app)

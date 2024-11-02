@@ -62,16 +62,16 @@ sort_sprites_from_far_to_close :: proc() {
 	slice.stable_sort_by(sprite_order[:], sprite_sort_by_dist)
 }
 
-// on_create :: proc(app: ca.papp) -> int {
+// on_create :: proc(app: ^ca.application) -> int {
 // 	assert(len(textures) > 0)
 // 	return 0
 // }
 
-// on_destroy :: proc(app: ca.papp) -> int {
+// on_destroy :: proc(app: ^ca.application) -> int {
 // 	return 0
 // }
 
-handle_input :: proc(app: ca.papp) {
+handle_input :: proc(app: ^ca.application) {
 	frameTime := scalar(app.delta)
 	//speed modifiers
 	moveSpeed := frameTime * 5.0 //the constant value is in squares/second

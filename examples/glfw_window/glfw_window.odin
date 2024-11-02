@@ -109,12 +109,7 @@ main :: proc() {
 		gl.ClearColor(0.5, 0.0, 1.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		pos := glm.vec3{
-			glm.cos(t*2),
-			glm.sin(t*2),
-			0,
-		}
-
+		pos := glm.vec3{glm.cos(t*2), glm.sin(t*2), 0}
 		pos *= 0.3
 
 		// matrix support
@@ -132,7 +127,7 @@ main :: proc() {
 		// model[2, 3] = -pos.z
 
 		// native swizzling support for arrays
-		model[3].yzx = pos.yzx
+		model[3].xyz = pos
 
 		view := glm.mat4LookAt({0, -1, +1}, {0, 0, 0}, {0, 0, 1})
 		proj := glm.mat4Perspective(45, 1.3, 0.1, 100.0)

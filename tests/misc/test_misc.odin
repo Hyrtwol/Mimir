@@ -190,9 +190,9 @@ array_of_procs :: proc(t: ^_t.T) {
 	append(&callbacks, callback(pow))
 	append(&callbacks, callback(sign))
 
-	for p, i in callbacks {
-		if (p != nil) {
-			fmt.printfln("Result: %d", p(i32(i)))
+	for cb, i in callbacks {
+		if (cb != nil) {
+			fmt.printfln("Result: %d", cb(i32(i)))
 		}
 	}
 }

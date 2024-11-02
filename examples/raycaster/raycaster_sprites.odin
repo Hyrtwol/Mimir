@@ -71,13 +71,13 @@ sprites: [numSprites]Sprite = {
 //1D Zbuffer
 z_buffer: [screenWidth]scalar
 
-on_create_raycaster_sprites :: proc(app: ca.papp) -> int {
+on_create_raycaster_sprites :: proc(app: ^ca.application) -> int {
 	assert(len(textures) > 0)
 	init_sprites()
 	return 0
 }
 
-on_update_raycaster_sprites :: proc(app: ca.papp) -> int {
+on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 
 	rot := matrix2_rotate(heading)
 	dir = rot[0]

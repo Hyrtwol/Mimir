@@ -9,6 +9,7 @@ import "core:os"
 // import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import "shared:obug"
+import "../../data/models/cube"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -149,6 +150,10 @@ run :: proc() -> (exit_code: int) {
         focalLength,
         &t, &b, &l, &r)
 	fmt.println("t, b, l, r:", t, b, l, r)
+
+	for v in cube.vertices {
+		fmt.printfln("v: %v", v)
+	}
 
 	return
 }

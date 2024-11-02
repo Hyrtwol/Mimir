@@ -34,7 +34,7 @@ worldmap_floor: World_Map =
 	{2,2,2,2,1,2,2,2,2,2,2,1,2,2,2,5,5,5,5,5,5,5,5,5},
 }
 
-on_update_raycaster_floor :: proc(app: ca.papp) -> int {
+on_update_raycaster_floor :: proc(app: ^ca.application) -> int {
 
 	rot := matrix2_rotate(heading)
 	dir = rot[0]

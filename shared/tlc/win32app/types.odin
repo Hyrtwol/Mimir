@@ -7,6 +7,8 @@ import win32 "core:sys/windows"
 import "core:time"
 
 int2 :: [2]i32
+int3 :: [3]i32
+float3 :: [3]f32
 
 Millisecond :: time.Millisecond
 Duration :: time.Duration
