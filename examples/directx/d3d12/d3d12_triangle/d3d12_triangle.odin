@@ -12,7 +12,7 @@ import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import "../../../../data/models/cube"
+import model "../../../../data/models/cube"
 
 TITLE :: "D3D12 triangle"
 WIDTH :: 1920 / 2
@@ -28,8 +28,6 @@ FrameCount :u32: 3
 TextureWidth :u32: 256
 TextureHeight :u32: 256
 TexturePixelSize : u32 : 4    // The number of bytes used to represent a pixel in the texture.
-
-#assert(len(cube.vertices) == 24)
 
 check :: proc(res: d3d12.HRESULT, message: string) {
 	if win32.SUCCEEDED(res) {
@@ -371,7 +369,7 @@ run :: proc() -> (exit_code: int) {
         //     -0.5, -0.5, 0.0,  0,0,1,0,
         // }
 
-		vertex :: cube.vertex
+		vertex :: model.vertex
 		vertices := [?]vertex {
             // pos            color
             {{ 0.0 , 0.5, 0.0},{1,0},{1,0,0}},
@@ -379,7 +377,7 @@ run :: proc() -> (exit_code: int) {
             {{-0.5, -0.5, 0.0},{1,1},{0,0,1}},
         }
 
-		//vertices := cube.vertices
+		//vertices := model.vertices
 
 		heap_props := d3d12.HEAP_PROPERTIES {
 			Type = .UPLOAD,

@@ -9,7 +9,7 @@ import "core:os"
 // import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import "shared:obug"
-import "../../data/models/cube"
+import model "../../data/models/cube"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -151,7 +151,7 @@ run :: proc() -> (exit_code: int) {
         &t, &b, &l, &r)
 	fmt.println("t, b, l, r:", t, b, l, r)
 
-	for v in cube.vertices {
+	for v in model.vertices {
 		fmt.printfln("v: %v", v)
 	}
 
@@ -159,6 +159,7 @@ run :: proc() -> (exit_code: int) {
 }
 
 main :: proc() {
+    assert(len(model.vertices) == 24)
 	when intrinsics.is_package_imported("obug") {
 		os.exit(obug.tracked_run(run))
 	} else {
