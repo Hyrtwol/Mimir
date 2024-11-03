@@ -180,7 +180,7 @@ run :: proc() -> (exit_code: int) {
 
 	frame_index := swap_chain->GetCurrentBackBufferIndex()
 
-	// Descripors describe the GPU data and are allocated from a Descriptor Heap
+	// Descriptors describe the GPU data and are allocated from a Descriptor Heap
 	rtv_descriptor_heap: ^d3d12.IDescriptorHeap
 	{
 		desc := d3d12.DESCRIPTOR_HEAP_DESC {
@@ -222,7 +222,7 @@ run :: proc() -> (exit_code: int) {
 		}
 	}
 
-	// The command allocator is used to create the commandlist that is used to tell the GPU what to draw
+	// The command allocator is used to create the command list that is used to tell the GPU what to draw
 	command_allocator: ^d3d12.ICommandAllocator
 	hr = device->CreateCommandAllocator(.DIRECT, d3d12.ICommandAllocator_UUID, (^rawptr)(&command_allocator))
 	check(hr, "Failed creating command allocator")
@@ -350,7 +350,7 @@ run :: proc() -> (exit_code: int) {
 		ps->Release()
 	}
 
-	// Create the commandlist that is reused further down.
+	// Create the command list that is reused further down.
 	cmdlist: ^d3d12.IGraphicsCommandList
 	hr = device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&cmdlist))
 	check(hr, "Failed to create command list")
@@ -431,7 +431,7 @@ run :: proc() -> (exit_code: int) {
 	textureUploadHeap: ^d3d12.IResource
 
     // Create the texture.
-	{
+	if true {
         textureDesc : d3d12.RESOURCE_DESC = {}
         textureDesc.MipLevels = 1
         textureDesc.Format = .R8G8B8A8_UNORM
@@ -535,11 +535,11 @@ run :: proc() -> (exit_code: int) {
 		srv_descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE
 		srv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&srv_descriptor_handle)
 		fmt.println("srv_descriptor_handle", srv_descriptor_handle)
-		device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
+		//device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
 	}
 
-	hr = cmdlist->Close()
-	check(hr, "Failed to close command list")
+	// hr = cmdlist->Close()
+	// check(hr, "Failed to close command list")
 
 	// This fence is used to wait for frames to finish
 	fence_value: u64
@@ -581,7 +581,7 @@ run :: proc() -> (exit_code: int) {
 			bottom = window_size.y,
 		}
 
-		// This state is reset everytime the cmd list is reset, so we need to rebind it
+		// This state is reset every time the cmd list is reset, so we need to rebind it
 		cmdlist->SetGraphicsRootSignature(root_signature)
 		cmdlist->RSSetViewports(1, &viewport)
 		cmdlist->RSSetScissorRects(1, &scissor_rect)

@@ -5,6 +5,8 @@ aprintf
 bgra
 bitmapinfo
 bresenham
+cmdlist
+cmdlists
 codepage
 coreclr
 createstruct
@@ -64,6 +66,7 @@ miniaudio
 mipmaps
 newtek
 objz
+objzero
 obug
 odinfmt
 origo
@@ -96,7 +99,11 @@ struct
 sublang
 subresource
 texcoord
+texcoords
+tprint
 tprintf
+tprintfln
+tprintln
 trianglelist
 trunc
 typeless
@@ -118,6 +125,10 @@ wndclassexw
 wndproc
 wolfenstein
 wparam
+wprint
+wprintf
+wprintfln
+wprintln
 wstring
 wtprintf
 wtprintfln

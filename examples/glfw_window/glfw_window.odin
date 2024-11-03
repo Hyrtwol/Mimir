@@ -13,10 +13,12 @@ import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
-// cow, cube, gazebo
-import zmodel "../../data/models/gazebo"
-
+// cow, cube, gazebo, crisscross, platonic/icosahedron
+import model "../../data/models/crisscross"
 SCALE :: 0.2
+
+//import model "../../data/models/platonic/icosahedron"
+//SCALE :: 1.0
 
 WINDOW_TITLE :: "Mimir"
 WINDOW_WIDTH :: 640
@@ -30,6 +32,8 @@ running: b32 = true
 aspect: f32 = 1
 
 run :: proc() -> (exit_code: int) {
+	fmt.println("size_of(model.material)=", size_of(model.material))
+
 	if !bool(glfw.Init()) {
 		fmt.eprintln("Failed to initialize GLFW")
 		return
@@ -52,7 +56,7 @@ run :: proc() -> (exit_code: int) {
 	glfw.SetKeyCallback(window_handle, key_callback)
 	glfw.SetFramebufferSizeCallback(window_handle, size_callback)
 
-	// Load OpenGL function pointers with the specficed OpenGL major and minor version.
+	// Load OpenGL function pointers with the specified OpenGL major and minor version.
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
 
 	{
@@ -61,7 +65,7 @@ run :: proc() -> (exit_code: int) {
 		fmt.println("size:", width, height, "aspect:", aspect)
 	}
 
-	vertex_source := vertex_sources[zmodel.vertex_flags]
+	vertex_source := vertex_sources[model.vertex_flags]
 	// useful utility procedures that are part of vendor:OpenGl
 	program := gl.load_shaders_source(vertex_source, fragment_source) or_else panic("Failed to create GLSL program")
 	defer gl.DeleteProgram(program)
@@ -81,37 +85,37 @@ run :: proc() -> (exit_code: int) {
 	gl.GenBuffers(1, &ebo);defer gl.DeleteBuffers(1, &ebo)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(zmodel.vertices) * size_of(zmodel.vertices[0]), raw_data(zmodel.vertices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(model.vertices) * size_of(model.vertices[0]), raw_data(model.vertices), gl.STATIC_DRAW)
 
-	fmt.printfln("vertex_flags: 0b%8b", zmodel.vertex_flags)
+	fmt.printfln("vertex_flags: 0b%8b", model.vertex_flags)
 
-	size_of_vertex := i32(size_of(zmodel.vertex))
-	when zmodel.vertex_flags == 0b01 {
+	size_of_vertex := i32(size_of(model.vertex))
+	when model.vertex_flags == 0b01 {
 		gl.EnableVertexAttribArray(0)
 		gl.EnableVertexAttribArray(1)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, pos))
-		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, texcoord))
-		// gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of_by_string(zmodel.vertex, "pos"))
-		// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of_by_string(zmodel.vertex, "texcoord"))
-	} else when zmodel.vertex_flags == 0b10 {
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
+		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, texcoord))
+		// gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of_by_string(model.vertex, "pos"))
+		// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of_by_string(model.vertex, "texcoord"))
+	} else when model.vertex_flags == 0b10 {
 		gl.EnableVertexAttribArray(0)
 		gl.EnableVertexAttribArray(1)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, pos))
-		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, normal))
-	} else when zmodel.vertex_flags == 0b11 {
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, normal))
+	} else when model.vertex_flags == 0b11 {
 		gl.EnableVertexAttribArray(0)
 		gl.EnableVertexAttribArray(1)
 		gl.EnableVertexAttribArray(2)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, pos))
-		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, texcoord))
-		gl.VertexAttribPointer(2, 3, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, normal))
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
+		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, texcoord))
+		gl.VertexAttribPointer(2, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, normal))
 	} else {
 		gl.EnableVertexAttribArray(0)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(zmodel.vertex, pos))
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
 	}
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(zmodel.indices) * size_of(zmodel.indices[0]), raw_data(zmodel.indices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(model.indices) * size_of(model.indices[0]), raw_data(model.indices), gl.STATIC_DRAW)
 
 	gl.ClearColor(0.10, 0.15, 0.20, 1.0)
 	gl.Enable(gl.CULL_FACE)
@@ -131,15 +135,11 @@ run :: proc() -> (exit_code: int) {
 		glfw.PollEvents()
 
 		//gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-		//gl.ClearColor(0.5, 0.0, 1.0, 1.0)
-		//gl.ClearDepth(1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		pos := glm.vec3{glm.cos(t * 2), glm.sin(t * 2), 0}
-		pos *= 0.3
+		pos *= 1.3
 
-		// matrix support
-		// model matrix which a default scale of 0.5
 		model_transform := glm.identity(glm.mat4)
 		model_transform *= glm.mat4Translate(pos)
 		model_transform *= glm.mat4Scale({SCALE, SCALE, SCALE})
@@ -152,12 +152,12 @@ run :: proc() -> (exit_code: int) {
 		{
 			u_transform = proj_view * model_transform * glm.mat4Rotate({0, 1, 1}, t)
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
-			gl.DrawElements(gl.TRIANGLES, i32(len(zmodel.indices)), gl.UNSIGNED_SHORT, nil)
+			gl.DrawElements(gl.TRIANGLES, i32(len(model.indices) * size_of(model.indices[0])), gl.UNSIGNED_SHORT, nil)
 		}
 		{
 			u_transform = proj_view * glm.mat4Rotate({1, 1, 1}, t * 1.47) * model_transform
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
-			gl.DrawElements(gl.TRIANGLES, i32(len(zmodel.indices)), gl.UNSIGNED_SHORT, nil)
+			gl.DrawElements(gl.TRIANGLES, i32(len(model.indices) * size_of(model.indices[0])), gl.UNSIGNED_SHORT, nil)
 		}
 		glfw.SwapBuffers(window_handle)
 	}

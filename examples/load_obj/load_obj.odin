@@ -10,6 +10,16 @@ import oz "shared:objzero"
 import "shared:obug"
 
 VERTEX_MODE :: 0
+FLOAT1 :: "f32"
+when VERTEX_MODE == 1 {
+	FLOAT2 :: "float2"
+	FLOAT3 :: "float3"
+} else {
+	FLOAT2 :: "[2]f32"
+	FLOAT3 :: "[3]f32"
+}
+VERTEX_ELEM :: "\t%-8v : %v,"
+MAT_ELEM :: "\t%-16v : %v,"
 
 progressCallback :: proc(filename: cstring, progress: i32) {
 	fmt.printf("\rprogress: %3d%% %s", progress, filename)
@@ -33,6 +43,20 @@ print_indices :: proc(w: io.Writer, indices: []$A) where intrinsics.type_is_nume
 		fmt.wprintln(w, flush = false)
 	}
 	fmt.wprintln(w, "}", flush = true)
+	fmt.println()
+}
+
+print_triangles :: proc(w: io.Writer, indices: []$A) where intrinsics.type_is_numeric(A) {
+	//fmt.wprintfln(w, "indices: [%v]%v = {{", len(indices), type_info_of(A))
+	fmt.wprintfln(w, "indices: [][3]%v = {{", type_info_of(A), flush = false)
+	total := len(indices)
+	for i := 0; i < total - 2; i += 3 {
+		fmt.wprintfln(w, "\t{{%4d, %4d, %4d}},", indices[i], indices[i + 1], indices[i + 2], flush = false)
+
+		progressCallback("triangles", i32(i * 100 / total))
+	}
+	fmt.wprintln(w, "}", flush = true)
+	progressCallback("triangles", 100)
 	fmt.println()
 }
 
@@ -79,16 +103,53 @@ print_vertices :: proc(w: io.Writer, model: ^oz.objzModel) {
 	//fmt.wprintfln(w, "vertices: [%v]vertex = {{", len(vertices))
 	fmt.wprintln(w, "vertices: []vertex = {", flush = false)
 	total := len(vertices) - 1
-	for v, i in vertices {
+	for &v, i in vertices {
 
-		fmt.wprint(w, "{", flush = false)
-		fmt.wprintf(w, "{{" + FF + "," + FF + "," + FF + "}}, ", v.pos.x, v.pos.y, v.pos.z, flush = false)
-		if do_texcoord {fmt.wprintf(w, "{{" + FF2 + "," + FF2 + "}}, ", v.texcoord.x, v.texcoord.y, flush = false)}
-		if do_normals {fmt.wprintf(w, "{{" + FF2 + "," + FF2 + "," + FF2 + "}}", v.normal.x, v.normal.y, v.normal.z, flush = false)}
-
+		fmt.wprint(w, "\t{", flush = false)
+		fmt.wprintf(w, "{{" + FF + "," + FF + "," + FF + "}}", v.pos.x, v.pos.y, v.pos.z, flush = false)
+		if do_texcoord {fmt.wprintf(w, ", {{" + FF2 + "," + FF2 + "}}", v.texcoord.x, v.texcoord.y, flush = false)}
+		if do_normals {fmt.wprintf(w, ", {{" + FF2 + "," + FF2 + "," + FF2 + "}}", v.normal.x, v.normal.y, v.normal.z, flush = false)}
 		fmt.wprintln(w, "},", flush = false)
 
 		progressCallback("vertices", i32(i * 100 / total))
+	}
+	fmt.wprintln(w, "}", flush = true)
+	fmt.println()
+}
+
+MAT_COMPACT :: false
+
+print_materials :: proc(w: io.Writer, model: ^oz.objzModel) {
+	{
+		fmt.wprintln(w, "material :: struct {", flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "name", "string", flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "ambient", FLOAT3, flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "diffuse", FLOAT3, flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "emission", FLOAT3, flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "specular", FLOAT3, flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "specularExponent", FLOAT1, flush = false)
+		fmt.wprintfln(w, MAT_ELEM, "opacity", FLOAT1, flush = false)
+
+		fmt.wprintln(w, "}", flush = false)
+		fmt.wprintln(w, "")
+	}
+	mats := oz.get_materials(model)
+	fmt.wprintln(w, "materials: []material = {", flush = false)
+	total := len(mats)
+	for &mat, i in mats {
+		FF :: "%.5f"
+		IND :: "\t"
+		fmt.wprintln(w, IND + "{", flush = false)
+		fmt.wprintfln(w, IND + IND + "name     = \"%s\",", cstring(&mat.name[0]), flush = false)
+		fmt.wprintfln(w, IND + IND + "ambient  = {{" + FF + ", " + FF + ", " + FF + "}},", mat.ambient.x, mat.ambient.y, mat.ambient.z, flush = false)
+		fmt.wprintfln(w, IND + IND + "diffuse  = {{" + FF + ", " + FF + ", " + FF + "}},", mat.diffuse.x, mat.diffuse.y, mat.diffuse.z, flush = false)
+		fmt.wprintfln(w, IND + IND + "emission = {{" + FF + ", " + FF + ", " + FF + "}},", mat.emission.x, mat.emission.y, mat.emission.z, flush = false)
+		fmt.wprintfln(w, IND + IND + "specular = {{" + FF + ", " + FF + ", " + FF + "}},", mat.specular.x, mat.specular.y, mat.specular.z, flush = false)
+		fmt.wprintfln(w, IND + IND + "specularExponent = " + FF + ",", mat.specularExponent, flush = false)
+		fmt.wprintfln(w, IND + IND + "opacity  = " + FF + ",", mat.opacity, flush = false)
+
+		fmt.wprintln(w, IND + "},", flush = false)
+		progressCallback("materials", i32((i + 1) * 100 / total))
 	}
 	fmt.wprintln(w, "}", flush = true)
 	fmt.println()
@@ -109,91 +170,65 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	fmt.wprintfln(w, "// triangles % 8d (%d)", model.numIndices / 3, model.numIndices, flush = false)
 	fmt.wprintln(w, "")
 
-	mats := oz.get_materials(model)
-	for &mat, i in mats {
-		fmt.wprintfln(w, "Material %u '%s'", i, cstring(&mat.name[0]), flush = false)
-		fmt.wprintfln(w, "   opacity: %v", mat.opacity, flush = false)
-		fmt.wprintfln(w, "   ambient: %v", mat.ambient, flush = false)
-		fmt.wprintfln(w, "   diffuse: %v", mat.diffuse, flush = false)
-		fmt.wprintfln(w, "   emission: %v", mat.emission, flush = false)
-		fmt.wprintfln(w, "   specular: %v", mat.specular, flush = false)
-		fmt.wprintfln(w, "   specularExponent: %v", mat.specularExponent, flush = false)
-		if mat.ambientTexture[0] != 0 {
-			fmt.wprintfln(w, "   ambientTexture: %s", cstring(&mat.ambientTexture[0]), flush = false)
-		}
-		if mat.bumpTexture[0] != 0 {
-			fmt.wprintfln(w, "   bumpTexture: %s", cstring(&mat.bumpTexture[0]), flush = false)
-		}
-		if mat.diffuseTexture[0] != 0 {
-			fmt.wprintfln(w, "   diffuseTexture: %s", cstring(&mat.diffuseTexture[0]), flush = false)
-		}
-		if mat.emissionTexture[0] != 0 {
-			fmt.wprintfln(w, "   emissionTexture: %s", cstring(&mat.emissionTexture[0]), flush = false)
-		}
-		if mat.specularTexture[0] != 0 {
-			fmt.wprintfln(w, "   specularTexture: %s", cstring(&mat.specularTexture[0]), flush = false)
-		}
-		if mat.specularExponentTexture[0] != 0 {
-			fmt.wprintfln(w, "   specularExponentTexture: %s", cstring(&mat.specularExponentTexture[0]), flush = false)
-		}
-		if mat.opacityTexture[0] != 0 {
-			fmt.wprintfln(w, "   opacityTexture: %s", cstring(&mat.opacityTexture[0]), flush = false)
-		}
-	}
-
-	objects := oz.get_objects(model)
-	meshes := oz.get_meshes(model)
-	for &object, i in objects {
-		fmt.wprintfln(w, "// Object: %d '%s', %d triangles, %d vertices, %d meshes", i, cstring(&object.name[0]), object.numIndices / 3, object.numVertices, object.numMeshes)
-		for j in 0 ..< object.numMeshes {
-			mesh := &meshes[object.firstMesh + j]
-			//wprintf(w, "   Mesh %u: '%s' material, %u triangles\n", j, mesh.materialIndex < 0 ? "<empty>" : mats[mesh.materialIndex].name, mesh.numIndices / 3);
-			fmt.wprintf(w, "//   Mesh %d: ", j, flush = false)
-			if mesh.materialIndex < 0 {
-				fmt.wprint(w, "<empty>", mesh.materialIndex, flush = false)
-			} else {
-				fmt.wprintf(w, "'%s'", cstring(&mats[mesh.materialIndex].name[0]), flush = false)
-			}
-			fmt.wprintfln(w, " material, %d triangles", mesh.numIndices / 3)
-		}
-	}
-
 	when VERTEX_MODE == 1 {
 		fmt.wprintln(w, "")
 		fmt.wprintln(w, "float2 :: [2]f32")
 		fmt.wprintln(w, "float3 :: [3]f32")
-		FLOAT2 :: "float2"
-		FLOAT3 :: "float3"
-	} else {
-		FLOAT2 :: "[2]f32"
-		FLOAT3 :: "[3]f32"
 	}
-	VERTEX_ELEM :: "\t%-8v : %v,"
 
-	fmt.wprintln(w, "", flush = false)
-	fmt.wprintln(w, "vertex :: struct {", flush = false)
-	fmt.wprintfln(w, VERTEX_ELEM, "pos", FLOAT3, flush = false)
-	if .OBJZ_FLAG_TEXCOORDS in model.flags {
-		fmt.wprintfln(w, VERTEX_ELEM, "texcoord", FLOAT2, flush = false)
+	mats := oz.get_materials(model)
+	if len(mats) > 0 {
+		print_materials(w, model)
+		fmt.wprintln(w, "")
 	}
-	if .OBJZ_FLAG_NORMALS in model.flags {
-		fmt.wprintfln(w, VERTEX_ELEM, "normal", FLOAT3, flush = false)
-	}
-	fmt.wprintln(w, "}", flush = false)
-	fmt.wprintln(w, "", flush = false)
 
-	fmt.wprintfln(w, "vertex_flags :: 0b%8b", transmute(u32)model.flags, flush = false)
-	fmt.wprintln(w, "")
+	{
+		objects := oz.get_objects(model)
+		meshes := oz.get_meshes(model)
+		for &object, i in objects {
+			fmt.wprintfln(w, "// Object: %d '%s', %d triangles, %d vertices, %d meshes", i, cstring(&object.name[0]), object.numIndices / 3, object.numVertices, object.numMeshes)
+			for j in 0 ..< object.numMeshes {
+				mesh := &meshes[object.firstMesh + j]
+				//wprintf(w, "   Mesh %u: '%s' material, %u triangles\n", j, mesh.materialIndex < 0 ? "<empty>" : mats[mesh.materialIndex].name, mesh.numIndices / 3);
+				fmt.wprintf(w, "//   Mesh %d: ", j, flush = false)
+				if mesh.materialIndex < 0 {
+					fmt.wprint(w, "<empty>", mesh.materialIndex, flush = false)
+				} else {
+					fmt.wprintf(w, "'%s'", cstring(&mats[mesh.materialIndex].name[0]), flush = false)
+				}
+				fmt.wprintfln(w, " material, %d triangles", mesh.numIndices / 3)
+			}
+		}
+	}
+
+	{
+		fmt.wprintln(w, "", flush = false)
+		fmt.wprintln(w, "vertex :: struct {", flush = false)
+		fmt.wprintfln(w, VERTEX_ELEM, "pos", FLOAT3, flush = false)
+		if .OBJZ_FLAG_TEXCOORDS in model.flags {
+			fmt.wprintfln(w, VERTEX_ELEM, "texcoord", FLOAT2, flush = false)
+		}
+		if .OBJZ_FLAG_NORMALS in model.flags {
+			fmt.wprintfln(w, VERTEX_ELEM, "normal", FLOAT3, flush = false)
+		}
+		fmt.wprintln(w, "}", flush = false)
+		fmt.wprintln(w, "", flush = false)
+
+		fmt.wprintfln(w, "vertex_flags :: 0b%8b", transmute(u32)model.flags, flush = false)
+		fmt.wprintln(w, "")
+	}
 
 	print_vertices(w, model)
 
 	fmt.wprintln(w, "")
 	if .OBJZ_FLAG_INDEX32 in model.flags {
 		indices_u32 := oz.get_indices_u32(model)
-		print_indices(w, indices_u32)
+		//print_indices(w, indices_u32)
+		print_triangles(w, indices_u32)
 	} else {
 		indices_u16 := oz.get_indices_u16(model)
-		print_indices(w, indices_u16)
+		//print_indices(w, indices_u16)
+		print_triangles(w, indices_u16)
 	}
 }
 
@@ -206,6 +241,7 @@ run :: proc() -> (exit_code: int) {
 		"../data/models/cow/cow.obj",
 		"../data/models/cube/cube.obj",
 		"../data/models/gazebo/gazebo.obj",
+		"../data/models/crisscross/crisscross.obj",
 	}
 	for input_path in input_paths {
 
@@ -217,7 +253,7 @@ run :: proc() -> (exit_code: int) {
 		output_path = filepath.abs(output_path, context.temp_allocator) or_else panic("filepath.abs")
 
 		clean_path := filepath.clean(input_path, context.temp_allocator) or_else panic("filepath.clean")
-		//clean_path = filepath.abs(clean_path, context.temp_allocator) or_else panic("filepath.abs")
+		clean_path = filepath.abs(clean_path, context.temp_allocator) or_else panic("filepath.abs")
 		obj_file := strings.clone_to_cstring(clean_path, context.temp_allocator) or_else panic("strings.clone_to_cstring")
 
 		fmt.printfln("reading %s", obj_file)

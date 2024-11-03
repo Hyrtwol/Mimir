@@ -10,6 +10,26 @@
 				"..${pathSeparator}${relativeFileDirname}",
 				"${config:odin.rc}",
 				"${config:odin.collection.shared}",
+				"${config:odin.collection.libs}"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": "**/*.odin"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/bin"
+			}
+		},
+		{
+			"label": "odin run (vet strict)",
+			"type": "process",
+			"command": "odin",
+			"args": [
+				"run",
+				"..${pathSeparator}${relativeFileDirname}",
+				"${config:odin.rc}",
+				"${config:odin.collection.shared}",
 				"${config:odin.collection.libs}",
 				"-vet",
 				"-strict-style"
@@ -24,7 +44,7 @@
 			}
 		},
 		{
-			"label": "odin run speed",
+			"label": "odin run (speed)",
 			"type": "process",
 			"command": "odin",
 			"args": [

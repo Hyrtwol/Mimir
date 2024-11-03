@@ -14,12 +14,12 @@ w :: proc(fd: os.Handle, args: ..any) {
 	os.write_string(fd, fmt.tprint(..args))
 }
 
-wfln :: proc(fd: os.Handle, fmtstr: string, args: ..any) {
-	os.write_string(fd, fmt.tprintfln(fmtstr, ..args))
+wfln :: proc(fd: os.Handle, format: string, args: ..any) {
+	os.write_string(fd, fmt.tprintfln(format, ..args))
 }
 
-wf :: proc(fd: os.Handle, fmtstr: string, args: ..any) {
-	os.write_string(fd, fmt.tprintf(fmtstr, ..args))
+wf :: proc(fd: os.Handle, format: string, args: ..any) {
+	os.write_string(fd, fmt.tprintf(format, ..args))
 }
 
 main :: proc() {
