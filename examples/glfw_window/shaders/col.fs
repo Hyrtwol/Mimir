@@ -6,4 +6,5 @@ out vec4 o_color;
 
 void main() {
 	o_color = v_color;
+    //o_color.y = 1;
 }

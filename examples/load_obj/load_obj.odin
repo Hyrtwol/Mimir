@@ -8,6 +8,7 @@ import "core:path/filepath"
 import "core:strings"
 import oz "shared:objzero"
 import "shared:obug"
+import "core:math/linalg"
 
 VERTEX_MODE :: 0
 FLOAT1 :: "f32"
@@ -108,7 +109,10 @@ print_vertices :: proc(w: io.Writer, model: ^oz.objzModel) {
 		fmt.wprint(w, "\t{", flush = false)
 		fmt.wprintf(w, "{{" + FF + "," + FF + "," + FF + "}}", v.pos.x, v.pos.y, v.pos.z, flush = false)
 		if do_texcoord {fmt.wprintf(w, ", {{" + FF2 + "," + FF2 + "}}", v.texcoord.x, v.texcoord.y, flush = false)}
-		if do_normals {fmt.wprintf(w, ", {{" + FF2 + "," + FF2 + "," + FF2 + "}}", v.normal.x, v.normal.y, v.normal.z, flush = false)}
+		if do_normals {
+			n := linalg.normalize(v.normal)
+			fmt.wprintf(w, ", {{" + FF2 + "," + FF2 + "," + FF2 + "}}", n.x, n.y, n.z, flush = false)
+		}
 		fmt.wprintln(w, "},", flush = false)
 
 		progressCallback("vertices", i32(i * 100 / total))

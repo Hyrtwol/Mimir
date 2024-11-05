@@ -1,6 +1,7 @@
 // Based off Simple d3d12 triangle example in Odin https://gist.github.com/jakubtomsu/ecd83e61976d974c7730f9d7ad3e1fd0
 package d3d12_triangle
 
+import model "../../../../data/models/cube"
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
@@ -12,7 +13,6 @@ import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import model "../../../../data/models/cube"
 
 TITLE :: "D3D12 triangle"
 WIDTH :: 1920 / 2
@@ -24,12 +24,12 @@ NUM_RENDERTARGETS :: 2
 int3 :: win32app.int3
 float3 :: win32app.float3
 
-FrameCount :u32: 3
-TextureWidth :u32: 256
-TextureHeight :u32: 256
-TexturePixelSize : u32 : 4    // The number of bytes used to represent a pixel in the texture.
+FrameCount: u32 : 3
+TextureWidth: u32 : 256
+TextureHeight: u32 : 256
+TexturePixelSize: u32 : 4 // The number of bytes used to represent a pixel in the texture.
 
-check :: proc(res: d3d12.HRESULT, message: string) {
+check :: proc(res: d3d12.HRESULT, message: string = #caller_expression(res)) {
 	if win32.SUCCEEDED(res) {
 		return
 	}
@@ -58,46 +58,31 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	}
 }
 
-GetRequiredIntermediateSize :: proc(pDestinationResource: ^d3d12.IResource, FirstSubresource, NumSubresources: u32) -> u64 {
-	RequiredSize : u64 = 0
-	desc, desc2 : d3d12.RESOURCE_DESC
-	desc = pDestinationResource->GetDesc(&desc2)^
-	// fmt.println("desc1:", desc)
-	// fmt.println("desc2:", desc2)
-	pDevice : ^d3d12.IDevice = nil
-	hr := pDestinationResource->GetDevice(d3d12.IDevice_UUID, (^rawptr)(&pDevice))
-	check(hr, "Failed GetDevice")
-	pDevice->GetCopyableFootprints(&desc, FirstSubresource, NumSubresources, 0, nil, nil, nil, &RequiredSize)
-	hr = win32.HRESULT(pDevice->Release())
-	check(hr, "pDevice->Release()")
-	return RequiredSize
-}
-
 GenerateTextureData :: proc() -> []u8 {
 	rowPitch := TextureWidth * TexturePixelSize
-    cellPitch := rowPitch >> 3        // The width of a cell in the checkboard texture.
-    cellHeight := TextureWidth >> 3    // The height of a cell in the checkerboard texture.
-    textureSize := rowPitch * TextureHeight
+	cellPitch := rowPitch >> 3 // The width of a cell in the checkboard texture.
+	cellHeight := TextureWidth >> 3 // The height of a cell in the checkerboard texture.
+	textureSize := rowPitch * TextureHeight
 
 	pData := make([]u8, textureSize)
 
-	for n: u32 = 0; n < textureSize;  n += TexturePixelSize {
+	for n: u32 = 0; n < textureSize; n += TexturePixelSize {
 		x := n % rowPitch
-        y := n / rowPitch
-        i := x / cellPitch
-        j := y / cellHeight
+		y := n / rowPitch
+		i := x / cellPitch
+		j := y / cellHeight
 
-        if i % 2 == j % 2 {
-            pData[n] = 0x00        // R
-            pData[n + 1] = 0x00    // G
-            pData[n + 2] = 0x00    // B
-            pData[n + 3] = 0xff    // A
-        } else {
-            pData[n] = 0xff        // R
-            pData[n + 1] = 0xff    // G
-            pData[n + 2] = 0xff    // B
-            pData[n + 3] = 0xff    // A
-        }
+		if i % 2 == j % 2 {
+			pData[n] = 0x00 // R
+			pData[n + 1] = 0x00 // G
+			pData[n + 2] = 0x00 // B
+			pData[n + 3] = 0xff // A
+		} else {
+			pData[n] = 0xff // R
+			pData[n + 1] = 0xff // G
+			pData[n + 2] = 0xff // B
+			pData[n + 3] = 0xff // A
+		}
 	}
 	return pData
 }
@@ -118,8 +103,7 @@ run :: proc() -> (exit_code: int) {
 	{
 		flags: dxgi.CREATE_FACTORY = {}
 		when ODIN_DEBUG {flags |= {.DEBUG}}
-		hr = dxgi.CreateDXGIFactory2(flags, dxgi.IFactory7_UUID, cast(^rawptr)&factory)
-		check(hr, "Failed creating factory")
+		check(dxgi.CreateDXGIFactory2(flags, dxgi.IFactory7_UUID, cast(^rawptr)&factory))
 	}
 
 	// Find the DXGI adapter (GPU)
@@ -145,17 +129,14 @@ run :: proc() -> (exit_code: int) {
 
 	// Create D3D12 device that represents the GPU
 	device: ^d3d12.IDevice
-	hr = d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, (^rawptr)(&device))
-	check(hr, "Failed to create device")
+	check(d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, (^rawptr)(&device)))
 	queue: ^d3d12.ICommandQueue
 
 	{
 		desc := d3d12.COMMAND_QUEUE_DESC {
 			Type = .DIRECT,
 		}
-
-		hr = device->CreateCommandQueue(&desc, d3d12.ICommandQueue_UUID, (^rawptr)(&queue))
-		check(hr, "Failed creating command queue")
+		check(device->CreateCommandQueue(&desc, d3d12.ICommandQueue_UUID, (^rawptr)(&queue)))
 	}
 
 	// Create the swap chain, it's the thing that contains render targets that we draw into. It has 2 render targets (NUM_RENDERTARGETS), giving us double buffering.
@@ -173,9 +154,7 @@ run :: proc() -> (exit_code: int) {
 			SwapEffect = .FLIP_DISCARD,
 			AlphaMode = .UNSPECIFIED,
 		}
-
-		hr = factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain))
-		check(hr, "Failed to create swap chain")
+		check(factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
 	}
 
 	frame_index := swap_chain->GetCurrentBackBufferIndex()
@@ -188,9 +167,7 @@ run :: proc() -> (exit_code: int) {
 			Type           = .RTV,
 			Flags          = {},
 		}
-
-		hr = device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&rtv_descriptor_heap))
-		check(hr, "Failed creating descriptor heap")
+		check(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&rtv_descriptor_heap)))
 	}
 
 	srv_descriptor_heap: ^d3d12.IDescriptorHeap
@@ -200,9 +177,7 @@ run :: proc() -> (exit_code: int) {
 			Type           = .CBV_SRV_UAV,
 			Flags          = {.SHADER_VISIBLE},
 		}
-
-		hr = device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&srv_descriptor_heap))
-		check(hr, "Failed creating descriptor heap")
+		check(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&srv_descriptor_heap)))
 	}
 
 	// Fetch the two render targets from the swap chain
@@ -215,8 +190,7 @@ run :: proc() -> (exit_code: int) {
 		rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&rtv_descriptor_handle)
 
 		for i: u32 = 0; i < NUM_RENDERTARGETS; i += 1 {
-			hr = swap_chain->GetBuffer(i, d3d12.IResource_UUID, (^rawptr)(&targets[i]))
-			check(hr, "Failed getting render target")
+			check(swap_chain->GetBuffer(i, d3d12.IResource_UUID, (^rawptr)(&targets[i])))
 			device->CreateRenderTargetView(targets[i], nil, rtv_descriptor_handle)
 			rtv_descriptor_handle.ptr += uint(rtv_descriptor_size)
 		}
@@ -224,8 +198,7 @@ run :: proc() -> (exit_code: int) {
 
 	// The command allocator is used to create the command list that is used to tell the GPU what to draw
 	command_allocator: ^d3d12.ICommandAllocator
-	hr = device->CreateCommandAllocator(.DIRECT, d3d12.ICommandAllocator_UUID, (^rawptr)(&command_allocator))
-	check(hr, "Failed creating command allocator")
+	check(device->CreateCommandAllocator(.DIRECT, d3d12.ICommandAllocator_UUID, (^rawptr)(&command_allocator)))
 
 	/*
     From https://docs.microsoft.com/en-us/windows/win32/direct3d12/root-signatures-overview:
@@ -238,22 +211,22 @@ run :: proc() -> (exit_code: int) {
 
 	{
 		sampler := d3d12.STATIC_SAMPLER_DESC {
-			Filter = .MIN_MAG_MIP_POINT,
-			AddressU = .BORDER,
-			AddressV = .BORDER,
-			AddressW = .BORDER,
-			MipLODBias = 0,
-			MaxAnisotropy = 0,
-			ComparisonFunc = .NEVER,
-			BorderColor = .TRANSPARENT_BLACK,
-			MinLOD = 0,
-			MaxLOD = max(f32),
-			ShaderRegister = 0,
-			RegisterSpace = 0,
+			Filter           = .MIN_MAG_MIP_POINT,
+			AddressU         = .BORDER,
+			AddressV         = .BORDER,
+			AddressW         = .BORDER,
+			MipLODBias       = 0,
+			MaxAnisotropy    = 0,
+			ComparisonFunc   = .NEVER,
+			BorderColor      = .TRANSPARENT_BLACK,
+			MinLOD           = 0,
+			MaxLOD           = max(f32),
+			ShaderRegister   = 0,
+			RegisterSpace    = 0,
 			ShaderVisibility = .PIXEL,
 		}
 
-		samplers : []d3d12.STATIC_SAMPLER_DESC = {sampler}
+		samplers: []d3d12.STATIC_SAMPLER_DESC = {sampler}
 		fmt.printfln("samplers: %#v", samplers)
 
 		desc := d3d12.VERSIONED_ROOT_SIGNATURE_DESC {
@@ -267,10 +240,8 @@ run :: proc() -> (exit_code: int) {
 		}
 
 		serialized_desc: ^d3d12.IBlob
-		hr = d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil)
-		check(hr, "Failed to serialize root signature")
-		hr = device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature))
-		check(hr, "Failed creating root signature")
+		check(d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil))
+		check(device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature)))
 		serialized_desc->Release()
 	}
 
@@ -287,11 +258,8 @@ run :: proc() -> (exit_code: int) {
 		vs: ^d3d12.IBlob = nil
 		ps: ^d3d12.IBlob = nil
 
-		hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "VSMain", "vs_4_0", compile_flags, 0, &vs, nil)
-		check(hr, "Failed to compile vertex shader")
-
-		hr = d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "PSMain", "ps_4_0", compile_flags, 0, &ps, nil)
-		check(hr, "Failed to compile pixel shader")
+		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "VSMain", "vs_4_0", compile_flags, 0, &vs, nil))
+		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "PSMain", "ps_4_0", compile_flags, 0, &ps, nil))
 
 		// This layout matches the vertices data defined further down
 		vertex_format: []d3d12.INPUT_ELEMENT_DESC = {
@@ -343,8 +311,7 @@ run :: proc() -> (exit_code: int) {
 			SampleDesc = {Count = 1, Quality = 0},
 		}
 
-		hr = device->CreateGraphicsPipelineState(&pipeline_state_desc, d3d12.IPipelineState_UUID, (^rawptr)(&pipeline))
-		check(hr, "Pipeline creation failed")
+		check(device->CreateGraphicsPipelineState(&pipeline_state_desc, d3d12.IPipelineState_UUID, (^rawptr)(&pipeline)))
 
 		vs->Release()
 		ps->Release()
@@ -352,30 +319,28 @@ run :: proc() -> (exit_code: int) {
 
 	// Create the command list that is reused further down.
 	cmdlist: ^d3d12.IGraphicsCommandList
-	hr = device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&cmdlist))
-	check(hr, "Failed to create command list")
-	hr = cmdlist->Close()
-	check(hr, "Failed to close command list")
+	check(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&cmdlist)))
+	check(cmdlist->Close())
 
 	vertex_buffer: ^d3d12.IResource
 	vertex_buffer_view: d3d12.VERTEX_BUFFER_VIEW
 
 	{
 		// The position and color data for the triangle's vertices go together per-vertex
-        // vertices := [?]f32 {
-        //     // pos            color
-        //      0.0 , 0.5, 0.0,  1,0,0,0,
-        //      0.5, -0.5, 0.0,  0,1,0,0,
-        //     -0.5, -0.5, 0.0,  0,0,1,0,
-        // }
+		// vertices := [?]f32 {
+		//     // pos            color
+		//      0.0 , 0.5, 0.0,  1,0,0,0,
+		//      0.5, -0.5, 0.0,  0,1,0,0,
+		//     -0.5, -0.5, 0.0,  0,0,1,0,
+		// }
 
 		vertex :: model.vertex
 		vertices := [?]vertex {
-            // pos            color
-            {{ 0.0 , 0.5, 0.0},{1,0},{1,0,0}},
-            {{ 0.5, -0.5, 0.0},{0,1},{0,1,0}},
-            {{-0.5, -0.5, 0.0},{1,1},{0,0,1}},
-        }
+			// pos            color
+			{{0.0, 0.5, 0.0}, {1, 0}, {1, 0, 0}},
+			{{0.5, -0.5, 0.0}, {0, 1}, {0, 1, 0}},
+			{{-0.5, -0.5, 0.0}, {1, 1}, {0, 0, 1}},
+		}
 
 		//vertices := model.vertices
 
@@ -400,14 +365,12 @@ run :: proc() -> (exit_code: int) {
 			Flags = {},
 		}
 
-		hr = device->CreateCommittedResource(&heap_props, {}, &resource_desc, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&vertex_buffer))
-		check(hr, "Failed creating vertex buffer")
+		check(device->CreateCommittedResource(&heap_props, {}, &resource_desc, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&vertex_buffer)))
 
 		gpu_data: rawptr
 		read_range: d3d12.RANGE
 
-		hr = vertex_buffer->Map(0, &read_range, &gpu_data)
-		check(hr, "Failed creating verex buffer resource")
+		check(vertex_buffer->Map(0, &read_range, &gpu_data))
 		fmt.println("read_range", read_range)
 
 		mem.copy(gpu_data, &vertices[0], vertex_buffer_size)
@@ -421,44 +384,35 @@ run :: proc() -> (exit_code: int) {
 		}
 	}
 
-    // Note: ComPtr's are CPU objects but this resource needs to stay in scope until
-    // the command list that references it has finished executing on the GPU.
-    // We will flush the GPU at the end of this method to ensure the resource is not
-    // prematurely destroyed.
-    //ComPtr<ID3D12Resource> textureUploadHeap;
+	// Note: ComPtr's are CPU objects but this resource needs to stay in scope until
+	// the command list that references it has finished executing on the GPU.
+	// We will flush the GPU at the end of this method to ensure the resource is not
+	// prematurely destroyed.
+	//ComPtr<ID3D12Resource> textureUploadHeap;
 	//textureUploadHeap : d3d12.RESOURCE_DESC
 	m_texture: ^d3d12.IResource
 	textureUploadHeap: ^d3d12.IResource
 
-    // Create the texture.
+	// Create the texture.
 	if true {
-        textureDesc : d3d12.RESOURCE_DESC = {}
-        textureDesc.MipLevels = 1
-        textureDesc.Format = .R8G8B8A8_UNORM
-        textureDesc.Width = u64(TextureWidth)
-        textureDesc.Height = TextureHeight
-        textureDesc.Flags = {} // D3D12_RESOURCE_FLAG_NONE
-        textureDesc.DepthOrArraySize = 1
-        textureDesc.SampleDesc.Count = 1
-        textureDesc.SampleDesc.Quality = 0
-        textureDesc.Dimension = .TEXTURE2D
-
+		textureDesc: d3d12.RESOURCE_DESC = {
+			MipLevels = 1,
+			Format = .R8G8B8A8_UNORM,
+			Width = u64(TextureWidth),
+			Height = TextureHeight,
+			Flags = {},
+			DepthOrArraySize = 1,
+			SampleDesc = {Count = 1, Quality = 0},
+			Dimension = .TEXTURE2D,
+		}
 		ppd := d3d12.HEAP_PROPERTIES {
 			Type = .DEFAULT,
 		}
 
-		hr = device->CreateCommittedResource(
-			&ppd,
-			{},
-			&textureDesc,
-			{.COPY_DEST},
-			nil,
-			d3d12.IResource_UUID,
-			(^rawptr)(&m_texture))
+		check(device->CreateCommittedResource(&ppd, {}, &textureDesc, {.COPY_DEST}, nil, d3d12.IResource_UUID, (^rawptr)(&m_texture)))
 		fmt.println("m_texture:", m_texture)
-		check(hr, "Failed creating texture buffer")
 
-		uploadBufferSize := GetRequiredIntermediateSize(m_texture, 0, 1)
+		uploadBufferSize := d3d12.GetRequiredIntermediateSize(m_texture, 0, 1)
 		fmt.println("uploadBufferSize:", uploadBufferSize)
 
 		pp := d3d12.HEAP_PROPERTIES {
@@ -475,7 +429,7 @@ run :: proc() -> (exit_code: int) {
 		}
         auto buf = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 		*/
-		buf : d3d12.RESOURCE_DESC = {
+		buf: d3d12.RESOURCE_DESC = {
 			Dimension = .BUFFER,
 			Alignment = 0,
 			Width = uploadBufferSize,
@@ -488,21 +442,11 @@ run :: proc() -> (exit_code: int) {
 			Flags = {},
 		}
 
-		hr = device->CreateCommittedResource(
-			&pp,
-			{},
-			&buf,
-			d3d12.RESOURCE_STATE_GENERIC_READ,
-			nil,
-			d3d12.IResource_UUID,
-			(^rawptr)(&textureUploadHeap))
-		check(hr, "Failed creating textureUploadHeap")
+		check(device->CreateCommittedResource(&pp, {}, &buf, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&textureUploadHeap)))
 
-		_ = buf
-		_ = pp
 		fmt.println("textureUploadHeap:", textureUploadHeap)
 
-        texture := GenerateTextureData()
+		texture := GenerateTextureData()
 		defer delete(texture)
 
 		textureData: d3d12.SUBRESOURCE_DATA = {}
@@ -511,35 +455,45 @@ run :: proc() -> (exit_code: int) {
 		textureData.SlicePitch = textureData.RowPitch * i64(TextureHeight)
 
 		// UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
-        // auto trans = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        // m_commandList->ResourceBarrier(1, &trans);
+
+		// auto trans = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		// m_commandList->ResourceBarrier(1, &trans);
+		trans := d3d12.RESOURCE_BARRIER {
+			Type  = .TRANSITION,
+			Flags = {},
+		}
+		trans.Transition = {
+			pResource   = m_texture,
+			StateBefore = {.COPY_DEST},
+			StateAfter  = {.PIXEL_SHADER_RESOURCE},
+			Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		}
+		cmdlist->ResourceBarrier(1, &trans)
+
 
 		gpu_data: rawptr
 		read_range: d3d12.RANGE
-
-		hr = textureUploadHeap->Map(0, &read_range, &gpu_data)
-		check(hr, "Failed creating textureUploadHeap resource")
+		check(textureUploadHeap->Map(0, &read_range, &gpu_data))
 		fmt.println("read_range", read_range)
 
 		mem.copy(gpu_data, &texture[0], len(texture))
 		textureUploadHeap->Unmap(0, nil)
 
 		// Describe and create a SRV for the texture.
-		srvDesc : d3d12.SHADER_RESOURCE_VIEW_DESC = {}
-        srvDesc.Shader4ComponentMapping = 0 //d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING
-        srvDesc.Format = textureDesc.Format
-        srvDesc.ViewDimension = .TEXTURE2D
-        srvDesc.Texture2D.MipLevels = 1
+		srvDesc: d3d12.SHADER_RESOURCE_VIEW_DESC = {}
+		srvDesc.Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING
+		srvDesc.Format = textureDesc.Format
+		srvDesc.ViewDimension = .TEXTURE2D
+		srvDesc.Texture2D.MipLevels = 1
 		// rtv_descriptor_heap
 
 		srv_descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE
 		srv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&srv_descriptor_handle)
 		fmt.println("srv_descriptor_handle", srv_descriptor_handle)
-		//device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
+		device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
 	}
 
-	// hr = cmdlist->Close()
-	// check(hr, "Failed to close command list")
+	//check(cmdlist->Close())
 
 	// This fence is used to wait for frames to finish
 	fence_value: u64
@@ -547,8 +501,7 @@ run :: proc() -> (exit_code: int) {
 	fence_event: win32.HANDLE
 
 	{
-		hr = device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence))
-		check(hr, "Failed to create fence")
+		check(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
 		fence_value += 1
 		manual_reset: win32.BOOL = false
 		initial_state: win32.BOOL = false
@@ -562,18 +515,14 @@ run :: proc() -> (exit_code: int) {
 	win32app.show_and_update_window(hwnd)
 	for win32app.pull_messages() {
 
-		hr = command_allocator->Reset()
-		check(hr, "Failed resetting command allocator")
-
-		hr = cmdlist->Reset(command_allocator, pipeline)
-		check(hr, "Failed to reset command list")
+		check(command_allocator->Reset())
+		check(cmdlist->Reset(command_allocator, pipeline))
 
 		window_size := settings.window_size
 		viewport := d3d12.VIEWPORT {
 			Width  = f32(window_size.x),
 			Height = f32(window_size.y),
 		}
-
 		scissor_rect := d3d12.RECT {
 			left   = 0,
 			right  = window_size.x,
@@ -625,8 +574,7 @@ run :: proc() -> (exit_code: int) {
 
 		cmdlist->ResourceBarrier(1, &to_present_barrier)
 
-		hr = cmdlist->Close()
-		check(hr, "Failed to close command list")
+		check(cmdlist->Close())
 
 		// execute
 		cmdlists := [?]^d3d12.IGraphicsCommandList{cmdlist}
@@ -635,26 +583,19 @@ run :: proc() -> (exit_code: int) {
 		// present
 		{
 			params: dxgi.PRESENT_PARAMETERS
-			hr = swap_chain->Present1(1, {}, &params)
-			check(hr, "Present failed")
+			check(swap_chain->Present1(1, {}, &params))
 		}
 
 		// wait for frame to finish
 		{
 			current_fence_value := fence_value
-
-			hr = queue->Signal(fence, current_fence_value)
-			check(hr, "Failed to signal fence")
-
+			check(queue->Signal(fence, current_fence_value))
 			fence_value += 1
 			completed := fence->GetCompletedValue()
-
 			if completed < current_fence_value {
-				hr = fence->SetEventOnCompletion(current_fence_value, fence_event)
-				check(hr, "Failed to set event on completion flag")
+				check(fence->SetEventOnCompletion(current_fence_value, fence_event))
 				win32.WaitForSingleObject(fence_event, win32.INFINITE)
 			}
-
 			frame_index = swap_chain->GetCurrentBackBufferIndex()
 		}
 	}

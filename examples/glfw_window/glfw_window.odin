@@ -4,7 +4,6 @@
 package glfw_window
 
 import "base:intrinsics"
-import "base:runtime"
 import "core:fmt"
 import glm "core:math/linalg/glsl"
 import "core:os"
@@ -12,13 +11,18 @@ import "core:time"
 import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
+import "core:image"
+import "core:image/png"
 
-// cow, cube, gazebo, crisscross, platonic/icosahedron
-import model "../../data/models/crisscross"
+// cow, cube, gazebo, crisscross
+import model "../../data/models/cube"
 SCALE :: 0.2
 
-//import model "../../data/models/platonic/icosahedron"
-//SCALE :: 1.0
+// import model "../../data/models/platonic/icosahedron"
+// SCALE :: 1.0
+
+_ :: png
+IMAGELOC :: "../../data/images/uv_checker_w.png"
 
 WINDOW_TITLE :: "Mimir"
 WINDOW_WIDTH :: 640
@@ -28,11 +32,25 @@ WINDOW_HEIGHT :: WINDOW_WIDTH * 3 / 4
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
 
+vertex_sources : []string = {
+	string(#load("shaders/pos.vs")),
+	string(#load("shaders/pos_tex.vs")),
+	string(#load("shaders/pos_nml.vs")),
+	string(#load("shaders/pos_tex_nml.vs")),
+}
+
+fragment_sources : []string = {
+	string(#load("shaders/col.fs")),
+	string(#load("shaders/tex.fs")),
+}
+
 running: b32 = true
 aspect: f32 = 1
 
 run :: proc() -> (exit_code: int) {
-	fmt.println("size_of(model.material)=", size_of(model.material))
+	when #defined(model.material) {
+		fmt.println("size_of(model.material)=", size_of(model.material))
+	}
 
 	if !bool(glfw.Init()) {
 		fmt.eprintln("Failed to initialize GLFW")
@@ -59,13 +77,10 @@ run :: proc() -> (exit_code: int) {
 	// Load OpenGL function pointers with the specified OpenGL major and minor version.
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
 
-	{
-		width, height := glfw.GetWindowSize(window_handle)
-		size_callback(window_handle, width, height)
-		fmt.println("size:", width, height, "aspect:", aspect)
-	}
+	size_callback(window_handle, glfw.GetFramebufferSize(window_handle))
 
 	vertex_source := vertex_sources[model.vertex_flags]
+	fragment_source := fragment_sources[1]
 	// useful utility procedures that are part of vendor:OpenGl
 	program := gl.load_shaders_source(vertex_source, fragment_source) or_else panic("Failed to create GLSL program")
 	defer gl.DeleteProgram(program)
@@ -74,6 +89,35 @@ run :: proc() -> (exit_code: int) {
 
 	uniforms := gl.get_uniforms_from_program(program)
 	defer gl.destroy_uniforms(uniforms)
+
+
+	// Load image at compile time
+    image_file_bytes    := #load(IMAGELOC)
+
+    // Load image  Odin's core:image library.
+    image_ptr           :  ^image.Image
+    err                 :  image.Error
+    options             := image.Options{.alpha_add_if_missing}
+
+    //    image_ptr, err =  q.load_from_file(IMAGELOC, options)
+    image_ptr, err =  png.load_from_bytes(image_file_bytes, options)
+    defer png.destroy(image_ptr)
+    image_w := i32(image_ptr.width)
+    image_h := i32(image_ptr.height)
+
+    if err != nil {
+        fmt.println("ERROR: Image:", IMAGELOC, "failed to load.")
+		return
+    }
+
+    // Copy bytes from icon buffer into slice.
+    earth_pixels_u8 := make([]u8, len(image_ptr.pixels.buf))
+	defer delete(earth_pixels_u8)
+    for b, i in image_ptr.pixels.buf {
+        earth_pixels_u8[i] = b
+    }
+
+	fmt.println("Image:", IMAGELOC, image_w, image_h)
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -116,6 +160,31 @@ run :: proc() -> (exit_code: int) {
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(model.indices) * size_of(model.indices[0]), raw_data(model.indices), gl.STATIC_DRAW)
+
+
+    // Describe texture.
+    gl.TexImage2D(
+        gl.TEXTURE_2D,    // texture type
+        0,                // level of detail number (default = 0)
+        gl.RGBA,          // texture format
+        image_w,          // width
+        image_h,          // height
+        0,                // border, must be 0
+        gl.RGBA,          // pixel data format
+        gl.UNSIGNED_BYTE, // data type of pixel data
+        //&earth_pixels_u8[0],  // image data
+		&image_ptr.pixels.buf[0],  // image data
+    )
+
+    // Texture wrapping options.
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+
+    // Texture filtering options.
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+
 
 	gl.ClearColor(0.10, 0.15, 0.20, 1.0)
 	gl.Enable(gl.CULL_FACE)

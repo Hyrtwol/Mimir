@@ -128,8 +128,8 @@ farClippingPLane: f32 : 1000
 focalLength: f32 = 20 // in mm
 
 // 35mm Full Aperture in inches
-filmApertureWidth: f32 = 0.980
-filmApertureHeight: f32 = 0.735
+filmApertureWidth :: 0.980
+filmApertureHeight :: 0.735
 
 run :: proc() -> (exit_code: int) {
 	fmt.println("hello world")
