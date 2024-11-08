@@ -92,12 +92,12 @@ run :: proc() -> (exit_code: int) {
 
 
 	// Load image at compile time
-    image_file_bytes    := #load(IMAGELOC)
+    image_file_bytes := #load(IMAGELOC)
 
     // Load image  Odin's core:image library.
-    image_ptr           :  ^image.Image
-    err                 :  image.Error
-    options             := image.Options{.alpha_add_if_missing}
+    image_ptr        : ^image.Image
+    err              : image.Error
+    options          := image.Options{.alpha_add_if_missing}
 
     //    image_ptr, err =  q.load_from_file(IMAGELOC, options)
     image_ptr, err =  png.load_from_bytes(image_file_bytes, options)

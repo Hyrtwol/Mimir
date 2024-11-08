@@ -29,12 +29,26 @@ TextureWidth: u32 : 256
 TextureHeight: u32 : 256
 TexturePixelSize: u32 : 4 // The number of bytes used to represent a pixel in the texture.
 
-check :: proc(res: d3d12.HRESULT, message: string = #caller_expression(res)) {
+// This fence is used to wait for frames to finish
+fence_value: u64
+fence: ^d3d12.IFence
+fence_event: win32.HANDLE
+frame_index: u32
+swap_chain: ^dxgi.ISwapChain3
+queue: ^d3d12.ICommandQueue
+
+m_commandList: ^d3d12.IGraphicsCommandList
+
+// ThrowIfFailed
+check :: proc(res: d3d12.HRESULT, message: string = #caller_expression(res), loc := #caller_location) {
 	if win32.SUCCEEDED(res) {
 		return
 	}
 
-	fmt.printfln("%v. Error code: %0x\n%#v", message, u32(res), win32.HRESULT(res))
+	hr := win32.HRESULT(res)
+	fmt.printfln("Error %v %v (0x%0x)", win32.System_Error(hr.Code), hr, u32(res))
+	fmt.printfln("\t%v", message)
+	fmt.printfln("\t%v", loc)
 	os.exit(-1)
 }
 
@@ -57,6 +71,10 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 }
+
+OnInit :: proc() {}
+LoadPipeline :: proc() {}
+LoadAssets :: proc() {}
 
 GenerateTextureData :: proc() -> []u8 {
 	rowPitch := TextureWidth * TexturePixelSize
@@ -85,6 +103,34 @@ GenerateTextureData :: proc() -> []u8 {
 		}
 	}
 	return pData
+}
+
+OnRender :: proc() {}
+OnDestroy :: proc() {
+    // Ensure that the GPU is no longer referencing resources that are about to be
+    // cleaned up by the destructor.
+    WaitForPreviousFrame()
+
+    win32.CloseHandle(fence_event)
+}
+
+PopulateCommandList :: proc() {}
+
+WaitForPreviousFrame :: proc() {
+    // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
+    // This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
+    // sample illustrates how to use fences for efficient resource usage and to
+    // maximize GPU utilization.
+
+	current_fence_value := fence_value
+	check(queue->Signal(fence, current_fence_value))
+	fence_value += 1
+	completed := fence->GetCompletedValue()
+	if completed < current_fence_value {
+		check(fence->SetEventOnCompletion(current_fence_value, fence_event))
+		win32.WaitForSingleObject(fence_event, win32.INFINITE)
+	}
+	frame_index = swap_chain->GetCurrentBackBufferIndex()
 }
 
 run :: proc() -> (exit_code: int) {
@@ -130,7 +176,7 @@ run :: proc() -> (exit_code: int) {
 	// Create D3D12 device that represents the GPU
 	device: ^d3d12.IDevice
 	check(d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, (^rawptr)(&device)))
-	queue: ^d3d12.ICommandQueue
+	// queue: ^d3d12.ICommandQueue
 
 	{
 		desc := d3d12.COMMAND_QUEUE_DESC {
@@ -140,7 +186,7 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	// Create the swap chain, it's the thing that contains render targets that we draw into. It has 2 render targets (NUM_RENDERTARGETS), giving us double buffering.
-	swap_chain: ^dxgi.ISwapChain3
+
 
 	{
 		swap_chain_desc := dxgi.SWAP_CHAIN_DESC1 {
@@ -157,7 +203,7 @@ run :: proc() -> (exit_code: int) {
 		check(factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
 	}
 
-	frame_index := swap_chain->GetCurrentBackBufferIndex()
+	frame_index = swap_chain->GetCurrentBackBufferIndex()
 
 	// Descriptors describe the GPU data and are allocated from a Descriptor Heap
 	rtv_descriptor_heap: ^d3d12.IDescriptorHeap
@@ -242,7 +288,7 @@ run :: proc() -> (exit_code: int) {
 		serialized_desc: ^d3d12.IBlob
 		check(d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil))
 		check(device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature)))
-		serialized_desc->Release()
+		//serialized_desc->Release()
 	}
 
 	// The pipeline contains the shaders etc to use
@@ -258,8 +304,8 @@ run :: proc() -> (exit_code: int) {
 		vs: ^d3d12.IBlob = nil
 		ps: ^d3d12.IBlob = nil
 
-		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "VSMain", "vs_4_0", compile_flags, 0, &vs, nil))
-		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "PSMain", "ps_4_0", compile_flags, 0, &ps, nil))
+		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "VSMain", "vs_5_0", compile_flags, 0, &vs, nil))
+		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "PSMain", "ps_5_0", compile_flags, 0, &ps, nil))
 
 		// This layout matches the vertices data defined further down
 		vertex_format: []d3d12.INPUT_ELEMENT_DESC = {
@@ -310,6 +356,7 @@ run :: proc() -> (exit_code: int) {
 			DSVFormat = .UNKNOWN,
 			SampleDesc = {Count = 1, Quality = 0},
 		}
+		fmt.printfln("pipeline_state_desc: %#v", pipeline_state_desc)
 
 		check(device->CreateGraphicsPipelineState(&pipeline_state_desc, d3d12.IPipelineState_UUID, (^rawptr)(&pipeline)))
 
@@ -317,10 +364,9 @@ run :: proc() -> (exit_code: int) {
 		ps->Release()
 	}
 
-	// Create the command list that is reused further down.
-	cmdlist: ^d3d12.IGraphicsCommandList
-	check(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&cmdlist)))
-	check(cmdlist->Close())
+    // Create the command list.
+	check(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&m_commandList)))
+	//check(m_commandList->Close())
 
 	vertex_buffer: ^d3d12.IResource
 	vertex_buffer_view: d3d12.VERTEX_BUFFER_VIEW
@@ -456,8 +502,10 @@ run :: proc() -> (exit_code: int) {
 
 		// UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
 
+		// res := d3d12.UpdateSubresources3(m_commandList, m_texture, textureUploadHeap, 0, 0, 1, &textureData)
+		// assert(res>0)
+
 		// auto trans = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		// m_commandList->ResourceBarrier(1, &trans);
 		trans := d3d12.RESOURCE_BARRIER {
 			Type  = .TRANSITION,
 			Flags = {},
@@ -468,37 +516,44 @@ run :: proc() -> (exit_code: int) {
 			StateAfter  = {.PIXEL_SHADER_RESOURCE},
 			Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		}
-		cmdlist->ResourceBarrier(1, &trans)
+		// m_commandList->ResourceBarrier(1, &trans);
+		m_commandList->ResourceBarrier(1, &trans)
 
 
-		gpu_data: rawptr
-		read_range: d3d12.RANGE
-		check(textureUploadHeap->Map(0, &read_range, &gpu_data))
-		fmt.println("read_range", read_range)
 
-		mem.copy(gpu_data, &texture[0], len(texture))
-		textureUploadHeap->Unmap(0, nil)
+		// gpu_data: rawptr
+		// read_range: d3d12.RANGE
+		// check(textureUploadHeap->Map(0, &read_range, &gpu_data))
+		// fmt.println("read_range", read_range)
+
+		// mem.copy(gpu_data, &texture[0], len(texture))
+		// textureUploadHeap->Unmap(0, nil)
+
+
 
 		// Describe and create a SRV for the texture.
-		srvDesc: d3d12.SHADER_RESOURCE_VIEW_DESC = {}
-		srvDesc.Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING
-		srvDesc.Format = textureDesc.Format
-		srvDesc.ViewDimension = .TEXTURE2D
-		srvDesc.Texture2D.MipLevels = 1
+		srvDesc: d3d12.SHADER_RESOURCE_VIEW_DESC = {
+			Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+			Format = textureDesc.Format,
+			ViewDimension = .TEXTURE2D,
+			Texture2D = {MipLevels = 1},
+		}
 		// rtv_descriptor_heap
-
 		srv_descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE
 		srv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&srv_descriptor_handle)
 		fmt.println("srv_descriptor_handle", srv_descriptor_handle)
 		device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
 	}
 
-	//check(cmdlist->Close())
+	check(m_commandList->Close())
 
-	// This fence is used to wait for frames to finish
-	fence_value: u64
-	fence: ^d3d12.IFence
-	fence_event: win32.HANDLE
+    //ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+    //m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	{
+	m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
+	queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
+	}
+
 
 	{
 		check(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
@@ -510,13 +565,18 @@ run :: proc() -> (exit_code: int) {
 			fmt.println("Failed to create fence event")
 			return
 		}
+
+        // Wait for the command list to execute; we are reusing the same command
+        // list in our main loop but for now, we just want to wait for setup to
+        // complete before continuing.
+        WaitForPreviousFrame()
 	}
 
 	win32app.show_and_update_window(hwnd)
 	for win32app.pull_messages() {
 
 		check(command_allocator->Reset())
-		check(cmdlist->Reset(command_allocator, pipeline))
+		check(m_commandList->Reset(command_allocator, pipeline))
 
 		window_size := settings.window_size
 		viewport := d3d12.VIEWPORT {
@@ -531,9 +591,9 @@ run :: proc() -> (exit_code: int) {
 		}
 
 		// This state is reset every time the cmd list is reset, so we need to rebind it
-		cmdlist->SetGraphicsRootSignature(root_signature)
-		cmdlist->RSSetViewports(1, &viewport)
-		cmdlist->RSSetScissorRects(1, &scissor_rect)
+		m_commandList->SetGraphicsRootSignature(root_signature)
+		m_commandList->RSSetViewports(1, &viewport)
+		m_commandList->RSSetScissorRects(1, &scissor_rect)
 
 		to_render_target_barrier := d3d12.RESOURCE_BARRIER {
 			Type  = .TRANSITION,
@@ -547,7 +607,7 @@ run :: proc() -> (exit_code: int) {
 			Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		}
 
-		cmdlist->ResourceBarrier(1, &to_render_target_barrier)
+		m_commandList->ResourceBarrier(1, &to_render_target_barrier)
 
 		rtv_handle: d3d12.CPU_DESCRIPTOR_HANDLE
 		rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&rtv_handle)
@@ -557,47 +617,37 @@ run :: proc() -> (exit_code: int) {
 			rtv_handle.ptr += uint(frame_index * s)
 		}
 
-		cmdlist->OMSetRenderTargets(1, &rtv_handle, false, nil)
+		m_commandList->OMSetRenderTargets(1, &rtv_handle, false, nil)
 
-		// clear backbuffer
+    	// Record commands.
 		clearcolor := [4]f32{0.05, 0.05, 0.05, 1.0}
-		cmdlist->ClearRenderTargetView(rtv_handle, &clearcolor, 0, nil)
+		m_commandList->ClearRenderTargetView(rtv_handle, &clearcolor, 0, nil)
+		m_commandList->IASetPrimitiveTopology(.TRIANGLELIST)
+		m_commandList->IASetVertexBuffers(0, 1, &vertex_buffer_view)
+		m_commandList->DrawInstanced(3, 1, 0, 0)
 
-		// draw call
-		cmdlist->IASetPrimitiveTopology(.TRIANGLELIST)
-		cmdlist->IASetVertexBuffers(0, 1, &vertex_buffer_view)
-		cmdlist->DrawInstanced(3, 1, 0, 0)
-
+    	// Indicate that the back buffer will now be used to present.
 		to_present_barrier := to_render_target_barrier
 		to_present_barrier.Transition.StateBefore = {.RENDER_TARGET}
 		to_present_barrier.Transition.StateAfter = d3d12.RESOURCE_STATE_PRESENT
 
-		cmdlist->ResourceBarrier(1, &to_present_barrier)
+		m_commandList->ResourceBarrier(1, &to_present_barrier)
 
-		check(cmdlist->Close())
+		check(m_commandList->Close())
 
 		// execute
-		cmdlists := [?]^d3d12.IGraphicsCommandList{cmdlist}
-		queue->ExecuteCommandLists(len(cmdlists), (^^d3d12.ICommandList)(&cmdlists[0]))
+		{
+			m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
+			queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
+		}
 
 		// present
 		{
-			params: dxgi.PRESENT_PARAMETERS
+			params: dxgi.PRESENT_PARAMETERS = {}
 			check(swap_chain->Present1(1, {}, &params))
 		}
 
-		// wait for frame to finish
-		{
-			current_fence_value := fence_value
-			check(queue->Signal(fence, current_fence_value))
-			fence_value += 1
-			completed := fence->GetCompletedValue()
-			if completed < current_fence_value {
-				check(fence->SetEventOnCompletion(current_fence_value, fence_event))
-				win32.WaitForSingleObject(fence_event, win32.INFINITE)
-			}
-			frame_index = swap_chain->GetCurrentBackBufferIndex()
-		}
+		WaitForPreviousFrame()
 	}
 
 	return

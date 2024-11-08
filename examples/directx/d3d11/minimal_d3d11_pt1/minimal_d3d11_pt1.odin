@@ -3,8 +3,7 @@ package minimal_d3d11_pt1
 
 import "base:runtime"
 import "core:fmt"
-import glm "core:math/linalg/glsl"
-//import hlm "core:math/linalg/hlsl"
+import "core:math/linalg"
 import win32 "core:sys/windows"
 import "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
@@ -16,15 +15,16 @@ WIDTH :: 1920 / 2
 HEIGHT :: WIDTH * 9 / 16
 SHADER_FILE :: "shaders.hlsl"
 
-// float2 :: glm.vec2
-// float3 :: glm.vec3
-// float4 :: glm.vec4
-// float4x4 :: glm.mat4
+float  :: f32
+float2 :: [2]float
+float3 :: [3]float
+float4 :: [4]float
+float4x4 :: matrix[4, 4]float
 
 Constants :: struct #align (16) {
-	transform:    glm.mat4,
-	projection:   glm.mat4,
-	light_vector: glm.vec3,
+	transform:    float4x4,
+	projection:   float4x4,
+	light_vector: float3,
 }
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -266,8 +266,8 @@ main :: proc() {
 	vertex_buffer_stride: u32 = 11 * size_of(u32)
 	vertex_buffer_offset: u32 = 0
 
-	model_rotation := glm.vec3{0.0, 0.0, 0.0}
-	model_translation := glm.vec3{0.0, 0.0, 4.0}
+	model_rotation := float3{0.0, 0.0, 0.0}
+	model_translation := float3{0.0, 0.0, 4.0}
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
 	win32.UpdateWindow(hwnd)
@@ -275,20 +275,13 @@ main :: proc() {
 	for win32app.pull_messages() {
 
 		viewport := d3d11.VIEWPORT{0, 0, f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height), 0, 1}
+		h, n, f, aspect: f32 = 1, 1, 9, viewport.Width / viewport.Height
+		rotate_x := linalg.matrix4_rotate_f32(model_rotation.x, {1, 0, 0})
+		rotate_y := linalg.matrix4_rotate_f32(model_rotation.y, {0, 1, 0})
+		rotate_z := linalg.matrix4_rotate_f32(model_rotation.z, {0, 0, 1})
+		translate := linalg.matrix4_translate_f32(model_translation)
 
-		w := viewport.Width / viewport.Height
-		h := f32(1)
-		n := f32(1)
-		f := f32(9)
-
-		rotate_x := glm.mat4Rotate({1, 0, 0}, model_rotation.x)
-		rotate_y := glm.mat4Rotate({0, 1, 0}, model_rotation.y)
-		rotate_z := glm.mat4Rotate({0, 0, 1}, model_rotation.z)
-		translate := glm.mat4Translate(model_translation)
-
-		model_rotation.x += 0.005
-		model_rotation.y += 0.009
-		model_rotation.z += 0.001
+		model_rotation += {0.005, 0.009, 0.001}
 
 		//-- Update Constants --//
 		{
@@ -298,9 +291,7 @@ main :: proc() {
 			constants.transform = translate * rotate_z * rotate_y * rotate_x
 			constants.light_vector = {+1, -1, +1}
 
-			constants.projection = {2 * n / w, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), n * f / (n - f), 0, 0, 1, 0}
-			//fmt.printfln("%s %v", "projection ", constants.projection)
-			//fmt.printfln("%s %v", "Perspective", glm.mat4Perspective(glm.PI*0.25, viewport.Height / viewport.Width, n, f))
+			constants.projection = {2 * n / aspect, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), n * f / (n - f), 0, 0, 1, 0}
 			device_context->Unmap(constant_buffer, 0)
 		}
 
