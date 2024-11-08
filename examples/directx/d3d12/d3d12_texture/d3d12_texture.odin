@@ -1,5 +1,5 @@
 // Based off Simple d3d12 triangle example in Odin https://gist.github.com/jakubtomsu/ecd83e61976d974c7730f9d7ad3e1fd0
-package d3d12_triangle
+package d3d12_texture
 
 import model "../../../../data/models/cube"
 import "base:intrinsics"
@@ -14,10 +14,10 @@ import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
 
-TITLE :: "D3D12 triangle"
+TITLE :: "D3D12 texture"
 WIDTH :: 1920 / 2
 HEIGHT :: WIDTH * 9 / 16
-SHADER_FILE :: "shaders.hlsl"
+SHADER_FILE :: "shaders_tx.hlsl"
 
 NUM_RENDERTARGETS :: 2
 
@@ -25,6 +25,9 @@ int3 :: win32app.int3
 float3 :: win32app.float3
 
 FrameCount: u32 : 3
+TextureWidth: u32 : 256
+TextureHeight: u32 : 256
+TexturePixelSize: u32 : 4 // The number of bytes used to represent a pixel in the texture.
 
 // This fence is used to wait for frames to finish
 fence_value: u64
@@ -72,6 +75,35 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 OnInit :: proc() {}
 LoadPipeline :: proc() {}
 LoadAssets :: proc() {}
+
+GenerateTextureData :: proc() -> []u8 {
+	rowPitch := TextureWidth * TexturePixelSize
+	cellPitch := rowPitch >> 3 // The width of a cell in the checkboard texture.
+	cellHeight := TextureWidth >> 3 // The height of a cell in the checkerboard texture.
+	textureSize := rowPitch * TextureHeight
+
+	pData := make([]u8, textureSize)
+
+	for n: u32 = 0; n < textureSize; n += TexturePixelSize {
+		x := n % rowPitch
+		y := n / rowPitch
+		i := x / cellPitch
+		j := y / cellHeight
+
+		if i % 2 == j % 2 {
+			pData[n] = 0x00 // R
+			pData[n + 1] = 0x00 // G
+			pData[n + 2] = 0x00 // B
+			pData[n + 3] = 0xff // A
+		} else {
+			pData[n] = 0xff // R
+			pData[n + 1] = 0xff // G
+			pData[n + 2] = 0xff // B
+			pData[n + 3] = 0xff // A
+		}
+	}
+	return pData
+}
 
 OnRender :: proc() {}
 OnDestroy :: proc() {
@@ -184,7 +216,7 @@ run :: proc() -> (exit_code: int) {
 		check(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&rtv_descriptor_heap)))
 	}
 
-	/*srv_descriptor_heap: ^d3d12.IDescriptorHeap
+	srv_descriptor_heap: ^d3d12.IDescriptorHeap
 	{
 		desc := d3d12.DESCRIPTOR_HEAP_DESC {
 			NumDescriptors = 1,
@@ -192,7 +224,7 @@ run :: proc() -> (exit_code: int) {
 			Flags          = {.SHADER_VISIBLE},
 		}
 		check(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&srv_descriptor_heap)))
-	}*/
+	}
 
 	// Fetch the two render targets from the swap chain
 	targets: [NUM_RENDERTARGETS]^d3d12.IResource
@@ -224,15 +256,39 @@ run :: proc() -> (exit_code: int) {
 	root_signature: ^d3d12.IRootSignature
 
 	{
+		sampler := d3d12.STATIC_SAMPLER_DESC {
+			Filter           = .MIN_MAG_MIP_POINT,
+			AddressU         = .BORDER,
+			AddressV         = .BORDER,
+			AddressW         = .BORDER,
+			MipLODBias       = 0,
+			MaxAnisotropy    = 0,
+			ComparisonFunc   = .NEVER,
+			BorderColor      = .TRANSPARENT_BLACK,
+			MinLOD           = 0,
+			MaxLOD           = max(f32),
+			ShaderRegister   = 0,
+			RegisterSpace    = 0,
+			ShaderVisibility = .PIXEL,
+		}
+
+		samplers: []d3d12.STATIC_SAMPLER_DESC = {sampler}
+		fmt.printfln("samplers: %#v", samplers)
+
 		desc := d3d12.VERSIONED_ROOT_SIGNATURE_DESC {
 			Version = ._1_1,
 		}
+
 		desc.Desc_1_1.Flags = {.ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}
+		desc.Desc_1_1.NumStaticSamplers = u32(len(samplers))
+		if desc.Desc_1_1.NumStaticSamplers > 0 {
+			desc.Desc_1_1.pStaticSamplers = &samplers[0]
+		}
 
 		serialized_desc: ^d3d12.IBlob
 		check(d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil))
 		check(device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature)))
-		serialized_desc->Release()
+		//serialized_desc->Release()
 	}
 
 	// The pipeline contains the shaders etc to use
@@ -300,7 +356,7 @@ run :: proc() -> (exit_code: int) {
 			DSVFormat = .UNKNOWN,
 			SampleDesc = {Count = 1, Quality = 0},
 		}
-		// fmt.printfln("pipeline_state_desc: %#v", pipeline_state_desc)
+		fmt.printfln("pipeline_state_desc: %#v", pipeline_state_desc)
 
 		check(device->CreateGraphicsPipelineState(&pipeline_state_desc, d3d12.IPipelineState_UUID, (^rawptr)(&pipeline)))
 
@@ -361,6 +417,8 @@ run :: proc() -> (exit_code: int) {
 		read_range: d3d12.RANGE
 
 		check(vertex_buffer->Map(0, &read_range, &gpu_data))
+		fmt.println("read_range", read_range)
+
 		mem.copy(gpu_data, &vertices[0], vertex_buffer_size)
 		vertex_buffer->Unmap(0, nil)
 
@@ -372,12 +430,130 @@ run :: proc() -> (exit_code: int) {
 		}
 	}
 
+	// Note: ComPtr's are CPU objects but this resource needs to stay in scope until
+	// the command list that references it has finished executing on the GPU.
+	// We will flush the GPU at the end of this method to ensure the resource is not
+	// prematurely destroyed.
+	//ComPtr<ID3D12Resource> textureUploadHeap;
+	//textureUploadHeap : d3d12.RESOURCE_DESC
+	m_texture: ^d3d12.IResource
+	textureUploadHeap: ^d3d12.IResource
+
+	// Create the texture.
+	if true {
+		textureDesc: d3d12.RESOURCE_DESC = {
+			MipLevels = 1,
+			Format = .R8G8B8A8_UNORM,
+			Width = u64(TextureWidth),
+			Height = TextureHeight,
+			Flags = {},
+			DepthOrArraySize = 1,
+			SampleDesc = {Count = 1, Quality = 0},
+			Dimension = .TEXTURE2D,
+		}
+		ppd := d3d12.HEAP_PROPERTIES {
+			Type = .DEFAULT,
+		}
+
+		check(device->CreateCommittedResource(&ppd, {}, &textureDesc, {.COPY_DEST}, nil, d3d12.IResource_UUID, (^rawptr)(&m_texture)))
+		fmt.println("m_texture:", m_texture)
+
+		uploadBufferSize := d3d12.GetRequiredIntermediateSize(m_texture, 0, 1)
+		fmt.println("uploadBufferSize:", uploadBufferSize)
+
+		pp := d3d12.HEAP_PROPERTIES {
+			Type = .UPLOAD,
+		}
+		/*
+		static inline CD3DX12_RESOURCE_DESC Buffer(
+			UINT64 width,
+			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+			UINT64 alignment = 0 ) noexcept
+		{
+			return CD3DX12_RESOURCE_DESC( D3D12_RESOURCE_DIMENSION_BUFFER, alignment, width, 1, 1, 1,
+				DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flags );
+		}
+        auto buf = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+		*/
+		buf: d3d12.RESOURCE_DESC = {
+			Dimension = .BUFFER,
+			Alignment = 0,
+			Width = uploadBufferSize,
+			Height = 1,
+			DepthOrArraySize = 1,
+			MipLevels = 1,
+			Format = .UNKNOWN,
+			SampleDesc = {Count = 1, Quality = 0},
+			Layout = .ROW_MAJOR,
+			Flags = {},
+		}
+
+		check(device->CreateCommittedResource(&pp, {}, &buf, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&textureUploadHeap)))
+
+		fmt.println("textureUploadHeap:", textureUploadHeap)
+
+		texture := GenerateTextureData()
+		defer delete(texture)
+
+		textureData: d3d12.SUBRESOURCE_DATA = {}
+		textureData.pData = &texture[0]
+		textureData.RowPitch = i64(TextureWidth) * i64(TexturePixelSize)
+		textureData.SlicePitch = textureData.RowPitch * i64(TextureHeight)
+
+		// UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
+
+		// res := d3d12.UpdateSubresources3(m_commandList, m_texture, textureUploadHeap, 0, 0, 1, &textureData)
+		// assert(res>0)
+
+		// auto trans = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		trans := d3d12.RESOURCE_BARRIER {
+			Type  = .TRANSITION,
+			Flags = {},
+		}
+		trans.Transition = {
+			pResource   = m_texture,
+			StateBefore = {.COPY_DEST},
+			StateAfter  = {.PIXEL_SHADER_RESOURCE},
+			Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		}
+		// m_commandList->ResourceBarrier(1, &trans);
+		m_commandList->ResourceBarrier(1, &trans)
+
+
+
+		// gpu_data: rawptr
+		// read_range: d3d12.RANGE
+		// check(textureUploadHeap->Map(0, &read_range, &gpu_data))
+		// fmt.println("read_range", read_range)
+
+		// mem.copy(gpu_data, &texture[0], len(texture))
+		// textureUploadHeap->Unmap(0, nil)
+
+
+
+		// Describe and create a SRV for the texture.
+		srvDesc: d3d12.SHADER_RESOURCE_VIEW_DESC = {
+			Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+			Format = textureDesc.Format,
+			ViewDimension = .TEXTURE2D,
+			Texture2D = {MipLevels = 1},
+		}
+		// rtv_descriptor_heap
+		srv_descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE
+		srv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&srv_descriptor_handle)
+		fmt.println("srv_descriptor_handle", srv_descriptor_handle)
+		device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
+	}
+
 	check(m_commandList->Close())
 
-	/*{
-		m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
-		queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
-	}*/
+    //ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+    //m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	{
+	m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
+	queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
+	}
+
 
 	{
 		check(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
@@ -475,11 +651,6 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	return
-}
-
-present :: proc() {
-	params: dxgi.PRESENT_PARAMETERS = {}
-	check(swap_chain->Present1(1, {}, &params))
 }
 
 shaders_hlsl := #load(SHADER_FILE)
