@@ -59,20 +59,8 @@ frame_stats: struct {
 	frame_time:    f32,
 }
 
-set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {
-	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
-}
-
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	return app
-}
-
-get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> ^application {
-	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
-	app := (^application)(pcs.lpCreateParams)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
 }
@@ -90,9 +78,9 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^application) -> 
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := get_app_from_lparam(lparam)
+	app := win32app.get_settings_from_lparam(lparam, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	set_app(hwnd, app)
+	win32app.set_settings(hwnd, app)
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
@@ -251,14 +239,15 @@ sleep :: proc(duration: time.Duration) {
 	}
 }
 
-run :: proc(app: ^application) {
+run :: proc(app: ^application) -> (exit_code: int) {
 	// queue.init(&app.char_queue)
 	// defer queue.destroy(&app.char_queue)
 	_, _, hwnd := win32app.prepare_run(app)
 	res: int
 	stopwatch := win32app.create_stopwatch()
 	stopwatch->start()
-	for win32app.pull_messages() {
+	msg: win32.MSG
+	for win32app.pull_messages(&msg) {
 
 		app.delta = f32(stopwatch->get_delta_seconds())
 		frame_stats.frame_time += app.delta
@@ -271,4 +260,6 @@ run :: proc(app: ^application) {
 		sleep(app.settings.sleep)
 	}
 	stopwatch->stop()
+	exit_code = int(msg.wParam)
+	return
 }

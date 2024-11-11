@@ -65,16 +65,10 @@ mouse_pos: win32app.int2
 
 show_atlas := false
 
-set_app :: #force_inline proc(hwnd: win32.HWND, app: ^application) {win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))}
-
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {return (^application)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))}
-
 convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {return (transmute(win32.COLORREF)mu_color) & 0xFFFFFF}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
-	app := win32app.get_application_from_createstruct(pcs, application)
+	app := win32app.get_settings_from_lparam(lparam, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.set_settings(hwnd, app)
 
@@ -108,7 +102,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	app := win32app.get_application(hwnd, application)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &timer1_id)
 	if !win32app.delete_object(&bitmap_handle) {
@@ -124,7 +118,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 // first := 5
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	app := win32app.get_application(hwnd, application)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 
 	ps: win32.PAINTSTRUCT
@@ -214,7 +208,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := win32app.get_application(hwnd, application)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	size := win32app.decode_lparam_as_int2(lparam)
@@ -250,7 +244,7 @@ WM_EXITSIZEMOVE :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	win32app.redraw_window(hwnd)
-	//app := get_app(hwnd)
+	//app := win32app.get_settings(hwnd, application)
 	//fmt.println(#procedure, app.mu_ctx.frame)
 	return 0
 }
@@ -261,7 +255,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	//case ' ':    win32app.redraw_window(hwnd)
 	case:
 		fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(lparam), win32.LOWORD(lparam))
-		app := get_app(hwnd)
+		app := win32app.get_settings(hwnd, application)
 		if app != nil {
 			//assert(&app.char_queue != nil)
 			//fmt.printfln("char_queue: %v", char_queue)

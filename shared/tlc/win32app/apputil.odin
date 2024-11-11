@@ -13,7 +13,7 @@ get_module_handle :: proc(lpModuleName: wstring = nil) -> HMODULE {
 	return module_handle
 }
 
-// get_instance :: proc() -> HINSTANCE {return HINSTANCE(get_module_handle())}
+get_instance :: proc() -> HINSTANCE {return HINSTANCE(get_module_handle())}
 
 get_module_filename :: proc(module: HMODULE, allocator := context.temp_allocator) -> string {
 	wname: [512]WCHAR
@@ -96,7 +96,7 @@ register_and_create_window :: proc(settings: ^window_settings) -> (instance: HIN
 	return
 }
 
-show_and_update_window :: proc(hwnd: HWND, nCmdShow: win32.INT = win32.SW_SHOWDEFAULT) {
+show_and_update_window :: #force_inline proc "contextless" (hwnd: HWND, nCmdShow: win32.INT = win32.SW_SHOWDEFAULT) {
 	win32.ShowWindow(hwnd, nCmdShow)
 	win32.UpdateWindow(hwnd)
 }
@@ -106,12 +106,7 @@ translate_and_dispatch_message :: #force_inline proc "contextless" (msg: ^win32.
 	win32.DispatchMessageW(msg)
 }
 
-pull_messages :: proc "contextless" (hwnd: HWND = nil) -> bool {
-	msg: win32.MSG
-	return pull_messages_msg(&msg, hwnd)
-}
-
-pull_messages_msg :: #force_inline proc "contextless" (msg: ^win32.MSG, hwnd: HWND = nil) -> bool {
+pull_messages :: #force_inline proc "contextless" (msg: ^win32.MSG, hwnd: HWND = nil) -> bool {
 	for win32.PeekMessageW(msg, hwnd, 0, 0, win32.PM_REMOVE) {
 		translate_and_dispatch_message(msg)
 		if (msg.message == win32.WM_QUIT) {
@@ -121,13 +116,10 @@ pull_messages_msg :: #force_inline proc "contextless" (msg: ^win32.MSG, hwnd: HW
 	return true
 }
 
-loop_messages :: proc(hwnd: HWND = nil) -> int {
-	msg: win32.MSG
-	for win32.GetMessageW(&msg, hwnd, 0, 0) > 0 {
-		win32.TranslateMessage(&msg)
-		win32.DispatchMessageW(&msg)
+loop_messages :: proc(msg: ^win32.MSG, hwnd: HWND = nil) {
+	for win32.GetMessageW(msg, hwnd, 0, 0) > 0 {
+		translate_and_dispatch_message(msg)
 	}
-	return int(msg.wParam)
 }
 
 prepare_run :: proc(settings: ^window_settings) -> (inst: HINSTANCE, atom: ATOM, hwnd: HWND) {
@@ -138,8 +130,9 @@ prepare_run :: proc(settings: ^window_settings) -> (inst: HINSTANCE, atom: ATOM,
 
 run :: proc(settings: ^window_settings) -> int {
 	_, _, _ = prepare_run(settings)
-	exit_code := loop_messages()
-	return exit_code
+	msg: win32.MSG
+	loop_messages(&msg)
+	return int(msg.wParam)
 }
 
 // default no draw background erase

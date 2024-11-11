@@ -62,7 +62,7 @@ run :: proc() -> (exit_code: int) {
 	load_rom(rom_path)
 
 	running = true
-	run_app(&app)
+	exit_code = run_app(&app)
 
 	//fmt.printfln("app %#v", app)
 	fmt.printfln("total %v (%v)", total, reps)

@@ -13,6 +13,7 @@ import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
+import "../../common"
 
 TITLE :: "D3D12 triangle"
 WIDTH :: 1920 / 2
@@ -36,18 +37,7 @@ queue: ^d3d12.ICommandQueue
 
 m_commandList: ^d3d12.IGraphicsCommandList
 
-// ThrowIfFailed
-check :: proc(res: d3d12.HRESULT, message: string = #caller_expression(res), loc := #caller_location) {
-	if win32.SUCCEEDED(res) {
-		return
-	}
-
-	hr := win32.HRESULT(res)
-	fmt.printfln("Error %v %v (0x%0x)", win32.System_Error(hr.Code), hr, u32(res))
-	fmt.printfln("\t%v", message)
-	fmt.printfln("\t%v", loc)
-	os.exit(-1)
-}
+panic_if_failed :: common.panic_if_failed
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
@@ -91,11 +81,11 @@ WaitForPreviousFrame :: proc() {
     // maximize GPU utilization.
 
 	current_fence_value := fence_value
-	check(queue->Signal(fence, current_fence_value))
+	panic_if_failed(queue->Signal(fence, current_fence_value))
 	fence_value += 1
 	completed := fence->GetCompletedValue()
 	if completed < current_fence_value {
-		check(fence->SetEventOnCompletion(current_fence_value, fence_event))
+		panic_if_failed(fence->SetEventOnCompletion(current_fence_value, fence_event))
 		win32.WaitForSingleObject(fence_event, win32.INFINITE)
 	}
 	frame_index = swap_chain->GetCurrentBackBufferIndex()
@@ -117,7 +107,7 @@ run :: proc() -> (exit_code: int) {
 	{
 		flags: dxgi.CREATE_FACTORY = {}
 		when ODIN_DEBUG {flags |= {.DEBUG}}
-		check(dxgi.CreateDXGIFactory2(flags, dxgi.IFactory7_UUID, cast(^rawptr)&factory))
+		panic_if_failed(dxgi.CreateDXGIFactory2(flags, dxgi.IFactory7_UUID, cast(^rawptr)&factory))
 	}
 
 	// Find the DXGI adapter (GPU)
@@ -143,14 +133,14 @@ run :: proc() -> (exit_code: int) {
 
 	// Create D3D12 device that represents the GPU
 	device: ^d3d12.IDevice
-	check(d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, (^rawptr)(&device)))
+	panic_if_failed(d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, (^rawptr)(&device)))
 	// queue: ^d3d12.ICommandQueue
 
 	{
 		desc := d3d12.COMMAND_QUEUE_DESC {
 			Type = .DIRECT,
 		}
-		check(device->CreateCommandQueue(&desc, d3d12.ICommandQueue_UUID, (^rawptr)(&queue)))
+		panic_if_failed(device->CreateCommandQueue(&desc, d3d12.ICommandQueue_UUID, (^rawptr)(&queue)))
 	}
 
 	// Create the swap chain, it's the thing that contains render targets that we draw into. It has 2 render targets (NUM_RENDERTARGETS), giving us double buffering.
@@ -168,7 +158,7 @@ run :: proc() -> (exit_code: int) {
 			SwapEffect = .FLIP_DISCARD,
 			AlphaMode = .UNSPECIFIED,
 		}
-		check(factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
+		panic_if_failed(factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
 	}
 
 	frame_index = swap_chain->GetCurrentBackBufferIndex()
@@ -181,18 +171,8 @@ run :: proc() -> (exit_code: int) {
 			Type           = .RTV,
 			Flags          = {},
 		}
-		check(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&rtv_descriptor_heap)))
+		panic_if_failed(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&rtv_descriptor_heap)))
 	}
-
-	/*srv_descriptor_heap: ^d3d12.IDescriptorHeap
-	{
-		desc := d3d12.DESCRIPTOR_HEAP_DESC {
-			NumDescriptors = 1,
-			Type           = .CBV_SRV_UAV,
-			Flags          = {.SHADER_VISIBLE},
-		}
-		check(device->CreateDescriptorHeap(&desc, d3d12.IDescriptorHeap_UUID, (^rawptr)(&srv_descriptor_heap)))
-	}*/
 
 	// Fetch the two render targets from the swap chain
 	targets: [NUM_RENDERTARGETS]^d3d12.IResource
@@ -204,7 +184,7 @@ run :: proc() -> (exit_code: int) {
 		rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&rtv_descriptor_handle)
 
 		for i: u32 = 0; i < NUM_RENDERTARGETS; i += 1 {
-			check(swap_chain->GetBuffer(i, d3d12.IResource_UUID, (^rawptr)(&targets[i])))
+			panic_if_failed(swap_chain->GetBuffer(i, d3d12.IResource_UUID, (^rawptr)(&targets[i])))
 			device->CreateRenderTargetView(targets[i], nil, rtv_descriptor_handle)
 			rtv_descriptor_handle.ptr += uint(rtv_descriptor_size)
 		}
@@ -212,7 +192,7 @@ run :: proc() -> (exit_code: int) {
 
 	// The command allocator is used to create the command list that is used to tell the GPU what to draw
 	command_allocator: ^d3d12.ICommandAllocator
-	check(device->CreateCommandAllocator(.DIRECT, d3d12.ICommandAllocator_UUID, (^rawptr)(&command_allocator)))
+	panic_if_failed(device->CreateCommandAllocator(.DIRECT, d3d12.ICommandAllocator_UUID, (^rawptr)(&command_allocator)))
 
 	/*
     From https://docs.microsoft.com/en-us/windows/win32/direct3d12/root-signatures-overview:
@@ -227,11 +207,12 @@ run :: proc() -> (exit_code: int) {
 		desc := d3d12.VERSIONED_ROOT_SIGNATURE_DESC {
 			Version = ._1_1,
 		}
+
 		desc.Desc_1_1.Flags = {.ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}
 
 		serialized_desc: ^d3d12.IBlob
-		check(d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil))
-		check(device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature)))
+		panic_if_failed(d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil))
+		panic_if_failed(device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature)))
 		serialized_desc->Release()
 	}
 
@@ -248,8 +229,8 @@ run :: proc() -> (exit_code: int) {
 		vs: ^d3d12.IBlob = nil
 		ps: ^d3d12.IBlob = nil
 
-		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "VSMain", "vs_5_0", compile_flags, 0, &vs, nil))
-		check(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "PSMain", "ps_5_0", compile_flags, 0, &ps, nil))
+		panic_if_failed(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "VSMain", "vs_5_0", compile_flags, 0, &vs, nil))
+		panic_if_failed(d3dc.Compile(raw_data(shaders_hlsl), len(shaders_hlsl), SHADER_FILE, nil, nil, "PSMain", "ps_5_0", compile_flags, 0, &ps, nil))
 
 		// This layout matches the vertices data defined further down
 		vertex_format: []d3d12.INPUT_ELEMENT_DESC = {
@@ -300,17 +281,16 @@ run :: proc() -> (exit_code: int) {
 			DSVFormat = .UNKNOWN,
 			SampleDesc = {Count = 1, Quality = 0},
 		}
-		// fmt.printfln("pipeline_state_desc: %#v", pipeline_state_desc)
 
-		check(device->CreateGraphicsPipelineState(&pipeline_state_desc, d3d12.IPipelineState_UUID, (^rawptr)(&pipeline)))
+		panic_if_failed(device->CreateGraphicsPipelineState(&pipeline_state_desc, d3d12.IPipelineState_UUID, (^rawptr)(&pipeline)))
 
 		vs->Release()
 		ps->Release()
 	}
 
     // Create the command list.
-	check(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&m_commandList)))
-	//check(m_commandList->Close())
+	panic_if_failed(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&m_commandList)))
+	//panic_if_failed(m_commandList->Close())
 
 	vertex_buffer: ^d3d12.IResource
 	vertex_buffer_view: d3d12.VERTEX_BUFFER_VIEW
@@ -355,12 +335,12 @@ run :: proc() -> (exit_code: int) {
 			Flags = {},
 		}
 
-		check(device->CreateCommittedResource(&heap_props, {}, &resource_desc, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&vertex_buffer)))
+		panic_if_failed(device->CreateCommittedResource(&heap_props, {}, &resource_desc, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&vertex_buffer)))
 
 		gpu_data: rawptr
 		read_range: d3d12.RANGE
 
-		check(vertex_buffer->Map(0, &read_range, &gpu_data))
+		panic_if_failed(vertex_buffer->Map(0, &read_range, &gpu_data))
 		mem.copy(gpu_data, &vertices[0], vertex_buffer_size)
 		vertex_buffer->Unmap(0, nil)
 
@@ -372,15 +352,10 @@ run :: proc() -> (exit_code: int) {
 		}
 	}
 
-	check(m_commandList->Close())
-
-	/*{
-		m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
-		queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
-	}*/
+	panic_if_failed(m_commandList->Close())
 
 	{
-		check(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
+		panic_if_failed(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
 		fence_value += 1
 		manual_reset: win32.BOOL = false
 		initial_state: win32.BOOL = false
@@ -397,10 +372,12 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	win32app.show_and_update_window(hwnd)
-	for win32app.pull_messages() {
 
-		check(command_allocator->Reset())
-		check(m_commandList->Reset(command_allocator, pipeline))
+	msg: win32.MSG
+	for win32app.pull_messages(&msg) {
+
+		panic_if_failed(command_allocator->Reset())
+		panic_if_failed(m_commandList->Reset(command_allocator, pipeline))
 
 		window_size := settings.window_size
 		viewport := d3d12.VIEWPORT {
@@ -457,7 +434,7 @@ run :: proc() -> (exit_code: int) {
 
 		m_commandList->ResourceBarrier(1, &to_present_barrier)
 
-		check(m_commandList->Close())
+		panic_if_failed(m_commandList->Close())
 
 		// execute
 		{
@@ -465,21 +442,18 @@ run :: proc() -> (exit_code: int) {
 			queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
 		}
 
-		// present
-		{
-			params: dxgi.PRESENT_PARAMETERS = {}
-			check(swap_chain->Present1(1, {}, &params))
-		}
+		// // present
+		// {
+		// 	params: dxgi.PRESENT_PARAMETERS = {}
+		// 	panic_if_failed(swap_chain->Present1(1, {}, &params))
+		// }
+		common.present(swap_chain)
 
 		WaitForPreviousFrame()
 	}
 
+	exit_code = int(msg.wParam)
 	return
-}
-
-present :: proc() {
-	params: dxgi.PRESENT_PARAMETERS = {}
-	check(swap_chain->Present1(1, {}, &params))
 }
 
 shaders_hlsl := #load(SHADER_FILE)

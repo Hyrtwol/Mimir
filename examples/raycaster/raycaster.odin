@@ -146,7 +146,7 @@ run :: proc() -> (exit_code: int) {
 		app.update = on_update_raycaster_pitch
 		world_map = worldmap_pitch
 	}
-	ca.run(&app)
+	exit_code = ca.run(&app)
 	fmt.println("Done.")
 	return
 }

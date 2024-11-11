@@ -221,7 +221,6 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	// fmt.println(#procedure, hwnd, wparam)
-	// app := get_app(hwnd)
 	fps = f64(frame_counter) / frame_time
 	frame_counter = 0
 	frame_time = 0
@@ -290,13 +289,15 @@ run :: proc() -> (exit_code: int) {
 	settings.sleep = time.Millisecond * 4
 	_, _, hwnd := win32app.prepare_run(&settings)
 	stopwatch->start()
-	for win32app.pull_messages() {
+	msg: win32.MSG
+	for win32app.pull_messages(&msg) {
 		delta = stopwatch->get_delta_seconds()
 		frame_time += delta
 		frame_counter += 1
 		draw_frame(hwnd)
 		time.sleep(settings.sleep)
 	}
+	exit_code = int(msg.wParam)
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())
 	return

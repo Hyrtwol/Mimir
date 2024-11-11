@@ -273,7 +273,7 @@ run :: proc() -> (exit_code: int) {
 	app.create = on_create
 	app.update = on_update
 	app.settings.window_size = app.size * ZOOM
-	ca.run(&app)
+	exit_code = ca.run(&app)
 	return
 }
 

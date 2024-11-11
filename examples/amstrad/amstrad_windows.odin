@@ -29,21 +29,8 @@ BITMAPINFO :: struct {
 	bmiColors: color_palette,
 }
 
-set_app :: #force_inline proc(hwnd: win32.HWND, app: papp) {
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(app)))
-}
-
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
-	app := (papp)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	return app
-}
-
-get_app_from_lparam :: #force_inline proc(lparam: win32.LPARAM) -> papp {
-	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
-	app := papp(pcs.lpCreateParams)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	return app
 }
@@ -59,8 +46,9 @@ fill_screen_with_image :: proc(app: papp) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := get_app_from_lparam(lparam)
-	set_app(hwnd, app)
+	app := win32app.get_settings_from_lparam(lparam, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	win32app.set_settings(hwnd, app)
 	//fmt.println(#procedure, hwnd, app)
 
 	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
@@ -288,14 +276,17 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 total: z.zusize = 0
 reps := 0
 
-run_app :: proc(app: papp) {
+run_app :: proc(app: papp) -> (exit_code: int) {
 	win32app.prepare_run(app)
 
-	for win32app.pull_messages() {
+	msg: win32.MSG
+	for win32app.pull_messages(&msg) {
 		for running {
 			total += z.z80_run(app.cpu, cycles_per_tick)
 			reps += 1
 		}
 	}
 
+	exit_code = int(msg.wParam)
+	return
 }

@@ -54,9 +54,7 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	pcs := win32app.decode_lparam_as_createstruct(lparam)
-	if pcs == nil {win32app.show_error_and_panic("Missing pcs!")}
-	app := win32app.get_application_from_createstruct(pcs, application)
+	app := win32app.get_settings_from_lparam(lparam, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.set_settings(hwnd, app)
 	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
@@ -88,7 +86,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := win32app.get_application(hwnd, application)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &timer1_id)
 	win32app.kill_timer(hwnd, &timer2_id)
@@ -126,7 +124,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	size := win32app.decode_lparam_as_int2(lparam)
-	app := win32app.get_application(hwnd, application)
+	app := win32app.get_settings(hwnd, application)
 	if app == nil {return 1}
 	fmt.println(#procedure, hwnd, type, size)
 	app.settings.window_size = size

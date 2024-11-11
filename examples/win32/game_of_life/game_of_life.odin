@@ -368,7 +368,7 @@ run :: proc() -> int {
 	game.world = &world
 	game.next_world = &next_world
 
-	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
+	instance := win32app.get_instance()
 	if (instance == nil) {show_error_and_panic("No instance")}
 	atom := win32app.register_window_class(instance, wndproc)
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
@@ -377,9 +377,8 @@ run :: proc() -> int {
 	dwStyle :: win32app.default_dwStyle
 	dwExStyle :: win32app.default_dwExStyle
 
-	size := window.size
 	position := win32app.default_window_position
-	win32app.adjust_size_for_style(&size, dwStyle)
+	size := win32app.adjust_window_size(window.size, dwStyle, dwExStyle)
 	if .CENTER in window.control_flags {
 		center_window(&position, size)
 	}
@@ -388,7 +387,9 @@ run :: proc() -> int {
 
 	win32app.show_and_update_window(hwnd)
 
-	return win32app.loop_messages()
+	msg: win32.MSG
+	win32app.loop_messages(&msg)
+	return int(msg.wParam)
 }
 
 main :: proc() {

@@ -2,6 +2,7 @@
 package movers
 
 import "base:intrinsics"
+import "core:os"
 import "core:math/rand"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
@@ -52,5 +53,6 @@ main :: proc() {
 	app.create = on_create
 	app.update = on_update
 	app.settings.window_size = app.size * ZOOM
-	ca.run(&app)
+	exit_code := ca.run(&app)
+	os.exit(exit_code)
 }

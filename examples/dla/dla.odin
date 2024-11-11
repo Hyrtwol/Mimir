@@ -202,7 +202,7 @@ run :: proc() -> (exit_code: int) {
 	app.destroy = on_destroy
 	app.settings.window_size = app.size * ZOOM
 	app.settings.title = "Diffusion Limited Aggregation"
-	ca.run(&app)
+	exit_code = ca.run(&app)
 	return
 }
 
