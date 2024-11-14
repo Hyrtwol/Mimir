@@ -287,7 +287,7 @@ run :: proc() -> (exit_code: int) {
 		fov, aspect, near, far: f32 = math.RAD_PER_DEG * 53, viewport.Width / viewport.Height, 1, 9
 		//fmt.println("fanf:", fov, aspect, near, far)
 		//h : f32 = 1
-		rotate := linalg.matrix4_from_euler_angles_xyz_f32(model_rotation.x, model_rotation.y, model_rotation.z)
+		rotate := linalg.matrix4_from_euler_angles_xyz_f32(expand_values(model_rotation))
 		translate := linalg.matrix4_translate_f32(model_translation)
 
 		model_rotation += {0.005, 0.009, 0.001}

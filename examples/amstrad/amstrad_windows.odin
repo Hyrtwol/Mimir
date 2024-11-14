@@ -103,7 +103,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	//fmt.println(#procedure, hwnd, app)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	win32app.kill_timer(hwnd, &app.timer_id)
 	if !win32app.delete_object(&app.hbitmap) {win32app.show_message_box("Unable to delete hbitmap", "Error")}
 	win32app.post_quit_message(0)
@@ -138,7 +137,6 @@ WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
 	settings := app.settings
 	type := win32app.WM_SIZE_WPARAM(wparam)
 	settings.window_size = win32app.decode_lparam_as_int2(lparam)
@@ -148,7 +146,6 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
-	if app == nil {return 0}
 
 	ps: win32.PAINTSTRUCT
 	hdc := win32.BeginPaint(hwnd, &ps)

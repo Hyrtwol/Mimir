@@ -27,7 +27,7 @@ application :: struct {
 	#subtype settings: win32app.window_settings,
 }
 papp :: ^application
-//settings: win32app.window_settings
+
 app: application
 dib: win32app.DIB
 // frame buffers

@@ -2,8 +2,8 @@ package test_misc
 
 import "core:fmt"
 import "core:os"
-import "core:strings"
 import "core:path/filepath"
+import "core:strings"
 import _t "core:testing"
 import "shared:ounit"
 
@@ -250,4 +250,15 @@ subtypes :: proc(t: ^_t.T) {
 	expect_int(t, d.dd, 4)
 	expect_int(t, d.a.aa, 41)
 	//do_ta(&d)
+}
+
+// expand_values
+
+@(test)
+expand_values_vector :: proc(t: ^T) {
+
+	v: [2]i32 = {1, 2}
+	x, y := expand_values(v)
+	expect_value(t, x, v.x)
+	expect_value(t, y, v.y)
 }
