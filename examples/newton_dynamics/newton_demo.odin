@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:math/linalg"
 import newton "shared:newton_dynamics"
 
 main :: proc() {
@@ -26,7 +27,7 @@ main :: proc() {
 		collision := newton.CreateBox(world, 2, 2, 2, 0, nil)
 		defer newton.DestroyCollision(collision)
 
-		mtx := newton.identity(newton.float4x4)
+		mtx := linalg.identity(newton.float4x4)
 		body := newton.CreateDynamicBody(world, collision, &mtx)
 		defer newton.DestroyBody(body)
 
@@ -55,8 +56,8 @@ main :: proc() {
 	// i3: newton.int3
 }
 
-dump_NewtonCollisionInfoRecord :: proc(collision: ^newton.NewtonCollision) {
-	cir: newton.NewtonCollisionInfoRecord
+dump_NewtonCollisionInfoRecord :: proc(collision: ^newton.Collision) {
+	cir: newton.CollisionInfoRecord
 	newton.CollisionGetInfo(collision, &cir)
 	fmt.println("CollisionInfoRecord:")
 	fmt.printfln("  m_offsetMatrix      : %v", cir.m_offsetMatrix)

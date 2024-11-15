@@ -76,6 +76,24 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^application) -> 
 	return decode_mouse_pos_01(app) * 2 - 1
 }
 
+set_window_text :: #force_inline proc(hwnd: win32.HWND) {
+	app := get_app(hwnd)
+	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, frame_stats.fps)
+}
+
+draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
+	app := get_app(hwnd)
+	win32app.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
+}
+
+draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	hdc := win32.GetDC(hwnd)
+	assert(hdc != nil)
+	defer win32.ReleaseDC(hwnd, hdc)
+	draw_dib(hwnd, hdc)
+	return 0
+}
+
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := win32app.get_settings_from_lparam(lparam, application)
@@ -108,11 +126,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
-set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	app := get_app(hwnd)
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, frame_stats.fps)
-}
-
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
 	type, size := win32app.decode_wm_size_params(wparam, lparam)
@@ -129,19 +142,6 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	frame_stats.frame_counter = 0
 	frame_stats.frame_time = 0
 	set_window_text(hwnd)
-	return 0
-}
-
-draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
-	app := get_app(hwnd)
-	win32app.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
-}
-
-draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	hdc := win32.GetDC(hwnd)
-	assert(hdc != nil)
-	defer win32.ReleaseDC(hwnd, hdc)
-	draw_dib(hwnd, hdc)
 	return 0
 }
 
