@@ -16,7 +16,9 @@ ZOOM :: 24
 WIDTH :: ZOOM * 32
 HEIGHT :: WIDTH
 
-settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
+application :: struct {
+	#subtype settings: win32app.window_settings,
+}
 
 dib: win32app.DIB
 selected_color: i32 = 1
@@ -29,25 +31,34 @@ is_active: bool = true
 is_focused := false
 cursor_state: i32 = 0
 
-show_cursor :: proc(show: bool) {
+show_cursor :: #force_inline proc(show: bool) {
 	cursor_state = win32app.show_cursor(show)
 	fmt.println(#procedure, cursor_state)
 }
 
-clip_cursor :: proc(hwnd: win32.HWND, clip: bool) -> bool {
+clip_cursor :: #force_inline proc "contextless" (hwnd: win32.HWND, clip: bool) -> bool {
 	return win32app.clip_cursor(hwnd, clip)
 }
 
-decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
+decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
 	size := win32app.decode_lparam_as_int2(lparam)
 	return size / ZOOM
 }
 
-set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
+set_dot :: #force_inline proc "contextless" (pos: win32app.int2, col: cv.byte4) {
 	cv.canvas_set_dot(&dib.canvas, pos, col)
 }
 
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
+	app := win32app.get_settings(hwnd, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	return app
+}
+
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
+	app := win32app.get_settings_from_lparam(lparam, application)
+	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	win32app.set_settings(hwnd, app)
 	fmt.println(#procedure)
 
 	show_cursor(false)
@@ -77,8 +88,9 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_text(hwnd, "%s %v %v", TITLE, settings.window_size, dib.canvas.size)
+	app := get_app(hwnd)
+	app.settings.window_size = win32app.decode_lparam_as_int2(lparam)
+	win32app.set_window_text(hwnd, "%s %v %v", TITLE, app.settings.window_size, dib.canvas.size)
 	clip_cursor(hwnd, true)
 	return 0
 }
@@ -94,7 +106,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
 	defer win32.DeleteDC(hdc_source)
 
-	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
+	win32app.select_object(hdc_source, dib.hbitmap)
 	client_size := win32app.get_rect_size(&ps.rcPaint)
 	dib_size := transmute(cv.int2)dib.canvas.size
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib_size.x, dib_size.y, win32.SRCCOPY)
@@ -172,9 +184,10 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 	switch rawinput.header.dwType {
 	case win32.RIM_TYPEMOUSE:
+		app := get_app(hwnd)
 		mouse_delta: win32app.int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
 		mouse_pos += mouse_delta
-		mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, settings.window_size - 1)
+		mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, app.settings.window_size - 1)
 		button_flags := rawinput.data.mouse.usButtonFlags
 		switch button_flags {
 		case win32.RI_MOUSE_BUTTON_1_DOWN:
@@ -242,6 +255,7 @@ main :: proc() {
 	icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
 	fmt.println("icon:", icon)
 
+	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
 	win32app.register_raw_input()
 	win32app.run(&settings)
 }

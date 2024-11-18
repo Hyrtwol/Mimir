@@ -1,60 +1,11 @@
 package main
 
+import "base:intrinsics"
 import "core:fmt"
 import "core:math/linalg"
+import "core:os"
 import newton "shared:newton_dynamics"
-
-main :: proc() {
-	fmt.println("Newton Dynamics")
-	defer fmt.println("Done.")
-
-	fmt.println("Globals:")
-	fmt.printfln("  Version             : %.2f", f32(newton.GetVersion()) / 100)
-	fmt.printfln("  FloatSize           : %v", newton.GetFloatSize())
-	fmt.printfln("  MemoryUsed          : %v", newton.GetMemoryUsed())
-
-	world := newton.Create()
-	defer newton.Destroy(world)
-
-	fmt.println("World:")
-	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
-	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
-	fmt.printfln("  BroadphaseAlgorithm : %v", newton.GetBroadphaseAlgorithm(world))
-	fmt.printfln("  ThreadsCount        : %v", newton.GetThreadsCount(world))
-	fmt.printfln("  MaxThreadsCount     : %v", newton.GetMaxThreadsCount(world))
-
-	{
-		collision := newton.CreateBox(world, 2, 2, 2, 0, nil)
-		defer newton.DestroyCollision(collision)
-
-		mtx := linalg.identity(newton.float4x4)
-		body := newton.CreateDynamicBody(world, collision, &mtx)
-		defer newton.DestroyBody(body)
-
-		fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
-		fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
-
-		fmt.println("Collision:")
-		fmt.printfln("  CollisionType       : %v", newton.CollisionGetType(collision))
-		fmt.printfln("  IsConvexShape       : %v", newton.CollisionIsConvexShape(collision))
-		fmt.printfln("  IsStaticShape       : %v", newton.CollisionIsStaticShape(collision))
-
-		dump_NewtonCollisionInfoRecord(collision)
-
-		fmt.println("Body:")
-		fmt.printfln("  BodyType            : %v", newton.BodyGetType(body))
-	}
-
-	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
-	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
-	fmt.println("DestroyAllBodies:")
-	newton.DestroyAllBodies(world)
-	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
-	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
-
-	// f3: newton.float3
-	// i3: newton.int3
-}
+import "shared:obug"
 
 dump_NewtonCollisionInfoRecord :: proc(collision: ^newton.Collision) {
 	cir: newton.CollisionInfoRecord
@@ -92,6 +43,146 @@ dump_NewtonCollisionInfoRecord :: proc(collision: ^newton.Collision) {
 	case newton.SerializeId.Usermesh:
 		fmt.printfln("  m_paramArray:         %v", cir.m_paramArray)
 	case:
-		fmt.println("  unknown")
+		fmt.printfln("  unknown %v", cir.m_collisionType)
+	}
+}
+
+run :: proc() -> (exit_code: int) {
+	fmt.println("Newton Dynamics")
+	defer fmt.println("Done.")
+
+	fmt.println("Globals:")
+	fmt.printfln("  Version             : %.2f", f32(newton.GetVersion()) / 100)
+	fmt.printfln("  FloatSize           : %v", newton.GetFloatSize())
+	fmt.printfln("  MemoryUsed          : %v", newton.GetMemoryUsed())
+
+	world := newton.Create()
+	defer newton.Destroy(world)
+
+	fmt.println("World:")
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+	fmt.printfln("  BroadphaseAlgorithm : %v", newton.GetBroadphaseAlgorithm(world))
+	fmt.printfln("  ThreadsCount        : %v", newton.GetThreadsCount(world))
+	fmt.printfln("  MaxThreadsCount     : %v", newton.GetMaxThreadsCount(world))
+
+	{
+		fmt.println("CreateBox:")
+		collision := newton.CreateBox(world, 2, 2, 2, 0, nil)
+		defer newton.DestroyCollision(collision)
+
+		mtx := linalg.identity(newton.float4x4)
+		body := newton.CreateDynamicBody(world, collision, &mtx)
+		defer newton.DestroyBody(body)
+
+		fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+		fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+
+		fmt.println("Collision:")
+		fmt.printfln("  CollisionType       : %v", newton.CollisionGetType(collision))
+		fmt.printfln("  IsConvexShape       : %v", newton.CollisionIsConvexShape(collision))
+		fmt.printfln("  IsStaticShape       : %v", newton.CollisionIsStaticShape(collision))
+		fmt.printfln("  Mode                : %v", newton.CollisionGetMode(collision))
+
+		dump_NewtonCollisionInfoRecord(collision)
+
+		fmt.println("Body:")
+		fmt.printfln("  BodyType            : %v", newton.BodyGetType(body))
+
+		fmt.println("Mesh:")
+		mesh := newton.MeshCreateFromCollision(collision)
+		defer newton.MeshDestroy(mesh)
+
+		fmt.printfln("  MeshHasNormalChannel   : %v", newton.MeshHasNormalChannel(mesh))
+		fmt.printfln("  MeshHasBinormalChannel : %v", newton.MeshHasBinormalChannel(mesh))
+		fmt.printfln("  MeshHasUV0Channel      : %v", newton.MeshHasUV0Channel(mesh))
+		fmt.printfln("  MeshHasUV1Channel      : %v", newton.MeshHasUV1Channel(mesh))
+
+		fmt.printfln("  MeshGetPointCount      : %v", newton.MeshGetPointCount(mesh))
+		fmt.printfln("  MeshGetTotalFaceCount  : %v", newton.MeshGetTotalFaceCount(mesh))
+		fmt.printfln("  MeshGetTotalIndexCount : %v", newton.MeshGetTotalIndexCount(mesh))
+		fmt.printfln("  MeshGetVertexCount     : %v", newton.MeshGetVertexCount(mesh))
+
+		newton.MeshTriangulate(mesh)
+		fmt.println("Triangulate:")
+
+		point_count := newton.MeshGetPointCount(mesh)
+		fmt.printfln("  MeshGetPointCount      : %v", point_count)
+		fmt.printfln("  MeshGetTotalFaceCount  : %v", newton.MeshGetTotalFaceCount(mesh))
+		fmt.printfln("  MeshGetTotalIndexCount : %v", newton.MeshGetTotalIndexCount(mesh))
+		fmt.printfln("  MeshGetVertexCount     : %v", newton.MeshGetVertexCount(mesh))
+
+		vertex :: struct {
+			pos: newton.float3,
+			nml: newton.float3,
+		}
+
+		// points := make([]newton.float3, point_count)
+		// defer delete(points)
+		// normals := make([]newton.float3, point_count)
+		// defer delete(normals)
+		// newton.MeshGetVertexChannel(mesh, size_of(newton.float3), &points[0])
+		// newton.MeshGetNormalChannel(mesh, size_of(newton.float3), &normals[0])
+
+		// fmt.println("  Vertices:")
+		// for i in 0 ..< point_count {
+		// 	fmt.printfln("    Vertex[% 3d]: %v,  %v", i, points[i], normals[i])
+		// }
+
+		vertices := make([]vertex, point_count)
+		defer delete(vertices)
+		newton.MeshGetVertexChannel(mesh, size_of(vertex), &vertices[0].pos)
+		newton.MeshGetNormalChannel(mesh, size_of(vertex), &vertices[0].nml)
+
+		FF :: "% 10.5f"
+		FF2 :: "% 8.5f"
+		fmt.println("vertices: []vertex = {")
+		for vtx in vertices {
+			fmt.print("\t{")
+			fmt.printf("{{" + FF + ", " + FF + ", " + FF + "}}", expand_values(vtx.pos))
+			fmt.print(", ")
+			fmt.printf("{{" + FF2 + ", " + FF2 + ", " + FF2 + "}}", expand_values(vtx.nml))
+			fmt.println("},")
+		}
+		fmt.println("}")
+		fmt.println()
+		fmt.println("indices: [][3]u16 = {")
+		indices: [3]i32
+		for face := newton.MeshGetFirstFace(mesh); face != nil; face = newton.MeshGetNextFace(mesh, face) {
+			if !newton.MeshIsFaceOpen(mesh, face) {
+				num := newton.MeshGetFaceIndexCount(mesh, face)
+				if num == 3 {
+					//newton.MeshGetFaceIndices(mesh, face, &indices[0])
+					newton.MeshGetFacePointIndices(mesh, face, &indices[0])
+					fmt.printfln("\t{{%4d, %4d, %4d}},", expand_values(indices))
+					// fmt.print("\t{")
+					// fmt.print(expand_values(indices), sep = ",")
+					// fmt.println("},")
+				} else {
+					fmt.printfln("    face: %v", num)
+				}
+			}
+		}
+		fmt.println("}")
+	}
+
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+
+	fmt.println("DestroyAllBodies:")
+	newton.DestroyAllBodies(world)
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+
+	// f3: newton.float3
+	// i3: newton.int3
+	return
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		os.exit(obug.tracked_run(run))
+	} else {
+		os.exit(run())
 	}
 }

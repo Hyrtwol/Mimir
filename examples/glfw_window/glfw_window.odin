@@ -5,14 +5,14 @@ package glfw_window
 
 import "base:intrinsics"
 import "core:fmt"
+import "core:image"
+import "core:image/png"
 import glm "core:math/linalg/glsl"
 import "core:os"
 import "core:time"
 import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
-import "core:image"
-import "core:image/png"
 
 // cow, cube, gazebo, crisscross
 import model "../../data/models/cube"
@@ -90,34 +90,38 @@ run :: proc() -> (exit_code: int) {
 	uniforms := gl.get_uniforms_from_program(program)
 	defer gl.destroy_uniforms(uniforms)
 
+	image_w, image_h: i32
+	texture_data: []u8 = nil
+	{
+		// Load image at compile time
+		image_file_bytes := #load(IMAGELOC)
 
-	// Load image at compile time
-    image_file_bytes := #load(IMAGELOC)
+		// Load image  Odin's core:image library.
+		image_ptr: ^image.Image
+		err: image.Error
+		options := image.Options{.alpha_add_if_missing}
 
-    // Load image  Odin's core:image library.
-    image_ptr        : ^image.Image
-    err              : image.Error
-    options          := image.Options{.alpha_add_if_missing}
+		//    image_ptr, err =  q.load_from_file(IMAGELOC, options)
+		image_ptr, err = png.load_from_bytes(image_file_bytes, options)
+		defer png.destroy(image_ptr)
+		image_w = i32(image_ptr.width)
+		image_h = i32(image_ptr.height)
 
-    //    image_ptr, err =  q.load_from_file(IMAGELOC, options)
-    image_ptr, err =  png.load_from_bytes(image_file_bytes, options)
-    defer png.destroy(image_ptr)
-    image_w := i32(image_ptr.width)
-    image_h := i32(image_ptr.height)
+		if err != nil {
+			fmt.println("ERROR: Image:", IMAGELOC, "failed to load.")
+			return
+		}
 
-    if err != nil {
-        fmt.println("ERROR: Image:", IMAGELOC, "failed to load.")
-		return
-    }
+		// Copy bytes from icon buffer into slice.
+		texture_data = make([]u8, len(image_ptr.pixels.buf))
+		for b, i in image_ptr.pixels.buf {
+			texture_data[i] = b
+		}
 
-    // Copy bytes from icon buffer into slice.
-    earth_pixels_u8 := make([]u8, len(image_ptr.pixels.buf))
-	defer delete(earth_pixels_u8)
-    for b, i in image_ptr.pixels.buf {
-        earth_pixels_u8[i] = b
-    }
-
-	fmt.println("Image:", IMAGELOC, image_w, image_h)
+		fmt.println("Image:", IMAGELOC, image_w, image_h)
+	}
+	assert(texture_data != nil)
+	defer delete(texture_data)
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -162,29 +166,28 @@ run :: proc() -> (exit_code: int) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(model.indices) * size_of(model.indices[0]), raw_data(model.indices), gl.STATIC_DRAW)
 
 
-    // Describe texture.
-    gl.TexImage2D(
-        gl.TEXTURE_2D,    // texture type
-        0,                // level of detail number (default = 0)
-        gl.RGBA,          // texture format
-        image_w,          // width
-        image_h,          // height
-        0,                // border, must be 0
-        gl.RGBA,          // pixel data format
-        gl.UNSIGNED_BYTE, // data type of pixel data
-        //&earth_pixels_u8[0],  // image data
-		&image_ptr.pixels.buf[0],  // image data
-    )
+	// gl.ActiveTexture(0) // no effect ?
+	// Describe texture.
+	gl.TexImage2D(
+		gl.TEXTURE_2D, // texture type
+		0, // level of detail number (default = 0)
+		gl.RGBA, // texture format
+		image_w, // width
+		image_h, // height
+		0, // border, must be 0
+		gl.RGBA, // pixel data format
+		gl.UNSIGNED_BYTE, // data type of pixel data
+		&texture_data[0], // image data
+		//&image_ptr.pixels.buf[0],  // image data
+	)
 
-    // Texture wrapping options.
-    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	// Texture wrapping options.
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
-    // Texture filtering options.
-    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-
-
+	// Texture filtering options.
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	gl.ClearColor(0.10, 0.15, 0.20, 1.0)
 	gl.Enable(gl.CULL_FACE)

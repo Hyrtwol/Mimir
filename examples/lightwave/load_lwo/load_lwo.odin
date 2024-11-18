@@ -1,8 +1,10 @@
 package main
 
+import "base:intrinsics"
 import "core:fmt"
 import "core:os"
 import lw "shared:newtek_lightwave"
+import "shared:obug"
 
 output_path :: "lightwave.txt"
 
@@ -22,7 +24,7 @@ wf :: proc(fd: os.Handle, format: string, args: ..any) {
 	os.write_string(fd, fmt.tprintf(format, ..args))
 }
 
-main :: proc() {
+run :: proc() -> (exit_code: int) {
 	fmt.println("LightWave Object Reader")
 
 	lwo_files: []cstring = {
@@ -94,4 +96,13 @@ main :: proc() {
 	}
 
 	fmt.println("Done.")
+	return
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		os.exit(obug.tracked_run(run))
+	} else {
+		os.exit(run())
+	}
 }

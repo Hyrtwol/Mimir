@@ -21,10 +21,11 @@ WIDTH :: 1920 / 2
 HEIGHT :: WIDTH * 9 / 16
 SHADER_FILE :: "shaders.hlsl"
 
-float2 :: hlm.float2
-float3 :: hlm.float3
-float4 :: hlm.float4
-float4x4 :: hlm.float4x4
+float :: f32
+float2 :: [2]float
+float3 :: [3]float
+float4 :: [4]float
+float4x4 :: matrix[4, 4]float
 
 panic_if_failed :: common.panic_if_failed
 

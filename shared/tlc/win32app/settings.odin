@@ -6,10 +6,16 @@ import "base:intrinsics"
 import win32 "core:sys/windows"
 import "core:time"
 
+window_option :: enum u32 {
+	center = 0,
+	raw_input = 1,
+}
+window_options :: bit_set[window_option;u32]
+
 window_settings :: struct {
 	title:       string,
 	window_size: int2,
-	center:      bool,
+	options:      window_options,
 	dwStyle:     WS_STYLES,
 	dwExStyle:   WS_EX_STYLES,
 	wndproc:     win32.WNDPROC,
@@ -34,7 +40,7 @@ get_settings_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPAR
 }
 
 default_window_settings :: window_settings {
-	center      = true,
+	options     = {.center},
 	dwStyle     = default_dwStyle,
 	dwExStyle   = default_dwExStyle,
 	sleep       = default_sleep,

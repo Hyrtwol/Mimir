@@ -37,7 +37,7 @@
 	"xmlTools.splitXmlnsOnFormat": false,
 	// "ols.server.path": "${env:ODIN_SHARED}${pathSeparator}ols${pathSeparator}ols.exe",
 	"cSpell.language": "en",
-	"cSpell.enableFiletypes": [
+	"#cSpell.enableFiletypes#": [
 		"odin"
 	],
 	"cSpell.customDictionaries": {

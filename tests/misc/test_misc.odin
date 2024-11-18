@@ -252,11 +252,8 @@ subtypes :: proc(t: ^_t.T) {
 	//do_ta(&d)
 }
 
-// expand_values
-
 @(test)
 expand_values_vector :: proc(t: ^T) {
-
 	v: [2]i32 = {1, 2}
 	x, y := expand_values(v)
 	expect_value(t, x, v.x)

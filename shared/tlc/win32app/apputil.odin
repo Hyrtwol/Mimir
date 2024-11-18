@@ -78,7 +78,7 @@ create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_setting
 	if settings.dwExStyle == {} {settings.dwExStyle = default_dwExStyle}
 
 	size := adjust_window_size(settings.window_size, settings.dwStyle, settings.dwExStyle)
-	position := get_window_position(size, settings.center)
+	position := get_window_position(size, .center in settings.options)
 
 	hwnd := win32.CreateWindowExW(settings.dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), settings.dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
 	if hwnd == nil {show_error_and_panic("create_window failed")}
@@ -257,7 +257,7 @@ show_cursor :: #force_inline proc "contextless" (show: bool) -> INT {
 	return win32.ShowCursor(win32.BOOL(show))
 }
 
-clip_cursor :: proc(hwnd: win32.HWND, clip: bool) -> (ok: bool) {
+clip_cursor :: proc "contextless" (hwnd: win32.HWND, clip: bool) -> (ok: bool) {
 	if clip {
 		rect: win32.RECT
 		ok = bool(win32.GetWindowRect(hwnd, &rect))
