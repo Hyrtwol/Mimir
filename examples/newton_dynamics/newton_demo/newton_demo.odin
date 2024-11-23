@@ -98,13 +98,14 @@ run :: proc() -> (exit_code: int) {
 		fmt.printfln("  MeshHasUV0Channel      : %v", newton.MeshHasUV0Channel(mesh))
 		fmt.printfln("  MeshHasUV1Channel      : %v", newton.MeshHasUV1Channel(mesh))
 
+		/*
 		fmt.printfln("  MeshGetPointCount      : %v", newton.MeshGetPointCount(mesh))
 		fmt.printfln("  MeshGetTotalFaceCount  : %v", newton.MeshGetTotalFaceCount(mesh))
 		fmt.printfln("  MeshGetTotalIndexCount : %v", newton.MeshGetTotalIndexCount(mesh))
 		fmt.printfln("  MeshGetVertexCount     : %v", newton.MeshGetVertexCount(mesh))
-
 		newton.MeshTriangulate(mesh)
 		fmt.println("Triangulate:")
+		*/
 
 		point_count := newton.MeshGetPointCount(mesh)
 		fmt.printfln("  MeshGetPointCount      : %v", point_count)
@@ -147,20 +148,18 @@ run :: proc() -> (exit_code: int) {
 		fmt.println("}")
 		fmt.println()
 		fmt.println("indices: [][3]u16 = {")
-		indices: [3]i32
 		for face := newton.MeshGetFirstFace(mesh); face != nil; face = newton.MeshGetNextFace(mesh, face) {
 			if !newton.MeshIsFaceOpen(mesh, face) {
 				num := newton.MeshGetFaceIndexCount(mesh, face)
-				if num == 3 {
-					//newton.MeshGetFaceIndices(mesh, face, &indices[0])
-					newton.MeshGetFacePointIndices(mesh, face, &indices[0])
-					fmt.printfln("\t{{%4d, %4d, %4d}},", expand_values(indices))
-					// fmt.print("\t{")
-					// fmt.print(expand_values(indices), sep = ",")
-					// fmt.println("},")
-				} else {
-					fmt.printfln("    face: %v", num)
+				indices:= make([]i32, num)
+				defer delete(indices)
+				newton.MeshGetFacePointIndices(mesh, face, &indices[0])
+				fmt.print("\t{")
+				for idx, i in indices {
+					if i > 0 {fmt.print(", ")}
+					fmt.printf("%4d", idx)
 				}
+				fmt.println("},")
 			}
 		}
 		fmt.println("}")

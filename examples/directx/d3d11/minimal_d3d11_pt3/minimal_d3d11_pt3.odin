@@ -7,7 +7,7 @@ import "core:fmt"
 import "core:os"
 import "core:math"
 import "core:math/linalg"
-import hlm "core:math/linalg/hlsl"
+//import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
 import "libs:tlc/win32app"
 import "shared:obug"
@@ -318,7 +318,7 @@ run :: proc() -> (exit_code: int) {
 
 	//-- Constant Buffer --//
 	fov, aspect, near, far: f32 = math.RAD_PER_DEG * 60, framebufferVP.Width / framebufferVP.Height, 1, 20
-	fmt.println("fanf:", fov, aspect, near, far)
+	fmt.println("fov, aspect, near, far:", fov, aspect, near, far)
 
 	constants: Constants = {
 		// camera projection matrix (perspective)

@@ -22,10 +22,10 @@ main :: proc() {
 	defer rl.CloseWindow()
 
 	pixels := make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
+	defer delete(pixels)
 	for alpha, i in mu.default_atlas_alpha {
 		pixels[i] = {0xff, 0xff, 0xff, alpha}
 	}
-	defer delete(pixels)
 
 	image := rl.Image {
 		data    = raw_data(pixels),

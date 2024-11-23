@@ -43,7 +43,7 @@
 	"cSpell.customDictionaries": {
 		"custom-dictionary-user": {
 			"name": "odin-dictionary",
-			"path": "doc/odin-dictionary.txt",
+			"path": "${workspaceFolder}${pathSeparator}doc${pathSeparator}odin-dictionary.txt",
 			"addWords": true,
 			"scope": "user"
 		}
