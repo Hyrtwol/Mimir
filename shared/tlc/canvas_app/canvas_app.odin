@@ -40,7 +40,7 @@ on_idle :: proc(app: ^application) -> int {return 0}
 
 default_application :: application {
 	settings = win32app.window_settings {
-		center      = true,
+		options     = {.Center},
 		dwStyle     = win32app.default_dwStyle,
 		dwExStyle   = win32app.default_dwExStyle,
 		sleep       = win32app.default_sleep,
@@ -76,16 +76,19 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^application) -> 
 	return decode_mouse_pos_01(app) * 2 - 1
 }
 
+@(private = "file")
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 	app := get_app(hwnd)
 	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, frame_stats.fps)
 }
 
+@(private = "file")
 draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
 	app := get_app(hwnd)
 	win32app.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
 }
 
+@(private = "file")
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	assert(hdc != nil)

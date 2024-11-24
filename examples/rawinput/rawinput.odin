@@ -256,6 +256,7 @@ main :: proc() {
 	fmt.println("icon:", icon)
 
 	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	win32app.register_raw_input()
+	//win32app.register_raw_input()
+	settings.options += {.Raw_Input}
 	win32app.run(&settings)
 }

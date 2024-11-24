@@ -241,7 +241,7 @@ main :: proc() {
 
 	app := application {
 		settings = win32app.window_settings {
-			center      = true,
+			options     = {.Center},
 			dwStyle     = win32app.default_dwStyle,
 			dwExStyle   = win32app.default_dwExStyle,
 			sleep       = win32app.default_sleep,

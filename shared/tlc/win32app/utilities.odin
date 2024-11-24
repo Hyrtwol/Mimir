@@ -89,10 +89,10 @@ get_window_position :: proc(size: int2, center: bool) -> int2 {
 	return default_window_position
 }
 
-register_raw_input :: proc() {
+register_raw_input :: proc(hwndTarget : HWND = nil, dwFlags : DWORD = win32.RIDEV_NOLEGACY) {
 	rid := [?]win32.RAWINPUTDEVICE {
-		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_MOUSE, dwFlags = win32.RIDEV_NOLEGACY, hwndTarget = nil},
-		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_KEYBOARD, dwFlags = win32.RIDEV_NOLEGACY, hwndTarget = nil},
+		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_MOUSE, dwFlags = dwFlags, hwndTarget = hwndTarget},
+		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_KEYBOARD, dwFlags = dwFlags, hwndTarget = hwndTarget},
 	}
 	if !win32.RegisterRawInputDevices(&rid[0], len(rid), size_of(rid[0])){
 		show_error_and_panic("RegisterRawInputDevices Failed")

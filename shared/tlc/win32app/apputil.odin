@@ -78,7 +78,7 @@ create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_setting
 	if settings.dwExStyle == {} {settings.dwExStyle = default_dwExStyle}
 
 	size := adjust_window_size(settings.window_size, settings.dwStyle, settings.dwExStyle)
-	position := get_window_position(size, .center in settings.options)
+	position := get_window_position(size, .Center in settings.options)
 
 	hwnd := win32.CreateWindowExW(settings.dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), settings.dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
 	if hwnd == nil {show_error_and_panic("create_window failed")}
@@ -124,6 +124,9 @@ loop_messages :: proc(msg: ^win32.MSG, hwnd: HWND = nil) {
 
 prepare_run :: proc(settings: ^window_settings) -> (inst: HINSTANCE, atom: ATOM, hwnd: HWND) {
 	inst, atom, hwnd = register_and_create_window(settings)
+	if .Raw_Input in settings.options {
+		register_raw_input(hwnd)
+	}
 	show_and_update_window(hwnd)
 	return
 }
@@ -152,6 +155,15 @@ redraw_window :: proc {
 
 invalidate_window :: #force_inline proc "contextless" (hwnd: HWND) {
 	win32.InvalidateRect(hwnd, nil, false)
+}
+
+
+set_window_user_data :: #force_inline proc "contextless" (hwnd: win32.HWND, user_data: rawptr) {
+	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(user_data)))
+}
+
+get_window_user_data :: #force_inline proc "contextless" (hwnd: win32.HWND, $T: typeid) {
+	return (^T)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
 }
 
 @(private = "file")
