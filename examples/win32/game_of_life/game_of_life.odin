@@ -25,7 +25,7 @@ import "core:os"
 import "base:runtime"
 import win32 "core:sys/windows"
 import "core:time"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 // defines
 L				:: intrinsics.constant_utf16_cstring
@@ -34,7 +34,7 @@ wstring			:: win32.wstring
 color			:: [4]u8
 int2			:: [2]i32
 
-show_error_and_panic :: win32app.show_error_and_panic
+show_error_and_panic :: owin.show_error_and_panic
 
 // constants
 COLOR_MODE :: 1
@@ -186,11 +186,11 @@ get_app_from_createstruct :: #force_inline proc "contextless" (pcs: ^win32.CREAT
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	pcs := win32app.decode_lparam_as_createstruct(lparam)
+	pcs := owin.decode_lparam_as_createstruct(lparam)
 	app := get_app_from_createstruct(pcs)
 	if app == nil {show_error_and_panic("Missing app!")}
 	set_app(hwnd, app)
-	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / FPS)
+	app.timer_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 1000 / FPS)
 	if app.timer_id == 0 {show_error_and_panic("No timer")}
 
 	hdc := win32.GetDC(hwnd)
@@ -222,7 +222,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 			bitmap_info.bmiColors[i] = color{u8(rbg.b), u8(rbg.g), u8(rbg.r), 0}
 		}
 	}
-	app.hbitmap = win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
+	app.hbitmap = owin.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
 
 	if app.world != nil {
 		cc := app.world.width * app.world.height
@@ -237,11 +237,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	if app == nil {show_error_and_panic("Missing app!")}
-	win32app.kill_timer(hwnd, &app.timer_id)
-	if !win32app.delete_object(&app.hbitmap) {
-		win32app.show_message_box("Unable to delete hbitmap", "Error")
+	owin.kill_timer(hwnd, &app.timer_id)
+	if !owin.delete_object(&app.hbitmap) {
+		owin.show_message_box("Unable to delete hbitmap", "Error")
 	}
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
@@ -257,9 +257,9 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		hdc_source := win32.CreateCompatibleDC(hdc)
 		defer win32.DeleteDC(hdc_source)
 
-		win32app.select_object(hdc_source, app.hbitmap)
+		owin.select_object(hdc_source, app.hbitmap)
 		client_size := get_rect_size(&ps.rcPaint)
-		win32app.stretch_blt(hdc, client_size, hdc_source, {bwidth, bheight})
+		owin.stretch_blt(hdc, client_size, hdc_source, {bwidth, bheight})
 	}
 
 	if show_help {
@@ -283,7 +283,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 				app.world, app.next_world = app.next_world, app.world
 				draw_world(app.pvBits, app.world)
 			}
-			win32app.redraw_window(hwnd)
+			owin.redraw_window(hwnd)
 		}
 	case:
 		fmt.println(#procedure, hwnd, wparam, lparam)
@@ -294,7 +294,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':
-		win32app.close_application(hwnd)
+		owin.close_application(hwnd)
 	case 'h':
 		show_help ~= true
 	case 'p':
@@ -368,27 +368,27 @@ run :: proc() -> int {
 	game.world = &world
 	game.next_world = &next_world
 
-	instance := win32app.get_instance()
+	instance := owin.get_instance()
 	if (instance == nil) {show_error_and_panic("No instance")}
-	atom := win32app.register_window_class(instance, wndproc)
+	atom := owin.register_window_class(instance, wndproc)
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
-	defer win32app.unregister_window_class(atom, instance)
+	defer owin.unregister_window_class(atom, instance)
 
-	dwStyle :: win32app.default_dwStyle
-	dwExStyle :: win32app.default_dwExStyle
+	dwStyle :: owin.default_dwStyle
+	dwExStyle :: owin.default_dwExStyle
 
-	position := win32app.default_window_position
-	size := win32app.adjust_window_size(window.size, dwStyle, dwExStyle)
+	position := owin.default_window_position
+	size := owin.adjust_window_size(window.size, dwStyle, dwExStyle)
 	if .CENTER in window.control_flags {
 		center_window(&position, size)
 	}
 	hwnd := create_window(atom, window.name, dwStyle, dwExStyle, position, size, instance, &game)
 	if hwnd == nil {show_error_and_panic("Failed to create window")}
 
-	win32app.show_and_update_window(hwnd)
+	owin.show_and_update_window(hwnd)
 
 	msg: win32.MSG
-	win32app.loop_messages(&msg)
+	owin.loop_messages(&msg)
 	return int(msg.wParam)
 }
 

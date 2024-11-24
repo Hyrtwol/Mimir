@@ -7,7 +7,7 @@ import "core:fmt"
 import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import mu "vendor:microui"
 
 _ :: mud
@@ -18,11 +18,11 @@ FPS :: 5
 IDT_TIMER1: win32.UINT_PTR : 10001
 timer1_id: win32.UINT_PTR
 
-DIB :: win32app.DIB
+DIB :: owin.DIB
 canvas :: cv.canvas
 
 mouse_event :: struct {
-	pos:       win32app.int2,
+	pos:       owin.int2,
 	mu_button: mu.Mouse,
 	state:     i32,
 }
@@ -31,13 +31,13 @@ char_queue: queue.Queue(u8)
 mouse_queue: queue.Queue(mouse_event)
 
 application :: struct {
-	#subtype settings: win32app.window_settings,
+	#subtype settings: owin.window_settings,
 	mu_ctx:          mu.Context,
 	log_buf:         [1 << 16]byte,
 	log_buf_len:     int,
 	log_buf_updated: bool,
 	bg:              mu.Color,
-	atlas_texture:   win32app.DIB,
+	atlas_texture:   owin.DIB,
 	//char_queue:      queue.Queue(u8),
 	//mouse_queue:     queue.Queue(mouse_event),
 }
@@ -48,18 +48,18 @@ state: application
 screen_buffer :: cv.screen_buffer
 
 bitmap_handle: win32.HGDIOBJ // win32.HBITMAP
-bitmap_size: win32app.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
+bitmap_size: owin.int2 = {mu.DEFAULT_ATLAS_WIDTH, mu.DEFAULT_ATLAS_HEIGHT}
 bitmap_count: i32
 pvBits: screen_buffer
 
 bg_brush: win32.HBRUSH
 
-mouse_pos: win32app.int2
+mouse_pos: owin.int2
 
-// mouse_buttons: win32app.MOUSE_KEY_STATE
+// mouse_buttons: owin.MOUSE_KEY_STATE
 
 // buttons_to_key := [?]struct {
-// 	wi_button: win32app.MOUSE_KEY_STATE,
+// 	wi_button: owin.MOUSE_KEY_STATE,
 // 	mu_button: mu.Mouse,
 // }{{{.MK_LBUTTON}, .LEFT}, {{.MK_RBUTTON}, .RIGHT}, {{.MK_MBUTTON}, .MIDDLE}}
 
@@ -68,11 +68,11 @@ show_atlas := false
 convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {return (transmute(win32.COLORREF)mu_color) & 0xFFFFFF}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
 
-	//client_size := win32app.get_client_size(hwnd)
+	//client_size := owin.get_client_size(hwnd)
 	//bitmap_size = client_size / ZOOM
 
 	bg_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
@@ -82,8 +82,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		defer win32.ReleaseDC(hwnd, hdc)
 		color_byte_count :: 4
 		color_bit_count :: color_byte_count * 8
-		bmi_header := win32app.create_bmi_header(bitmap_size, true, color_bit_count)
-		bitmap_handle = win32.HGDIOBJ(win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bmi_header, .DIB_RGB_COLORS, &pvBits))
+		bmi_header := owin.create_bmi_header(bitmap_size, true, color_bit_count)
+		bitmap_handle = win32.HGDIOBJ(owin.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bmi_header, .DIB_RGB_COLORS, &pvBits))
 	}
 
 	if pvBits != nil {
@@ -96,30 +96,30 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		bitmap_count = 0
 	}
 
-	timer1_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
+	timer1_id = owin.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
 
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.kill_timer(hwnd, &timer1_id)
-	if !win32app.delete_object(&bitmap_handle) {
-		win32app.show_message_box("Unable to delete hbitmap", "Error")
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.kill_timer(hwnd, &timer1_id)
+	if !owin.delete_object(&bitmap_handle) {
+		owin.show_message_box("Unable to delete hbitmap", "Error")
 	}
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
 // first := 5
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
 
 	ps: win32.PAINTSTRUCT
 	win32.BeginPaint(hwnd, &ps) // todo check if defer can be used for EndPaint
@@ -128,12 +128,12 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	defer win32.DeleteDC(hdc_source)
 
 	// if first > 0 {
-	// 	fmt.println("rcPaint:", ps.rcPaint, win32app.get_rect_size(&ps.rcPaint), win32app.get_client_size(hwnd))
+	// 	fmt.println("rcPaint:", ps.rcPaint, owin.get_rect_size(&ps.rcPaint), owin.get_client_size(hwnd))
 	// 	first -= 1
 	// }
 
 	if bitmap_handle != nil {
-		//client_size := win32app.get_rect_size(&ps.rcPaint)
+		//client_size := owin.get_rect_size(&ps.rcPaint)
 
 		dc_brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
 
@@ -155,7 +155,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 				mv := queue.pop_front_safe(&mouse_queue) or_break
 				fmt.println(mv)
 				// mouse_event :: struct {
-				// 	pos: win32app.int2,
+				// 	pos: owin.int2,
 				// 	mu_button: mu.Mouse,
 				// 	state: i32,
 				// }
@@ -208,23 +208,23 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	type := win32app.WM_SIZE_WPARAM(wparam)
-	size := win32app.decode_lparam_as_int2(lparam)
-	if app == nil {win32app.show_error_and_panicf("Missing app in %v", #procedure)}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	type := owin.WM_SIZE_WPARAM(wparam)
+	size := owin.decode_lparam_as_int2(lparam)
+	if app == nil {owin.show_error_and_panicf("Missing app in %v", #procedure)}
 	//fmt.println(#procedure, hwnd, type, size)
 	app.settings.window_size = size
-	win32app.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
+	owin.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
 	return 0
 }
 
 WM_SIZING :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	// wParam - The edge of the window that is being sized.
-	type := win32app.WM_SIZING_WPARAM(wparam)
+	type := owin.WM_SIZING_WPARAM(wparam)
 	// lParam - A pointer to a RECT structure with the screen coordinates of the drag rectangle. To change the size or position of the drag rectangle, an application must change the members of this structure.
-	rect := win32app.decode_lparam_as_rect(lparam)
-	size := win32app.get_rect_size(rect)
+	rect := owin.decode_lparam_as_rect(lparam)
+	size := owin.get_rect_size(rect)
 	fmt.println(#procedure, hwnd, type, rect, size)
 	return 0
 }
@@ -236,26 +236,26 @@ WM_ENTERSIZEMOVE :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_EXITSIZEMOVE :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	//size := win32app.get_client_size(hwnd)
+	//size := owin.get_client_size(hwnd)
 	//fmt.println(#procedure, hwnd, size)
 	//first = 3
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	win32app.redraw_window(hwnd)
-	//app := win32app.get_settings(hwnd, application)
+	owin.redraw_window(hwnd)
+	//app := owin.get_settings(hwnd, application)
 	//fmt.println(#procedure, app.mu_ctx.frame)
 	return 0
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
-	case '\x1b': win32app.close_application(hwnd)
-	//case ' ':    win32app.redraw_window(hwnd)
+	case '\x1b': owin.close_application(hwnd)
+	//case ' ':    owin.redraw_window(hwnd)
 	case:
 		fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(lparam), win32.LOWORD(lparam))
-		app := win32app.get_settings(hwnd, application)
+		app := owin.get_settings(hwnd, application)
 		if app != nil {
 			//assert(&app.char_queue != nil)
 			//fmt.printfln("char_queue: %v", char_queue)
@@ -268,8 +268,8 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM, updown: i32) -> win32.LRESULT {
 	//app := get_app(hwnd)
-	//mouse_buttons := win32app.decode_wparam_as_mouse_key_state(wparam)
-	mouse_pos = win32app.decode_lparam_as_int2(lparam)
+	//mouse_buttons := owin.decode_wparam_as_mouse_key_state(wparam)
+	mouse_pos = owin.decode_lparam_as_int2(lparam)
 	//fmt.println(#procedure, mouse_buttons, updown, wparam)
 
 	// switch wparam {
@@ -316,8 +316,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CHAR:          return WM_CHAR(hwnd, wparam, lparam)
 
 	case win32.WM_MOUSEMOVE:	return handle_input(hwnd, wparam, lparam, 0)
-	case win32.WM_LBUTTONDOWN:	{queue.push_front(&mouse_queue, mouse_event{win32app.decode_lparam_as_int2(lparam), .LEFT, -1});return 0}
-	case win32.WM_LBUTTONUP:	{queue.push_front(&mouse_queue, mouse_event{win32app.decode_lparam_as_int2(lparam), .LEFT, 1});return 0}
+	case win32.WM_LBUTTONDOWN:	{queue.push_front(&mouse_queue, mouse_event{owin.decode_lparam_as_int2(lparam), .LEFT, -1});return 0}
+	case win32.WM_LBUTTONUP:	{queue.push_front(&mouse_queue, mouse_event{owin.decode_lparam_as_int2(lparam), .LEFT, 1});return 0}
 	// case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam, -1)
 	// case win32.WM_RBUTTONUP:	return handle_input(hwnd, wparam, lparam, 1)
 	// case win32.WM_MBUTTONDOWN:	return handle_input(hwnd, wparam, lparam, -1)
@@ -335,12 +335,12 @@ main :: proc() {
 	//defer rl.CloseWindow()
 
 	state = {
-		settings = win32app.default_window_settings,
+		settings = owin.default_window_settings,
 		bg       = {90, 95, 100, 255},
 	}
 	state.settings.window_size = {800, 600}
 	state.settings.wndproc = wndproc
-	state.settings.dwStyle = win32app.default_dwStyle | win32.WS_SIZEBOX
+	state.settings.dwStyle = owin.default_dwStyle | win32.WS_SIZEBOX
 
 	//queue.init(&state.char_queue)
 	//defer queue.destroy(&state.char_queue)
@@ -355,7 +355,7 @@ main :: proc() {
 	ctx.text_width = mu.default_atlas_text_width
 	ctx.text_height = mu.default_atlas_text_height
 
-	win32app.run(&state)
+	owin.run(&state)
 
 
 	// image := rl.Image {
@@ -505,7 +505,7 @@ render :: proc(ctx: ^mu.Context, ps: ^win32.PAINTSTRUCT, hdc_source: win32.HDC) 
 			old_brush := win32.SelectObject(hdc, win32.HGDIOBJ(dc_brush))
 			old_color := win32.SetDCBrushColor(hdc, convert_mu_color(cmd.color))
 			//old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(hPen));
-			old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(win32app.HPEN_NULL))
+			old_pen := win32.SelectObject(hdc, win32.HGDIOBJ(owin.HPEN_NULL))
 			win32.Rectangle(hdc, cmd.rect.x, cmd.rect.y, cmd.rect.x + cmd.rect.w, cmd.rect.y + cmd.rect.h)
 			//win32.FillRect(hdc, &cmd.rect, win32.HBRUSH(dc_brush))
 			win32.SelectObject(hdc, old_pen)

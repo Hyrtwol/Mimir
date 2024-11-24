@@ -9,7 +9,7 @@ import "core:math"
 import "core:math/linalg"
 //import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import "shared:obug"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
@@ -49,7 +49,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		win32app.post_quit_message();return 0
+		owin.post_quit_message();return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
@@ -67,12 +67,12 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 run :: proc() -> (exit_code: int) {
 
-	settings := win32app.default_window_settings
+	settings := owin.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-	_, _, hwnd := win32app.register_and_create_window(&settings)
-	if hwnd == nil {win32app.show_error_and_panic("register_and_create_window failed")}
+	_, _, hwnd := owin.register_and_create_window(&settings)
+	if hwnd == nil {owin.show_error_and_panic("register_and_create_window failed")}
 
 	//-- Create Device --//
 
@@ -343,10 +343,10 @@ run :: proc() -> (exit_code: int) {
 
 	//-- Main Loop --//
 
-	win32app.show_and_update_window(hwnd)
+	owin.show_and_update_window(hwnd)
 
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 
 		constants.ModelRotation += ModelRotationStep
 

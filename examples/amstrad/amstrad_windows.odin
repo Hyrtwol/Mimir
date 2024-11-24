@@ -6,7 +6,7 @@ import "base:intrinsics"
 import "base:runtime"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import z "shared:z80"
 
 // constants
@@ -30,8 +30,8 @@ BITMAPINFO :: struct {
 }
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
@@ -46,9 +46,9 @@ fill_screen_with_image :: proc(app: papp) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
 	//fmt.println(#procedure, hwnd, app)
 
 	bkgnd_brush = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
@@ -82,7 +82,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	{
 		hdc := win32.GetDC(hwnd)
 		defer win32.ReleaseDC(hwnd, hdc)
-		app.hbitmap = win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
+		app.hbitmap = owin.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
 	}
 
 	//fill_screen_with_image(app)
@@ -90,7 +90,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		intrinsics.mem_copy(app.pvBits, &memory[0xC000], size_16kb)
 	}
 
-	app.timer_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
+	app.timer_id = owin.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
 
 	if app.cpu != nil {
 		z.z80_power(app.cpu, true)
@@ -103,9 +103,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	//fmt.println(#procedure, hwnd, app)
-	win32app.kill_timer(hwnd, &app.timer_id)
-	if !win32app.delete_object(&app.hbitmap) {win32app.show_message_box("Unable to delete hbitmap", "Error")}
-	win32app.post_quit_message(0)
+	owin.kill_timer(hwnd, &app.timer_id)
+	if !owin.delete_object(&app.hbitmap) {owin.show_message_box("Unable to delete hbitmap", "Error")}
+	owin.post_quit_message(0)
 	return 0
 }
 
@@ -138,9 +138,9 @@ WM_KILLFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
 	settings := app.settings
-	type := win32app.WM_SIZE_WPARAM(wparam)
-	settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
+	type := owin.WM_SIZE_WPARAM(wparam)
+	settings.window_size = owin.decode_lparam_as_int2(lparam)
+	owin.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
 	return 0
 }
 
@@ -180,7 +180,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	/*
 	switch wparam {
-	//case '\x1b':	win32app.close_application(hwnd)
+	//case '\x1b':	owin.close_application(hwnd)
 	//case '\t':	put_chars ~= true
 	case: {
 		app := get_app(hwnd)
@@ -216,7 +216,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 
 	switch vk_code {
 	case win32.VK_ESCAPE:
-		if is_key_released {win32app.close_application(hwnd)}
+		if is_key_released {owin.close_application(hwnd)}
 	case win32.VK_F1:
 		if is_key_released {put_chars ~= true}
 	case win32.VK_F2:
@@ -274,10 +274,10 @@ total: z.zusize = 0
 reps := 0
 
 run_app :: proc(app: papp) -> (exit_code: int) {
-	win32app.prepare_run(app)
+	owin.prepare_run(app)
 
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 		for running {
 			total += z.z80_run(app.cpu, cycles_per_tick)
 			reps += 1

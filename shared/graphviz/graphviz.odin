@@ -5,7 +5,7 @@ import "core:os/os2"
 import "core:path/filepath"
 import "core:reflect"
 import "core:time"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 DOT_EXE :: "%GRAPHVIZ%\\dot.exe"
 
@@ -17,7 +17,7 @@ output_formats :: enum {
 }
 
 execute_dot :: proc(dot_path: string, output_file: string) {
-	full_exe, err := win32app.expand_environment_strings(DOT_EXE)
+	full_exe, err := owin.expand_environment_strings(DOT_EXE)
 	if err != 0 {fmt.panicf("expand_environment_strings error: %v", err)}
 
 	ext := filepath.ext(output_file)

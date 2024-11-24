@@ -11,7 +11,7 @@ import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import "shared:obug"
 
 L :: intrinsics.constant_utf16_cstring
@@ -20,7 +20,7 @@ int2 :: cv.int2
 double2 :: [2]f64
 double3 :: [3]f64
 
-DIB :: win32app.DIB
+DIB :: owin.DIB
 canvas :: cv.canvas
 
 TITLE :: "Flames"
@@ -29,9 +29,9 @@ HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
 ZOOM :: 8
 
-settings: win32app.window_settings
+settings: owin.window_settings
 
-stopwatch := win32app.create_stopwatch()
+stopwatch := owin.create_stopwatch()
 fps: f64 = 0
 frame_counter := 0
 delta, frame_time: f64 = 0, 0
@@ -155,7 +155,7 @@ dib_flames_2 :: proc(dib: ^canvas) {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	owin.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
 }
 
 
@@ -164,11 +164,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
-	dib = win32app.dib_create_v5(hdc, {WIDTH, HEIGHT})
-	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB")}
+	dib = owin.dib_create_v5(hdc, {WIDTH, HEIGHT})
+	if dib.canvas.pvBits == nil {owin.show_error_and_panic("No DIB")}
 	cv.canvas_clear(&dib, cv.byte4{0, 0, 0, 255})
 
-	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / TimerTickPS)
+	timer_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 1000 / TimerTickPS)
 	assert(timer_id != 0)
 
 	return 0
@@ -177,24 +177,24 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
-	win32app.dib_free_section(&dib)
+	owin.dib_free_section(&dib)
 	assert(dib.hbitmap == nil)
-	win32app.kill_timer(hwnd, &timer_id)
+	owin.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
-	settings.window_size = win32app.decode_lparam_as_int2(lparam)
+	settings.window_size = owin.decode_lparam_as_int2(lparam)
 	set_window_text(hwnd)
 	return 0
 }
 
 draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
-	win32app.draw_dib(hwnd, hdc, settings.window_size, &dib)
+	owin.draw_dib(hwnd, hdc, settings.window_size, &dib)
 }
 
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
@@ -231,7 +231,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 WM_CHAR :: proc "contextless" (hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch wparam {
 	case '\x1b':
-		win32app.close_application(hwnd)
+		owin.close_application(hwnd)
 	case '1':
 		dib_update_func = dib_flames
 	case '2':
@@ -240,8 +240,8 @@ WM_CHAR :: proc "contextless" (hwnd: win32.HWND, wparam: win32.WPARAM, lparam: w
 	return 0
 }
 
-decode_input_position :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
-	return win32app.decode_lparam_as_int2(lparam) / ZOOM
+decode_input_position :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> owin.int2 {
+	return owin.decode_lparam_as_int2(lparam) / ZOOM
 }
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -282,15 +282,15 @@ run :: proc() -> (exit_code: int) {
 		palette[i] = {calc_col(math.pow(f, 0.5)), calc_col(math.pow(f, 1.25)), calc_col(math.pow(f, 3.0)), 255}
 	}
 
-	settings = win32app.default_window_settings
+	settings = owin.default_window_settings
 	settings.window_size = {WIDTH * ZOOM, HEIGHT * ZOOM}
 	settings.title = TITLE
 	settings.wndproc = wndproc
 	settings.sleep = time.Millisecond * 4
-	_, _, hwnd := win32app.prepare_run(&settings)
+	_, _, hwnd := owin.prepare_run(&settings)
 	stopwatch->start()
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 		delta = stopwatch->get_delta_seconds()
 		frame_time += delta
 		frame_counter += 1

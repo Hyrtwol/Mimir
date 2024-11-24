@@ -6,7 +6,7 @@ import "base:runtime"
 import "core:fmt"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -23,20 +23,20 @@ clear_color: COLOR = .BLACK
 select: COLOR = .WHITE
 
 application :: struct {
-	#subtype settings: win32app.window_settings,
+	#subtype settings: owin.window_settings,
 }
 
-dib: win32app.DIB
+dib: owin.DIB
 // frame buffers
 fbc :: 2
-fbs: [fbc]win32app.DIB
+fbs: [fbc]owin.DIB
 fps: f64 = 0
 frame_counter := 0
 
 timer_id: win32.UINT_PTR
-stopwatch : win32app.stopwatch
+stopwatch : owin.stopwatch
 
-mouse_pos: win32app.int2 = {0, 0}
+mouse_pos: owin.int2 = {0, 0}
 is_active: bool = true
 is_focused := false
 cursor_state: i32 = 0
@@ -44,23 +44,23 @@ cursor_state: i32 = 0
 grid_color: u32 = 0x80808080
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
 show_cursor :: proc(show: bool) {
-	cursor_state = win32app.show_cursor(show)
+	cursor_state = owin.show_cursor(show)
 	fmt.println(#procedure, cursor_state)
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 	app := get_app(hwnd)
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, fps)
+	owin.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, fps)
 }
 
 decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> cv.int2 {
-	return win32app.decode_lparam_as_int2(lparam) / ZOOM
+	return owin.decode_lparam_as_int2(lparam) / ZOOM
 }
 
 set_dot :: #force_inline proc "contextless" (pos: cv.int2, col: COLOR) {
@@ -70,13 +70,13 @@ set_dot :: #force_inline proc "contextless" (pos: cv.int2, col: COLOR) {
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure)
 
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
 
 	//show_cursor(false)
 
-	client_size := win32app.get_client_size(hwnd)
+	client_size := owin.get_client_size(hwnd)
 	fmt.println("client_size", client_size)
 
 	hdc := win32.GetDC(hwnd)
@@ -84,14 +84,14 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	cc := cv.get_color(clear_color)
 	for i in 0 ..< fbc {
-		fbs[i] = win32app.dib_create_v5(hdc, client_size)
+		fbs[i] = owin.dib_create_v5(hdc, client_size)
 		cv.canvas_clear(&fbs[i], cc)
 	}
 
-	dib = win32app.dib_create_v5(hdc, client_size / ZOOM)
+	dib = owin.dib_create_v5(hdc, client_size / ZOOM)
 	cv.canvas_clear(&dib, cc)
 
-	timer_id = win32app.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
+	timer_id = owin.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
 
 	return 0
 }
@@ -99,23 +99,23 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	fmt.println(#procedure)
-	win32app.kill_timer(hwnd, &timer_id)
-	// win32app.clip_cursor(hwnd, false)
+	owin.kill_timer(hwnd, &timer_id)
+	// owin.clip_cursor(hwnd, false)
 	// if cursor_state < 1 {show_cursor(true)}
-	win32app.dib_free_section(&dib)
+	owin.dib_free_section(&dib)
 	for i in 0 ..< fbc {
-		win32app.dib_free_section(&fbs[i])
+		owin.dib_free_section(&fbs[i])
 	}
-	win32app.post_quit_message()
+	owin.post_quit_message()
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
 	fmt.println(#procedure)
-	app.settings.window_size = win32app.decode_lparam_as_int2(lparam)
+	app.settings.window_size = owin.decode_lparam_as_int2(lparam)
 	set_window_text(hwnd)
-	// win32app.clip_cursor(hwnd, true)
+	// owin.clip_cursor(hwnd, true)
 	return 0
 }
 
@@ -137,33 +137,33 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	assert(fb_hdc != nil)
 	defer win32.DeleteDC(fb_hdc)
 
-	old_obj := win32app.select_object(fb_hdc, fb.hbitmap)
-	defer win32app.select_object(fb_hdc, old_obj)
+	old_obj := owin.select_object(fb_hdc, fb.hbitmap)
+	defer owin.select_object(fb_hdc, old_obj)
 
 	// paint dib to active fb
 	{
 		hdc_source := win32.CreateCompatibleDC(hdc)
 		assert(hdc_source != nil)
 		defer win32.DeleteDC(hdc_source)
-		old_hdc_source_object := win32app.select_object(hdc_source, dib.hbitmap)
-		defer win32app.select_object(hdc_source, old_hdc_source_object)
+		old_hdc_source_object := owin.select_object(hdc_source, dib.hbitmap)
+		defer owin.select_object(hdc_source, old_hdc_source_object)
 
-		win32app.stretch_blt(fb_hdc, fb_canvas_size, hdc_source, transmute(cv.int2)dib.canvas.size)
+		owin.stretch_blt(fb_hdc, fb_canvas_size, hdc_source, transmute(cv.int2)dib.canvas.size)
 	}
 	// draw grid
 	{
 		dc_pen := win32.GetStockObject(win32.DC_PEN)
-		old_dc_pen := win32app.select_object(fb_hdc, dc_pen)
-		defer win32app.select_object(fb_hdc, old_dc_pen)
+		old_dc_pen := owin.select_object(fb_hdc, dc_pen)
+		defer owin.select_object(fb_hdc, old_dc_pen)
 		old_pen := win32.SetDCPenColor(fb_hdc, grid_color)
 		defer win32.SetDCPenColor(fb_hdc, old_pen)
 
-		win32app.draw_grid(fb_hdc, {0, 0}, {ZOOM, ZOOM}, fb_canvas_size)
+		owin.draw_grid(fb_hdc, {0, 0}, {ZOOM, ZOOM}, fb_canvas_size)
 	}
 
-	win32app.bit_blt(hdc, fb_canvas_size, fb_hdc)
+	owin.bit_blt(hdc, fb_canvas_size, fb_hdc)
 
-	// win32app.redraw_window(hwnd)
+	// owin.redraw_window(hwnd)
 
 	return 0
 }
@@ -179,8 +179,8 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	defer win32.DeleteDC(hdc_source)
 
 	fb := fbs[frame_counter]
-	client_size := win32app.get_rect_size(&ps.rcPaint)
-	win32app.select_object(hdc_source, fb.hbitmap)
+	client_size := owin.get_rect_size(&ps.rcPaint)
+	owin.select_object(hdc_source, fb.hbitmap)
 	bitmap_size := transmute(cv.int2)fb.canvas.size
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bitmap_size.x, bitmap_size.y, win32.SRCCOPY)
 
@@ -240,20 +240,20 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 main :: proc() {
 
 	app := application {
-		settings = win32app.window_settings {
+		settings = owin.window_settings {
 			options     = {.Center},
-			dwStyle     = win32app.default_dwStyle,
-			dwExStyle   = win32app.default_dwExStyle,
-			sleep       = win32app.default_sleep,
+			dwStyle     = owin.default_dwStyle,
+			dwExStyle   = owin.default_dwExStyle,
+			sleep       = owin.default_sleep,
 			window_size = {WIDTH, HEIGHT},
 			wndproc = wndproc,
 		},
 	}
 
-	stopwatch = win32app.create_stopwatch()
+	stopwatch = owin.create_stopwatch()
 	stopwatch->start()
 
-	win32app.run(&app)
+	owin.run(&app)
 
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())

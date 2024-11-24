@@ -8,7 +8,7 @@ import "core:fmt"
 import "core:mem"
 import "core:os"
 import win32 "core:sys/windows"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
@@ -22,8 +22,8 @@ SHADER_FILE :: "shaders_tx.hlsl"
 
 NUM_RENDERTARGETS :: 2
 
-int3 :: win32app.int3
-float3 :: win32app.float3
+int3 :: owin.int3
+float3 :: owin.float3
 
 FrameCount: u32 : 3
 TextureWidth: u32 : 256
@@ -46,13 +46,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		win32app.post_quit_message();return 0
+		owin.post_quit_message();return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
 		switch wparam {
 		case '\x1b': // ESC
-			win32app.close_application(hwnd)
+			owin.close_application(hwnd)
 		// case 's':
 		// 	show_shadowmap = !show_shadowmap
 		}
@@ -125,12 +125,12 @@ WaitForPreviousFrame :: proc() {
 
 run :: proc() -> (exit_code: int) {
 
-	settings := win32app.default_window_settings
+	settings := owin.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-	_, _, hwnd := win32app.register_and_create_window(&settings)
-	if hwnd == nil {win32app.show_error_and_panic("register_and_create_window failed")}
+	_, _, hwnd := owin.register_and_create_window(&settings)
+	if hwnd == nil {owin.show_error_and_panic("register_and_create_window failed")}
 	hr: win32.HRESULT
 
 	// Init DXGI factory. DXGI is the link between the window and DirectX
@@ -559,10 +559,10 @@ run :: proc() -> (exit_code: int) {
         WaitForPreviousFrame()
 	}
 
-	win32app.show_and_update_window(hwnd)
+	owin.show_and_update_window(hwnd)
 
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 
 		panic_if_failed(command_allocator->Reset())
 		panic_if_failed(m_commandList->Reset(command_allocator, pipeline))

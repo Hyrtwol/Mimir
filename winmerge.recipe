@@ -1,0 +1,46 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <WinMergeFolder>$(MSBuildProjectDirectory)\winmerge</WinMergeFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <WinMerge Include="core_sys">
+      <left>..\Odin\core\sys</left>
+      <right>shared\sys</right>
+    </WinMerge>
+    <WinMerge Include="tests">
+      <left>..\Odin\tests</left>
+      <right>shared\tests</right>
+    </WinMerge>
+    <WinMerge Include="owin">
+      <left>..\shared\owin</left>
+      <right>shared\tlc\win32app</right>
+    </WinMerge>
+  </ItemGroup>
+  <Target Name="Build">
+    <MakeDir Directories="$(WinMergeFolder)" />
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="CreateWinMergeFile" Properties="WinMergeName=$(WinMergeFolder)\%(WinMerge.Identity).WinMerge;Left=%(WinMerge.left);Right=%(WinMerge.right)" />
+  </Target>
+  <Target Name="CreateWinMergeFile">
+    <PropertyGroup>
+      <Left>$([System.IO.Path]::GetFullPath('$(Left)'))</Left>
+      <Right>$([System.IO.Path]::GetFullPath('$(Right)'))</Right>
+    </PropertyGroup>
+    <ItemGroup>
+      <WinMergeLine Include="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" />
+      <WinMergeLine Include="&lt;project&gt;" />
+      <WinMergeLine Include="&lt;paths&gt;" />
+      <WinMergeLine Include="&lt;left&gt;&lt;/left&gt;" />
+      <WinMergeLine Include="&lt;right&gt;&lt;/right&gt;" />
+      <WinMergeLine Include="&lt;filter&gt;Odin (tlc)&lt;/filter&gt;" />
+      <WinMergeLine Include="&lt;subfolders&gt;1&lt;/subfolders&gt;" />
+      <WinMergeLine Include="&lt;left-readonly&gt;0&lt;/left-readonly&gt;" />
+      <WinMergeLine Include="&lt;right-readonly&gt;0&lt;/right-readonly&gt;" />
+      <WinMergeLine Include="&lt;/paths&gt;" />
+      <WinMergeLine Include="&lt;/project&gt;" />
+    </ItemGroup>
+    <Message Text="Writing '$(WinMergeName)'" Importance="high" />
+    <WriteLinesToFile Lines="@(WinMergeLine)" File="$(WinMergeName)" Overwrite="true" Encoding="ascii" />
+    <XmlPoke XmlInputPath="$(WinMergeName)" Query="//project/paths/left" Value="$(Left)" />
+    <XmlPoke XmlInputPath="$(WinMergeName)" Query="//project/paths/right" Value="$(Right)" />
+  </Target>
+</Project>

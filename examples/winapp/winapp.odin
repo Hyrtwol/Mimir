@@ -7,7 +7,7 @@ import "core:fmt"
 import "core:math/rand"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 
@@ -18,34 +18,34 @@ CENTER  :: true
 ZOOM  	:: 8
 
 screen_buffer  :: cv.screen_buffer
-//pixel_size    : win32app.int2 : {ZOOM, ZOOM}
+//pixel_size    : owin.int2 : {ZOOM, ZOOM}
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
-bitmap_size   : win32app.int2
+bitmap_size   : owin.int2
 bitmap_count  : i32
 pvBits        : screen_buffer
 
-dib           : win32app.DIB
+dib           : owin.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
 application :: struct {
-	#subtype settings: win32app.window_settings,
+	#subtype settings: owin.window_settings,
 }
 
 // TODO GetKeyboardState
 
-decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	pos := win32app.decode_lparam_as_int2(lparam) / ZOOM
+decode_scrpos :: proc(lparam: win32.LPARAM) -> owin.int2 {
+	pos := owin.decode_lparam_as_int2(lparam) / ZOOM
 	pos.y = bitmap_size.y - 1 - pos.y
 	return pos
 }
 
-random_scrpos :: proc() -> win32app.int2 {
+random_scrpos :: proc() -> owin.int2 {
 	return {rand.int31_max(bitmap_size.x), rand.int31_max(bitmap_size.y)}
 }
 
-set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
+set_dot :: proc(pos: owin.int2, col: cv.byte4) {
 	i := u32(pos.y * bitmap_size.x + pos.x)
 	if i < u32(bitmap_count) {
 		pvBits[i] = col
@@ -54,13 +54,13 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
-	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
-	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 3000)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
+	timer1_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 1000)
+	timer2_id = owin.set_timer(hwnd, owin.IDT_TIMER2, 3000)
 
-	client_size := win32app.get_client_size(hwnd)
+	client_size := owin.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
 
 	{
@@ -68,7 +68,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		defer win32.ReleaseDC(hwnd, hdc)
 		color_byte_count :: 4
 		color_bit_count :: color_byte_count * 8
-		bmi_header := win32app.create_bmi_header(bitmap_size, false, color_bit_count)
+		bmi_header := owin.create_bmi_header(bitmap_size, false, color_bit_count)
 		//fmt.printfln("bmi_header %v", bmi_header)
 		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
 	}
@@ -86,15 +86,15 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.kill_timer(hwnd, &timer1_id)
-	win32app.kill_timer(hwnd, &timer2_id)
-	win32app.delete_object(&bitmap_handle)
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.kill_timer(hwnd, &timer1_id)
+	owin.kill_timer(hwnd, &timer2_id)
+	owin.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
@@ -122,13 +122,13 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	type := win32app.WM_SIZE_WPARAM(wparam)
-	size := win32app.decode_lparam_as_int2(lparam)
-	app := win32app.get_settings(hwnd, application)
+	type := owin.WM_SIZE_WPARAM(wparam)
+	size := owin.decode_lparam_as_int2(lparam)
+	app := owin.get_settings(hwnd, application)
 	if app == nil {return 1}
 	fmt.println(#procedure, hwnd, type, size)
 	app.settings.window_size = size
-	win32app.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, bitmap_size)
+	owin.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, bitmap_size)
 	return 0
 }
 
@@ -154,7 +154,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
 	defer win32.DeleteDC(hdc_source)
 
-	client_size := win32app.get_rect_size(&ps.rcPaint)
+	client_size := owin.get_rect_size(&ps.rcPaint)
 	brush := win32.HBRUSH(win32.GetStockObject(win32.DC_BRUSH))
 	col, org_color: win32.COLORREF
 
@@ -193,15 +193,15 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch win32.UINT_PTR(wparam)
 	{
-	case win32app.IDT_TIMER1: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
-	case win32app.IDT_TIMER2: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
+	case owin.IDT_TIMER1: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_CYAN)
+	case owin.IDT_TIMER2: set_dot_invalidate(hwnd, random_scrpos(), cv.COLOR_YELLOW)
 	}
 	return 0
 }
 
-set_dot_invalidate :: proc(hwnd: win32.HWND, pos: win32app.int2, col: cv.byte4) {
+set_dot_invalidate :: proc(hwnd: win32.HWND, pos: owin.int2, col: cv.byte4) {
 	set_dot(pos, col)
-	win32app.invalidate_window(hwnd)
+	owin.invalidate_window(hwnd)
 }
 
 decode_set_dot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
@@ -210,7 +210,7 @@ decode_set_dot :: proc(hwnd: win32.HWND, lparam: win32.LPARAM, col: cv.byte4) {
 
 handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	// odinfmt: disable
-	mouse_key_state := win32app.decode_wparam_as_mouse_key_state(wparam)
+	mouse_key_state := owin.decode_wparam_as_mouse_key_state(wparam)
 	switch mouse_key_state {
 	case {.MK_LBUTTON}: decode_set_dot(hwnd, lparam, cv.COLOR_RED)
 	case {.MK_RBUTTON}: decode_set_dot(hwnd, lparam, cv.COLOR_BLUE)
@@ -221,7 +221,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 	return 0
 }
 
-wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+wndproc :: proc "system" (hwnd: win32.HWND, msg: owin.WM_MSG, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	// odinfmt: disable
 	switch msg {
@@ -246,13 +246,13 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32app.WM_MSG, wparam: win32.
 main :: proc() {
 
 	app: application = {
-		settings = win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
+		settings = owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
 	}
 
-	stopwatch := win32app.create_stopwatch()
+	stopwatch := owin.create_stopwatch()
 	stopwatch->start()
 
-	win32app.run(&app)
+	owin.run(&app)
 
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())

@@ -1,6 +1,6 @@
 #+build windows
 #+vet
-package win32app
+package owin
 
 import "core:path/filepath"
 import win32 "core:sys/windows"

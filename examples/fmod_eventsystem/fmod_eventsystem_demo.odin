@@ -7,7 +7,7 @@ import          "core:math"
 import          "base:runtime"
 import win32	"core:sys/windows"
 import fmod		"shared:fmodex"
-import			"libs:tlc/win32app"
+import owin     "libs:tlc/win32app"
 import cv		"libs:tlc/canvas"
 import			"libs:tlc/wolf"
 
@@ -25,12 +25,12 @@ DistanceFactor :: 1.0
 screen_buffer  :: cv.screen_buffer
 
 bitmap_handle : win32.HGDIOBJ // win32.HBITMAP
-bitmap_size   : win32app.int2
+bitmap_size   : owin.int2
 bitmap_count  : i32
 pvBits        : screen_buffer
-pixel_size    : win32app.int2 : {ZOOM, ZOOM}
+pixel_size    : owin.int2 : {ZOOM, ZOOM}
 
-//dib           : win32app.DIB
+//dib           : owin.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
@@ -92,13 +92,13 @@ play_song :: proc() {
 	}
 }
 
-decode_scrpos :: proc(lparam: win32.LPARAM) -> win32app.int2 {
-	scrpos := win32app.decode_lparam_as_int2(lparam) / ZOOM
+decode_scrpos :: proc(lparam: win32.LPARAM) -> owin.int2 {
+	scrpos := owin.decode_lparam_as_int2(lparam) / ZOOM
 	scrpos.y = bitmap_size.y - 1 - scrpos.y
 	return scrpos
 }
 
-set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
+set_dot :: proc(pos: owin.int2, col: cv.byte4) {
 	i := pos.y * bitmap_size.x + pos.x
 	if i >= 0 && i < bitmap_count {
 		pvBits[i] = col
@@ -108,10 +108,10 @@ set_dot :: proc(pos: win32app.int2, col: cv.byte4) {
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
-	timer1_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000)
-	timer2_id = win32app.set_timer(hwnd, win32app.IDT_TIMER2, 50)
+	timer1_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 1000)
+	timer2_id = owin.set_timer(hwnd, owin.IDT_TIMER2, 50)
 
-	client_size := win32app.get_client_size(hwnd)
+	client_size := owin.get_client_size(hwnd)
 	bitmap_size = client_size / ZOOM
 	fmt.println("bitmap_size:", bitmap_size)
 
@@ -120,9 +120,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	color_byte_count :: 4
 	color_bit_count :: color_byte_count * 8
-	bmi_header := win32app.create_bmi_header(bitmap_size, false, color_bit_count)
+	bmi_header := owin.create_bmi_header(bitmap_size, false, color_bit_count)
 
-	bitmap_handle = win32.HGDIOBJ(win32app.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bmi_header, .DIB_RGB_COLORS, &pvBits))
+	bitmap_handle = win32.HGDIOBJ(owin.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bmi_header, .DIB_RGB_COLORS, &pvBits))
 
 	if pvBits != nil {
 		bitmap_count = bitmap_size.x * bitmap_size.y
@@ -137,13 +137,13 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	win32app.kill_timer(hwnd, &timer2_id)
-	win32app.kill_timer(hwnd, &timer1_id)
-	win32app.delete_object(&bitmap_handle)
+	owin.kill_timer(hwnd, &timer2_id)
+	owin.kill_timer(hwnd, &timer1_id)
+	owin.delete_object(&bitmap_handle)
 	bitmap_size = {0, 0}
 	bitmap_count = 0
 	pvBits = nil
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
@@ -183,14 +183,14 @@ lin2dB :: proc(linear: f32) -> f32 {return math.clamp(math.log10(linear) * 20.0,
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	switch win32.UINT_PTR(wparam)
 	{
-	case win32app.IDT_TIMER1:
+	case owin.IDT_TIMER1:
 		{
 			fmod.FMOD_System_GetCPUUsage(system, &dsp, &stream, &geometry, &update, &total)
 			fmod.FMOD_System_GetChannelsPlaying(system, &channels_playing)
 			new_title := fmt.tprintf("%s cpu %v channels %v", title, total, channels_playing)
 			win32.SetWindowTextW(hwnd, win32.utf8_to_wstring(new_title))
 		}
-	case win32app.IDT_TIMER2:
+	case owin.IDT_TIMER2:
 		{
 			fmod.FMOD_System_GetSpectrum(system, &spectrum_left[0], spectrum_size, 0, fft_window)
 			fmod.FMOD_System_GetSpectrum(system, &spectrum_right[0], spectrum_size, 1, fft_window)
@@ -214,7 +214,7 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 
 			win32.InvalidateRect(hwnd, nil, false)
 			//win32.InvalidateRect(hwnd)
-			win32app.redraw_window(hwnd)
+			owin.redraw_window(hwnd)
 		}
 	}
 	return 0
@@ -261,7 +261,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_PAINT:		return win32app.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
+	case win32.WM_PAINT:		return owin.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)
@@ -380,6 +380,6 @@ main :: proc() {
 	title = fmt.aprintf("%s Version : %d.%d.%d (0x%x)", TITLE, fmod_version.Major, fmod_version.Minor, fmod_version.Development, transmute(u32)fmod_version)
 	defer delete(title)
 
-	settings := win32app.create_window_settings({WIDTH, HEIGHT}, title, wndproc)
-	win32app.run(&settings)
+	settings := owin.create_window_settings({WIDTH, HEIGHT}, title, wndproc)
+	owin.run(&settings)
 }

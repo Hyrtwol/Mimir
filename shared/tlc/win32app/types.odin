@@ -1,6 +1,6 @@
 #+build windows
 #+vet
-package win32app
+package owin
 
 import "base:intrinsics"
 import win32 "core:sys/windows"

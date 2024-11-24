@@ -1,4 +1,4 @@
-package glfw_window
+package newton_glfw
 
 import "base:intrinsics"
 import "core:fmt"
@@ -13,14 +13,16 @@ import newton "shared:newton_dynamics"
 import "shared:obug"
 
 // cow, cube, gazebo, crisscross
-import model "../../data/models/cube"
+// examples\newton_dynamics\newton_glfw\newton_glfw.odin
+import model "../../../data/models/cube"
 SCALE :: 0.2
 
 // import model "../../data/models/platonic/icosahedron"
 // SCALE :: 1.0
 
 _ :: png
-IMAGELOC :: "../../data/images/uv_checker_w.png"
+IMAGELOC :: "../../../data/images/uv_checker_w.png"
+IMAGELOC2 :: "../../../data/images/uv_checker_x.png"
 
 WINDOW_TITLE :: "Mimir"
 WINDOW_WIDTH :: 640
@@ -29,6 +31,16 @@ WINDOW_HEIGHT :: WINDOW_WIDTH * 3 / 4
 // @note You might need to lower this to 3.3 depending on how old your graphics card is.
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
+
+// Create alias types for vertex array / buffer objects
+VAO             :: u32
+VBO             :: u32
+ShaderProgram   :: u32
+Texture         :: u32
+
+// Global variables.
+global_vao       : VAO
+global_shader    : ShaderProgram
 
 vertex_sources : []string = {
 	string(#load("shaders/pos.vs")),
@@ -56,6 +68,13 @@ run :: proc() -> (exit_code: int) {
 
 	world := newton.Create()
 	defer newton.Destroy(world)
+
+	fmt.println("World:")
+	fmt.printfln("  BodyCount           : %v", newton.WorldGetBodyCount(world))
+	fmt.printfln("  ConstraintCount     : %v", newton.WorldGetConstraintCount(world))
+	fmt.printfln("  BroadphaseAlgorithm : %v", newton.GetBroadphaseAlgorithm(world))
+	fmt.printfln("  ThreadsCount        : %v", newton.GetThreadsCount(world))
+	fmt.printfln("  MaxThreadsCount     : %v", newton.GetMaxThreadsCount(world))
 
 	when #defined(model.material) {
 		fmt.println("size_of(model.material)=", size_of(model.material))
@@ -101,6 +120,8 @@ run :: proc() -> (exit_code: int) {
 
 	image_w, image_h: i32
 	texture_data: []u8 = nil
+	texture_data2: []u8 = nil
+
 	{
 		// Load image at compile time
 		image_file_bytes := #load(IMAGELOC)
@@ -129,8 +150,39 @@ run :: proc() -> (exit_code: int) {
 
 		fmt.println("Image:", IMAGELOC, image_w, image_h)
 	}
+	{
+		// Load image at compile time
+		image_file_bytes := #load(IMAGELOC2)
+
+		// Load image  Odin's core:image library.
+		image_ptr: ^image.Image
+		err: image.Error
+		options := image.Options{.alpha_add_if_missing}
+
+		//    image_ptr, err =  q.load_from_file(IMAGELOC, options)
+		image_ptr, err = png.load_from_bytes(image_file_bytes, options)
+		defer png.destroy(image_ptr)
+		image_w = i32(image_ptr.width)
+		image_h = i32(image_ptr.height)
+
+		if err != nil {
+			fmt.println("ERROR: Image:", IMAGELOC2, "failed to load.")
+			return
+		}
+
+		// Copy bytes from icon buffer into slice.
+		texture_data2 = make([]u8, len(image_ptr.pixels.buf))
+		for b, i in image_ptr.pixels.buf {
+			texture_data2[i] = b
+		}
+
+		fmt.println("Image:", IMAGELOC2, image_w, image_h)
+	}
+
 	assert(texture_data != nil)
 	defer delete(texture_data)
+	assert(texture_data2 != nil)
+	defer delete(texture_data2)
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -175,28 +227,59 @@ run :: proc() -> (exit_code: int) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(model.indices) * size_of(model.indices[0]), raw_data(model.indices), gl.STATIC_DRAW)
 
 
-	// gl.ActiveTexture(0) // no effect ?
-	// Describe texture.
-	gl.TexImage2D(
-		gl.TEXTURE_2D, // texture type
-		0, // level of detail number (default = 0)
-		gl.RGBA, // texture format
-		image_w, // width
-		image_h, // height
-		0, // border, must be 0
-		gl.RGBA, // pixel data format
-		gl.UNSIGNED_BYTE, // data type of pixel data
-		&texture_data[0], // image data
-		//&image_ptr.pixels.buf[0],  // image data
-	)
+    Earth_texture : [2]Texture
+    gl.GenTextures(len(Earth_texture), &Earth_texture[0])
+	defer gl.DeleteTextures(len(Earth_texture), &Earth_texture[0])
 
-	// Texture wrapping options.
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.BindTexture(gl.TEXTURE_2D, Earth_texture[0])
+	//gl.ActiveTexture(Earth_texture[0]) // no effect ?
+	{
+		// Describe texture.
+		gl.TexImage2D(
+			gl.TEXTURE_2D, // texture type
+			0, // level of detail number (default = 0)
+			gl.RGBA, // texture format
+			image_w, // width
+			image_h, // height
+			0, // border, must be 0
+			gl.RGBA, // pixel data format
+			gl.UNSIGNED_BYTE, // data type of pixel data
+			&texture_data[0], // image data
+			//&image_ptr.pixels.buf[0],  // image data
+		)
 
-	// Texture filtering options.
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		// Texture wrapping options.
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+
+		// Texture filtering options.
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	}
+	gl.BindTexture(gl.TEXTURE_2D, Earth_texture[1])
+	{
+		// Describe texture.
+		gl.TexImage2D(
+			gl.TEXTURE_2D, // texture type
+			0, // level of detail number (default = 0)
+			gl.RGBA, // texture format
+			image_w, // width
+			image_h, // height
+			0, // border, must be 0
+			gl.RGBA, // pixel data format
+			gl.UNSIGNED_BYTE, // data type of pixel data
+			&texture_data2[0], // image data
+			//&image_ptr.pixels.buf[0],  // image data
+		)
+
+		// Texture wrapping options.
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+
+		// Texture filtering options.
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	}
 
 	gl.ClearColor(0.10, 0.15, 0.20, 1.0)
 	gl.Enable(gl.CULL_FACE)
@@ -231,11 +314,15 @@ run :: proc() -> (exit_code: int) {
 
 		u_transform: glm.mat4
 		{
+			//gl.ActiveTexture(Earth_texture[0])
+			gl.BindTexture(gl.TEXTURE_2D, Earth_texture[0])
 			u_transform = proj_view * model_transform * glm.mat4Rotate({0, 1, 1}, t)
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
 			gl.DrawElements(gl.TRIANGLES, i32(len(model.indices) * size_of(model.indices[0])), gl.UNSIGNED_SHORT, nil)
 		}
 		{
+			//gl.ActiveTexture(Earth_texture[1])
+			gl.BindTexture(gl.TEXTURE_2D, Earth_texture[1])
 			u_transform = proj_view * glm.mat4Rotate({1, 1, 1}, t * 1.47) * model_transform
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
 			gl.DrawElements(gl.TRIANGLES, i32(len(model.indices) * size_of(model.indices[0])), gl.UNSIGNED_SHORT, nil)

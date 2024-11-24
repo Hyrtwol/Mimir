@@ -7,14 +7,14 @@ import "core:os"
 import "core:path/filepath"
 import win32 "core:sys/windows"
 import a "libs:amstrad"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import "shared:obug"
 
 ROM_PATH := filepath.clean("../data/z80/") or_else panic("filepath.clean")
 AMSTRAD_PATH := filepath.clean("../examples/amstrad/data/") or_else panic("filepath.clean")
 
 application :: struct {
-	#subtype settings: win32app.window_settings,
+	#subtype settings: owin.window_settings,
 	pause:    bool,
 	//colors:    []color,
 	//screen_size:     int2,
@@ -33,11 +33,11 @@ run :: proc() -> (exit_code: int) {
 	cpu: Z80
 	init_cpu(&cpu)
 	app: application = {
-		settings = win32app.window_settings {
-			center = true,
-			dwStyle = win32app.default_dwStyle,
-			dwExStyle = win32app.default_dwExStyle,
-			sleep = win32app.default_sleep,
+		settings = owin.window_settings {
+			options = {.Center},
+			dwStyle = owin.default_dwStyle,
+			dwExStyle = owin.default_dwExStyle,
+			sleep = owin.default_sleep,
 			window_size = {WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE},
 			wndproc = wndproc,
 			title = TITLE,

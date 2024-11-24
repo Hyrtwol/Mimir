@@ -8,13 +8,13 @@ import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 TimerTickPS :: 5
 
 int2 :: cv.int2
 color: cv.color
-dib: win32app.DIB
+dib: owin.DIB
 
 app_action :: #type proc(app: ^application) -> int
 
@@ -23,7 +23,7 @@ key_state :: bool
 key_states :: [key_state_count]key_state
 
 application :: struct {
-	#subtype settings:       win32app.window_settings,
+	#subtype settings:       owin.window_settings,
 	pause:                   bool,
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
@@ -31,7 +31,7 @@ application :: struct {
 	tick:                    u32,
 	create, update, destroy: app_action,
 	mouse_pos:               int2,
-	mouse_buttons:           win32app.MOUSE_KEY_STATE,
+	mouse_buttons:           owin.MOUSE_KEY_STATE,
 	keys:                    key_states,
 	char_queue:              queue.Queue(u8),
 }
@@ -39,11 +39,11 @@ application :: struct {
 on_idle :: proc(app: ^application) -> int {return 0}
 
 default_application :: application {
-	settings = win32app.window_settings {
+	settings = owin.window_settings {
 		options     = {.Center},
-		dwStyle     = win32app.default_dwStyle,
-		dwExStyle   = win32app.default_dwExStyle,
-		sleep       = win32app.default_sleep,
+		dwStyle     = owin.default_dwStyle,
+		dwExStyle   = owin.default_dwExStyle,
+		sleep       = owin.default_sleep,
 		window_size = {640, 480},
 		wndproc = wndproc,
 	},
@@ -60,8 +60,8 @@ frame_stats: struct {
 }
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
@@ -79,13 +79,13 @@ decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^application) -> 
 @(private = "file")
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 	app := get_app(hwnd)
-	win32app.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, frame_stats.fps)
+	owin.set_window_text(hwnd, "%s %v %v FPS: %f", app.settings.title, app.settings.window_size, dib.canvas.size, frame_stats.fps)
 }
 
 @(private = "file")
 draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
 	app := get_app(hwnd)
-	win32app.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
+	owin.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
 }
 
 @(private = "file")
@@ -99,20 +99,20 @@ draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = win32app.dib_create_v5(hdc, app.size)
-	if dib.canvas.pvBits == nil {win32app.show_error_and_panic("No DIB")}
+	dib = owin.dib_create_v5(hdc, app.size)
+	if dib.canvas.pvBits == nil {owin.show_error_and_panic("No DIB")}
 	cv.canvas_clear(&dib, cv.COLOR_BLACK)
 
 	app->create()
 
-	app.timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 1000 / TimerTickPS)
+	app.timer_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 1000 / TimerTickPS)
 	assert(app.timer_id != 0)
 
 	return 0
@@ -122,16 +122,16 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := get_app(hwnd)
 	app->destroy()
-	win32app.dib_free_section(&dib)
-	win32app.kill_timer(hwnd, &app.timer_id)
+	owin.dib_free_section(&dib)
+	owin.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	type, size := win32app.decode_wm_size_params(wparam, lparam)
+	type, size := owin.decode_wm_size_params(wparam, lparam)
 	fmt.println(#procedure, hwnd, type, size)
 	app.settings.window_size = size
 	set_window_text(hwnd)
@@ -186,7 +186,7 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 
 	switch vk_code {
 	case win32.VK_ESCAPE:
-		if is_key_released {win32app.close_application(hwnd)}
+		if is_key_released {owin.close_application(hwnd)}
 	// case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
 
@@ -208,8 +208,8 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 
 handle_mouse_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	app.mouse_pos = win32app.decode_lparam_as_int2(lparam)
-	app.mouse_buttons = win32app.decode_wparam_as_mouse_key_state(wparam)
+	app.mouse_pos = owin.decode_lparam_as_int2(lparam)
+	app.mouse_buttons = owin.decode_wparam_as_mouse_key_state(wparam)
 	return 0
 }
 
@@ -245,12 +245,12 @@ sleep :: proc(duration: time.Duration) {
 run :: proc(app: ^application) -> (exit_code: int) {
 	// queue.init(&app.char_queue)
 	// defer queue.destroy(&app.char_queue)
-	_, _, hwnd := win32app.prepare_run(app)
+	_, _, hwnd := owin.prepare_run(app)
 	res: int
-	stopwatch := win32app.create_stopwatch()
+	stopwatch := owin.create_stopwatch()
 	stopwatch->start()
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 
 		app.delta = f32(stopwatch->get_delta_seconds())
 		frame_stats.frame_time += app.delta

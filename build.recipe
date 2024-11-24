@@ -73,7 +73,7 @@
 		<Project Include="examples\lerp">
 			<Flavour>Odin</Flavour>
 		</Project>
-		<Project Include="examples\lightwave">
+		<Project Include="examples\lightwave\load_lwo">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\load_obj">
@@ -91,7 +91,7 @@
 		<Project Include="examples\neural_network">
 			<Flavour>Odin</Flavour>
 		</Project>
-		<Project Include="examples\newton_dynamics">
+		<Project Include="examples\newton_dynamics\newton_demo">
 			<Flavour>Odin</Flavour>
 		</Project>
 		<Project Include="examples\noise">

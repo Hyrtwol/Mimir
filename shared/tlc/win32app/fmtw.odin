@@ -1,6 +1,6 @@
 #+build windows
 #+vet
-package win32app
+package owin
 
 import "core:fmt"
 import "core:mem"

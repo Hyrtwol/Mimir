@@ -4,7 +4,7 @@ import "core:bytes"
 import "core:fmt"
 import "base:runtime"
 import "core:testing"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 @(test)
 can_i_inline_asm :: proc(t: ^testing.T) {
@@ -24,7 +24,7 @@ can_i_call_rdtsc :: proc(t: ^testing.T) {
 	reps :: 100000
 	exp: u64 = 0
 
-	stopwatch := win32app.create_stopwatch()
+	stopwatch := owin.create_stopwatch()
 	stopwatch->start()
 
 	act := __rdtsc()

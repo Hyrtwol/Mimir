@@ -12,7 +12,7 @@ import "base:runtime"
 //import "core:time"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import f "shared:flac"
 
 _ :: f
@@ -70,7 +70,7 @@ PNoiseDisplay :: ^TNoiseDisplay
 
 TDoBuffer :: proc(Buf: rawptr)
 
-dib: win32app.DIB
+dib: owin.DIB
 colidx := 1
 cols := cv.C64_COLORS
 
@@ -95,7 +95,7 @@ NoiseDisplayTop: i32
 
 DoBuffer := DoBuffer3
 
-set_dot :: #force_inline proc "contextless" (pos: win32app.int2, col: cv.byte4) {
+set_dot :: #force_inline proc "contextless" (pos: owin.int2, col: cv.byte4) {
 	cv.canvas_set_dot(&dib, pos, col)
 }
 
@@ -153,7 +153,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 	hr := win32.waveOutOpen(&waveout, win32.WAVE_MAPPER, &WaveFormatEx, win32.DWORD_PTR(uintptr(hwnd)), 0, win32.CALLBACK_WINDOW | win32.WAVE_ALLOWSYNC)
 
 	if hr != .MMSYSERR_NOERROR {
-		win32app.show_last_errorf("waveOutOpen %v\n%v", hr, WaveFormatEx)
+		owin.show_last_errorf("waveOutOpen %v\n%v", hr, WaveFormatEx)
 		return
 	}
 
@@ -172,7 +172,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 
 		hr = win32.waveOutPrepareHeader(waveout, header, size_of(win32.WAVEHDR))
 		if hr != .MMSYSERR_NOERROR {
-			win32app.show_last_errorf("header[%d]=%v", i, header)
+			owin.show_last_errorf("header[%d]=%v", i, header)
 			return
 		}
 	}
@@ -220,20 +220,20 @@ WriteBuffer :: proc() {
 	//fmt.printfln("WB %d", CurrentBuffer)
 }
 
-decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
-	size := win32app.decode_lparam_as_int2(lparam)
+decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> owin.int2 {
+	size := owin.decode_lparam_as_int2(lparam)
 	return size / ZOOM
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.println(#procedure, hwnd, win32app.decode_lparam_as_createstruct(lparam))
+	fmt.println(#procedure, hwnd, owin.decode_lparam_as_createstruct(lparam))
 
-	client_size := win32app.get_client_size(hwnd)
+	client_size := owin.get_client_size(hwnd)
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = win32app.dib_create_v5(hdc, client_size / ZOOM)
+	dib = owin.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
 		cv.canvas_clear(&dib, cv.byte4{50, 100, 150, 255})
 	}
@@ -245,9 +245,9 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	win32app.dib_free_section(&dib)
+	owin.dib_free_section(&dib)
 	//CloseFile()
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
@@ -268,8 +268,8 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_text(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
+	size := owin.decode_lparam_as_int2(lparam)
+	owin.set_window_text(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }
 
@@ -282,7 +282,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	defer win32.DeleteDC(hdc_source)
 
 	win32.SelectObject(hdc_source, win32.HGDIOBJ(dib.hbitmap))
-	client_size := win32app.get_rect_size(&ps.rcPaint)
+	client_size := owin.get_rect_size(&ps.rcPaint)
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib.size.x, dib.size.y, win32.SRCCOPY)
 
 	return 0
@@ -334,7 +334,7 @@ MM_WOM_OPEN :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM
 MM_WOM_CLOSE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	wo := get_waveout(wparam)
 	fmt.println(#procedure, wo)
-	win32app.close_application(hwnd)
+	owin.close_application(hwnd)
 	return 0
 }
 
@@ -373,7 +373,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:    return 1
 	case win32.WM_SIZE:          return WM_SIZE(hwnd, wparam, lparam)
 	//case win32.WM_PAINT:       return WM_PAINT(hwnd)
-	case win32.WM_PAINT:         return win32app.wm_paint_dib(hwnd, dib)
+	case win32.WM_PAINT:         return owin.wm_paint_dib(hwnd, dib)
 	case win32.WM_CHAR:          return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:     return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:   return WM_LBUTTONDOWN(hwnd, wparam, lparam)
@@ -401,6 +401,6 @@ list_audio_devices :: proc() {
 
 main :: proc() {
 	list_audio_devices()
-	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	win32app.run(&settings)
+	settings := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
+	owin.run(&settings)
 }

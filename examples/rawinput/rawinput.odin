@@ -7,9 +7,9 @@ import "core:fmt"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
-L :: win32app.L
+L :: owin.L
 
 TITLE :: "Raw Input"
 ZOOM :: 24
@@ -17,58 +17,58 @@ WIDTH :: ZOOM * 32
 HEIGHT :: WIDTH
 
 application :: struct {
-	#subtype settings: win32app.window_settings,
+	#subtype settings: owin.window_settings,
 }
 
-dib: win32app.DIB
+dib: owin.DIB
 selected_color: i32 = 1
 cols := cv.C64_COLORS
 
 icon: win32.HICON
 
-mouse_pos: win32app.int2 = {0, 0}
+mouse_pos: owin.int2 = {0, 0}
 is_active: bool = true
 is_focused := false
 cursor_state: i32 = 0
 
 show_cursor :: #force_inline proc(show: bool) {
-	cursor_state = win32app.show_cursor(show)
+	cursor_state = owin.show_cursor(show)
 	fmt.println(#procedure, cursor_state)
 }
 
 clip_cursor :: #force_inline proc "contextless" (hwnd: win32.HWND, clip: bool) -> bool {
-	return win32app.clip_cursor(hwnd, clip)
+	return owin.clip_cursor(hwnd, clip)
 }
 
-decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> win32app.int2 {
-	size := win32app.decode_lparam_as_int2(lparam)
+decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> owin.int2 {
+	size := owin.decode_lparam_as_int2(lparam)
 	return size / ZOOM
 }
 
-set_dot :: #force_inline proc "contextless" (pos: win32app.int2, col: cv.byte4) {
+set_dot :: #force_inline proc "contextless" (pos: owin.int2, col: cv.byte4) {
 	cv.canvas_set_dot(&dib.canvas, pos, col)
 }
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
 	fmt.println(#procedure)
 
 	show_cursor(false)
 
-	client_size := win32app.get_client_size(hwnd)
+	client_size := owin.get_client_size(hwnd)
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = win32app.dib_create_v5(hdc, client_size / ZOOM)
+	dib = owin.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
 		cv.canvas_clear(&dib, cols[0])
 	}
@@ -82,15 +82,15 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if cursor_state < 1 {
 		show_cursor(true)
 	}
-	win32app.dib_free_section(&dib)
-	win32app.post_quit_message()
+	owin.dib_free_section(&dib)
+	owin.post_quit_message()
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	app.settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_text(hwnd, "%s %v %v", TITLE, app.settings.window_size, dib.canvas.size)
+	app.settings.window_size = owin.decode_lparam_as_int2(lparam)
+	owin.set_window_text(hwnd, "%s %v %v", TITLE, app.settings.window_size, dib.canvas.size)
 	clip_cursor(hwnd, true)
 	return 0
 }
@@ -106,8 +106,8 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc_source := win32.CreateCompatibleDC(ps.hdc)
 	defer win32.DeleteDC(hdc_source)
 
-	win32app.select_object(hdc_source, dib.hbitmap)
-	client_size := win32app.get_rect_size(&ps.rcPaint)
+	owin.select_object(hdc_source, dib.hbitmap)
+	client_size := owin.get_rect_size(&ps.rcPaint)
 	dib_size := transmute(cv.int2)dib.canvas.size
 	win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, dib_size.x, dib_size.y, win32.SRCCOPY)
 
@@ -116,8 +116,8 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	old_dc_pen := win32.SelectObject(hdc, dc_pen)
 	old_pen := win32.SetDCPenColor(hdc, pen_color)
 
-	win32app.draw_grid(hdc, {0, 0}, {ZOOM, ZOOM}, transmute(win32app.int2)dib.canvas.size)
-	win32app.draw_marker(hdc, mouse_pos)
+	owin.draw_grid(hdc, {0, 0}, {ZOOM, ZOOM}, transmute(owin.int2)dib.canvas.size)
+	owin.draw_marker(hdc, mouse_pos)
 
 	win32.SetDCPenColor(hdc, old_pen)
 	win32.SelectObject(hdc_source, old_dc_pen)
@@ -147,7 +147,7 @@ WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPA
 // * lParam: A handle to the window being activated or deactivated, depending on the value of the wParam parameter. If the low-order word of wParam is WA_INACTIVE, lParam is the handle to the window being activated. If the low-order word of wParam is WA_ACTIVE or WA_CLICKACTIVE, lParam is the handle to the window being deactivated. This handle can be NULL.
 // * Return: If an application processes this message, it should return zero.
 WM_ACTIVATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	activate := win32app.WM_ACTIVATE_WPARAM(wparam)
+	activate := owin.WM_ACTIVATE_WPARAM(wparam)
 	fmt.println(#procedure, activate, lparam)
 	return 0
 }
@@ -167,13 +167,13 @@ get_raw_input_data :: proc(hRawInput: win32.HRAWINPUT) -> bool {
 	dwSize: win32.UINT
 	win32.GetRawInputData(hRawInput, win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
 	if dwSize == 0 {
-		win32app.show_error_and_panic("dwSize is zero")
+		owin.show_error_and_panic("dwSize is zero")
 	}
 	if dwSize > size_of(win32.RAWINPUT) {
-		win32app.show_error_and_panic("dwSize too big")
+		owin.show_error_and_panic("dwSize too big")
 	}
 	if win32.GetRawInputData(hRawInput, win32.RID_INPUT, &rawinput, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
-		win32app.show_error_and_panic("GetRawInputData Failed")
+		owin.show_error_and_panic("GetRawInputData Failed")
 	}
 	return true
 }
@@ -185,7 +185,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	switch rawinput.header.dwType {
 	case win32.RIM_TYPEMOUSE:
 		app := get_app(hwnd)
-		mouse_delta: win32app.int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
+		mouse_delta: owin.int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
 		mouse_pos += mouse_delta
 		mouse_pos = linalg.clamp(mouse_pos, cv.int2_zero, app.settings.window_size - 1)
 		button_flags := rawinput.data.mouse.usButtonFlags
@@ -209,7 +209,7 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	case win32.RIM_TYPEKEYBOARD:
 		switch rawinput.data.keyboard.VKey {
 		case win32.VK_ESCAPE:
-			win32app.close_application(hwnd)
+			owin.close_application(hwnd)
 		case win32.VK_0 ..= win32.VK_9:
 			selected_color = i32(rawinput.data.keyboard.VKey - win32.VK_0)
 		case:
@@ -255,8 +255,8 @@ main :: proc() {
 	icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_QUESTION))
 	fmt.println("icon:", icon)
 
-	settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	//win32app.register_raw_input()
+	settings := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
+	//owin.register_raw_input()
 	settings.options += {.Raw_Input}
-	win32app.run(&settings)
+	owin.run(&settings)
 }

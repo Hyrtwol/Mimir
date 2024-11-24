@@ -9,7 +9,7 @@ import "core:os"
 import "core:math/linalg"
 import hlm "core:math/linalg/hlsl"
 import win32 "core:sys/windows"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
@@ -40,7 +40,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		win32app.post_quit_message(0);return 0
+		owin.post_quit_message(0);return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
@@ -58,12 +58,12 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 run :: proc() -> (exit_code: int) {
 
-	settings := win32app.default_window_settings
+	settings := owin.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-	_, _, hwnd := win32app.register_and_create_window(&settings)
-	if hwnd == nil {win32app.show_error_and_panic("CreateWindowEx failed")}
+	_, _, hwnd := owin.register_and_create_window(&settings)
+	if hwnd == nil {owin.show_error_and_panic("CreateWindowEx failed")}
 
 	//-- Create Device --//
 
@@ -341,10 +341,10 @@ run :: proc() -> (exit_code: int) {
 	constants.scale = {1.0, 1.0, 1.0, 0.0}
 	constants.translate = {0.0, 0.0, 4.0, 0.0}
 
-	win32app.show_and_update_window(hwnd)
+	owin.show_and_update_window(hwnd)
 
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 
 		constants.rotate += {0.005, 0.009, 0.001, 0.0}
 

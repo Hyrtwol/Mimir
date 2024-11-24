@@ -6,7 +6,7 @@ import "base:runtime"
 import "core:math/noise"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: [4]u8
@@ -14,7 +14,7 @@ int2 :: [2]i32
 float2 :: [2]f32
 double2 :: [2]f64
 double3 :: [3]f64
-DIB :: win32app.DIB
+DIB :: owin.DIB
 canvas :: cv.canvas
 
 TITLE :: "Noise"
@@ -22,7 +22,7 @@ WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
 ZOOM :: 4
 
-settings := win32app.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
+settings := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
 timer_id: win32.UINT_PTR
 dib: DIB
 npos1: double3 = {0, 0, 0}
@@ -85,24 +85,24 @@ dib_noise2 :: proc(dib: ^canvas) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	timer_id = win32app.set_timer(hwnd, win32app.IDT_TIMER1, 50)
+	timer_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 50)
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
-	dib = win32app.dib_create_v5(hdc, win32app.get_client_size(hwnd) / ZOOM)
+	dib = owin.dib_create_v5(hdc, owin.get_client_size(hwnd) / ZOOM)
 	cv.canvas_clear(&dib, cv.byte4{50, 150, 100, 255})
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	win32app.kill_timer(hwnd, &timer_id)
-	win32app.dib_free_section(&dib)
-	win32app.post_quit_message(0)
+	owin.kill_timer(hwnd, &timer_id)
+	owin.dib_free_section(&dib)
+	owin.post_quit_message(0)
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	size := win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_text(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
+	size := owin.decode_lparam_as_int2(lparam)
+	owin.set_window_text(hwnd, "%s %v %v", TITLE, size, dib.canvas.size)
 	return 0
 }
 
@@ -114,24 +114,24 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc_source := win32.CreateCompatibleDC(hdc_target)
 	defer win32.DeleteDC(hdc_source)
 
-	win32app.select_object(hdc_source, dib.hbitmap)
+	owin.select_object(hdc_source, dib.hbitmap)
 
-	client_size := win32app.get_rect_size(&ps.rcPaint)
+	client_size := owin.get_rect_size(&ps.rcPaint)
 	dib_size := transmute(int2)dib.canvas.size
-	win32app.stretch_blt(hdc_target, client_size, hdc_source, dib_size)
+	owin.stretch_blt(hdc_target, client_size, hdc_source, dib_size)
 	return 0
 }
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	noise_func(&dib.canvas)
-	win32app.redraw_window(hwnd)
+	owin.redraw_window(hwnd)
 	return 0
 }
 
 WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	// odinfmt: disable
 	switch wparam {
-	case '\x1b':	win32app.close_application(hwnd)
+	case '\x1b':	owin.close_application(hwnd)
 	case '1':	    noise_func = dib_noise1
 	case '2':	    noise_func = dib_noise2
 	}
@@ -156,5 +156,5 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 }
 
 main :: proc() {
-	win32app.run(&settings)
+	owin.run(&settings)
 }

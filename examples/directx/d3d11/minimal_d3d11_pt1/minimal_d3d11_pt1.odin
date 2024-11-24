@@ -9,7 +9,7 @@ import "core:os"
 import "core:math"
 import "core:math/linalg"
 import win32 "core:sys/windows"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
@@ -38,7 +38,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
-		win32app.post_quit_message();return 0
+		owin.post_quit_message();return 0
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
@@ -56,12 +56,12 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 run :: proc() -> (exit_code: int) {
 
-	settings := win32app.default_window_settings
+	settings := owin.default_window_settings
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-	_, _, hwnd := win32app.register_and_create_window(&settings)
-	if hwnd == nil {win32app.show_error_and_panic("CreateWindowEx failed")}
+	_, _, hwnd := owin.register_and_create_window(&settings)
+	if hwnd == nil {owin.show_error_and_panic("CreateWindowEx failed")}
 
 	//-- Create Device --//
 
@@ -278,10 +278,13 @@ run :: proc() -> (exit_code: int) {
 	model_rotation := float3{0.0, 0.0, 0.0}
 	model_translation := float3{0.0, 0.0, 4.0}
 
-	win32app.show_and_update_window(hwnd)
+	owin.show_and_update_window(hwnd)
+
+	client_size := owin.get_client_size(hwnd)
+	fmt.println("client_size", client_size, depth_buffer_desc.Width, depth_buffer_desc.Height)
 
 	msg: win32.MSG
-	for win32app.pull_messages(&msg) {
+	for owin.pull_messages(&msg) {
 
 		viewport := d3d11.VIEWPORT{0, 0, f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height), 0, 1}
 		fov, aspect, near, far: f32 = math.RAD_PER_DEG * 53, viewport.Width / viewport.Height, 1, 9

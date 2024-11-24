@@ -4,7 +4,7 @@ import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
 import win32 "core:sys/windows"
-import "libs:tlc/win32app"
+import owin "libs:tlc/win32app"
 import "shared:obug"
 import "core:os"
 import gl "vendor:OpenGL"
@@ -16,14 +16,14 @@ GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
 
 application :: struct {
-	#subtype settings: win32app.window_settings,
+	#subtype settings: owin.window_settings,
 }
 
 running: b32 = true
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := win32app.get_settings(hwnd, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
+	app := owin.get_settings(hwnd, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
@@ -70,24 +70,24 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := win32app.get_settings_from_lparam(lparam, application)
-	if app == nil {win32app.show_error_and_panic("Missing app!")}
-	win32app.set_settings(hwnd, app)
+	app := owin.get_settings_from_lparam(lparam, application)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	owin.set_settings(hwnd, app)
 	return 0
 }
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/deleting-a-rendering-context>
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	// app := get_app(hwnd)
-	win32app.post_quit_message(0)
+	owin.post_quit_message(0)
 	return 0
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	type := win32app.WM_SIZE_WPARAM(wparam)
-	app.settings.window_size = win32app.decode_lparam_as_int2(lparam)
-	win32app.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
+	type := owin.WM_SIZE_WPARAM(wparam)
+	app.settings.window_size = owin.decode_lparam_as_int2(lparam)
+	owin.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
 	return 0
 }
 
