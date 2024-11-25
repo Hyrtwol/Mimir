@@ -7,10 +7,6 @@
       <left>..\Odin\core\sys</left>
       <right>shared\sys</right>
     </WinMerge>
-    <WinMerge Include="tests">
-      <left>..\Odin\tests</left>
-      <right>shared\tests</right>
-    </WinMerge>
     <WinMerge Include="owin">
       <left>..\shared\owin</left>
       <right>shared\tlc\win32app</right>

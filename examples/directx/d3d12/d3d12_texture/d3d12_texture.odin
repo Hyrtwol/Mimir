@@ -13,7 +13,7 @@ import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import "../../common"
+import owin_dxgi "libs:tlc/win32app/owin_dxgi"
 
 TITLE :: "D3D12 texture"
 WIDTH :: 1920 / 2
@@ -40,7 +40,7 @@ queue: ^d3d12.ICommandQueue
 
 m_commandList: ^d3d12.IGraphicsCommandList
 
-panic_if_failed :: common.panic_if_failed
+panic_if_failed :: owin.panic_if_failed
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
@@ -609,8 +609,8 @@ run :: proc() -> (exit_code: int) {
 		m_commandList->OMSetRenderTargets(1, &rtv_handle, false, nil)
 
     	// Record commands.
-		clearcolor := [4]f32{0.05, 0.05, 0.05, 1.0}
-		m_commandList->ClearRenderTargetView(rtv_handle, &clearcolor, 0, nil)
+		clear_color := [4]f32{0.05, 0.05, 0.05, 1.0}
+		m_commandList->ClearRenderTargetView(rtv_handle, &clear_color, 0, nil)
 		m_commandList->IASetPrimitiveTopology(.TRIANGLELIST)
 		m_commandList->IASetVertexBuffers(0, 1, &vertex_buffer_view)
 		m_commandList->DrawInstanced(3, 1, 0, 0)
@@ -635,7 +635,7 @@ run :: proc() -> (exit_code: int) {
 		// 	params: dxgi.PRESENT_PARAMETERS = {}
 		// 	panic_if_failed(swap_chain->Present1(1, {}, &params))
 		// }
-		common.present(swap_chain)
+		owin_dxgi.present(swap_chain)
 
 		WaitForPreviousFrame()
 	}

@@ -1,7 +1,6 @@
 // Based off Minimal D3D11 https://gist.github.com/d7samurai/261c69490cce0620d0bfc93003cd1052
 package minimal_d3d11_pt1
 
-import "../../common"
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
@@ -10,10 +9,13 @@ import "core:math"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import owin "libs:tlc/win32app"
+import owin_dxgi "libs:tlc/win32app/owin_dxgi"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
 import "shared:obug"
+
+_ :: owin_dxgi
 
 TITLE :: "Minimal D3D11 pt1"
 WIDTH :: 1920 / 2
@@ -26,7 +28,7 @@ float3 :: [3]float
 float4 :: [4]float
 float4x4 :: matrix[4, 4]float
 
-panic_if_failed :: common.panic_if_failed
+panic_if_failed :: owin.panic_if_failed
 
 Constants :: struct #align (16) {
 	transform:    float4x4,
@@ -42,13 +44,11 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:
 		return 1 // skip
 	case win32.WM_CHAR:
-		{
-			switch wparam {
-			case '\x1b':
-				win32.DestroyWindow(hwnd) // ESC
-			}
-			return 0
+		switch wparam {
+		case '\x1b':
+			win32.DestroyWindow(hwnd) // ESC
 		}
+		return 0
 	case:
 		return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
@@ -61,7 +61,7 @@ run :: proc() -> (exit_code: int) {
 	settings.title = TITLE
 	settings.wndproc = wndproc
 	_, _, hwnd := owin.register_and_create_window(&settings)
-	if hwnd == nil {owin.show_error_and_panic("CreateWindowEx failed")}
+	if hwnd == nil {owin.show_error_and_panic("register_and_create_window failed")}
 
 	//-- Create Device --//
 
@@ -83,18 +83,19 @@ run :: proc() -> (exit_code: int) {
 
 	dxgi_factory: ^dxgi.IFactory2 = nil
 	{
-		dxgi_device: ^dxgi.IDevice = nil
-		panic_if_failed(device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device)))
+		raw_device: rawptr
+		panic_if_failed(device->QueryInterface(dxgi.IDevice_UUID, &raw_device))
+		dxgi_device: ^dxgi.IDevice = (^dxgi.IDevice)(raw_device)
+		//panic_if_failed(device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device)))
 		assert(dxgi_device != nil)
 
 		dxgi_adapter: ^dxgi.IAdapter = nil
 		panic_if_failed(dxgi_device->GetAdapter(&dxgi_adapter))
 		assert(dxgi_adapter != nil)
 
-		//dxgi_factory: ^dxgi.IFactory2 = nil
 		panic_if_failed(dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory)))
-		assert(dxgi_factory != nil)
 	}
+	assert(dxgi_factory != nil)
 
 	//-- Swap Chain --//
 
@@ -288,7 +289,7 @@ run :: proc() -> (exit_code: int) {
 
 		viewport := d3d11.VIEWPORT{0, 0, f32(depth_buffer_desc.Width), f32(depth_buffer_desc.Height), 0, 1}
 		fov, aspect, near, far: f32 = math.RAD_PER_DEG * 53, viewport.Width / viewport.Height, 1, 9
-		//fmt.println("fanf:", fov, aspect, near, far)
+		//fmt.println("fov, aspect, near, far:", fov, aspect, near, far)
 		//h : f32 = 1
 		rotate := linalg.matrix4_from_euler_angles_xyz_f32(expand_values(model_rotation))
 		translate := linalg.matrix4_translate_f32(model_translation)
@@ -299,6 +300,7 @@ run :: proc() -> (exit_code: int) {
 		{
 			mapped_subresource: d3d11.MAPPED_SUBRESOURCE
 			panic_if_failed(device_context->Map(constant_buffer, 0, .WRITE_DISCARD, {}, &mapped_subresource))
+			defer device_context->Unmap(constant_buffer, 0)
 			constants := (^Constants)(mapped_subresource.pData)
 			constants.transform = translate * rotate
 			constants.light_vector = {+1, -1, +1}
@@ -311,7 +313,6 @@ run :: proc() -> (exit_code: int) {
 			// fmt.println("projection:", constants.projection)
 			constants.projection = linalg.matrix4_perspective_f32(fov, aspect, near, far, false)
 			// fmt.println("projection:", constants.projection)
-			device_context->Unmap(constant_buffer, 0)
 		}
 
 		//-- Render Frame --//
@@ -354,7 +355,7 @@ run :: proc() -> (exit_code: int) {
 		///////////////////////////////////////////////////////////////////////////////////////////
 
 		panic_if_failed(swap_chain->Present(1, {}))
-		//common.present(swap_chain)
+		//owin_dxgi.present(swap_chain)
 	}
 
 	exit_code = int(msg.wParam)

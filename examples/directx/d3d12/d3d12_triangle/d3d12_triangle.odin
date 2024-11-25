@@ -9,11 +9,11 @@ import "core:mem"
 import "core:os"
 import win32 "core:sys/windows"
 import owin "libs:tlc/win32app"
+import owin_dxgi "libs:tlc/win32app/owin_dxgi"
 import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import "../../common"
 
 TITLE :: "D3D12 triangle"
 WIDTH :: 1920 / 2
@@ -37,7 +37,7 @@ queue: ^d3d12.ICommandQueue
 
 m_commandList: ^d3d12.IGraphicsCommandList
 
-panic_if_failed :: common.panic_if_failed
+panic_if_failed :: owin.panic_if_failed
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
@@ -48,7 +48,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return 1 // skip
 	case win32.WM_CHAR:
 		switch wparam {
-		case '\x1b': // ESC
+		case '\x1b':
+			// ESC
 			owin.close_application(hwnd)
 		// case 's':
 		// 	show_shadowmap = !show_shadowmap
@@ -65,20 +66,20 @@ LoadAssets :: proc() {}
 
 OnRender :: proc() {}
 OnDestroy :: proc() {
-    // Ensure that the GPU is no longer referencing resources that are about to be
-    // cleaned up by the destructor.
-    WaitForPreviousFrame()
+	// Ensure that the GPU is no longer referencing resources that are about to be
+	// cleaned up by the destructor.
+	WaitForPreviousFrame()
 
-    win32.CloseHandle(fence_event)
+	win32.CloseHandle(fence_event)
 }
 
 PopulateCommandList :: proc() {}
 
 WaitForPreviousFrame :: proc() {
-    // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
-    // This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
-    // sample illustrates how to use fences for efficient resource usage and to
-    // maximize GPU utilization.
+	// WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
+	// This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
+	// sample illustrates how to use fences for efficient resource usage and to
+	// maximize GPU utilization.
 
 	current_fence_value := fence_value
 	panic_if_failed(queue->Signal(fence, current_fence_value))
@@ -118,7 +119,7 @@ run :: proc() -> (exit_code: int) {
 		adapter->GetDesc1(&desc)
 		if .SOFTWARE in desc.Flags {continue}
 
-		hr = d3d12.CreateDevice((^dxgi.IUnknown)(adapter), MINIMUM_FEATURE_LEVEL, dxgi.IDevice_UUID, nil)
+		hr = d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, dxgi.IDevice_UUID, nil)
 		if win32.SUCCEEDED(hr) {
 			break
 		} else {
@@ -144,8 +145,6 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	// Create the swap chain, it's the thing that contains render targets that we draw into. It has 2 render targets (NUM_RENDERTARGETS), giving us double buffering.
-
-
 	{
 		swap_chain_desc := dxgi.SWAP_CHAIN_DESC1 {
 			Width = u32(settings.window_size.x),
@@ -158,7 +157,7 @@ run :: proc() -> (exit_code: int) {
 			SwapEffect = .FLIP_DISCARD,
 			AlphaMode = .UNSPECIFIED,
 		}
-		panic_if_failed(factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
+		panic_if_failed(factory->CreateSwapChainForHwnd(queue, hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
 	}
 
 	frame_index = swap_chain->GetCurrentBackBufferIndex()
@@ -288,7 +287,7 @@ run :: proc() -> (exit_code: int) {
 		ps->Release()
 	}
 
-    // Create the command list.
+	// Create the command list.
 	panic_if_failed(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&m_commandList)))
 	//panic_if_failed(m_commandList->Close())
 
@@ -365,10 +364,10 @@ run :: proc() -> (exit_code: int) {
 			return
 		}
 
-        // Wait for the command list to execute; we are reusing the same command
-        // list in our main loop but for now, we just want to wait for setup to
-        // complete before continuing.
-        WaitForPreviousFrame()
+		// Wait for the command list to execute; we are reusing the same command
+		// list in our main loop but for now, we just want to wait for setup to
+		// complete before continuing.
+		WaitForPreviousFrame()
 	}
 
 	owin.show_and_update_window(hwnd)
@@ -420,14 +419,14 @@ run :: proc() -> (exit_code: int) {
 
 		m_commandList->OMSetRenderTargets(1, &rtv_handle, false, nil)
 
-    	// Record commands.
-		clearcolor := [4]f32{0.05, 0.05, 0.05, 1.0}
-		m_commandList->ClearRenderTargetView(rtv_handle, &clearcolor, 0, nil)
+		// Record commands.
+		clear_color := [4]f32{0.05, 0.05, 0.05, 1.0}
+		m_commandList->ClearRenderTargetView(rtv_handle, &clear_color, 0, nil)
 		m_commandList->IASetPrimitiveTopology(.TRIANGLELIST)
 		m_commandList->IASetVertexBuffers(0, 1, &vertex_buffer_view)
 		m_commandList->DrawInstanced(3, 1, 0, 0)
 
-    	// Indicate that the back buffer will now be used to present.
+		// Indicate that the back buffer will now be used to present.
 		to_present_barrier := to_render_target_barrier
 		to_present_barrier.Transition.StateBefore = {.RENDER_TARGET}
 		to_present_barrier.Transition.StateAfter = d3d12.RESOURCE_STATE_PRESENT
@@ -447,7 +446,7 @@ run :: proc() -> (exit_code: int) {
 		// 	params: dxgi.PRESENT_PARAMETERS = {}
 		// 	panic_if_failed(swap_chain->Present1(1, {}, &params))
 		// }
-		common.present(swap_chain)
+		owin_dxgi.present(swap_chain)
 
 		WaitForPreviousFrame()
 	}

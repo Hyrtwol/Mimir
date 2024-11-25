@@ -14,7 +14,7 @@ import "shared:obug"
 import d3d11 "vendor:directx/d3d11"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import "../../common"
+import owin_dxgi "libs:tlc/win32app/owin_dxgi"
 
 TITLE :: "Minimal D3D11 pt3"
 WIDTH :: 1920 / 2
@@ -27,7 +27,7 @@ float3 :: [3]float
 float4 :: [4]float
 float4x4 :: matrix[4, 4]float
 
-panic_if_failed :: common.panic_if_failed
+panic_if_failed :: owin.panic_if_failed
 
 show_shadowmap := true
 
@@ -92,16 +92,18 @@ run :: proc() -> (exit_code: int) {
 
 	//-- Adapter Factory --//
 
-	dxgi_device: ^dxgi.IDevice = nil
-	panic_if_failed(device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device)))
-	assert(dxgi_device != nil)
-
-	dxgi_adapter: ^dxgi.IAdapter = nil
-	panic_if_failed(dxgi_device->GetAdapter(&dxgi_adapter))
-	assert(dxgi_adapter != nil)
-
 	dxgi_factory: ^dxgi.IFactory2 = nil
-	panic_if_failed(dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory)))
+	{
+		dxgi_device: ^dxgi.IDevice = nil
+		panic_if_failed(device->QueryInterface(dxgi.IDevice_UUID, (^rawptr)(&dxgi_device)))
+		assert(dxgi_device != nil)
+
+		dxgi_adapter: ^dxgi.IAdapter = nil
+		panic_if_failed(dxgi_device->GetAdapter(&dxgi_adapter))
+		assert(dxgi_adapter != nil)
+
+		panic_if_failed(dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory)))
+	}
 	assert(dxgi_factory != nil)
 
 	//-- Swap Chain --//
@@ -114,7 +116,7 @@ run :: proc() -> (exit_code: int) {
 		SampleDesc = {Count = 1, Quality = 0},
 		BufferUsage = {.RENDER_TARGET_OUTPUT},
 		BufferCount = 2,
-		Scaling = .STRETCH,
+		Scaling = .NONE,
 		SwapEffect = .FLIP_DISCARD,
 		AlphaMode = .UNSPECIFIED,
 		Flags = {},
@@ -322,12 +324,13 @@ run :: proc() -> (exit_code: int) {
 
 	constants: Constants = {
 		// camera projection matrix (perspective)
-		CameraProjection = float4x4{
-			2.0 / (framebufferVP.Width / framebufferVP.Height), 0, 0, 0,
-			0, 2, 0, 0,
-			0, 0, 1.125, 1,
-			0, 0, -1.125, 0,
-		},
+		// CameraProjection = float4x4{
+		// 	2.0 / (framebufferVP.Width / framebufferVP.Height), 0, 0, 0,
+		// 	0, 2, 0, 0,
+		// 	0, 0, 1.125, 1,
+		// 	0, 0, -1.125, 0,
+		// },
+		CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, false) ),
 		// light projection matrix (orthographic)
 		LightProjection  = float4x4{0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.125, 0, 0, 0, -0.125, 1},
 		LightRotation    = {0.8, 0.6, 0.0, 0},
@@ -336,8 +339,8 @@ run :: proc() -> (exit_code: int) {
 		ShadowmapSize    = {shadowmapVP.Width, shadowmapVP.Height, 0, 0},
 	}
 	fmt.println("projection:", constants.CameraProjection)
-	constants.CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, false) )
-	fmt.println("projection:", constants.CameraProjection)
+	// constants.CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, false) )
+	// fmt.println("projection:", constants.CameraProjection)
 
 	fmt.println("constants:", constants)
 
@@ -354,8 +357,8 @@ run :: proc() -> (exit_code: int) {
 		{
 			mappedSubresource: d3d11.MAPPED_SUBRESOURCE
 			panic_if_failed(device_context->Map(constantBuffer, 0, .WRITE_DISCARD, {}, &mappedSubresource))
+			defer device_context->Unmap(constantBuffer, 0)
 			(^Constants)(mappedSubresource.pData)^ = constants
-			device_context->Unmap(constantBuffer, 0)
 		}
 
 		//-- Render Shadowmap --//

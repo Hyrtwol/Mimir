@@ -40,7 +40,7 @@ show_last_error :: proc(caption: string, loc := #caller_location) {
 	error_text: [512]win32.WCHAR
 	error_wstring := wstring(&error_text)
 	cch := win32.FormatMessageW(win32.FORMAT_MESSAGE_FROM_SYSTEM | win32.FORMAT_MESSAGE_IGNORE_INSERTS, nil, last_error, LANGID_NEUTRAL_DEFAULT, error_wstring, len(error_text) - 1, nil)
-	if (cch > 0) {
+	if cch > 0 {
 		error_string, err := wstring_to_utf8(&error_wstring[0], int(cch))
 		if err == .None {
 			fmt.eprintln(error_string)
@@ -52,6 +52,16 @@ show_last_error :: proc(caption: string, loc := #caller_location) {
 
 show_last_errorf :: #force_inline proc(format: string, args: ..any, loc := #caller_location) {
 	show_last_error(fmt.tprintf(format, ..args), loc = loc)
+}
+
+// TODO rename to pif
+panic_if_failed :: proc(res: win32.HRESULT, message: string = #caller_expression(res), loc := #caller_location) {
+	if win32.SUCCEEDED(res) {
+		return
+	}
+
+	hr := win32.HRESULT_DETAILS(res)
+	fmt.panicf("Error %v %v (0x%0x)\n\t%v\n\t%v", win32.System_Error(hr.Code), hr, u32(hr), message, loc)
 }
 
 get_rect_size :: #force_inline proc "contextless" (rect: ^RECT) -> int2 {
@@ -89,12 +99,12 @@ get_window_position :: proc(size: int2, center: bool) -> int2 {
 	return default_window_position
 }
 
-register_raw_input :: proc(hwndTarget : HWND = nil, dwFlags : DWORD = win32.RIDEV_NOLEGACY) {
+register_raw_input :: proc(hwndTarget: HWND = nil, dwFlags: DWORD = win32.RIDEV_NOLEGACY) {
 	rid := [?]win32.RAWINPUTDEVICE {
 		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_MOUSE, dwFlags = dwFlags, hwndTarget = hwndTarget},
 		{usUsagePage = win32.HID_USAGE_PAGE_GENERIC, usUsage = win32.HID_USAGE_GENERIC_KEYBOARD, dwFlags = dwFlags, hwndTarget = hwndTarget},
 	}
-	if !win32.RegisterRawInputDevices(&rid[0], len(rid), size_of(rid[0])){
+	if !win32.RegisterRawInputDevices(&rid[0], len(rid), size_of(rid[0])) {
 		show_error_and_panic("RegisterRawInputDevices Failed")
 	}
 }

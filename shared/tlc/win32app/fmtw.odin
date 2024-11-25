@@ -8,7 +8,7 @@ import "core:strings"
 import win32 "core:sys/windows"
 
 // similar to strings.to_string
-to_wstring :: #force_inline proc(b: strings.Builder, allocator := context.temp_allocator) -> (res: wstring) {
+to_wstring :: #force_inline proc(b: strings.Builder, allocator := context.temp_allocator) -> wstring {
 	return utf8_to_wstring(string(b.buf[:]), allocator)
 }
 

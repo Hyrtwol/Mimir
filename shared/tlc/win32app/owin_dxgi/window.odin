@@ -1,8 +1,8 @@
-package directx_common
+package owin_dxgi
 
 import "base:runtime"
 import win32 "core:sys/windows"
-import owin "libs:tlc/win32app"
+import owin ".."
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
