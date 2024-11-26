@@ -16,15 +16,29 @@ import "vendor:glfw"
 // examples\newton_dynamics\newton_glfw\newton_glfw.odin
 import model "../../../data/models/cube"
 SCALE :: 0.2
-
 // import model "../../data/models/platonic/icosahedron"
 // SCALE :: 1.0
 
 _ :: png
-//IMAGELOC :: "../../../data/images/uv_checker_x.png"
-//IMAGELOC2 :: "../../../data/images/uv_checker_y.png"
 
-image_file_bytes: [2][]u8 = {#load("../../../data/images/uv_checker_x.png"), #load("../../../data/images/uv_checker_y.png")}
+// odinfmt: disable
+image_file_bytes: [2][]u8 = {
+	#load("../../../data/images/uv_checker_x.png"),
+	#load("../../../data/images/uv_checker_y.png"),
+}
+
+vertex_sources: []string = {
+	string(#load("shaders/pos.vs")),
+	string(#load("shaders/pos_tex.vs")),
+	string(#load("shaders/pos_nml.vs")),
+	string(#load("shaders/pos_tex_nml.vs")),
+}
+
+fragment_sources: []string = {
+	string(#load("shaders/col.fs")),
+	string(#load("shaders/tex.fs")),
+}
+// odinfmt: enable
 
 WINDOW_TITLE :: "Mimir"
 WINDOW_WIDTH :: 640
@@ -43,20 +57,6 @@ Texture :: u32
 // Global variables.
 global_vao: VAO
 global_shader: ShaderProgram
-
-// odinfmt: disable
-vertex_sources: []string = {
-	string(#load("shaders/pos.vs")),
-	string(#load("shaders/pos_tex.vs")),
-	string(#load("shaders/pos_nml.vs")),
-	string(#load("shaders/pos_tex_nml.vs")),
-}
-
-fragment_sources: []string = {
-	string(#load("shaders/col.fs")),
-	string(#load("shaders/tex.fs")),
-}
-// odinfmt: enable
 
 running: b32 = true
 aspect: f32 = 1
@@ -124,7 +124,6 @@ run :: proc() -> (exit_code: int) {
 
 	image_w, image_h: i32
 	texture_data: [2][]u8
-
 	{
 		img: ^image.Image
 		err: image.Error

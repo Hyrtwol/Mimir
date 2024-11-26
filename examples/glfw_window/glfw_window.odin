@@ -17,12 +17,29 @@ import "vendor:glfw"
 // cow, cube, gazebo, crisscross
 import model "../../data/models/cube"
 SCALE :: 0.2
-
 // import model "../../data/models/platonic/icosahedron"
 // SCALE :: 1.0
 
 _ :: png
-IMAGELOC :: "../../data/images/uv_checker_w.png"
+
+// odinfmt: disable
+image_file_bytes: [2][]u8 = {
+	#load("../../data/images/uv_checker_x.png"),
+	#load("../../data/images/uv_checker_y.png"),
+}
+
+vertex_sources: []string = {
+	string(#load("shaders/pos.vs")),
+	string(#load("shaders/pos_tex.vs")),
+	string(#load("shaders/pos_nml.vs")),
+	string(#load("shaders/pos_tex_nml.vs")),
+}
+
+fragment_sources: []string = {
+	string(#load("shaders/col.fs")),
+	string(#load("shaders/tex.fs")),
+}
+// odinfmt: enable
 
 WINDOW_TITLE :: "Mimir"
 WINDOW_WIDTH :: 640
@@ -32,18 +49,8 @@ WINDOW_HEIGHT :: WINDOW_WIDTH * 3 / 4
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
 
-vertex_sources : []string = {
-	string(#load("shaders/pos.vs")),
-	string(#load("shaders/pos_tex.vs")),
-	string(#load("shaders/pos_nml.vs")),
-	string(#load("shaders/pos_tex_nml.vs")),
-}
-
-fragment_sources : []string = {
-	string(#load("shaders/col.fs")),
-	string(#load("shaders/tex.fs")),
-}
-
+// Create alias types for vertex array / buffer objects
+Texture :: u32
 running: b32 = true
 aspect: f32 = 1
 
@@ -91,37 +98,56 @@ run :: proc() -> (exit_code: int) {
 	defer gl.destroy_uniforms(uniforms)
 
 	image_w, image_h: i32
-	texture_data: []u8 = nil
+	texture_data: [2][]u8
 	{
-		// Load image at compile time
-		image_file_bytes := #load(IMAGELOC)
-
-		// Load image  Odin's core:image library.
-		image_ptr: ^image.Image
+		img: ^image.Image
 		err: image.Error
 		options := image.Options{.alpha_add_if_missing}
 
-		//    image_ptr, err =  q.load_from_file(IMAGELOC, options)
-		image_ptr, err = png.load_from_bytes(image_file_bytes, options)
-		defer png.destroy(image_ptr)
-		image_w = i32(image_ptr.width)
-		image_h = i32(image_ptr.height)
-
+		img, err = png.load_from_bytes(image_file_bytes[0], options)
 		if err != nil {
-			fmt.println("ERROR: Image:", IMAGELOC, "failed to load.")
+			fmt.println("ERROR: Image:", "failed to load.")
 			return
 		}
+		defer png.destroy(img)
+		image_w = i32(img.width)
+		image_h = i32(img.height)
 
 		// Copy bytes from icon buffer into slice.
-		texture_data = make([]u8, len(image_ptr.pixels.buf))
-		for b, i in image_ptr.pixels.buf {
-			texture_data[i] = b
+		data := make([]u8, len(img.pixels.buf))
+		for b, i in img.pixels.buf {
+			data[i] = b
 		}
+		texture_data[0] = data
 
-		fmt.println("Image:", IMAGELOC, image_w, image_h)
+		fmt.println("Image:", image_w, image_h)
 	}
-	assert(texture_data != nil)
-	defer delete(texture_data)
+	{
+		img: ^image.Image
+		err: image.Error
+		options := image.Options{.alpha_add_if_missing}
+
+		img, err = png.load_from_bytes(image_file_bytes[1], options)
+		if err != nil {
+			fmt.println("ERROR: Image:", "failed to load.")
+			return
+		}
+		defer png.destroy(img)
+		image_w = i32(img.width)
+		image_h = i32(img.height)
+
+		// Copy bytes from icon buffer into slice.
+		data := make([]u8, len(img.pixels.buf))
+		for b, i in img.pixels.buf {
+			data[i] = b
+		}
+		texture_data[1] = data
+
+		fmt.println("Image:", image_w, image_h)
+	}
+
+	for td in texture_data {assert(td != nil)}
+	defer for td in texture_data {delete(td)}
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -166,28 +192,34 @@ run :: proc() -> (exit_code: int) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(model.indices) * size_of(model.indices[0]), raw_data(model.indices), gl.STATIC_DRAW)
 
 
-	// gl.ActiveTexture(0) // no effect ?
-	// Describe texture.
-	gl.TexImage2D(
-		gl.TEXTURE_2D, // texture type
-		0, // level of detail number (default = 0)
-		gl.RGBA, // texture format
-		image_w, // width
-		image_h, // height
-		0, // border, must be 0
-		gl.RGBA, // pixel data format
-		gl.UNSIGNED_BYTE, // data type of pixel data
-		&texture_data[0], // image data
-		//&image_ptr.pixels.buf[0],  // image data
-	)
+	textures: [2]Texture
+	gl.GenTextures(len(textures), &textures[0])
+	defer gl.DeleteTextures(len(textures), &textures[0])
 
-	// Texture wrapping options.
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	for ti in 0 ..< len(textures) {
+		//gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, textures[ti])
+		// Describe texture.
+		gl.TexImage2D(
+			gl.TEXTURE_2D, // texture type
+			0, // level of detail number (default = 0)
+			gl.RGBA, // texture format
+			image_w, // width
+			image_h, // height
+			0, // border, must be 0
+			gl.RGBA, // pixel data format
+			gl.UNSIGNED_BYTE, // data type of pixel data
+			&texture_data[ti][0], // image data
+		)
 
-	// Texture filtering options.
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		// Texture wrapping options.
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+
+		// Texture filtering options.
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	}
 
 	gl.ClearColor(0.10, 0.15, 0.20, 1.0)
 	gl.Enable(gl.CULL_FACE)
@@ -198,6 +230,7 @@ run :: proc() -> (exit_code: int) {
 	start_tick := time.tick_now()
 
 	ui_transform := &uniforms["u_transform"]
+	u_transform: [2]glm.mat4
 
 	for !glfw.WindowShouldClose(window_handle) && running {
 		duration := time.tick_since(start_tick)
@@ -220,17 +253,16 @@ run :: proc() -> (exit_code: int) {
 		proj := glm.mat4Perspective(45, aspect, 0.1, 100.0)
 		proj_view := proj * view
 
-		u_transform: glm.mat4
-		{
-			u_transform = proj_view * model_transform * glm.mat4Rotate({0, 1, 1}, t)
-			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
+		u_transform[0] = proj_view * model_transform * glm.mat4Rotate({0, 1, 1}, t)
+		u_transform[1] = proj_view * glm.mat4Rotate({1, 1, 1}, t * 1.47) * model_transform
+
+		for ti in 0 ..< len(textures) {
+			//gl.ActiveTexture(gl.TEXTURE0)
+			gl.BindTexture(gl.TEXTURE_2D, textures[ti])
+			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[ti][0, 0])
 			gl.DrawElements(gl.TRIANGLES, i32(len(model.indices) * size_of(model.indices[0])), gl.UNSIGNED_SHORT, nil)
 		}
-		{
-			u_transform = proj_view * glm.mat4Rotate({1, 1, 1}, t * 1.47) * model_transform
-			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[0, 0])
-			gl.DrawElements(gl.TRIANGLES, i32(len(model.indices) * size_of(model.indices[0])), gl.UNSIGNED_SHORT, nil)
-		}
+
 		glfw.SwapBuffers(window_handle)
 	}
 	return

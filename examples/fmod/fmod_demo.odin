@@ -119,7 +119,7 @@ main :: proc() {
 	num_events: i32
 	res = fmod.FMOD_EventSystem_GetNumEvents(eventsys, &num_events)
 	if res != .FMOD_OK {
-		fmt.eprintln("FMOD_EventSystem_Load", res)
+		fmt.eprintln("FMOD_EventSystem_GetNumEvents", res)
 		return
 	}
 	fmt.printfln("Events : %v", num_events)
