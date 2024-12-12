@@ -97,20 +97,20 @@ GenerateTextureData :: proc() -> []u8 {
 
 OnRender :: proc() {}
 OnDestroy :: proc() {
-    // Ensure that the GPU is no longer referencing resources that are about to be
-    // cleaned up by the destructor.
-    WaitForPreviousFrame()
+	// Ensure that the GPU is no longer referencing resources that are about to be
+	// cleaned up by the destructor.
+	WaitForPreviousFrame()
 
-    win32.CloseHandle(fence_event)
+	win32.CloseHandle(fence_event)
 }
 
 PopulateCommandList :: proc() {}
 
 WaitForPreviousFrame :: proc() {
-    // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
-    // This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
-    // sample illustrates how to use fences for efficient resource usage and to
-    // maximize GPU utilization.
+	// WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
+	// This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
+	// sample illustrates how to use fences for efficient resource usage and to
+	// maximize GPU utilization.
 
 	current_fence_value := fence_value
 	panic_if_failed(queue->Signal(fence, current_fence_value))
@@ -176,8 +176,6 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	// Create the swap chain, it's the thing that contains render targets that we draw into. It has 2 render targets (NUM_RENDERTARGETS), giving us double buffering.
-
-
 	{
 		swap_chain_desc := dxgi.SWAP_CHAIN_DESC1 {
 			Width = u32(settings.window_size.x),
@@ -190,7 +188,7 @@ run :: proc() -> (exit_code: int) {
 			SwapEffect = .FLIP_DISCARD,
 			AlphaMode = .UNSPECIFIED,
 		}
-		panic_if_failed(factory->CreateSwapChainForHwnd((^dxgi.IUnknown)(queue), hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
+		panic_if_failed(factory->CreateSwapChainForHwnd(queue, hwnd, &swap_chain_desc, nil, nil, (^^dxgi.ISwapChain1)(&swap_chain)))
 	}
 
 	frame_index = swap_chain->GetCurrentBackBufferIndex()
@@ -246,6 +244,26 @@ run :: proc() -> (exit_code: int) {
 	root_signature: ^d3d12.IRootSignature
 
 	{
+		range := d3d12.DESCRIPTOR_RANGE1 {
+			RangeType = .SRV,
+			NumDescriptors = 1,
+			BaseShaderRegister = 0,
+			RegisterSpace = 0,
+			Flags = {.DATA_STATIC},
+			OffsetInDescriptorsFromTableStart = d3d12.DESCRIPTOR_RANGE_OFFSET_APPEND,
+		}
+		ranges := []d3d12.DESCRIPTOR_RANGE1 {range}
+
+		rootParameter := d3d12.ROOT_PARAMETER1 {
+			ParameterType = .DESCRIPTOR_TABLE,
+			ShaderVisibility = .PIXEL,
+			DescriptorTable = {
+				NumDescriptorRanges = u32(len(ranges)),
+				pDescriptorRanges = &ranges[0],
+			},
+		}
+		rootParameters := []d3d12.ROOT_PARAMETER1 {rootParameter}
+
 		sampler := d3d12.STATIC_SAMPLER_DESC {
 			Filter           = .MIN_MAG_MIP_POINT,
 			AddressU         = .BORDER,
@@ -270,6 +288,11 @@ run :: proc() -> (exit_code: int) {
 		}
 
 		desc.Desc_1_1.Flags = {.ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}
+		desc.Desc_1_1.NumParameters = u32(len(rootParameters))
+		if desc.Desc_1_1.NumParameters > 0 {
+			desc.Desc_1_1.pParameters = &rootParameters[0]
+		}
+
 		desc.Desc_1_1.NumStaticSamplers = u32(len(samplers))
 		if desc.Desc_1_1.NumStaticSamplers > 0 {
 			desc.Desc_1_1.pStaticSamplers = &samplers[0]
@@ -320,24 +343,32 @@ run :: proc() -> (exit_code: int) {
 
 		pipeline_state_desc := d3d12.GRAPHICS_PIPELINE_STATE_DESC {
 			pRootSignature = root_signature,
-			VS = {pShaderBytecode = vs->GetBufferPointer(), BytecodeLength = vs->GetBufferSize()},
-			PS = {pShaderBytecode = ps->GetBufferPointer(), BytecodeLength = ps->GetBufferSize()},
+			// VS = {pShaderBytecode = vs->GetBufferPointer(), BytecodeLength = vs->GetBufferSize()},
+			// PS = {pShaderBytecode = ps->GetBufferPointer(), BytecodeLength = ps->GetBufferSize()},
+			VS = d3d12.CD3DX12_SHADER_BYTECODE(vs),
+			PS = d3d12.CD3DX12_SHADER_BYTECODE(ps),
 			StreamOutput = {},
-			BlendState = {AlphaToCoverageEnable = false, IndependentBlendEnable = false, RenderTarget = {0 = default_blend_state, 1 ..< 7 = {}}},
-			SampleMask = 0xFFFFFFFF,
-			RasterizerState = {
-				FillMode = .SOLID,
-				CullMode = .BACK,
-				FrontCounterClockwise = false,
-				DepthBias = 0,
-				DepthBiasClamp = 0,
-				SlopeScaledDepthBias = 0,
-				DepthClipEnable = true,
-				MultisampleEnable = false,
-				AntialiasedLineEnable = false,
-				ForcedSampleCount = 0,
-				ConservativeRaster = .OFF,
+			BlendState = {
+				AlphaToCoverageEnable = false,
+				IndependentBlendEnable = false,
+				//RenderTarget = {0 = default_blend_state, 1 ..< 7 = {}}
+				RenderTarget = {0 ..< 7 = default_blend_state},
 			},
+			SampleMask = 0xFFFFFFFF,
+			RasterizerState = d3d12.CD3DX12_RASTERIZER_DESC_DEFAULT,
+			// RasterizerState = {
+			// 	FillMode = .SOLID,
+			// 	CullMode = .BACK,
+			// 	FrontCounterClockwise = false,
+			// 	DepthBias = 0,
+			// 	DepthBiasClamp = 0,
+			// 	SlopeScaledDepthBias = 0,
+			// 	DepthClipEnable = true,
+			// 	MultisampleEnable = false,
+			// 	AntialiasedLineEnable = false,
+			// 	ForcedSampleCount = 0,
+			// 	ConservativeRaster = .OFF,
+			// },
 			DepthStencilState = {DepthEnable = false, StencilEnable = false},
 			InputLayout = {pInputElementDescs = &vertex_format[0], NumElements = u32(len(vertex_format))},
 			PrimitiveTopologyType = .TRIANGLE,
@@ -353,7 +384,7 @@ run :: proc() -> (exit_code: int) {
 		ps->Release()
 	}
 
-    // Create the command list.
+	// Create the command list.
 	panic_if_failed(device->CreateCommandList(0, .DIRECT, command_allocator, pipeline, d3d12.ICommandList_UUID, (^rawptr)(&m_commandList)))
 	//panic_if_failed(m_commandList->Close())
 
@@ -377,11 +408,7 @@ run :: proc() -> (exit_code: int) {
 			{{-0.5, -0.5, 0.0}, {1, 1}, {0, 0, 1}},
 		}
 
-		//vertices := model.vertices
-
-		heap_props := d3d12.HEAP_PROPERTIES {
-			Type = .UPLOAD,
-		}
+		heap_props := d3d12.CD3DX12_HEAP_PROPERTIES(.UPLOAD)
 
 		fmt.println("size_of(vertex):", size_of(vertex))
 		vertex_buffer_size := len(vertices) * size_of(vertices[0])
@@ -400,7 +427,13 @@ run :: proc() -> (exit_code: int) {
 			Flags = {},
 		}
 
-		panic_if_failed(device->CreateCommittedResource(&heap_props, {}, &resource_desc, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&vertex_buffer)))
+		panic_if_failed(device->CreateCommittedResource(
+			&heap_props,
+			{},
+			&resource_desc,
+			d3d12.RESOURCE_STATE_GENERIC_READ,
+			nil,
+			d3d12.IResource_UUID, (^rawptr)(&vertex_buffer)))
 
 		gpu_data: rawptr
 		read_range: d3d12.RANGE
@@ -428,6 +461,7 @@ run :: proc() -> (exit_code: int) {
 
 	// Create the texture.
 	if true {
+        // Describe and create a Texture2D.
 		textureDesc: d3d12.RESOURCE_DESC = {
 			MipLevels = 1,
 			Format = .R8G8B8A8_UNORM,
@@ -438,47 +472,35 @@ run :: proc() -> (exit_code: int) {
 			SampleDesc = {Count = 1, Quality = 0},
 			Dimension = .TEXTURE2D,
 		}
-		ppd := d3d12.HEAP_PROPERTIES {
-			Type = .DEFAULT,
-		}
-
-		panic_if_failed(device->CreateCommittedResource(&ppd, {}, &textureDesc, {.COPY_DEST}, nil, d3d12.IResource_UUID, (^rawptr)(&m_texture)))
+		ppd := d3d12.CD3DX12_HEAP_PROPERTIES(.DEFAULT)
+		panic_if_failed(device->CreateCommittedResource(
+			&ppd,
+			{},
+			&textureDesc,
+			{.COPY_DEST},
+			nil,
+			d3d12.IResource_UUID,
+			(^rawptr)(&m_texture)))
 		fmt.println("m_texture:", m_texture)
 
 		uploadBufferSize := d3d12.GetRequiredIntermediateSize(m_texture, 0, 1)
-		fmt.println("uploadBufferSize:", uploadBufferSize)
+		//fmt.println("uploadBufferSize:", uploadBufferSize)
+		assert(uploadBufferSize == 262144)
 
-		pp := d3d12.HEAP_PROPERTIES {
-			Type = .UPLOAD,
-		}
-		/*
-		static inline CD3DX12_RESOURCE_DESC Buffer(
-			UINT64 width,
-			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
-			UINT64 alignment = 0 ) noexcept
-		{
-			return CD3DX12_RESOURCE_DESC( D3D12_RESOURCE_DIMENSION_BUFFER, alignment, width, 1, 1, 1,
-				DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flags );
-		}
-        auto buf = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-		*/
-		buf: d3d12.RESOURCE_DESC = {
-			Dimension = .BUFFER,
-			Alignment = 0,
-			Width = uploadBufferSize,
-			Height = 1,
-			DepthOrArraySize = 1,
-			MipLevels = 1,
-			Format = .UNKNOWN,
-			SampleDesc = {Count = 1, Quality = 0},
-			Layout = .ROW_MAJOR,
-			Flags = {},
-		}
+		pp := d3d12.CD3DX12_HEAP_PROPERTIES(.UPLOAD)
+		buf: d3d12.RESOURCE_DESC = d3d12.CD3DX12_RESOURCE_DESC_BUFFER(uploadBufferSize)
+		panic_if_failed(device->CreateCommittedResource(
+			&pp,
+			{},
+			&buf,
+			d3d12.RESOURCE_STATE_GENERIC_READ,
+			nil,
+			d3d12.IResource_UUID,
+			(^rawptr)(&textureUploadHeap)))
+		assert(textureUploadHeap != nil)
 
-		panic_if_failed(device->CreateCommittedResource(&pp, {}, &buf, d3d12.RESOURCE_STATE_GENERIC_READ, nil, d3d12.IResource_UUID, (^rawptr)(&textureUploadHeap)))
-
-		fmt.println("textureUploadHeap:", textureUploadHeap)
-
+        // Copy data to the intermediate upload heap and then schedule a copy
+        // from the upload heap to the Texture2D.
 		texture := GenerateTextureData()
 		defer delete(texture)
 
@@ -489,8 +511,8 @@ run :: proc() -> (exit_code: int) {
 
 		// UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
 
-		// res := d3d12.UpdateSubresources3(m_commandList, m_texture, textureUploadHeap, 0, 0, 1, &textureData)
-		// assert(res>0)
+		res := d3d12.UpdateSubresources3(m_commandList, m_texture, textureUploadHeap, 0, 0, 1, &textureData)
+		assert(res > 0)
 
 		// auto trans = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		trans := d3d12.RESOURCE_BARRIER {
@@ -503,20 +525,7 @@ run :: proc() -> (exit_code: int) {
 			StateAfter  = {.PIXEL_SHADER_RESOURCE},
 			Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		}
-		// m_commandList->ResourceBarrier(1, &trans);
 		m_commandList->ResourceBarrier(1, &trans)
-
-
-
-		// gpu_data: rawptr
-		// read_range: d3d12.RANGE
-		// panic_if_failed(textureUploadHeap->Map(0, &read_range, &gpu_data))
-		// fmt.println("read_range", read_range)
-
-		// mem.copy(gpu_data, &texture[0], len(texture))
-		// textureUploadHeap->Unmap(0, nil)
-
-
 
 		// Describe and create a SRV for the texture.
 		srvDesc: d3d12.SHADER_RESOURCE_VIEW_DESC = {
@@ -532,16 +541,14 @@ run :: proc() -> (exit_code: int) {
 		device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
 	}
 
+    // Close the command list and execute it to begin the initial GPU setup.
 	panic_if_failed(m_commandList->Close())
-
-    //ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-    //m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 	{
 		m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
 		queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
 	}
 
-
+    // Create synchronization objects and wait until assets have been uploaded to the GPU.
 	{
 		panic_if_failed(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
 		fence_value += 1
@@ -553,10 +560,10 @@ run :: proc() -> (exit_code: int) {
 			return
 		}
 
-        // Wait for the command list to execute; we are reusing the same command
-        // list in our main loop but for now, we just want to wait for setup to
-        // complete before continuing.
-        WaitForPreviousFrame()
+		// Wait for the command list to execute; we are reusing the same command
+		// list in our main loop but for now, we just want to wait for setup to
+		// complete before continuing.
+		WaitForPreviousFrame()
 	}
 
 	owin.show_and_update_window(hwnd)
@@ -608,14 +615,14 @@ run :: proc() -> (exit_code: int) {
 
 		m_commandList->OMSetRenderTargets(1, &rtv_handle, false, nil)
 
-    	// Record commands.
+		// Record commands.
 		clear_color := [4]f32{0.05, 0.05, 0.05, 1.0}
 		m_commandList->ClearRenderTargetView(rtv_handle, &clear_color, 0, nil)
 		m_commandList->IASetPrimitiveTopology(.TRIANGLELIST)
 		m_commandList->IASetVertexBuffers(0, 1, &vertex_buffer_view)
 		m_commandList->DrawInstanced(3, 1, 0, 0)
 
-    	// Indicate that the back buffer will now be used to present.
+		// Indicate that the back buffer will now be used to present.
 		to_present_barrier := to_render_target_barrier
 		to_present_barrier.Transition.StateBefore = {.RENDER_TARGET}
 		to_present_barrier.Transition.StateAfter = d3d12.RESOURCE_STATE_PRESENT

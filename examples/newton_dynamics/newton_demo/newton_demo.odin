@@ -118,22 +118,34 @@ run :: proc() -> (exit_code: int) {
 			nml: newton.float3,
 		}
 
-		// points := make([]newton.float3, point_count)
-		// defer delete(points)
-		// normals := make([]newton.float3, point_count)
-		// defer delete(normals)
-		// newton.MeshGetVertexChannel(mesh, size_of(newton.float3), &points[0])
-		// newton.MeshGetNormalChannel(mesh, size_of(newton.float3), &normals[0])
-
-		// fmt.println("  Vertices:")
-		// for i in 0 ..< point_count {
-		// 	fmt.printfln("    Vertex[% 3d]: %v,  %v", i, points[i], normals[i])
-		// }
-
 		vertices := make([]vertex, point_count)
 		defer delete(vertices)
-		newton.MeshGetVertexChannel(mesh, size_of(vertex), &vertices[0].pos)
-		newton.MeshGetNormalChannel(mesh, size_of(vertex), &vertices[0].nml)
+		vertex_attrib := 0
+		when intrinsics.type_has_field(vertex, "pos") {
+			newton.MeshGetVertexChannel(mesh, size_of(vertex), &vertices[0].pos)
+			vertex_attrib += 1
+		}
+		when intrinsics.type_has_field(vertex, "nml") {
+			newton.MeshGetNormalChannel(mesh, size_of(vertex), &vertices[0].nml)
+			vertex_attrib += 1
+		}
+		when intrinsics.type_has_field(vertex, "bnl") {
+			newton.MeshGetBinormalChannel(mesh, size_of(vertex), &vertices[0].bnl)
+			vertex_attrib += 1
+		}
+		when intrinsics.type_has_field(vertex, "uv0") {
+			newton.MeshGetUV0Channel(mesh, size_of(vertex), &vertices[0].uv0)
+			vertex_attrib += 1
+		}
+		when intrinsics.type_has_field(vertex, "uv1") {
+			newton.MeshGetUV1Channel(mesh, size_of(vertex), &vertices[0].uv1)
+			vertex_attrib += 1
+		}
+		when intrinsics.type_has_field(vertex, "col") {
+			newton.MeshGetVertexColorChannel(mesh, size_of(vertex), &vertices[0].col)
+			vertex_attrib += 1
+		}
+		fmt.printfln("vertex_attrib: %d", vertex_attrib)
 
 		FF :: "% 10.5f"
 		FF2 :: "% 8.5f"
@@ -147,11 +159,12 @@ run :: proc() -> (exit_code: int) {
 		}
 		fmt.println("}")
 		fmt.println()
+
 		fmt.println("indices: [][3]u16 = {")
 		for face := newton.MeshGetFirstFace(mesh); face != nil; face = newton.MeshGetNextFace(mesh, face) {
 			if !newton.MeshIsFaceOpen(mesh, face) {
 				num := newton.MeshGetFaceIndexCount(mesh, face)
-				indices:= make([]i32, num)
+				indices := make([]i32, num)
 				defer delete(indices)
 				newton.MeshGetFacePointIndices(mesh, face, &indices[0])
 				fmt.print("\t{")

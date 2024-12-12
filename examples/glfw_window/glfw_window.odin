@@ -23,19 +23,20 @@ SCALE :: 0.2
 _ :: png
 
 // odinfmt: disable
-image_file_bytes: [2][]u8 = {
+image_file_bytes:= [?][]u8 {
 	#load("../../data/images/uv_checker_x.png"),
 	#load("../../data/images/uv_checker_y.png"),
 }
+image_count :: len(image_file_bytes)
 
-vertex_sources: []string = {
+vertex_sources:= [?]string {
 	string(#load("shaders/pos.vs")),
 	string(#load("shaders/pos_tex.vs")),
 	string(#load("shaders/pos_nml.vs")),
 	string(#load("shaders/pos_tex_nml.vs")),
 }
 
-fragment_sources: []string = {
+fragment_sources:= [?]string {
 	string(#load("shaders/col.fs")),
 	string(#load("shaders/tex.fs")),
 }
@@ -53,6 +54,13 @@ GL_MINOR_VERSION :: 6
 Texture :: u32
 running: b32 = true
 aspect: f32 = 1
+
+texture_def :: struct {
+	size: [2]i32,
+	data: []u8,
+}
+
+vertex :: model.vertex
 
 run :: proc() -> (exit_code: int) {
 	when #defined(model.material) {
@@ -88,7 +96,7 @@ run :: proc() -> (exit_code: int) {
 
 	vertex_source := vertex_sources[model.vertex_flags]
 	fragment_source := fragment_sources[1]
-	// useful utility procedures that are part of vendor:OpenGl
+
 	program := gl.load_shaders_source(vertex_source, fragment_source) or_else panic("Failed to create GLSL program")
 	defer gl.DeleteProgram(program)
 
@@ -97,57 +105,33 @@ run :: proc() -> (exit_code: int) {
 	uniforms := gl.get_uniforms_from_program(program)
 	defer gl.destroy_uniforms(uniforms)
 
-	image_w, image_h: i32
-	texture_data: [2][]u8
+	texture_data: [image_count]texture_def
 	{
-		img: ^image.Image
-		err: image.Error
 		options := image.Options{.alpha_add_if_missing}
+		for ti in 0 ..< image_count {
+			img: ^image.Image
+			err: image.Error
 
-		img, err = png.load_from_bytes(image_file_bytes[0], options)
-		if err != nil {
-			fmt.println("ERROR: Image:", "failed to load.")
-			return
+			img, err = png.load_from_bytes(image_file_bytes[ti], options)
+			if err != nil {
+				fmt.println("ERROR: Image:", "failed to load.")
+				return
+			}
+			defer png.destroy(img)
+			texture_data[ti].size = {i32(img.width), i32(img.height)}
+
+			// Copy bytes from icon buffer into slice.
+			data := make([]u8, len(img.pixels.buf))
+			for b, i in img.pixels.buf {
+				data[i] = b
+			}
+			texture_data[ti].data = data
+
+			fmt.println("Image:", texture_data[ti].size)
 		}
-		defer png.destroy(img)
-		image_w = i32(img.width)
-		image_h = i32(img.height)
-
-		// Copy bytes from icon buffer into slice.
-		data := make([]u8, len(img.pixels.buf))
-		for b, i in img.pixels.buf {
-			data[i] = b
-		}
-		texture_data[0] = data
-
-		fmt.println("Image:", image_w, image_h)
 	}
-	{
-		img: ^image.Image
-		err: image.Error
-		options := image.Options{.alpha_add_if_missing}
-
-		img, err = png.load_from_bytes(image_file_bytes[1], options)
-		if err != nil {
-			fmt.println("ERROR: Image:", "failed to load.")
-			return
-		}
-		defer png.destroy(img)
-		image_w = i32(img.width)
-		image_h = i32(img.height)
-
-		// Copy bytes from icon buffer into slice.
-		data := make([]u8, len(img.pixels.buf))
-		for b, i in img.pixels.buf {
-			data[i] = b
-		}
-		texture_data[1] = data
-
-		fmt.println("Image:", image_w, image_h)
-	}
-
-	for td in texture_data {assert(td != nil)}
-	defer for td in texture_data {delete(td)}
+	for td in texture_data {assert(td.data != nil)}
+	defer for td in texture_data {delete(td.data)}
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -192,11 +176,11 @@ run :: proc() -> (exit_code: int) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(model.indices) * size_of(model.indices[0]), raw_data(model.indices), gl.STATIC_DRAW)
 
 
-	textures: [2]Texture
+	textures: [image_count]Texture
 	gl.GenTextures(len(textures), &textures[0])
 	defer gl.DeleteTextures(len(textures), &textures[0])
 
-	for ti in 0 ..< len(textures) {
+	for ti in 0 ..< image_count {
 		//gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, textures[ti])
 		// Describe texture.
@@ -204,12 +188,12 @@ run :: proc() -> (exit_code: int) {
 			gl.TEXTURE_2D, // texture type
 			0, // level of detail number (default = 0)
 			gl.RGBA, // texture format
-			image_w, // width
-			image_h, // height
+			texture_data[ti].size.x, // width
+			texture_data[ti].size.y, // height
 			0, // border, must be 0
 			gl.RGBA, // pixel data format
 			gl.UNSIGNED_BYTE, // data type of pixel data
-			&texture_data[ti][0], // image data
+			&texture_data[ti].data[0], // image data
 		)
 
 		// Texture wrapping options.

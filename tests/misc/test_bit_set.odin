@@ -19,6 +19,5 @@ bit_sets :: proc(t: ^T) {
 	expect_value(t, transmute(u8)flags, 7)
 	expect_value(t, card(flags), 3)
 	testing.expect_value(t, flags, Flags{.A, .B, .C})
-	//ounit.__expect_value(t, flags, Flags{.A, .B, .C})
 	expect_flags(t, flags, 7)
 }

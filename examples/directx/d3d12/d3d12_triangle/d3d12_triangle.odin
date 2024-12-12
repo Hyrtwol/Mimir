@@ -48,8 +48,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return 1 // skip
 	case win32.WM_CHAR:
 		switch wparam {
-		case '\x1b':
-			// ESC
+		case '\x1b': // ESC
 			owin.close_application(hwnd)
 		// case 's':
 		// 	show_shadowmap = !show_shadowmap
@@ -254,24 +253,31 @@ run :: proc() -> (exit_code: int) {
 
 		pipeline_state_desc := d3d12.GRAPHICS_PIPELINE_STATE_DESC {
 			pRootSignature = root_signature,
-			VS = {pShaderBytecode = vs->GetBufferPointer(), BytecodeLength = vs->GetBufferSize()},
-			PS = {pShaderBytecode = ps->GetBufferPointer(), BytecodeLength = ps->GetBufferSize()},
+			// VS = {pShaderBytecode = vs->GetBufferPointer(), BytecodeLength = vs->GetBufferSize()},
+			// PS = {pShaderBytecode = ps->GetBufferPointer(), BytecodeLength = ps->GetBufferSize()},
+			VS = d3d12.CD3DX12_SHADER_BYTECODE(vs),
+			PS = d3d12.CD3DX12_SHADER_BYTECODE(ps),
 			StreamOutput = {},
-			BlendState = {AlphaToCoverageEnable = false, IndependentBlendEnable = false, RenderTarget = {0 = default_blend_state, 1 ..< 7 = {}}},
-			SampleMask = 0xFFFFFFFF,
-			RasterizerState = {
-				FillMode = .SOLID,
-				CullMode = .BACK,
-				FrontCounterClockwise = false,
-				DepthBias = 0,
-				DepthBiasClamp = 0,
-				SlopeScaledDepthBias = 0,
-				DepthClipEnable = true,
-				MultisampleEnable = false,
-				AntialiasedLineEnable = false,
-				ForcedSampleCount = 0,
-				ConservativeRaster = .OFF,
+			BlendState = {
+				AlphaToCoverageEnable = false,
+				IndependentBlendEnable = false,
+				RenderTarget = {0 = default_blend_state, 1 ..< 7 = {}},
 			},
+			SampleMask = 0xFFFFFFFF,
+			RasterizerState = d3d12.CD3DX12_RASTERIZER_DESC_DEFAULT,
+			// RasterizerState = {
+			// 	FillMode = .SOLID,
+			// 	CullMode = .BACK,
+			// 	FrontCounterClockwise = false,
+			// 	DepthBias = 0,
+			// 	DepthBiasClamp = 0,
+			// 	SlopeScaledDepthBias = 0,
+			// 	DepthClipEnable = true,
+			// 	MultisampleEnable = false,
+			// 	AntialiasedLineEnable = false,
+			// 	ForcedSampleCount = 0,
+			// 	ConservativeRaster = .OFF,
+			// },
 			DepthStencilState = {DepthEnable = false, StencilEnable = false},
 			InputLayout = {pInputElementDescs = &vertex_format[0], NumElements = u32(len(vertex_format))},
 			PrimitiveTopologyType = .TRIANGLE,
@@ -295,14 +301,6 @@ run :: proc() -> (exit_code: int) {
 	vertex_buffer_view: d3d12.VERTEX_BUFFER_VIEW
 
 	{
-		// The position and color data for the triangle's vertices go together per-vertex
-		// vertices := [?]f32 {
-		//     // pos            color
-		//      0.0 , 0.5, 0.0,  1,0,0,0,
-		//      0.5, -0.5, 0.0,  0,1,0,0,
-		//     -0.5, -0.5, 0.0,  0,0,1,0,
-		// }
-
 		vertex :: model.vertex
 		vertices := [?]vertex {
 			// pos            color
@@ -311,11 +309,7 @@ run :: proc() -> (exit_code: int) {
 			{{-0.5, -0.5, 0.0}, {1, 1}, {0, 0, 1}},
 		}
 
-		//vertices := model.vertices
-
-		heap_props := d3d12.HEAP_PROPERTIES {
-			Type = .UPLOAD,
-		}
+		heap_props := d3d12.CD3DX12_HEAP_PROPERTIES(.UPLOAD)
 
 		fmt.println("size_of(vertex):", size_of(vertex))
 		vertex_buffer_size := len(vertices) * size_of(vertices[0])

@@ -38,13 +38,13 @@ string_vs_cstring :: proc(t: ^T) {
 	defer delete(dst)
 
 	//expect_value(t, v[0], 3)
-	_t.expect(t, dst == "Can i convert")
+	_t.expect_value(t, dst, "Can i convert")
 
 	// NOTE: This is valid because 'clone_string' appends a NUL terminator
 	// see core\encoding\json\unmarshal.odin unmarshal_string_token
 	dst2 := cstring(raw_data(str))
 
-	_t.expect(t, dst2 == "Can i convert")
+	_t.expect_value(t, dst2, "Can i convert")
 }
 
 // when
@@ -59,7 +59,7 @@ when_to_use_when :: proc(t: ^T) {
 		str = "Oh no"
 	}
 
-	_t.expectf(t, str == "Can i convert", "%v", str)
+	_t.expect_value(t, str, "Can i convert")
 
 	// when ODIN_DEBUG {
 	// 	fmt.println("Debug")
