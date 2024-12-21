@@ -44,10 +44,12 @@ write_mesh :: proc(mesh: ^newton.Mesh) {
 
 write_body :: proc(body: ^newton.Body) {
 	fmt.println("Body:")
-	fmt.printfln("  BodyType            : %v", newton.BodyGetType(body))
+	fmt.printfln("  Type                : %v", newton.BodyGetType(body))
+	fmt.printfln("  ID                  : %v", newton.BodyGetID(body))
 	pos, rot: newton.float3
 	newton.BodyGetPosition(body, &pos[0])
 	newton.BodyGetRotation(body, &rot[0])
 	fmt.printfln("  Position            : %v", pos)
 	fmt.printfln("  Rotation            : %v", rot)
+	fmt.printfln("  UserData            : %v", newton.BodyGetUserData(body))
 }

@@ -5,7 +5,7 @@ import "base:runtime"
 import "core:fmt"
 import "core:image"
 import "core:image/png"
-import "core:math"
+//import "core:math"
 import "core:math/linalg"
 import glm "core:math/linalg/glsl"
 import "core:os"
@@ -17,10 +17,13 @@ import "vendor:glfw"
 
 _ :: png
 vec3 :: glm.vec3
+float3 :: glm.vec3
 mat4 :: glm.mat4
+float4x4 :: glm.mat4
 Mesh :: newton.Mesh
 
 SCALE :: 0.2
+TRIANGULATE_WITH_NEWTON :: false
 
 // odinfmt: disable
 image_file_bytes:= [?][]u8 {
@@ -102,19 +105,63 @@ Vertex :: struct {
 
 Index :: u16
 
-vertices: []Vertex
+Body_User_Data :: i32
+
 collisions: []^newton.Collision
 bodies: [dynamic]^newton.Body
 meshes: []^newton.Mesh
 shapeId: i32 = 0
+u_transform: [dynamic]float4x4
 
 Render_Item :: struct {
 	// Specifies a constant that should be added to each element of indices when choosing elements from the enabled vertex arrays.
 	base_vertex: i32,
 	base_index:  i32,
-	count:      i32,
+	count:       i32,
 }
-render_items: []Render_Item
+
+set_transform_callback :: proc "c" (body: ^newton.Body, matrix4x4: ^float4x4, threadIndex: i32) {
+	ud := Body_User_Data(uintptr(newton.BodyGetUserData(body)))
+	if ud < i32(len(u_transform)) {
+		u_transform[ud] = matrix4x4^
+	}
+}
+
+//ApplyForceAndTorque :: #type proc "c" (body: ^Body, timestep: dFloat, threadIndex: i32)
+force_and_torque_callback :: proc "c" (body: ^newton.Body, timestep: f32, threadIndex: i32) {
+	mass: f32
+	vector: float3 = {0, 0, 0}
+	newton.BodyGetMass(body, &mass, &vector.x, &vector.y, &vector.z)
+	force: float3 = {0, 0, 0}
+	/*
+	Newton.NewtonBodyGetMatrix(_body, out var matrix);
+	Vector3 position = matrix.GetPosition();
+	Vector3[] origo = Origo;
+	for (int i = 0; i < origo.Length; i++)
+	{
+		Vector3 vector2 = origo[i] - position;
+		float sqrMagnitude = vector2.sqrMagnitude;
+		if (sqrMagnitude > 4f)
+		{
+			float num = (float)Math.Sqrt(sqrMagnitude);
+			vector2 *= 1000f * mass / (sqrMagnitude * num);
+		}
+		else if (sqrMagnitude < 0.5f)
+		{
+			vector2 = Vector3.zero;
+		}
+		else
+		{
+			vector2 *= 1000f * mass / sqrMagnitude / 2f;
+		}
+
+		force += vector2;
+	}
+	*/
+
+	force.y = (0 - mass) * 9.8
+	newton.BodySetForce(body, &force)
+}
 
 on_world_destroy :: proc "c" (world: ^newton.World) {
 	context = runtime.default_context()
@@ -123,7 +170,7 @@ on_world_destroy :: proc "c" (world: ^newton.World) {
 
 run :: proc() -> (exit_code: int) {
 	fmt.println("Newton Dynamics")
-	defer fmt.println("Done.")
+	defer fmt.println("Done.", exit_code)
 
 	write_globals()
 
@@ -163,7 +210,7 @@ run :: proc() -> (exit_code: int) {
 	defer {{for &mesh in meshes {newton.MeshDestroy(mesh)}};delete(meshes)}
 	for i in 0 ..< len(meshes) {
 		mesh := newton.MeshCreateFromCollision(collisions[i])
-		// newton.MeshTriangulate(mesh)
+		if TRIANGULATE_WITH_NEWTON {newton.MeshTriangulate(mesh)}
 		write_mesh(mesh)
 		meshes[i] = mesh
 	}
@@ -172,16 +219,14 @@ run :: proc() -> (exit_code: int) {
 	defer delete(render_items)
 
 	total_vertex_count, total_point_count: i32 = 0, 0
-	for &mesh, idx in meshes {
+	for &mesh in meshes {
 		total_vertex_count += newton.MeshGetPointCount(mesh)
 		total_point_count += newton.MeshGetTotalIndexCount(mesh)
 	}
 	fmt.println("total_vertex_count=", total_vertex_count, "total_point_count=", total_point_count)
 
-	vertices := make([]Vertex, total_vertex_count)
+	vertices := make([dynamic]Vertex, 0, total_vertex_count)
 	defer delete(vertices)
-	//indices := make([]u16, total_point_count)
-	//indices := make([dynamic]u16, total_point_count, total_point_count)
 	indices := make([dynamic]u16, 0, total_point_count)
 	defer delete(indices)
 
@@ -193,9 +238,6 @@ run :: proc() -> (exit_code: int) {
 	defer delete(indices)
 	*/
 	{
-		vertex_size := i32(size_of(Vertex))
-		//ofs: i32 = 0
-		vi, ii: i32 = 0, 0
 		for &mesh, idx in meshes {
 			// point_count := MeshGetPointCount(mesh)
 			// index_count := newton.MeshGetTotalIndexCount(mesh)
@@ -207,24 +249,21 @@ run :: proc() -> (exit_code: int) {
 			m_indices := newton.get_indices(mesh, u16)
 			defer delete(m_indices)
 
-			ri := Render_Item {
-				base_vertex = vi,
-				base_index  = ii,
-				count      = i32(len(m_indices)),
+			render_items[idx] = Render_Item {
+				base_vertex = i32(len(vertices)),
+				base_index  = i32(len(indices)),
+				count       = i32(len(m_indices)),
 			}
 			for v in m_vertices {
-				vertices[vi] = v;vi += 1
+				append(&vertices, v)
 			}
 			for i in m_indices {
-				//indices[ii] = i;ii += 1
-				append(&indices, i);ii += 1
+				append(&indices, i)
 			}
-			//ofs += ri.count
-			//ofs += i32(len(m_vertices))
-			render_items[idx] = ri
 		}
 	}
 	//assert(len(indices) == int(total_point_count))
+	//assert(len(vertices) == int(total_vertex_count))
 	for &ri, i in render_items {fmt.println(i, ri)}
 
 	write_world_count(world)
@@ -234,15 +273,39 @@ run :: proc() -> (exit_code: int) {
 	bodies = make([dynamic]^newton.Body, 0, 8)
 	defer {{for &body in bodies {newton.DestroyBody(body)}};delete(bodies)}
 
+	u_transform = make([dynamic]float4x4, 0, 8)
+	defer delete(u_transform)
+
+	mtx: newton.float4x4
 	identity := linalg.identity(newton.float4x4)
 	for &collision, i in collisions {
 		body := newton.CreateDynamicBody(world, collision, &identity)
-		mtx := linalg.matrix4_translate(newton.float3{f32(i), 0, 0}) * linalg.matrix4_rotate(f32(i), newton.float3{0, 1, 0})
+
+		//newton.BodySetUserData(body, rawptr(uintptr(i)))
+		newton.BodySetUserData(body, rawptr(uintptr(Body_User_Data(i))))
+		newton.BodySetTransformCallback(body, set_transform_callback)
+		if i == 0 {
+			mtx = linalg.matrix4_translate(newton.float3{0, -1, 0})
+		} else {
+			newton.BodySetForceAndTorqueCallback(body, force_and_torque_callback)
+
+			vector := float3{1, 1, 1}
+			ixx: f32 = 4.16666651 * (vector.y * vector.y + vector.z * vector.z)
+			iyy: f32 = 4.16666651 * (vector.x * vector.x + vector.z * vector.z)
+			izz: f32 = 4.16666651 * (vector.x * vector.x + vector.y * vector.y)
+			newton.BodySetMassMatrix(body, 50, ixx, iyy, izz)
+
+			mtx = linalg.matrix4_translate(newton.float3{f32(i) * 0.5, 4, 0}) * linalg.matrix4_rotate(f32(i), newton.float3{0, 1, 0})
+		}
+
 		newton.BodySetMatrix(body, &mtx)
 		append(&bodies, body)
+		append(&u_transform, mtx)
 	}
 
-	for &body, i in bodies {write_body(body)}
+	resize_dynamic_array(&u_transform, len(bodies))
+
+	for &body in bodies {write_body(body)}
 
 	// Init glfw
 
@@ -281,7 +344,7 @@ run :: proc() -> (exit_code: int) {
 
 	gl.UseProgram(program)
 
-	uniforms := gl.get_uniforms_from_program(program)
+	uniforms: gl.Uniforms = gl.get_uniforms_from_program(program)
 	defer gl.destroy_uniforms(uniforms)
 
 	texture_data: [image_count]texture_def
@@ -391,20 +454,19 @@ run :: proc() -> (exit_code: int) {
 
 	start_tick := time.tick_now()
 	last_tick := start_tick
+	delta: f32
 
-	t: f32
-
-	ui_transform := &uniforms["u_transform"]
-	u_transform: [8]glm.mat4
+	ui_transform: ^gl.Uniform_Info = &uniforms["u_transform"]
+	//u_transform: [8]glm.mat4
 
 	for !glfw.WindowShouldClose(window_handle) && running {
 
 		start_tick = time.tick_now()
-		delta := f32(time.duration_seconds(time.tick_diff(last_tick, start_tick)))
+		delta = f32(time.duration_seconds(time.tick_diff(last_tick, start_tick)))
 		last_tick = start_tick
 
-		t += delta
-		//if t > math.PI * 2 {t -= math.PI * 4}
+		newton.Update(world, delta)
+		//fmt.println("LastUpdateTime", newton.GetLastUpdateTime(world), delta)
 
 		// Process all incoming events like keyboard press, window resize, and etc.
 		glfw.PollEvents()
@@ -412,43 +474,24 @@ run :: proc() -> (exit_code: int) {
 		//gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		// SetLocalPositionAndRotation(target, ref _bodys[i].TransformMatrix);
-
-		pos := glm.vec3{glm.cos(t * 2), glm.sin(t * 2), 0}
-		pos *= 1.3
-
-		model_transform := glm.identity(glm.mat4)
-		model_transform *= glm.mat4Translate(pos)
-		//model_transform *= glm.mat4Scale({SCALE, SCALE, SCALE})
-
-		view := glm.mat4LookAt({0, -1, 4}, {0, 0, 0}, {0, 0, 1})
+		view := glm.mat4LookAt({0, 10, 20}, {0, 0, 0}, {0, 1, 0})
 		proj := glm.mat4Perspective(45, aspect, 0.1, 100.0)
 		proj_view := proj * view
 
-		// u_transform[0] = proj_view * model_transform * glm.mat4Rotate({0, 1, 1}, t*1.0)
-		// u_transform[1] = proj_view * model_transform * glm.mat4Rotate({1, 1, 1}, t*1.1)
-		// u_transform[2] = proj_view * model_transform * glm.mat4Rotate({1, 1, 0}, t*1.2)
-		// u_transform[3] = proj_view * model_transform * glm.mat4Rotate({1, 0, 1}, t*1.3)
-		// u_transform[4] = proj_view * glm.mat4Rotate({0, 1, 1}, t*1.4) * model_transform
-		// u_transform[5] = proj_view * glm.mat4Rotate({1, 1, 1}, t*1.5) * model_transform
-		// u_transform[6] = proj_view * glm.mat4Rotate({1, 1, 0}, t*1.6) * model_transform
-		// u_transform[7] = proj_view * glm.mat4Rotate({1, 0, 1}, t*1.7) * model_transform
-
+		ut: float4x4
 		for i in 0 ..< len(u_transform) {
-			u_transform[i] = proj_view * glm.mat4Rotate({f32(i), 1, 1}, t * (0.2 * f32(i))) * model_transform
-		}
-
-		for i in 0 ..< len(u_transform) {
+			ri := &render_items[i]
 			//gl.ActiveTexture(gl.TEXTURE0)
-			gl.BindTexture(gl.TEXTURE_2D, textures[i & image_mask])
-			gl.UniformMatrix4fv(ui_transform.location, 1, false, &u_transform[i & 7][0, 0])
-			ri := &render_items[1 + i]
+			gl.BindTexture(gl.TEXTURE_2D, textures[i % 3])
+			ut = proj_view * u_transform[i]
+			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ut[0, 0])
 			//gl.DrawElements(gl.TRIANGLES, i32(len(indices) * size_of(indices[0])), gl.UNSIGNED_SHORT, nil)
 			gl.DrawElementsBaseVertex(gl.TRIANGLES, ri.count, gl.UNSIGNED_SHORT, rawptr(uintptr(ri.base_index * 2)), ri.base_vertex)
 		}
 
 		glfw.SwapBuffers(window_handle)
 	}
+
 	return
 }
 
