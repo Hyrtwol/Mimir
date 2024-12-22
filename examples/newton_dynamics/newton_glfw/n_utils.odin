@@ -36,10 +36,10 @@ write_collision :: proc(collision: ^newton.Collision) {
 
 write_mesh :: proc(mesh: ^newton.Mesh) {
 	fmt.println("Mesh:")
-	fmt.printfln("  MeshGetPointCount      : %v", newton.MeshGetPointCount(mesh))
-	fmt.printfln("  MeshGetTotalFaceCount  : %v", newton.MeshGetTotalFaceCount(mesh))
-	fmt.printfln("  MeshGetTotalIndexCount : %v", newton.MeshGetTotalIndexCount(mesh))
-	fmt.printfln("  MeshGetVertexCount     : %v", newton.MeshGetVertexCount(mesh))
+	fmt.printfln("  PointCount          : %v", newton.MeshGetPointCount(mesh))
+	fmt.printfln("  TotalFaceCount      : %v", newton.MeshGetTotalFaceCount(mesh))
+	fmt.printfln("  TotalIndexCount     : %v", newton.MeshGetTotalIndexCount(mesh))
+	fmt.printfln("  VertexCount         : %v", newton.MeshGetVertexCount(mesh))
 }
 
 write_body :: proc(body: ^newton.Body) {

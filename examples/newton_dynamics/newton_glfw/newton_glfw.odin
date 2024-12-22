@@ -3,8 +3,6 @@ package newton_glfw
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
-import "core:image"
-import "core:image/png"
 //import "core:math"
 import "core:math/linalg"
 import glm "core:math/linalg/glsl"
@@ -15,26 +13,13 @@ import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
-_ :: png
-vec3 :: glm.vec3
 float3 :: glm.vec3
-mat4 :: glm.mat4
 float4x4 :: glm.mat4
 Mesh :: newton.Mesh
 
-SCALE :: 0.2
 TRIANGULATE_WITH_NEWTON :: false
 
 // odinfmt: disable
-image_file_bytes:= [?][]u8 {
-	#load("../../../data/images/uv_checker_x.png"),
-	#load("../../../data/images/uv_checker_y.png"),
-	#load("../../../data/images/uv_checker_z.png"),
-	#load("../../../data/images/uv_checker_w.png"),
-}
-image_count :: len(image_file_bytes)
-image_mask :: image_count - 1
-
 vertex_sources:= [?]string {
 	string(#load("shaders/pos.vs")),
 	string(#load("shaders/pos_tex.vs")),
@@ -48,11 +33,7 @@ fragment_sources:= [?]string {
 }
 // odinfmt: enable
 
-WINDOW_TITLE :: "Mimir"
-WINDOW_WIDTH :: 640
-WINDOW_HEIGHT :: WINDOW_WIDTH * 3 / 4
 
-// @note You might need to lower this to 3.3 depending on how old your graphics card is.
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
 
@@ -91,43 +72,45 @@ materials: []material = {
 	},
 }
 
-texture_def :: struct {
-	size: [2]i32,
-	data: []u8,
-}
-
 vertex_flags :: 0b00000010
 
+Index :: u16
 Vertex :: struct {
 	pos: newton.float3 `POSITION`,
 	nml: newton.float3 `NORMAL`,
 }
 
-Index :: u16
-
+World_User_Data :: u32
 Body_User_Data :: i32
 
-collisions: []^newton.Collision
-bodies: [dynamic]^newton.Body
-meshes: []^newton.Mesh
 shapeId: i32 = 0
-u_transform: [dynamic]float4x4
+collisions: [dynamic]^newton.Collision
+bodies: [dynamic]^newton.Body
+meshes: [dynamic]^newton.Mesh
+render_items: [dynamic]Render_Item
 
 Render_Item :: struct {
 	// Specifies a constant that should be added to each element of indices when choosing elements from the enabled vertex arrays.
-	base_vertex: i32,
-	base_index:  i32,
-	count:       i32,
+	base_vertex:   i32,
+	base_index:    i32,
+	count:         i32,
+	texture_index: i32,
+	transform:     float4x4,
+}
+
+Render_Item_Tex :: struct {
+	render_item:   ^Render_Item,
+	texture_index: i32,
+	transform:     float4x4,
 }
 
 set_transform_callback :: proc "c" (body: ^newton.Body, matrix4x4: ^float4x4, threadIndex: i32) {
-	ud := Body_User_Data(uintptr(newton.BodyGetUserData(body)))
-	if ud < i32(len(u_transform)) {
-		u_transform[ud] = matrix4x4^
+	ud := newton.body_get_user_data(body, Body_User_Data)
+	if ud < i32(len(render_items)) {
+		render_items[ud].transform = matrix4x4^
 	}
 }
 
-//ApplyForceAndTorque :: #type proc "c" (body: ^Body, timestep: dFloat, threadIndex: i32)
 force_and_torque_callback :: proc "c" (body: ^newton.Body, timestep: f32, threadIndex: i32) {
 	mass: f32
 	vector: float3 = {0, 0, 0}
@@ -172,12 +155,17 @@ run :: proc() -> (exit_code: int) {
 	fmt.println("Newton Dynamics")
 	defer fmt.println("Done.", exit_code)
 
+	texture_data := make([dynamic]texture_def, 0, 0)
+	defer delete(texture_data)
+	load_texture_data(&texture_data)
+	for td in texture_data {fmt.println("Image:", td.size, len(td.data));assert(td.data != nil)}
+	defer {for td in texture_data {delete(td.data)}}
+
 	write_globals()
 
 	world := newton.Create()
 	defer newton.Destroy(world)
-	user_data: u32 = 0xDEADBEEF
-	newton.WorldSetUserData(world, rawptr(uintptr(user_data)))
+	newton.world_set_user_data(world, World_User_Data(0xDEADBEEF))
 	newton.WorldSetDestructorCallback(world, on_world_destroy)
 
 	write_world(world)
@@ -187,36 +175,36 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	// Create collisions
-	collisions = make([]^newton.Collision, 10)
-	{
-		collisions[shapeId] = newton.CreateBox(world, 400, 2, 400, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateSphere(world, 0.5, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateBox(world, 1.0, 1.0, 1.0, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateBox(world, 1.0, 0.5, 2.0, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateCylinder(world, 0.5, 0.5, 1.5, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateCylinder(world, 0.3, 0.6, 1.5, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateCapsule(world, 0.5, 0.5, 1.5, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateCapsule(world, 0.4, 0.6, 1.2, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateCone(world, 0.5, 2.0, shapeId, nil);shapeId += 1
-		collisions[shapeId] = newton.CreateChamferCylinder(world, 0.5, 0.6, shapeId, nil);shapeId += 1
-	}
-	defer {{for &collision in collisions {newton.DestroyCollision(collision)}};delete(collisions)}
 
+	collisions = make([dynamic]^newton.Collision)
+	defer {{for &collision in collisions {newton.DestroyCollision(collision)}};delete(collisions)}
+	{
+		//append(&collisions, newton.CreateBox(world, 400, 2, 400, i32(len(collisions)), nil));shapeId += 1
+		append(&collisions, newton.CreateBox(world, 400, 2, 400, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateSphere(world, 0.5, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateBox(world, 1.0, 1.0, 1.0, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateBox(world, 1.0, 0.5, 2.0, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateCylinder(world, 0.5, 0.5, 1.5, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateCylinder(world, 0.3, 0.6, 1.5, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateCapsule(world, 0.5, 0.5, 1.5, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateCapsule(world, 0.4, 0.6, 1.2, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateCone(world, 0.5, 2.0, shapeId, nil));shapeId += 1
+		append(&collisions, newton.CreateChamferCylinder(world, 0.5, 0.6, shapeId, nil));shapeId += 1
+	}
 	for &collision in collisions {write_collision(collision)}
 
 	// Create meshes
-	//mesh_count := len(collisions)
-	meshes = make([]^newton.Mesh, len(collisions))
+
+	meshes = make([dynamic]^newton.Mesh)
 	defer {{for &mesh in meshes {newton.MeshDestroy(mesh)}};delete(meshes)}
-	for i in 0 ..< len(meshes) {
+	for i in 0 ..< len(collisions) {
 		mesh := newton.MeshCreateFromCollision(collisions[i])
 		if TRIANGULATE_WITH_NEWTON {newton.MeshTriangulate(mesh)}
 		write_mesh(mesh)
-		meshes[i] = mesh
+		append(&meshes, mesh)
 	}
 
-	render_items := make([]Render_Item, len(meshes))
-	defer delete(render_items)
+	// Create vertices & indices
 
 	total_vertex_count, total_point_count: i32 = 0, 0
 	for &mesh in meshes {
@@ -230,40 +218,32 @@ run :: proc() -> (exit_code: int) {
 	indices := make([dynamic]u16, 0, total_point_count)
 	defer delete(indices)
 
-	/*
-	m := meshes[3]
-	vertices = newton.get_vertices(m, Vertex)
-	defer delete(vertices)
-	indices := newton.get_indices(m, u16)
-	defer delete(indices)
-	*/
+	// Create reader items
+
+	render_items = make([dynamic]Render_Item, 0)
+	defer delete(render_items)
+
 	{
+		image_mask := i32(len(texture_data) - 1)
 		for &mesh, idx in meshes {
-			// point_count := MeshGetPointCount(mesh)
-			// index_count := newton.MeshGetTotalIndexCount(mesh)
-			// MeshGetVertexChannel(mesh, vertex_size, &vertices[ofs].pos)
-			// MeshGetNormalChannel(mesh, vertex_size, &vertices[ofs].nml)
 
-			m_vertices := newton.get_vertices(mesh, Vertex)
-			defer delete(m_vertices)
-			m_indices := newton.get_indices(mesh, u16)
-			defer delete(m_indices)
+			m_vertices := newton.get_vertices(mesh, Vertex, allocator = context.temp_allocator)
+			m_indices := newton.get_indices(mesh, u16, allocator = context.temp_allocator)
 
-			render_items[idx] = Render_Item {
-				base_vertex = i32(len(vertices)),
-				base_index  = i32(len(indices)),
-				count       = i32(len(m_indices)),
+			ri := Render_Item {
+				base_vertex   = i32(len(vertices)),
+				base_index    = i32(len(indices)),
+				count         = i32(len(m_indices)),
+				texture_index = ((i32(idx) % image_mask) + 1) if idx > 0 else 0,
 			}
-			for v in m_vertices {
-				append(&vertices, v)
-			}
-			for i in m_indices {
-				append(&indices, i)
-			}
+
+			append(&render_items, ri)
+
+			append_elems(&vertices, ..m_vertices)
+			append_elems(&indices, ..m_indices)
 		}
 	}
-	//assert(len(indices) == int(total_point_count))
-	//assert(len(vertices) == int(total_vertex_count))
+
 	for &ri, i in render_items {fmt.println(i, ri)}
 
 	write_world_count(world)
@@ -273,55 +253,52 @@ run :: proc() -> (exit_code: int) {
 	bodies = make([dynamic]^newton.Body, 0, 8)
 	defer {{for &body in bodies {newton.DestroyBody(body)}};delete(bodies)}
 
-	u_transform = make([dynamic]float4x4, 0, 8)
-	defer delete(u_transform)
+	//u_transform = make([dynamic]float4x4, 0, 8);defer delete(u_transform)
+	{
+		mtx: newton.float4x4
+		identity := linalg.identity(newton.float4x4)
+		for &collision, i in collisions {
+			body := newton.CreateDynamicBody(world, collision, &identity)
 
-	mtx: newton.float4x4
-	identity := linalg.identity(newton.float4x4)
-	for &collision, i in collisions {
-		body := newton.CreateDynamicBody(world, collision, &identity)
+			newton.body_set_user_data(body, Body_User_Data(i))
+			newton.BodySetTransformCallback(body, set_transform_callback)
+			if i == 0 {
+				mtx = linalg.matrix4_translate(newton.float3{0, -1, 0})
+			} else {
+				newton.BodySetForceAndTorqueCallback(body, force_and_torque_callback)
+				mass: f32 = 50
+				vector := float3{1, 1, 1}
+				inertia := float3{(vector.y * vector.y + vector.z * vector.z), (vector.x * vector.x + vector.z * vector.z), (vector.x * vector.x + vector.y * vector.y)}
+				inertia *= 4.16666651
+				newton.BodySetMassMatrix(body, mass, inertia.x, inertia.y, inertia.z)
+				// ixx: f32 = 4.16666651 * (vector.y * vector.y + vector.z * vector.z)
+				// iyy: f32 = 4.16666651 * (vector.x * vector.x + vector.z * vector.z)
+				// izz: f32 = 4.16666651 * (vector.x * vector.x + vector.y * vector.y)
+				//newton.BodySetMassMatrix(body, 50, ixx, iyy, izz)
 
-		//newton.BodySetUserData(body, rawptr(uintptr(i)))
-		newton.BodySetUserData(body, rawptr(uintptr(Body_User_Data(i))))
-		newton.BodySetTransformCallback(body, set_transform_callback)
-		if i == 0 {
-			mtx = linalg.matrix4_translate(newton.float3{0, -1, 0})
-		} else {
-			newton.BodySetForceAndTorqueCallback(body, force_and_torque_callback)
+				mtx = linalg.matrix4_translate(float3{f32(i) * 0.5, 4, 0}) * linalg.matrix4_rotate(f32(i), float3{0, 1, 0})
+			}
 
-			vector := float3{1, 1, 1}
-			ixx: f32 = 4.16666651 * (vector.y * vector.y + vector.z * vector.z)
-			iyy: f32 = 4.16666651 * (vector.x * vector.x + vector.z * vector.z)
-			izz: f32 = 4.16666651 * (vector.x * vector.x + vector.y * vector.y)
-			newton.BodySetMassMatrix(body, 50, ixx, iyy, izz)
-
-			mtx = linalg.matrix4_translate(newton.float3{f32(i) * 0.5, 4, 0}) * linalg.matrix4_rotate(f32(i), newton.float3{0, 1, 0})
+			newton.BodySetMatrix(body, &mtx)
+			append(&bodies, body)
 		}
-
-		newton.BodySetMatrix(body, &mtx)
-		append(&bodies, body)
-		append(&u_transform, mtx)
 	}
-
-	resize_dynamic_array(&u_transform, len(bodies))
-
 	for &body in bodies {write_body(body)}
 
 	// Init glfw
 
-	if !bool(glfw.Init()) {
+	if !glfw.Init() {
 		fmt.eprintln("Failed to initialize GLFW")
 		return
 	}
 	defer glfw.Terminate()
 
-	window_handle := glfw.CreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, nil, nil)
-	defer glfw.DestroyWindow(window_handle)
-
+	window_handle := CreateWindowCentered()
 	if window_handle == nil {
 		fmt.eprintln("GLFW has failed to load the window.")
 		return
 	}
+	defer glfw.DestroyWindow(window_handle)
 
 	// Load OpenGL context or the "state" of OpenGL.
 	glfw.MakeContextCurrent(window_handle)
@@ -346,37 +323,6 @@ run :: proc() -> (exit_code: int) {
 
 	uniforms: gl.Uniforms = gl.get_uniforms_from_program(program)
 	defer gl.destroy_uniforms(uniforms)
-
-	texture_data: [image_count]texture_def
-	{
-		options := image.Options{.alpha_add_if_missing}
-		for ti in 0 ..< image_count {
-			img: ^image.Image
-			err: image.Error
-
-			img, err = png.load_from_bytes(image_file_bytes[ti], options)
-			if err != nil {
-				fmt.println("ERROR: Image:", "failed to load.")
-				return
-			}
-			defer png.destroy(img)
-			tex_def: texture_def
-			tex_def.size = {i32(img.width), i32(img.height)}
-
-			// Copy bytes from icon buffer into slice.
-			data := make([]u8, len(img.pixels.buf))
-			for b, i in img.pixels.buf {
-				data[i] = b
-			}
-			tex_def.data = data
-
-			fmt.println("Image:", tex_def.size)
-
-			texture_data[ti] = tex_def
-		}
-	}
-	for td in texture_data {assert(td.data != nil)}
-	defer for td in texture_data {delete(td.data)}
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -419,12 +365,12 @@ run :: proc() -> (exit_code: int) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices) * size_of(indices[0]), raw_data(indices), gl.STATIC_DRAW)
 
 
-	textures := make([]Texture, image_count)
+	textures := make([]Texture, len(texture_data))
 	defer delete(textures)
 	gl.GenTextures(i32(len(textures)), &textures[0])
 	defer gl.DeleteTextures(i32(len(textures)), &textures[0])
 
-	for ti in 0 ..< image_count {
+	for ti in 0 ..< len(textures) {
 		//gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, textures[ti])
 		gl.TexImage2D(
@@ -438,13 +384,14 @@ run :: proc() -> (exit_code: int) {
 			gl.UNSIGNED_BYTE, // data type of pixel data
 			&texture_data[ti].data[0], // image data
 		)
+		gl.GenerateMipmap(gl.TEXTURE_2D)
 
 		// Texture wrapping options.
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
 		// Texture filtering options.
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	}
 
@@ -457,7 +404,6 @@ run :: proc() -> (exit_code: int) {
 	delta: f32
 
 	ui_transform: ^gl.Uniform_Info = &uniforms["u_transform"]
-	//u_transform: [8]glm.mat4
 
 	for !glfw.WindowShouldClose(window_handle) && running {
 
@@ -479,11 +425,13 @@ run :: proc() -> (exit_code: int) {
 		proj_view := proj * view
 
 		ut: float4x4
-		for i in 0 ..< len(u_transform) {
-			ri := &render_items[i]
+		//for i in 0 ..< len(u_transform) {
+		//	ri := &render_items[i]
+		for &ri in render_items {
 			//gl.ActiveTexture(gl.TEXTURE0)
-			gl.BindTexture(gl.TEXTURE_2D, textures[i % 3])
-			ut = proj_view * u_transform[i]
+			gl.BindTexture(gl.TEXTURE_2D, textures[ri.texture_index])
+			//ut = proj_view * u_transform[i]
+			ut = proj_view * ri.transform
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ut[0, 0])
 			//gl.DrawElements(gl.TRIANGLES, i32(len(indices) * size_of(indices[0])), gl.UNSIGNED_SHORT, nil)
 			gl.DrawElementsBaseVertex(gl.TRIANGLES, ri.count, gl.UNSIGNED_SHORT, rawptr(uintptr(ri.base_index * 2)), ri.base_vertex)

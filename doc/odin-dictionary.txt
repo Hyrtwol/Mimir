@@ -17,6 +17,7 @@ directx
 dword
 dxgi
 dynlib
+elems
 eprintf
 eprintfln
 eprintln
