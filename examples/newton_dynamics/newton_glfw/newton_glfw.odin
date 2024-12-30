@@ -3,7 +3,7 @@ package newton_glfw
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
-//import "core:math"
+import "core:math"
 import "core:math/linalg"
 import glm "core:math/linalg/glsl"
 import "core:os"
@@ -15,6 +15,8 @@ import "vendor:glfw"
 
 float3 :: glm.vec3
 float4x4 :: glm.mat4
+quaternion :: glm.quat
+//quaternion :: linalg.quaternion128
 Mesh :: newton.Mesh
 
 TRIANGULATE_WITH_NEWTON :: false
@@ -111,38 +113,37 @@ set_transform_callback :: proc "c" (body: ^newton.Body, matrix4x4: ^float4x4, th
 	}
 }
 
+origos := [?]float3{
+	{6, 2, 0},
+	{-6, 2, 0},
+}
+
+FORCE_FACTOR :: 20
+
 force_and_torque_callback :: proc "c" (body: ^newton.Body, timestep: f32, threadIndex: i32) {
 	mass: f32
-	vector: float3 = {0, 0, 0}
-	newton.BodyGetMass(body, &mass, &vector.x, &vector.y, &vector.z)
+	inertia: float3
+	newton.BodyGetMass(body, &mass, &inertia.x, &inertia.y, &inertia.z)
+	// Newton.NewtonBodyGetMatrix(_body, out var matrix);
+	position: float3
+	newton.BodyGetPosition(body, &position)
+
 	force: float3 = {0, 0, 0}
-	/*
-	Newton.NewtonBodyGetMatrix(_body, out var matrix);
-	Vector3 position = matrix.GetPosition();
-	Vector3[] origo = Origo;
-	for (int i = 0; i < origo.Length; i++)
-	{
-		Vector3 vector2 = origo[i] - position;
-		float sqrMagnitude = vector2.sqrMagnitude;
-		if (sqrMagnitude > 4f)
-		{
-			float num = (float)Math.Sqrt(sqrMagnitude);
-			vector2 *= 1000f * mass / (sqrMagnitude * num);
+	for origo in origos {
+		vector2 := origo - position
+		sqrMagnitude := linalg.dot(vector2, vector2) // aka vector_length2
+		if sqrMagnitude > 0.1 {
+			if sqrMagnitude > 1 {
+				vector2 *= FORCE_FACTOR * mass / (sqrMagnitude * math.sqrt(sqrMagnitude))
+			} else {
+				//vector2 *= FORCE_FACTOR * mass / sqrMagnitude
+				vector2 *= FORCE_FACTOR * mass * math.sqrt(sqrMagnitude)
+			}
+			force += vector2
 		}
-		else if (sqrMagnitude < 0.5f)
-		{
-			vector2 = Vector3.zero;
-		}
-		else
-		{
-			vector2 *= 1000f * mass / sqrMagnitude / 2f;
-		}
-
-		force += vector2;
 	}
-	*/
 
-	force.y = (0 - mass) * 9.8
+	force.y -= mass * 9.8
 	newton.BodySetForce(body, &force)
 }
 
@@ -253,17 +254,21 @@ run :: proc() -> (exit_code: int) {
 	bodies = make([dynamic]^newton.Body, 0, 8)
 	defer {{for &body in bodies {newton.DestroyBody(body)}};delete(bodies)}
 
-	//u_transform = make([dynamic]float4x4, 0, 8);defer delete(u_transform)
 	{
 		mtx: newton.float4x4
 		identity := linalg.identity(newton.float4x4)
+
+		// rot: quaternion = linalg.QUATERNIONF32_IDENTITY
+		// scale: float3 = {1, 1, 1}
+
 		for &collision, i in collisions {
 			body := newton.CreateDynamicBody(world, collision, &identity)
 
 			newton.body_set_user_data(body, Body_User_Data(i))
 			newton.BodySetTransformCallback(body, set_transform_callback)
 			if i == 0 {
-				mtx = linalg.matrix4_translate(newton.float3{0, -1, 0})
+				mtx = linalg.matrix4_translate(float3{0, -1, 0})
+				//rot = linalg.QUATERNIONF32_IDENTITY
 			} else {
 				newton.BodySetForceAndTorqueCallback(body, force_and_torque_callback)
 				mass: f32 = 50
@@ -271,12 +276,13 @@ run :: proc() -> (exit_code: int) {
 				inertia := float3{(vector.y * vector.y + vector.z * vector.z), (vector.x * vector.x + vector.z * vector.z), (vector.x * vector.x + vector.y * vector.y)}
 				inertia *= 4.16666651
 				newton.BodySetMassMatrix(body, mass, inertia.x, inertia.y, inertia.z)
-				// ixx: f32 = 4.16666651 * (vector.y * vector.y + vector.z * vector.z)
-				// iyy: f32 = 4.16666651 * (vector.x * vector.x + vector.z * vector.z)
-				// izz: f32 = 4.16666651 * (vector.x * vector.x + vector.y * vector.y)
-				//newton.BodySetMassMatrix(body, 50, ixx, iyy, izz)
 
-				mtx = linalg.matrix4_translate(float3{f32(i) * 0.5, 4, 0}) * linalg.matrix4_rotate(f32(i), float3{0, 1, 0})
+				//mtx = linalg.matrix4_translate(float3{f32(i) * 0.5, 4, 0}) * linalg.matrix4_rotate(f32(i), float3{0, 1, 0})
+
+				t := float3{f32(i) * 1, 4 + f32(i), 0}
+				r := linalg.quaternion_angle_axis(f32(i), float3{0, 1, 0})
+				s := float3{1, 1, 1}
+				mtx = linalg.matrix4_from_trs(t, r, s)
 			}
 
 			newton.BodySetMatrix(body, &mtx)

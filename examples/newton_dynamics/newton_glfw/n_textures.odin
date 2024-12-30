@@ -4,9 +4,6 @@ import "core:fmt"
 import "core:image"
 import "core:image/png"
 import newton "shared:newton_dynamics"
-// import "core:math/linalg"
-// import gl "vendor:OpenGL"
-// import "vendor:glfw"
 
 _ :: png
 _ :: newton
