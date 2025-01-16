@@ -59,13 +59,13 @@ struct_tags :: proc(t: ^testing.T) {
 		fmt.wprintfln(w, "%v", field)
 
 		if vt, ok = reflect.struct_tag_lookup(reflect.Struct_Tag(field.tag), "POSITION"); ok {
-			fmt.wprintfln(w, "POSITION: %v", vt)
+			fmt.wprintfln(w, "POSITION: '%v'", vt)
 		}
 		if vt, ok = reflect.struct_tag_lookup(reflect.Struct_Tag(field.tag), "NORMAL"); ok {
-			fmt.wprintfln(w, "NORMAL: %v", vt)
+			fmt.wprintfln(w, "NORMAL: '%v'", vt)
 		}
 		if vt, ok = reflect.struct_tag_lookup(reflect.Struct_Tag(field.tag), "TEXCOORD"); ok {
-			fmt.wprintfln(w, "TEXCOORD: %v", vt)
+			fmt.wprintfln(w, "TEXCOORD: '%v'", vt)
 		}
 	}
 
