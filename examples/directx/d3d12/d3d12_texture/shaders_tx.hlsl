@@ -19,6 +19,9 @@ PSInput VSMain(float4 position : POSITION, float2 uv : TEXCOORD, float3 normal :
 
 //float4 PSMain(PSInput input, float3 baryWeights : SV_Barycentrics) : SV_TARGET
 float4 PSMain(PSInput input) : SV_TARGET {
-    //return g_texture.Sample(g_sampler, input.uv);
-    return float4(input.uv.xy,0,1);
+    float4 col = g_texture.Sample(g_sampler, input.uv);
+    //return float4(input.uv.xy,0,1);
+	//col.xy = input.uv;
+	//col.g = 1;
+	return col;
 }

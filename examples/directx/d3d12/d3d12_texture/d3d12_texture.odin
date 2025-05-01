@@ -298,6 +298,11 @@ run :: proc() -> (exit_code: int) {
 			desc.Desc_1_1.pStaticSamplers = &samplers[0]
 		}
 
+		assert(desc.Version == ._1_1)
+		assert(desc.Desc_1_1.Flags == {.ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT})
+		assert(desc.Desc_1_1.NumParameters == 1)
+		assert(desc.Desc_1_1.NumStaticSamplers == 1)
+
 		serialized_desc: ^d3d12.IBlob
 		panic_if_failed(d3d12.SerializeVersionedRootSignature(&desc, &serialized_desc, nil))
 		panic_if_failed(device->CreateRootSignature(0, serialized_desc->GetBufferPointer(), serialized_desc->GetBufferSize(), d3d12.IRootSignature_UUID, (^rawptr)(&root_signature)))
@@ -472,6 +477,15 @@ run :: proc() -> (exit_code: int) {
 			SampleDesc = {Count = 1, Quality = 0},
 			Dimension = .TEXTURE2D,
 		}
+
+		assert(textureDesc.MipLevels == 1)
+        assert(int(textureDesc.Format) == 28)
+        assert(transmute(u32)(textureDesc.Flags) == 0)
+        assert(textureDesc.DepthOrArraySize == 1)
+        assert(textureDesc.SampleDesc.Count == 1)
+        assert(textureDesc.SampleDesc.Quality == 0)
+        assert(int(textureDesc.Dimension) == 3)
+
 		ppd := d3d12.CD3DX12_HEAP_PROPERTIES(.DEFAULT)
 		panic_if_failed(device->CreateCommittedResource(
 			&ppd,
@@ -488,6 +502,12 @@ run :: proc() -> (exit_code: int) {
 		assert(uploadBufferSize == 262144)
 
 		pp := d3d12.CD3DX12_HEAP_PROPERTIES(.UPLOAD)
+        assert(int(pp.Type) == 2)
+        assert(int(pp.CPUPageProperty) == 0)
+        assert(int(pp.MemoryPoolPreference) == 0)
+        assert(pp.CreationNodeMask == 1)
+        assert(pp.VisibleNodeMask == 1)
+
 		buf: d3d12.RESOURCE_DESC = d3d12.CD3DX12_RESOURCE_DESC_BUFFER(uploadBufferSize)
 		panic_if_failed(device->CreateCommittedResource(
 			&pp,
@@ -502,6 +522,8 @@ run :: proc() -> (exit_code: int) {
         // Copy data to the intermediate upload heap and then schedule a copy
         // from the upload heap to the Texture2D.
 		texture := GenerateTextureData()
+		assert(len(texture) == 262144)
+
 		defer delete(texture)
 
 		textureData: d3d12.SUBRESOURCE_DATA = {}
@@ -509,22 +531,31 @@ run :: proc() -> (exit_code: int) {
 		textureData.RowPitch = i64(TextureWidth) * i64(TexturePixelSize)
 		textureData.SlicePitch = textureData.RowPitch * i64(TextureHeight)
 
+		assert(textureData.RowPitch == 1024)
+		assert(textureData.SlicePitch == 262144)
+
 		// UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
 
 		res := d3d12.UpdateSubresources3(m_commandList, m_texture, textureUploadHeap, 0, 0, 1, &textureData)
-		assert(res > 0)
+		assert(res == 262144)
 
 		// auto trans = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		trans := d3d12.RESOURCE_BARRIER {
 			Type  = .TRANSITION,
 			Flags = {},
+			Transition = {
+				pResource   = m_texture,
+				StateBefore = {.COPY_DEST},
+				StateAfter  = {.PIXEL_SHADER_RESOURCE},
+				Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
+			},
 		}
-		trans.Transition = {
+		/*trans.Transition = {
 			pResource   = m_texture,
 			StateBefore = {.COPY_DEST},
 			StateAfter  = {.PIXEL_SHADER_RESOURCE},
 			Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		}
+		}*/
 		m_commandList->ResourceBarrier(1, &trans)
 
 		// Describe and create a SRV for the texture.
@@ -534,6 +565,13 @@ run :: proc() -> (exit_code: int) {
 			ViewDimension = .TEXTURE2D,
 			Texture2D = {MipLevels = 1},
 		}
+        assert(srvDesc.Shader4ComponentMapping == 5768)
+        assert(int(srvDesc.Format) == 28)
+        assert(int(srvDesc.ViewDimension) == 4)
+        assert(srvDesc.Texture2D.MipLevels == 1)
+        assert(srvDesc.Texture2D.MostDetailedMip == 0)
+        assert(srvDesc.Texture2D.PlaneSlice == 0)
+        assert(srvDesc.Texture2D.ResourceMinLODClamp == 0)
 		// rtv_descriptor_heap
 		srv_descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE
 		srv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&srv_descriptor_handle)

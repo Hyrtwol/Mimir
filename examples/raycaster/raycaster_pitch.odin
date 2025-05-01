@@ -138,7 +138,11 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
-		if side == 0 {wallX = pos.y + perpendicular_wall_distance * ray_dir.y} else {wallX = pos.x + perpendicular_wall_distance * ray_dir.x}
+		if side == 0 {
+			wallX = pos.y + perpendicular_wall_distance * ray_dir.y
+		} else {
+			wallX = pos.x + perpendicular_wall_distance * ray_dir.x
+		}
 		wallX -= math.floor(wallX)
 
 		//x coordinate on the texture
@@ -202,9 +206,8 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 			currentDist = (scalar(h) + (2 * pos.z)) / (2 * (scalar(y) - pitch) - scalar(h))
 			weight := (currentDist - distPlayer) / (distWall - distPlayer)
 			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
-			// currentFloor *= 2
-			floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3 // checkerBoardPattern
 			texIdx := texture_index(currentFloor)
+			floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3 // checkerBoardPattern
 			cv.canvas_set_dot(canvas, x, y, get_texture_color(floorTexture, texIdx) / 2)
 		}
 
