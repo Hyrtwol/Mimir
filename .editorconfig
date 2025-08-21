@@ -23,7 +23,6 @@ indent_style = tab
 indent_style = tab
 
 [*.{xml,csproj,props,targets,recipe,shproj,projitems}]
-indent_style = tab
 insert_final_newline = false
 
 [*.hlsl]

@@ -16,9 +16,9 @@ import "vendor:glfw"
 float3 :: glm.vec3
 float4x4 :: glm.mat4
 quaternion :: glm.quat
-//quaternion :: linalg.quaternion128
 Mesh :: newton.Mesh
 
+g :: 9.8
 TRIANGULATE_WITH_NEWTON :: false
 
 // odinfmt: disable
@@ -51,6 +51,7 @@ global_shader: ShaderProgram
 
 running: b32 = true
 aspect: f32 = 1
+camera_up: float3 = linalg.normalize(float3{0, 1, 0}) // camera up vector
 
 material :: struct {
 	name:             string,
@@ -83,9 +84,7 @@ Vertex :: struct {
 }
 
 World_User_Data :: u32
-Body_User_Data :: i32
 
-shapeId: i32 = 0
 collisions: [dynamic]^newton.Collision
 bodies: [dynamic]^newton.Body
 meshes: [dynamic]^newton.Mesh
@@ -100,22 +99,22 @@ Render_Item :: struct {
 	transform:     float4x4,
 }
 
-Render_Item_Tex :: struct {
-	render_item:   ^Render_Item,
-	texture_index: i32,
-	transform:     float4x4,
-}
+// Render_Item_Tex :: struct {
+// 	render_item:   ^Render_Item,
+// 	texture_index: i32,
+// 	transform:     float4x4,
+// }
 
-set_transform_callback :: proc "c" (body: ^newton.Body, matrix4x4: ^float4x4, threadIndex: i32) {
-	ud := newton.body_get_user_data(body, Body_User_Data)
-	if ud < i32(len(render_items)) {
-		render_items[ud].transform = matrix4x4^
+set_transform_callback :: proc "c" (body: ^newton.Body, transform: ^float4x4, threadIndex: i32) {
+	render_item := newton.body_get_user_data(body, ^Render_Item)
+	if render_item != nil {
+		render_item.transform = transform^
 	}
 }
 
 origos := [?]float3{
-	{6, 2, 0},
-	{-6, 2, 0},
+	{6, 3, 0},
+	{-6, 3, 0},
 }
 
 FORCE_FACTOR :: 20
@@ -130,20 +129,19 @@ force_and_torque_callback :: proc "c" (body: ^newton.Body, timestep: f32, thread
 
 	force: float3 = {0, 0, 0}
 	for origo in origos {
-		vector2 := origo - position
-		sqrMagnitude := linalg.dot(vector2, vector2) // aka vector_length2
+		v := origo - position
+		sqrMagnitude := linalg.dot(v, v) // aka vector_length2
 		if sqrMagnitude > 0.1 {
 			if sqrMagnitude > 1 {
-				vector2 *= FORCE_FACTOR * mass / (sqrMagnitude * math.sqrt(sqrMagnitude))
+				v *= FORCE_FACTOR * mass / (sqrMagnitude * math.sqrt(sqrMagnitude))
 			} else {
-				//vector2 *= FORCE_FACTOR * mass / sqrMagnitude
-				vector2 *= FORCE_FACTOR * mass * math.sqrt(sqrMagnitude)
+				v *= FORCE_FACTOR * mass * math.sqrt(sqrMagnitude)
 			}
-			force += vector2
+			force += v
 		}
 	}
 
-	force.y -= mass * 9.8
+	force.y -= mass * g
 	newton.BodySetForce(body, &force)
 }
 
@@ -179,19 +177,19 @@ run :: proc() -> (exit_code: int) {
 
 	collisions = make([dynamic]^newton.Collision)
 	defer {{for &collision in collisions {newton.DestroyCollision(collision)}};delete(collisions)}
-	{
-		//append(&collisions, newton.CreateBox(world, 400, 2, 400, i32(len(collisions)), nil));shapeId += 1
-		append(&collisions, newton.CreateBox(world, 400, 2, 400, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateSphere(world, 0.5, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateBox(world, 1.0, 1.0, 1.0, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateBox(world, 1.0, 0.5, 2.0, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateCylinder(world, 0.5, 0.5, 1.5, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateCylinder(world, 0.3, 0.6, 1.5, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateCapsule(world, 0.5, 0.5, 1.5, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateCapsule(world, 0.4, 0.6, 1.2, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateCone(world, 0.5, 2.0, shapeId, nil));shapeId += 1
-		append(&collisions, newton.CreateChamferCylinder(world, 0.5, 0.6, shapeId, nil));shapeId += 1
-	}
+	append(&collisions, newton.CreateBox(world, 400, 2, 400, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateSphere(world, 0.5, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateSphere(world, 1.0, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateBox(world, 1.0, 1.0, 1.0, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateBox(world, 1.0, 0.5, 2.0, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateCylinder(world, 0.5, 0.5, 1.5, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateCylinder(world, 0.3, 0.6, 1.5, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateCapsule(world, 0.5, 0.5, 1.5, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateCapsule(world, 0.4, 0.6, 1.2, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateCone(world, 0.5, 2.0, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateCone(world, 1.0, 1.0, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateChamferCylinder(world, 0.5, 0.6, i32(len(collisions)), nil))
+	append(&collisions, newton.CreateChamferCylinder(world, 0.5, 1.0, i32(len(collisions)), nil))
 	for &collision in collisions {write_collision(collision)}
 
 	// Create meshes
@@ -216,7 +214,7 @@ run :: proc() -> (exit_code: int) {
 
 	vertices := make([dynamic]Vertex, 0, total_vertex_count)
 	defer delete(vertices)
-	indices := make([dynamic]u16, 0, total_point_count)
+	indices := make([dynamic]Index, 0, total_point_count)
 	defer delete(indices)
 
 	// Create reader items
@@ -229,7 +227,7 @@ run :: proc() -> (exit_code: int) {
 		for &mesh, idx in meshes {
 
 			m_vertices := newton.get_vertices(mesh, Vertex, allocator = context.temp_allocator)
-			m_indices := newton.get_indices(mesh, u16, allocator = context.temp_allocator)
+			m_indices := newton.get_indices(mesh, Index, allocator = context.temp_allocator)
 
 			ri := Render_Item {
 				base_vertex   = i32(len(vertices)),
@@ -255,41 +253,32 @@ run :: proc() -> (exit_code: int) {
 	defer {{for &body in bodies {newton.DestroyBody(body)}};delete(bodies)}
 
 	{
-		mtx: newton.float4x4
 		identity := linalg.identity(newton.float4x4)
-
-		// rot: quaternion = linalg.QUATERNIONF32_IDENTITY
-		// scale: float3 = {1, 1, 1}
-
+		ofs := float3{f32(len(collisions)) * -0.5, 0, 0}
 		for &collision, i in collisions {
 			body := newton.CreateDynamicBody(world, collision, &identity)
-
-			newton.body_set_user_data(body, Body_User_Data(i))
+			newton.body_set_user_data(body, &render_items[i])
 			newton.BodySetTransformCallback(body, set_transform_callback)
+
+			mtx: newton.float4x4
 			if i == 0 {
 				mtx = linalg.matrix4_translate(float3{0, -1, 0})
-				//rot = linalg.QUATERNIONF32_IDENTITY
 			} else {
 				newton.BodySetForceAndTorqueCallback(body, force_and_torque_callback)
-				mass: f32 = 50
-				vector := float3{1, 1, 1}
-				inertia := float3{(vector.y * vector.y + vector.z * vector.z), (vector.x * vector.x + vector.z * vector.z), (vector.x * vector.x + vector.y * vector.y)}
-				inertia *= 4.16666651
-				newton.BodySetMassMatrix(body, mass, inertia.x, inertia.y, inertia.z)
-
-				//mtx = linalg.matrix4_translate(float3{f32(i) * 0.5, 4, 0}) * linalg.matrix4_rotate(f32(i), float3{0, 1, 0})
-
-				t := float3{f32(i) * 1, 4 + f32(i), 0}
-				r := linalg.quaternion_angle_axis(f32(i), float3{0, 1, 0})
-				s := float3{1, 1, 1}
-				mtx = linalg.matrix4_from_trs(t, r, s)
+				mass: f32 = 10
+				newton.BodySetMassProperties(body, mass, collision)
+				mtx = linalg.matrix4_translate(float3{f32(i) * 1, 4 + f32(i), 0} + ofs) * linalg.matrix4_rotate(f32(i), camera_up)
 			}
-
 			newton.BodySetMatrix(body, &mtx)
+
 			append(&bodies, body)
 		}
 	}
 	for &body in bodies {write_body(body)}
+
+	assert(len(collisions) == len(meshes))
+	assert(len(collisions) == len(render_items))
+	assert(len(collisions) == len(bodies))
 
 	// Init glfw
 
@@ -426,17 +415,14 @@ run :: proc() -> (exit_code: int) {
 		//gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		view := glm.mat4LookAt({0, 10, 20}, {0, 0, 0}, {0, 1, 0})
+		view := glm.mat4LookAt({0, 10, 20}, {0, 0, 0}, camera_up)
 		proj := glm.mat4Perspective(45, aspect, 0.1, 100.0)
 		proj_view := proj * view
 
 		ut: float4x4
-		//for i in 0 ..< len(u_transform) {
-		//	ri := &render_items[i]
 		for &ri in render_items {
 			//gl.ActiveTexture(gl.TEXTURE0)
 			gl.BindTexture(gl.TEXTURE_2D, textures[ri.texture_index])
-			//ut = proj_view * u_transform[i]
 			ut = proj_view * ri.transform
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ut[0, 0])
 			//gl.DrawElements(gl.TRIANGLES, i32(len(indices) * size_of(indices[0])), gl.UNSIGNED_SHORT, nil)

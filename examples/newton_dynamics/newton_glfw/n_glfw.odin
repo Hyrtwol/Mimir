@@ -1,11 +1,11 @@
 package newton_glfw
 
+import "core:fmt"
 import "vendor:glfw"
-// import "core:fmt"
-// import "core:math/linalg"
-// import newton "shared:newton_dynamics"
-// import gl "vendor:OpenGL"
 // import "core:c"
+// import "core:math/linalg"
+// import gl "vendor:OpenGL"
+// import newton "shared:newton_dynamics"
 
 @(private = "file")
 GetFirstMonitor :: proc() -> (monitor_handle: glfw.MonitorHandle) {
@@ -34,16 +34,18 @@ GetWindowPosAndSize :: proc(monitor_handle: glfw.MonitorHandle) -> (window_pos, 
 
 CreateWindowCentered :: proc() -> (window_handle: glfw.WindowHandle) {
 
-	window_pos, window_size := GetWindowPosAndSize(GetFirstMonitor())
 
 	glfw.WindowHint(glfw.VISIBLE, glfw.FALSE)
 
+	window_pos, window_size := GetWindowPosAndSize(GetFirstMonitor())
 	window_handle = glfw.CreateWindow(window_size.x, window_size.y, "Mimir", nil, nil)
-	if window_handle == nil {return}
+	if window_handle == nil {
+		fmt.eprintln("Failed to create GLFW window")
+		return
+	}
 
 	glfw.DefaultWindowHints()
 	glfw.SetWindowPos(window_handle, window_pos.x, window_pos.y)
 	glfw.ShowWindow(window_handle)
-
 	return
 }

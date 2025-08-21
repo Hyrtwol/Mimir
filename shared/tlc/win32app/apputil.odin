@@ -80,7 +80,20 @@ create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_setting
 	size := adjust_window_size(settings.window_size, settings.dwStyle, settings.dwExStyle)
 	position := get_window_position(size, .Center in settings.options)
 
-	hwnd := win32.CreateWindowExW(settings.dwExStyle, win32.LPCWSTR(uintptr(atom)), utf8_to_wstring(settings.title), settings.dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, settings)
+	hwnd := win32.CreateWindowExW(
+		settings.dwExStyle,
+		win32.LPCWSTR(uintptr(atom)),
+		utf8_to_wstring(settings.title),
+		settings.dwStyle,
+		position.x,
+		position.y,
+		size.x,
+		size.y,
+		nil,
+		nil,
+		instance,
+		settings,
+	)
 	if hwnd == nil {show_error_and_panic("create_window failed")}
 	return hwnd
 }
@@ -237,8 +250,16 @@ dib_usage :: enum UINT {
 	DIB_PAL_COLORS = win32.DIB_PAL_COLORS,
 }
 
-create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
-	return win32.CreateDIBSection(hdc, pbmi, UINT(usage), ppvBits, hSection, offset)
+create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^[^]$T, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
+	return win32.CreateDIBSection(
+		hdc,
+		pbmi,
+		UINT(usage),
+		// TODO remove this cast
+		(^^win32.VOID)(ppvBits),
+		hSection,
+		offset,
+	)
 }
 
 @(private = "file")

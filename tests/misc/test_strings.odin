@@ -43,3 +43,12 @@ is_a_rune_the_same_as_in_csharp :: proc(t: ^T) {
 	expect_value(t, s[2], 0x98)
 	expect_value(t, s[3], 0x83)
 }
+
+@(test)
+verify_cstrings :: proc(t: ^T) {
+
+	data: [10]u8 = "1234567890"
+	expect_value(t, len(data), 10)
+	cs : cstring = cstring(&data[0])
+	expect_value(t, cs[1], "2")
+}

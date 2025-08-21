@@ -9,11 +9,11 @@ import "core:mem"
 import "core:os"
 import win32 "core:sys/windows"
 import owin "libs:tlc/win32app"
+import owin_dxgi "libs:tlc/win32app/owin_dxgi"
 import "shared:obug"
 import d3d12 "vendor:directx/d3d12"
 import d3dc "vendor:directx/d3d_compiler"
 import dxgi "vendor:directx/dxgi"
-import owin_dxgi "libs:tlc/win32app/owin_dxgi"
 
 TITLE :: "D3D12 texture"
 WIDTH :: 1920 / 2
@@ -43,6 +43,7 @@ m_commandList: ^d3d12.IGraphicsCommandList
 panic_if_failed :: owin.panic_if_failed
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	ESC :: '\x1b'
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
@@ -51,10 +52,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return 1 // skip
 	case win32.WM_CHAR:
 		switch wparam {
-		case '\x1b': // ESC
+		case ESC:
 			owin.close_application(hwnd)
-		// case 's':
-		// 	show_shadowmap = !show_shadowmap
 		}
 		return 0
 	case:
@@ -150,7 +149,7 @@ run :: proc() -> (exit_code: int) {
 		adapter->GetDesc1(&desc)
 		if .SOFTWARE in desc.Flags {continue}
 
-		hr = d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, dxgi.IDevice_UUID, nil)
+		hr = d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, nil)
 		if win32.SUCCEEDED(hr) {
 			break
 		} else {
@@ -245,14 +244,14 @@ run :: proc() -> (exit_code: int) {
 
 	{
 		range := d3d12.DESCRIPTOR_RANGE1 {
-			RangeType = .SRV,
-			NumDescriptors = 1,
-			BaseShaderRegister = 0,
-			RegisterSpace = 0,
-			Flags = {.DATA_STATIC},
+			RangeType                         = .SRV,
+			NumDescriptors                    = 1,
+			BaseShaderRegister                = 0,
+			RegisterSpace                     = 0,
+			Flags                             = {.DATA_STATIC},
 			OffsetInDescriptorsFromTableStart = d3d12.DESCRIPTOR_RANGE_OFFSET_APPEND,
 		}
-		ranges := []d3d12.DESCRIPTOR_RANGE1 {range}
+		ranges := []d3d12.DESCRIPTOR_RANGE1{range}
 
 		rootParameter := d3d12.ROOT_PARAMETER1 {
 			ParameterType = .DESCRIPTOR_TABLE,
@@ -262,7 +261,7 @@ run :: proc() -> (exit_code: int) {
 				pDescriptorRanges = &ranges[0],
 			},
 		}
-		rootParameters := []d3d12.ROOT_PARAMETER1 {rootParameter}
+		rootParameters := []d3d12.ROOT_PARAMETER1{rootParameter}
 
 		sampler := d3d12.STATIC_SAMPLER_DESC {
 			Filter           = .MIN_MAG_MIP_POINT,
@@ -438,7 +437,9 @@ run :: proc() -> (exit_code: int) {
 			&resource_desc,
 			d3d12.RESOURCE_STATE_GENERIC_READ,
 			nil,
-			d3d12.IResource_UUID, (^rawptr)(&vertex_buffer)))
+			d3d12.IResource_UUID,
+			(^rawptr)(&vertex_buffer),
+		))
 
 		gpu_data: rawptr
 		read_range: d3d12.RANGE
@@ -466,7 +467,7 @@ run :: proc() -> (exit_code: int) {
 
 	// Create the texture.
 	if true {
-        // Describe and create a Texture2D.
+		// Describe and create a Texture2D.
 		textureDesc: d3d12.RESOURCE_DESC = {
 			MipLevels = 1,
 			Format = .R8G8B8A8_UNORM,
@@ -479,12 +480,12 @@ run :: proc() -> (exit_code: int) {
 		}
 
 		assert(textureDesc.MipLevels == 1)
-        assert(int(textureDesc.Format) == 28)
-        assert(transmute(u32)(textureDesc.Flags) == 0)
-        assert(textureDesc.DepthOrArraySize == 1)
-        assert(textureDesc.SampleDesc.Count == 1)
-        assert(textureDesc.SampleDesc.Quality == 0)
-        assert(int(textureDesc.Dimension) == 3)
+		assert(int(textureDesc.Format) == 28)
+		assert(transmute(u32)(textureDesc.Flags) == 0)
+		assert(textureDesc.DepthOrArraySize == 1)
+		assert(textureDesc.SampleDesc.Count == 1)
+		assert(textureDesc.SampleDesc.Quality == 0)
+		assert(int(textureDesc.Dimension) == 3)
 
 		ppd := d3d12.CD3DX12_HEAP_PROPERTIES(.DEFAULT)
 		panic_if_failed(device->CreateCommittedResource(
@@ -494,19 +495,19 @@ run :: proc() -> (exit_code: int) {
 			{.COPY_DEST},
 			nil,
 			d3d12.IResource_UUID,
-			(^rawptr)(&m_texture)))
+			(^rawptr)(&m_texture),
+		))
 		fmt.println("m_texture:", m_texture)
 
 		uploadBufferSize := d3d12.GetRequiredIntermediateSize(m_texture, 0, 1)
-		//fmt.println("uploadBufferSize:", uploadBufferSize)
 		assert(uploadBufferSize == 262144)
 
 		pp := d3d12.CD3DX12_HEAP_PROPERTIES(.UPLOAD)
-        assert(int(pp.Type) == 2)
-        assert(int(pp.CPUPageProperty) == 0)
-        assert(int(pp.MemoryPoolPreference) == 0)
-        assert(pp.CreationNodeMask == 1)
-        assert(pp.VisibleNodeMask == 1)
+		assert(int(pp.Type) == 2)
+		assert(int(pp.CPUPageProperty) == 0)
+		assert(int(pp.MemoryPoolPreference) == 0)
+		assert(pp.CreationNodeMask == 1)
+		assert(pp.VisibleNodeMask == 1)
 
 		buf: d3d12.RESOURCE_DESC = d3d12.CD3DX12_RESOURCE_DESC_BUFFER(uploadBufferSize)
 		panic_if_failed(device->CreateCommittedResource(
@@ -516,11 +517,12 @@ run :: proc() -> (exit_code: int) {
 			d3d12.RESOURCE_STATE_GENERIC_READ,
 			nil,
 			d3d12.IResource_UUID,
-			(^rawptr)(&textureUploadHeap)))
+			(^rawptr)(&textureUploadHeap),
+		))
 		assert(textureUploadHeap != nil)
 
-        // Copy data to the intermediate upload heap and then schedule a copy
-        // from the upload heap to the Texture2D.
+		// Copy data to the intermediate upload heap and then schedule a copy
+		// from the upload heap to the Texture2D.
 		texture := GenerateTextureData()
 		assert(len(texture) == 262144)
 
@@ -565,13 +567,13 @@ run :: proc() -> (exit_code: int) {
 			ViewDimension = .TEXTURE2D,
 			Texture2D = {MipLevels = 1},
 		}
-        assert(srvDesc.Shader4ComponentMapping == 5768)
-        assert(int(srvDesc.Format) == 28)
-        assert(int(srvDesc.ViewDimension) == 4)
-        assert(srvDesc.Texture2D.MipLevels == 1)
-        assert(srvDesc.Texture2D.MostDetailedMip == 0)
-        assert(srvDesc.Texture2D.PlaneSlice == 0)
-        assert(srvDesc.Texture2D.ResourceMinLODClamp == 0)
+		assert(srvDesc.Shader4ComponentMapping == 5768)
+		assert(int(srvDesc.Format) == 28)
+		assert(int(srvDesc.ViewDimension) == 4)
+		assert(srvDesc.Texture2D.MipLevels == 1)
+		assert(srvDesc.Texture2D.MostDetailedMip == 0)
+		assert(srvDesc.Texture2D.PlaneSlice == 0)
+		assert(srvDesc.Texture2D.ResourceMinLODClamp == 0)
 		// rtv_descriptor_heap
 		srv_descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE
 		srv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(&srv_descriptor_handle)
@@ -579,14 +581,14 @@ run :: proc() -> (exit_code: int) {
 		device->CreateShaderResourceView(m_texture, &srvDesc, srv_descriptor_handle)
 	}
 
-    // Close the command list and execute it to begin the initial GPU setup.
+	// Close the command list and execute it to begin the initial GPU setup.
 	panic_if_failed(m_commandList->Close())
 	{
 		m_commandLists := [?]^d3d12.IGraphicsCommandList{m_commandList}
 		queue->ExecuteCommandLists(len(m_commandLists), (^^d3d12.ICommandList)(&m_commandLists[0]))
 	}
 
-    // Create synchronization objects and wait until assets have been uploaded to the GPU.
+	// Create synchronization objects and wait until assets have been uploaded to the GPU.
 	{
 		panic_if_failed(device->CreateFence(fence_value, {}, d3d12.IFence_UUID, (^rawptr)(&fence)))
 		fence_value += 1

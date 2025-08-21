@@ -1,9 +1,9 @@
 #+build windows
 package main
 
-import "core:fmt"
 import "base:intrinsics"
 import "base:runtime"
+import "core:fmt"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import owin "libs:tlc/win32app"
@@ -55,13 +55,13 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	bitmap_info := BITMAPINFO {
 		bmiHeader = win32.BITMAPV5HEADER {
-			bV5Size          = size_of(win32.BITMAPV5HEADER),
-			bV5Width         = SCREEN_WIDTH,
-			bV5Height        = -(SCREEN_HEIGHT+5), // minus for top-down
-			bV5Planes        = 1,
-			bV5BitCount      = color_bits,
-			bV5Compression   = win32.BI_RGB,
-			bV5ClrUsed       = palette_count,
+			bV5Size        = size_of(win32.BITMAPV5HEADER),
+			bV5Width       = SCREEN_WIDTH,
+			bV5Height      = -(SCREEN_HEIGHT + 5), // minus for top-down
+			bV5Planes      = 1,
+			bV5BitCount    = color_bits,
+			bV5Compression = win32.BI_RGB,
+			bV5ClrUsed     = palette_count,
 		},
 	}
 
@@ -109,18 +109,6 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
-WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
-	//return 1 // paint should fill out the client area so no need to erase the background
-	if bkgnd_brush != nil {
-		hdc := win32.GetDC(hwnd)
-		defer win32.ReleaseDC(hwnd, hdc)
-		rect: win32.RECT
-		win32.GetClientRect(hwnd, &rect)
-		win32.FillRect(hdc, &rect, bkgnd_brush)
-	}
-	return 0
-}
-
 focused := false
 
 WM_SETFOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
@@ -141,6 +129,18 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	type := owin.WM_SIZE_WPARAM(wparam)
 	settings.window_size = owin.decode_lparam_as_int2(lparam)
 	owin.set_window_text(hwnd, "%s %v %v", settings.title, settings.window_size, type)
+	return 0
+}
+
+WM_ERASEBKGND :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
+	//return 1 // paint should fill out the client area so no need to erase the background
+	if bkgnd_brush != nil {
+		hdc := win32.GetDC(hwnd)
+		defer win32.ReleaseDC(hwnd, hdc)
+		rect: win32.RECT
+		win32.GetClientRect(hwnd, &rect)
+		win32.FillRect(hdc, &rect, bkgnd_brush)
+	}
 	return 0
 }
 
@@ -209,7 +209,8 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 	switch vk_code {
 	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
 	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
-	case win32.VK_MENU: // converts to VK_LMENU or VK_RMENU
+	case win32.VK_MENU:
+		// converts to VK_LMENU or VK_RMENU
 		vk_code = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scan_code), win32.MAPVK_VSC_TO_VK_EX))
 		break
 	}

@@ -40,6 +40,7 @@ m_commandList: ^d3d12.IGraphicsCommandList
 panic_if_failed :: owin.panic_if_failed
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	ESC :: '\x1b'
 	context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
@@ -48,10 +49,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 		return 1 // skip
 	case win32.WM_CHAR:
 		switch wparam {
-		case '\x1b': // ESC
+		case ESC:
 			owin.close_application(hwnd)
-		// case 's':
-		// 	show_shadowmap = !show_shadowmap
 		}
 		return 0
 	case:
@@ -118,7 +117,7 @@ run :: proc() -> (exit_code: int) {
 		adapter->GetDesc1(&desc)
 		if .SOFTWARE in desc.Flags {continue}
 
-		hr = d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, dxgi.IDevice_UUID, nil)
+		hr = d3d12.CreateDevice(adapter, MINIMUM_FEATURE_LEVEL, d3d12.IDevice_UUID, nil)
 		if win32.SUCCEEDED(hr) {
 			break
 		} else {

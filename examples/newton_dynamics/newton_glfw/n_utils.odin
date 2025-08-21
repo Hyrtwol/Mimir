@@ -27,6 +27,7 @@ write_world :: proc(world: ^newton.World) {
 
 write_collision :: proc(collision: ^newton.Collision) {
 	fmt.println("Collision:")
+	fmt.printfln("  UserID              : %v", newton.CollisionGetUserID(collision))
 	fmt.printfln("  CollisionType       : %v", newton.CollisionGetType(collision))
 	fmt.printfln("  IsConvexShape       : %v", newton.CollisionIsConvexShape(collision))
 	fmt.printfln("  IsStaticShape       : %v", newton.CollisionIsStaticShape(collision))
@@ -46,10 +47,13 @@ write_body :: proc(body: ^newton.Body) {
 	fmt.println("Body:")
 	fmt.printfln("  Type                : %v", newton.BodyGetType(body))
 	fmt.printfln("  ID                  : %v", newton.BodyGetID(body))
-	pos, rot: newton.float3
-	newton.BodyGetPosition(body, &pos)
-	newton.BodyGetRotation(body, &rot)
-	fmt.printfln("  Position            : %v", pos)
-	fmt.printfln("  Rotation            : %v", rot)
+	v: newton.float3
+	newton.BodyGetPosition(body, &v)
+	fmt.printfln("  Position            : %v", v)
+	newton.BodyGetRotation(body, &v)
+	fmt.printfln("  Rotation            : %v", v)
 	fmt.printfln("  UserData            : %v", newton.BodyGetUserData(body))
+	im: newton.float4x4
+	newton.BodyGetInertiaMatrix(body, &im)
+	fmt.printfln("  InertiaMatrix       : %v", im)
 }
