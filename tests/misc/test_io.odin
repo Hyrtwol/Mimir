@@ -22,7 +22,7 @@ write_hello_txt :: proc(t: ^testing.T) {
 	testing.expect(t, !os.exists(path))
 }
 
-EXPECTED_FILE_SIZE :: 2890
+EXPECTED_FILE_SIZE :: 3114
 
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {

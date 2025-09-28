@@ -10,8 +10,8 @@ import a "libs:amstrad"
 import owin "libs:tlc/win32app"
 import "shared:obug"
 
-ROM_PATH := filepath.clean("../data/z80/") or_else panic("filepath.clean")
-AMSTRAD_PATH := filepath.clean("../examples/amstrad/data/") or_else panic("filepath.clean")
+ROM_PATH : string
+AMSTRAD_PATH : string
 
 application :: struct {
 	#subtype settings: owin.window_settings,
@@ -72,6 +72,8 @@ run :: proc() -> (exit_code: int) {
 }
 
 main :: proc() {
+	ROM_PATH = filepath.clean("../data/z80/") or_else panic("filepath.clean")
+	AMSTRAD_PATH = filepath.clean("../examples/amstrad/data/") or_else panic("filepath.clean")
 	when intrinsics.is_package_imported("obug") {
 		os.exit(obug.tracked_run(run))
 	} else {

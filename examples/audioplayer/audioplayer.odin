@@ -121,6 +121,7 @@ freq: f64 = 2000
 scale := SAMPLES_PER_SEC
 
 DoBuffer3 :: proc(header: ^win32.WAVEHDR) {
+	assert(BufferLength == header.dwBufferLength)
 	data := ([^]sample)(header.lpData)
 	cnt := BufferLength / CHANNELS
 	for i in 0 ..< cnt {
@@ -161,7 +162,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 
 	for i in 0 ..< NUM_BUFFERS {
 		header := &Headers[i]
-		runtime.memset(header, 0, size_of(win32.WAVEHDR)) // don't think this is need as odin by default zeros mem
+		runtime.memset(header, 0, size_of(win32.WAVEHDR)) // don't think this is needed as odin by default zeros mem
 
 		//data := make([]byte, BufferLength)
 		//header.lpData = win32.LPSTR(&data[0])

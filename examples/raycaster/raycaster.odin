@@ -39,7 +39,7 @@ plane: vector2
 pitch: scalar = 0 // looking up/down, expressed in screen pixels the horizon shifts
 
 //arrays used to sort the sprites
-Sprite_Index :: struct { // Sprite_Index
+Sprite_Index :: struct {
 	sprite: ^Sprite,
 	dist:   scalar,
 }
@@ -109,7 +109,7 @@ handle_input :: proc(app: ^ca.application) {
 	}
 }
 
-run_mode: enum {
+Run_Mode: enum {
 	flat,
 	textured,
 	floor,
@@ -124,24 +124,24 @@ run :: proc() -> (exit_code: int) {
 	app.size = {screenWidth, screenHeight}
 	app.settings.window_size = app.size * ZOOM
 	app.settings.sleep = time.Millisecond * 5
-	app.settings.title = fmt.tprintf("Raycaster %v", run_mode)
+	app.settings.title = fmt.tprintf("Raycaster %v", Run_Mode)
 	//app.create = on_create
 	//app.destroy = on_destroy
-	when run_mode == .flat {
+	when Run_Mode == .flat {
 		app.update = on_update_raycaster_flat
 		world_map = worldmap_flat
-	} else when run_mode == .textured {
+	} else when Run_Mode == .textured {
 		app.update = on_update_raycaster_textured
 		world_map = worldmap_textured
-	} else when run_mode == .floor {
+	} else when Run_Mode == .floor {
 		//app.create = on_create
 		app.update = on_update_raycaster_floor
 		world_map = worldmap_floor
-	} else when run_mode == .sprites {
+	} else when Run_Mode == .sprites {
 		app.create = on_create_raycaster_sprites
 		app.update = on_update_raycaster_sprites
 		world_map = worldmap_sprites
-	} else when run_mode == .pitch {
+	} else when Run_Mode == .pitch {
 		app.create = on_create_raycaster_pitch
 		app.update = on_update_raycaster_pitch
 		world_map = worldmap_pitch

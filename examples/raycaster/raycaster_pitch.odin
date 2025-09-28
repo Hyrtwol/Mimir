@@ -155,6 +155,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 		step: scalar = scalar(pics_h) / line_height
 		// Starting texture coordinate
 		texPos := (scalar(drawStart) - pitch - (pos.z / perpendicular_wall_distance) - h_half + line_height_half) * step
+
 		for y in drawStart ..= drawEnd {
 			// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
 			texY := i32(texPos) & pics_hm
@@ -188,7 +189,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 		distWall = perpendicular_wall_distance
 		distPlayer = 0.0
 
-		if (drawEnd < 0) {drawEnd = h} 	//becomes < 0 when the integer overflows
+		if (drawEnd < 0) {drawEnd = 0} 	//becomes < 0 when the integer overflows
 
 		currentFloor: vector2
 

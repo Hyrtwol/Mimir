@@ -190,12 +190,12 @@ gen_pics_from_list :: proc(output_name: string) -> int {
 	return gen_pics(output_name, image_paths)
 }
 
-run_mode :: enum {nop, scan, from_filelist, from_list}
+Run_Mode :: enum {nop, scan, from_filelist, from_list}
 
 run :: proc() -> (exit_code: int) {
-	mode: run_mode = .from_list
+	mode: Run_Mode = .from_list
 	if len(os.args) > 1 {
-		m, ok := reflect.enum_from_name(run_mode, os.args[1])
+		m, ok := reflect.enum_from_name(Run_Mode, os.args[1])
 		if !ok {
 			fmt.println("Invalid arg", os.args[1])
 			exit_code = -1

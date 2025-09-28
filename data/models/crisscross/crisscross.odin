@@ -36,11 +36,9 @@ materials: []material = {
 //   Mesh 0: 'crisscross' material, 132 triangles
 
 vertex :: struct {
-	pos      : [3]f32,
-	normal   : [3]f32,
+	pos      : [3]f32 `POSITION`,
+	normal   : [3]f32 `NORMAL`,
 }
-
-vertex_flags :: 0b00000010
 
 vertices: []vertex = {
 	{{  -1.50000,  -0.35355,  -0.35355}, {-0.47596,-0.62188,-0.62188}},

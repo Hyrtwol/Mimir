@@ -36,11 +36,9 @@ materials: []material = {
 //   Mesh 0: 'icosahedron' material, 20 triangles
 
 vertex :: struct {
-	pos      : [3]f32,
-	normal   : [3]f32,
+	pos      : [3]f32 `POSITION`,
+	normal   : [3]f32 `NORMAL`,
 }
-
-vertex_flags :: 0b00000010
 
 vertices: []vertex = {
 	{{   0.00000,   0.22361,  -0.44721}, {-0.00000, 0.44721,-0.89443}},

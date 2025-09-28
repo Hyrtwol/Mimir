@@ -14,11 +14,9 @@ package gazebo
 //   Mesh 0: <empty> -1 material, 730 triangles
 
 vertex :: struct {
-	pos      : [3]f32,
-	normal   : [3]f32,
+	pos      : [3]f32 `POSITION`,
+	normal   : [3]f32 `NORMAL`,
 }
-
-vertex_flags :: 0b00000010
 
 vertices: []vertex = {
 	{{   0.55257,   1.35969,   1.24884}, {-0.95277, 0.00000, 0.30369}},

@@ -98,10 +98,9 @@ dib_flames :: proc(dib: ^canvas) {
 
 	{
 		// set a new bottom line
-		i := w * (h - 1)
-		for _ in 0 ..< w {
+		c := w * h
+		for i in c - w ..< c {
 			flamebuffer[i] = u8(rand.int31_max(256))
-			i += 1
 		}
 	}
 

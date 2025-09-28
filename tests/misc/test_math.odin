@@ -51,9 +51,9 @@ min_max_uintptr :: proc(t: ^testing.T) {
 @(test)
 min_max_consts :: proc(t: ^testing.T) {
 	act := max(f32) //      =  340282320000000000000000000000000000000.000
-	testing.expect(t, math.F32_MAX == act) // 3.402823466e+38 == 340282320000000000000000000000000000000.000
-	testing.expect(t, math.F32_MAX == 3.402823466e+38) //  340282320000000000000000000000000000000.000 max(f32)
-	testing.expectf(t, fmt.tprintf("%f", math.F32_MAX) == "340282346599999000000000000000000000000.000", "%f", math.F32_MAX)
+	testing.expect_value(t, act, math.F32_MAX) // 3.402823466e+38 == 340282320000000000000000000000000000000.000
+	testing.expect_value(t, 3.402823466e+38, math.F32_MAX) //  340282320000000000000000000000000000000.000 max(f32)
+	testing.expectf(t, fmt.tprintf("%f", math.F32_MAX) == "340282346600000016151267322115014000640.000", "%f", math.F32_MAX)
 }
 
 // Float 32 puzzle

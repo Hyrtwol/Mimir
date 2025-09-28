@@ -19,7 +19,7 @@ expand_environment_strings :: proc(path: string, allocator := context.temp_alloc
 		err = -2
 		return
 	}
-	expanded_path, aerr := win32.wstring_to_utf8(&infoBuf[0], int(bufCharCount), context.temp_allocator)
+	expanded_path, aerr := win32.wstring_to_utf8(wstring(&infoBuf[0]), int(bufCharCount), context.temp_allocator)
 	if aerr != .None {
 		err = int(aerr)
 		return

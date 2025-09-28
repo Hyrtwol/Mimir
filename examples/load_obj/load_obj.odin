@@ -10,16 +10,18 @@ import "core:strings"
 import oz "shared:objzero"
 import "shared:obug"
 
-VERTEX_MODE :: 0
+CONFIG_VERTEX_FLAGS :: false
+CONFIG_PRINT_TRIANGLES :: true
+CONFIG_VERTEX_MODE :: 0
 FLOAT1 :: "f32"
-when VERTEX_MODE == 1 {
+when CONFIG_VERTEX_MODE == 1 {
 	FLOAT2 :: "float2"
 	FLOAT3 :: "float3"
 } else {
-	FLOAT2 :: "[2]f32"
-	FLOAT3 :: "[3]f32"
+	FLOAT2 :: "[2]" + FLOAT1
+	FLOAT3 :: "[3]" + FLOAT1
 }
-VERTEX_ELEM :: "\t%-8v : %v,"
+VERTEX_ELEM :: "\t%-8v : %v `%v`,"
 MAT_ELEM :: "\t%-16v : %v,"
 
 progressCallback :: proc(filename: cstring, progress: i32) {
@@ -174,7 +176,7 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	fmt.wprintfln(w, "// triangles % 8d (%d)", model.numIndices / 3, model.numIndices, flush = false)
 	fmt.wprintln(w, "")
 
-	when VERTEX_MODE == 1 {
+	when CONFIG_VERTEX_MODE == 1 {
 		fmt.wprintln(w, "")
 		fmt.wprintln(w, "float2 :: [2]f32")
 		fmt.wprintln(w, "float3 :: [3]f32")
@@ -208,18 +210,21 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	{
 		fmt.wprintln(w, "", flush = false)
 		fmt.wprintln(w, "vertex :: struct {", flush = false)
-		fmt.wprintfln(w, VERTEX_ELEM, "pos", FLOAT3, flush = false)
+		//                                           "POSITION:\"0\""
+		fmt.wprintfln(w, VERTEX_ELEM, "pos", FLOAT3, "POSITION", flush = false)
 		if .OBJZ_FLAG_TEXCOORDS in model.flags {
-			fmt.wprintfln(w, VERTEX_ELEM, "texcoord", FLOAT2, flush = false)
+			fmt.wprintfln(w, VERTEX_ELEM, "texcoord", FLOAT2, "TEXCOORD", flush = false)
 		}
 		if .OBJZ_FLAG_NORMALS in model.flags {
-			fmt.wprintfln(w, VERTEX_ELEM, "normal", FLOAT3, flush = false)
+			fmt.wprintfln(w, VERTEX_ELEM, "normal", FLOAT3, "NORMAL", flush = false)
 		}
 		fmt.wprintln(w, "}", flush = false)
 		fmt.wprintln(w, "", flush = false)
 
-		fmt.wprintfln(w, "vertex_flags :: 0b%8b", transmute(u32)model.flags, flush = false)
-		fmt.wprintln(w, "")
+		when CONFIG_VERTEX_FLAGS {
+			fmt.wprintfln(w, "vertex_flags :: 0b%8b", transmute(u32)model.flags, flush = false)
+			fmt.wprintln(w, "")
+		}
 	}
 
 	print_vertices(w, model)
@@ -236,8 +241,6 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	}
 }
 
-//output_path :: "load_obj.txt"
-
 run :: proc() -> (exit_code: int) {
 	fmt.println("objzero Reader")
 
@@ -246,6 +249,7 @@ run :: proc() -> (exit_code: int) {
 		"../data/models/cube/cube.obj",
 		"../data/models/gazebo/gazebo.obj",
 		"../data/models/crisscross/crisscross.obj",
+		"../data/models/platonic/icosahedron/icosahedron.obj",
 	}
 	for input_path in input_paths {
 

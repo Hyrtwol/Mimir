@@ -5,7 +5,7 @@ package owin
 import "core:fmt"
 import "core:mem"
 import "core:strings"
-import win32 "core:sys/windows"
+//import win32 "core:sys/windows"
 
 // similar to strings.to_string
 to_wstring :: #force_inline proc(b: strings.Builder, allocator := context.temp_allocator) -> wstring {
@@ -60,7 +60,7 @@ wstring_equal :: proc "contextless" (a, b: wstring) -> bool {
 	case sb == 0:  return false
 	case sa != sb: return false
 	}
-	return mem.compare_byte_ptrs((^u8)(&a[0]), (^u8)(&b[0]), sa) == 0
+	return mem.compare_byte_ptrs((^u8)((^u16)(a)), (^u8)((^u16)(b)), sa) == 0
 }
 
 /*
@@ -68,6 +68,7 @@ wstring_equal :: proc "contextless" (a, b: wstring) -> bool {
 		return MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, multibyte_input, input_length, output, output_size);
 	}
 */
+/*
 convert_multibyte_to_widechar :: proc(multibyte_input: string, output: wstring, output_size: i32) -> i32 {
 	input_length := i32(len(multibyte_input))
 	if input_length < 1 {
@@ -85,18 +86,20 @@ convert_multibyte_to_widechar :: proc(multibyte_input: string, output: wstring, 
 		return 0
 	}
 
-	n1 := win32.MultiByteToWideChar(win32.CP_UTF8, win32.MB_ERR_INVALID_CHARS, cstr, input_length, output, output_size)
+	n1 := win32.MultiByteToWideChar(win32.CP_UTF8, win32.MB_ERR_INVALID_CHARS, cstr, input_length, (LPWSTR)(output), output_size)
 	if n1 == 0 {
 		return 0
 	}
 
-	output[n] = 0
-	for n >= 1 && output[n-1] == 0 {
+	oo := (LPWSTR)(output)
+
+	oo[n] = 0
+	for n >= 1 && oo[n-1] == 0 {
 		n -= 1
 	}
 	return n
 }
-
+*/
 /*
 	gb_internal int convert_widechar_to_multibyte(wchar_t const *widechar_input, int input_length, char *output, int output_size) {
 		return WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, widechar_input, input_length, output, output_size, nullptr, nullptr);

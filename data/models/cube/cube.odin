@@ -14,12 +14,10 @@ package cube
 //   Mesh 0: <empty> -1 material, 12 triangles
 
 vertex :: struct {
-	pos      : [3]f32,
-	texcoord : [2]f32,
-	normal   : [3]f32,
+	pos      : [3]f32 `POSITION`,
+	texcoord : [2]f32 `TEXCOORD`,
+	normal   : [3]f32 `NORMAL`,
 }
-
-vertex_flags :: 0b00000011
 
 vertices: []vertex = {
 	{{   1.00000,  -1.00000,   1.00000}, { 1.00000, 0.00000}, { 0.00000,-1.00000, 0.00000}},

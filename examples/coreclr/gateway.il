@@ -21,12 +21,12 @@
 }
 .assembly gateway
 {
-  .custom instance void [System.Runtime]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
+  .custom instance void [System.Runtime]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 )
   .custom instance void [System.Runtime]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                                    63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
 
   // --- The following custom attribute is added automatically, do not uncomment -------
-  //  .custom instance void [System.Runtime]System.Diagnostics.DebuggableAttribute::.ctor(valuetype [System.Runtime]System.Diagnostics.DebuggableAttribute/DebuggingModes) = ( 01 00 07 01 00 00 00 00 ) 
+  //  .custom instance void [System.Runtime]System.Diagnostics.DebuggableAttribute::.ctor(valuetype [System.Runtime]System.Diagnostics.DebuggableAttribute/DebuggingModes) = ( 01 00 07 01 00 00 00 00 )
 
   .custom instance void [System.Runtime]System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(string) = ( 01 00 18 2E 4E 45 54 43 6F 72 65 41 70 70 2C 56   // ....NETCoreApp,V
                                                                                                               65 72 73 69 6F 6E 3D 76 38 2E 30 01 00 54 0E 14   // ersion=v8.0..T..
@@ -35,10 +35,10 @@
   .custom instance void [System.Runtime]System.Reflection.AssemblyCompanyAttribute::.ctor(string) = ( 01 00 07 67 61 74 65 77 61 79 00 00 )             // ...gateway..
   .custom instance void [System.Runtime]System.Reflection.AssemblyConfigurationAttribute::.ctor(string) = ( 01 00 05 44 65 62 75 67 00 00 )                   // ...Debug..
   .custom instance void [System.Runtime]System.Reflection.AssemblyFileVersionAttribute::.ctor(string) = ( 01 00 07 31 2E 30 2E 30 2E 30 00 00 )             // ...1.0.0.0..
-  .custom instance void [System.Runtime]System.Reflection.AssemblyInformationalVersionAttribute::.ctor(string) = ( 01 00 2E 31 2E 30 2E 30 2B 34 62 65 64 35 35 33   // ...1.0.0+4bed553
-                                                                                                                   38 35 65 39 61 32 30 35 66 35 66 32 61 39 32 37   // 85e9a205f5f2a927
-                                                                                                                   35 32 37 39 36 64 62 39 66 37 33 32 38 61 30 32   // 52796db9f7328a02
-                                                                                                                   65 00 00 )                                        // e..
+  .custom instance void [System.Runtime]System.Reflection.AssemblyInformationalVersionAttribute::.ctor(string) = ( 01 00 2E 31 2E 30 2E 30 2B 39 36 65 64 65 33 35   // ...1.0.0+96ede35
+                                                                                                                   66 65 62 38 63 66 63 66 65 36 61 32 34 33 37 38   // feb8cfcfe6a24378
+                                                                                                                   65 30 66 65 66 39 62 62 38 64 33 65 64 34 36 36   // e0fef9bb8d3ed466
+                                                                                                                   32 00 00 )                                        // 2..
   .custom instance void [System.Runtime]System.Reflection.AssemblyProductAttribute::.ctor(string) = ( 01 00 07 67 61 74 65 77 61 79 00 00 )             // ...gateway..
   .custom instance void [System.Runtime]System.Reflection.AssemblyTitleAttribute::.ctor(string) = ( 01 00 07 67 61 74 65 77 61 79 00 00 )             // ...gateway..
   .permissionset reqmin
@@ -47,15 +47,15 @@
   .ver 1:0:0:0
 }
 .module gateway.dll
-// MVID: {8f232ceb-33bb-4658-9777-c1e599a76d17}
-.custom instance void [System.Runtime]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
-.custom instance void [System.Runtime]System.Runtime.CompilerServices.RefSafetyRulesAttribute::.ctor(int32) = ( 01 00 0B 00 00 00 00 00 ) 
+// MVID: {f2b9521b-2b09-423f-9681-c835c6b7ad12}
+.custom instance void [System.Runtime]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 )
+.custom instance void [System.Runtime]System.Runtime.CompilerServices.RefSafetyRulesAttribute::.ctor(int32) = ( 01 00 0B 00 00 00 00 00 )
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x000001E120D70000
+// Image base: 0x0000024111F30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -63,20 +63,20 @@
 .class public auto ansi sealed UnmanagedCallbackDelegate
        extends [System.Runtime]System.MulticastDelegate
 {
-  .method public hidebysig specialname rtspecialname 
+  .method public hidebysig specialname rtspecialname
           instance void  .ctor(object 'object',
                                native int 'method') runtime managed
   {
   } // end of method UnmanagedCallbackDelegate::.ctor
 
-  .method public hidebysig newslot virtual 
+  .method public hidebysig newslot virtual
           instance bool  Invoke(string funcName,
                                 string jsonArgs) runtime managed
   {
   } // end of method UnmanagedCallbackDelegate::Invoke
 
-  .method public hidebysig newslot virtual 
-          instance class [System.Runtime]System.IAsyncResult 
+  .method public hidebysig newslot virtual
+          instance class [System.Runtime]System.IAsyncResult
           BeginInvoke(string funcName,
                       string jsonArgs,
                       class [System.Runtime]System.AsyncCallback callback,
@@ -84,7 +84,7 @@
   {
   } // end of method UnmanagedCallbackDelegate::BeginInvoke
 
-  .method public hidebysig newslot virtual 
+  .method public hidebysig newslot virtual
           instance bool  EndInvoke(class [System.Runtime]System.IAsyncResult result) runtime managed
   {
   } // end of method UnmanagedCallbackDelegate::EndInvoke
@@ -94,40 +94,31 @@
 .class public abstract auto ansi sealed beforefieldinit Gateway
        extends [System.Runtime]System.Object
 {
-  .method public hidebysig static string 
+  .method public hidebysig static string
           Bootstrap() cil managed
   {
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (string V_0)
-    IL_0000:  nop
-    IL_0001:  ldstr      "Bootstrap!"
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
+    // Code size       21 (0x15)
+    .maxstack  8
+    IL_0000:  ldtoken    Gateway
+    IL_0005:  call       class [System.Runtime]System.Type [System.Runtime]System.Type::GetTypeFromHandle(valuetype [System.Runtime]System.RuntimeTypeHandle)
+    IL_000a:  callvirt   instance class [System.Runtime]System.Reflection.Assembly [System.Runtime]System.Type::get_Assembly()
+    IL_000f:  callvirt   instance string [System.Runtime]System.Reflection.Assembly::get_Location()
+    IL_0014:  ret
   } // end of method Gateway::Bootstrap
 
-  .method public hidebysig static float64 
+  .method public hidebysig static float64
           Plus(float64 x,
                float64 y) cil managed
   {
-    // Code size       9 (0x9)
-    .maxstack  2
-    .locals init (float64 V_0)
-    IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldarg.1
-    IL_0003:  add
-    IL_0004:  stloc.0
-    IL_0005:  br.s       IL_0007
-
-    IL_0007:  ldloc.0
-    IL_0008:  ret
+    // Code size       4 (0x4)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  add
+    IL_0003:  ret
   } // end of method Gateway::Plus
 
-  .method public hidebysig static float64 
+  .method public hidebysig static float64
           Sum(float64* x,
               int32 n) cil managed
   {
@@ -175,7 +166,7 @@
     IL_002c:  ret
   } // end of method Gateway::Sum
 
-  .method public hidebysig static float64 
+  .method public hidebysig static float64
           Sum2(float64* x,
                int32 n) cil managed
   {
@@ -199,139 +190,121 @@
     IL_001a:  ret
   } // end of method Gateway::Sum2
 
-  .method public hidebysig static string 
-          marshal( lpstr) 
+  .method public hidebysig static string
+          marshal( lpstr)
           ManagedDirectMethod(string  marshal( lpstr) funcName,
                               string  marshal( lpstr) jsonArgs,
-                              class UnmanagedCallbackDelegate dlgUnmanagedCallback) cil managed
+                              class UnmanagedCallbackDelegate unmanagedCallback) cil managed
   {
-    // Code size       263 (0x107)
-    .maxstack  3
+    // Code size       213 (0xd5)
+    .maxstack  4
     .locals init (string V_0,
-             valuetype [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler V_1,
+             valuetype [System.Runtime]System.Nullable`1<bool> V_1,
              valuetype [System.Runtime]System.Nullable`1<bool> V_2,
-             valuetype [System.Runtime]System.Nullable`1<bool> V_3,
+             valuetype [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler V_3,
              class [System.Runtime]System.Exception V_4,
              string V_5)
     IL_0000:  nop
-    IL_0001:  ldloca.s   V_1
-    IL_0003:  ldc.i4.s   43
-    IL_0005:  ldc.i4.2
-    IL_0006:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::.ctor(int32,
-                                                                                                                               int32)
-    IL_000b:  ldloca.s   V_1
-    IL_000d:  ldstr      "ManagedDirectMethod(funcName: "
-    IL_0012:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
+    IL_0001:  ldstr      "C#>> "
+    IL_0006:  ldarg.0
+    IL_0007:  ldstr      ", "
+    IL_000c:  ldarg.1
+    IL_000d:  call       string [System.Runtime]System.String::Concat(string,
+                                                                      string,
+                                                                      string,
+                                                                      string)
+    IL_0012:  call       void [System.Console]System.Console::WriteLine(string)
     IL_0017:  nop
-    IL_0018:  ldloca.s   V_1
-    IL_001a:  ldarg.0
-    IL_001b:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted(string)
-    IL_0020:  nop
-    IL_0021:  ldloca.s   V_1
-    IL_0023:  ldstr      ", jsonArgs: "
-    IL_0028:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
-    IL_002d:  nop
-    IL_002e:  ldloca.s   V_1
-    IL_0030:  ldarg.1
-    IL_0031:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted(string)
-    IL_0036:  nop
-    IL_0037:  ldloca.s   V_1
-    IL_0039:  ldstr      ")"
-    IL_003e:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
-    IL_0043:  nop
-    IL_0044:  ldloca.s   V_1
-    IL_0046:  call       instance string [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::ToStringAndClear()
-    IL_004b:  call       void [System.Console]System.Console::WriteLine(string)
-    IL_0050:  nop
-    IL_0051:  ldnull
-    IL_0052:  stloc.0
+    IL_0018:  ldnull
+    IL_0019:  stloc.0
     .try
     {
-      IL_0053:  nop
-      IL_0054:  ldarg.2
-      IL_0055:  brtrue.s   IL_0062
+      IL_001a:  nop
+      IL_001b:  ldarg.2
+      IL_001c:  brtrue.s   IL_0029
 
-      IL_0057:  ldloca.s   V_3
-      IL_0059:  initobj    valuetype [System.Runtime]System.Nullable`1<bool>
-      IL_005f:  ldloc.3
-      IL_0060:  br.s       IL_006f
+      IL_001e:  ldloca.s   V_2
+      IL_0020:  initobj    valuetype [System.Runtime]System.Nullable`1<bool>
+      IL_0026:  ldloc.2
+      IL_0027:  br.s       IL_0036
 
-      IL_0062:  ldarg.2
-      IL_0063:  ldarg.0
-      IL_0064:  ldarg.1
-      IL_0065:  callvirt   instance bool UnmanagedCallbackDelegate::Invoke(string,
+      IL_0029:  ldarg.2
+      IL_002a:  ldarg.0
+      IL_002b:  ldarg.1
+      IL_002c:  callvirt   instance bool UnmanagedCallbackDelegate::Invoke(string,
                                                                            string)
-      IL_006a:  newobj     instance void valuetype [System.Runtime]System.Nullable`1<bool>::.ctor(!0)
-      IL_006f:  stloc.2
-      IL_0070:  ldc.i4.4
-      IL_0071:  ldc.i4.1
-      IL_0072:  newobj     instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::.ctor(int32,
+      IL_0031:  newobj     instance void valuetype [System.Runtime]System.Nullable`1<bool>::.ctor(!0)
+      IL_0036:  stloc.1
+      IL_0037:  ldc.i4.s   13
+      IL_0039:  ldc.i4.1
+      IL_003a:  newobj     instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::.ctor(int32,
                                                                                                                                  int32)
-      IL_0077:  stloc.1
-      IL_0078:  ldloca.s   V_1
-      IL_007a:  ldstr      "res="
-      IL_007f:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
-      IL_0084:  nop
-      IL_0085:  ldloca.s   V_1
-      IL_0087:  ldloc.2
-      IL_0088:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted<valuetype [System.Runtime]System.Nullable`1<bool>>(!!0)
-      IL_008d:  nop
-      IL_008e:  ldloca.s   V_1
-      IL_0090:  call       instance string [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::ToStringAndClear()
-      IL_0095:  stloc.0
-      IL_0096:  nop
-      IL_0097:  leave.s    IL_00ff
+      IL_003f:  stloc.3
+      IL_0040:  ldloca.s   V_3
+      IL_0042:  ldstr      "Invoke was \""
+      IL_0047:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
+      IL_004c:  nop
+      IL_004d:  ldloca.s   V_3
+      IL_004f:  ldloc.1
+      IL_0050:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted<valuetype [System.Runtime]System.Nullable`1<bool>>(!!0)
+      IL_0055:  nop
+      IL_0056:  ldloca.s   V_3
+      IL_0058:  ldstr      "\""
+      IL_005d:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
+      IL_0062:  nop
+      IL_0063:  ldloca.s   V_3
+      IL_0065:  call       instance string [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::ToStringAndClear()
+      IL_006a:  stloc.0
+      IL_006b:  nop
+      IL_006c:  leave.s    IL_00cd
 
     }  // end .try
-    catch [System.Runtime]System.Exception 
+    catch [System.Runtime]System.Exception
     {
-      IL_0099:  stloc.s    V_4
-      IL_009b:  nop
-      IL_009c:  ldloca.s   V_1
-      IL_009e:  ldc.i4.s   20
-      IL_00a0:  ldc.i4.3
-      IL_00a1:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::.ctor(int32,
+      IL_006e:  stloc.s    V_4
+      IL_0070:  nop
+      IL_0071:  ldloca.s   V_3
+      IL_0073:  ldc.i4.s   20
+      IL_0075:  ldc.i4.3
+      IL_0076:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::.ctor(int32,
                                                                                                                                  int32)
-      IL_00a6:  ldloca.s   V_1
-      IL_00a8:  ldstr      "ERROR in \""
-      IL_00ad:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
-      IL_00b2:  nop
-      IL_00b3:  ldloca.s   V_1
-      IL_00b5:  ldarg.0
-      IL_00b6:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted(string)
-      IL_00bb:  nop
-      IL_00bc:  ldloca.s   V_1
-      IL_00be:  ldstr      "\" invoke:"
-      IL_00c3:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
-      IL_00c8:  nop
-      IL_00c9:  ldloca.s   V_1
-      IL_00cb:  call       string [System.Runtime]System.Environment::get_NewLine()
-      IL_00d0:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted(string)
-      IL_00d5:  nop
-      IL_00d6:  ldloca.s   V_1
-      IL_00d8:  ldstr      " "
-      IL_00dd:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
-      IL_00e2:  nop
-      IL_00e3:  ldloca.s   V_1
-      IL_00e5:  ldloc.s    V_4
-      IL_00e7:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted<class [System.Runtime]System.Exception>(!!0)
-      IL_00ec:  nop
-      IL_00ed:  ldloca.s   V_1
-      IL_00ef:  call       instance string [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::ToStringAndClear()
-      IL_00f4:  stloc.0
-      IL_00f5:  ldloc.0
-      IL_00f6:  call       void [System.Console]System.Console::WriteLine(string)
-      IL_00fb:  nop
-      IL_00fc:  nop
-      IL_00fd:  leave.s    IL_00ff
+      IL_007b:  ldloca.s   V_3
+      IL_007d:  ldstr      "ERROR in \""
+      IL_0082:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
+      IL_0087:  nop
+      IL_0088:  ldloca.s   V_3
+      IL_008a:  ldarg.0
+      IL_008b:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted(string)
+      IL_0090:  nop
+      IL_0091:  ldloca.s   V_3
+      IL_0093:  ldstr      "\" invoke:"
+      IL_0098:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
+      IL_009d:  nop
+      IL_009e:  ldloca.s   V_3
+      IL_00a0:  call       string [System.Runtime]System.Environment::get_NewLine()
+      IL_00a5:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted(string)
+      IL_00aa:  nop
+      IL_00ab:  ldloca.s   V_3
+      IL_00ad:  ldstr      " "
+      IL_00b2:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendLiteral(string)
+      IL_00b7:  nop
+      IL_00b8:  ldloca.s   V_3
+      IL_00ba:  ldloc.s    V_4
+      IL_00bc:  call       instance void [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::AppendFormatted<class [System.Runtime]System.Exception>(!!0)
+      IL_00c1:  nop
+      IL_00c2:  ldloca.s   V_3
+      IL_00c4:  call       instance string [System.Runtime]System.Runtime.CompilerServices.DefaultInterpolatedStringHandler::ToStringAndClear()
+      IL_00c9:  stloc.0
+      IL_00ca:  nop
+      IL_00cb:  leave.s    IL_00cd
 
     }  // end handler
-    IL_00ff:  ldloc.0
-    IL_0100:  stloc.s    V_5
-    IL_0102:  br.s       IL_0104
+    IL_00cd:  ldloc.0
+    IL_00ce:  stloc.s    V_5
+    IL_00d0:  br.s       IL_00d2
 
-    IL_0104:  ldloc.s    V_5
-    IL_0106:  ret
+    IL_00d2:  ldloc.s    V_5
+    IL_00d4:  ret
   } // end of method Gateway::ManagedDirectMethod
 
 } // end of class Gateway

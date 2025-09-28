@@ -14,11 +14,9 @@ package cow
 //   Mesh 0: <empty> -1 material, 3156 triangles
 
 vertex :: struct {
-	pos      : [3]f32,
-	texcoord : [2]f32,
+	pos      : [3]f32 `POSITION`,
+	texcoord : [2]f32 `TEXCOORD`,
 }
-
-vertex_flags :: 0b00000001
 
 vertices: []vertex = {
 	{{   2.18866,   5.86984,   0.51677}, { 0.27320, 0.28577}},
