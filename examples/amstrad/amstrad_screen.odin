@@ -98,7 +98,7 @@ update_screen_1 :: proc(app: papp) {
 
 cursor_x, cursor_y, column_count: u32 = 0, 0, 80
 
-poke_char :: proc(pvBits: screen_buffer, char: u8) {
+poke_char :: proc "contextless" (pvBits: screen_buffer, char: u8) {
 	ch := i32(char) * 8
 	sy := cursor_x + cursor_y * (80 * 8)
 	#unroll for _ in 0 ..< 8 {
@@ -116,7 +116,7 @@ poke_char :: proc(pvBits: screen_buffer, char: u8) {
 	}
 }
 
-put_char :: proc(pvBits: screen_buffer, char: u8) {
+put_char :: proc "contextless" (pvBits: screen_buffer, char: u8) {
 	if char == 13 {
 		cursor_x = column_count
 	} else {

@@ -38,36 +38,44 @@ https://www.chibiakumas.com/z80/AmstradCPC.php
 https://neuro-sys.github.io/2019/10/01/amstrad-cpc-crtc.html
 */
 
-z_get_app :: #force_inline proc(zcontext: rawptr) -> papp {
-	if zcontext == nil {panic("Missing app!")}
-	return papp(zcontext)
+log_port :: proc "contextless" (prefix: string, port: z.zuint16, value: z.zuint8) {
+	context = runtime.default_context()
+	fmt.print(prefix)
+	fmt.printf("[0x%2X]=0x%2X", port, value)
+	if value >= 32 {fmt.printf(" '%v'", rune(value))}
+	fmt.println()
 }
 
-z_fetch_opcode :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
+// z_get_app :: #force_inline proc(zcontext: rawptr) -> papp {
+// 	if zcontext == nil {panic("Missing app!")}
+// 	return papp(zcontext)
+// }
+
+z_fetch_opcode :: proc "c" (zcontext: papp, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
 	//fmt.printfln("fetch_opcode[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
-z_fetch :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
+z_fetch :: proc "c" (zcontext: papp, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
 	//fmt.printfln("fetch[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
-z_read :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
+z_read :: proc "c" (zcontext: papp, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
 	//fmt.printfln("read[%d]=0x%2X", address, memory[address])
 	return memory[address]
 }
 
-z_write :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
+z_write :: proc "c" (zcontext: papp, address: z.zuint16, value: z.zuint8) {
 	//app := z_get_app(zcontext)
 	//fmt.printfln("write[0x%4X]=0x%2X", address, value)
 	memory[address] = value
 }
 
-z_in :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
+z_in :: proc "c" (zcontext: papp, address: z.zuint16) -> z.zuint8 {
 	//app := z_get_app(zcontext)
 	port := address & 0xFF
 	value: z.zuint8 = 0
@@ -75,15 +83,17 @@ z_in :: proc(zcontext: rawptr, address: z.zuint16) -> z.zuint8 {
 	case 1:
 		value = 1
 	case:
-		fmt.printf("in[0x%2X]=0x%2X", port, value)
-		if value >= 32 {fmt.printf(" '%v'", rune(value))}
-		fmt.println()
+		// fmt.printf("in[0x%2X]=0x%2X", port, value)
+		// if value >= 32 {fmt.printf(" '%v'", rune(value))}
+		// fmt.println()
+		log_port("in", port, value)
 	}
 	return value
 }
 
-z_out :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
-	app := z_get_app(zcontext)
+z_out :: proc "c" (zcontext: papp, address: z.zuint16, value: z.zuint8) {
+	//app := z_get_app(zcontext)
+	app := zcontext
 	port := address & 0xFF
 	switch port {
 	case 1:
@@ -95,14 +105,17 @@ z_out :: proc(zcontext: rawptr, address: z.zuint16, value: z.zuint8) {
 		case: put_char(app.pvBits, value)
 		}
 	case:
-		fmt.printf("out[0x%2X]=0x%2X", port, value)
-		if value >= 32 {fmt.printf(" '%v'", rune(value))}
-		fmt.println()
+		// fmt.printf("out[0x%2X]=0x%2X", port, value)
+		// if value >= 32 {fmt.printf(" '%v'", rune(value))}
+		// fmt.println()
+		log_port("out", port, value)
 	}
 }
 
-z_halt :: proc(zcontext: rawptr, signal: z.zuint8) {
-	app := z_get_app(zcontext)
+z_halt :: proc "c" (zcontext: papp, signal: z.zuint8) {
+	context = runtime.default_context()
+	//app := z_get_app(zcontext)
+	app := zcontext
 	fmt.println()
 	fmt.printfln("halt %d pc=%d", signal, app.cpu.pc)
 	running = signal == 0
@@ -110,7 +123,7 @@ z_halt :: proc(zcontext: rawptr, signal: z.zuint8) {
 
 reset :: proc() {
 	fmt.println("memory reset")
-	runtime.memset(&memory, 0, mem_size)
+	runtime.mem_zero(&memory, mem_size)
 }
 
 load_rom :: proc(filename: string) {
@@ -127,11 +140,11 @@ load_rom :: proc(filename: string) {
 }
 
 init_cpu :: proc (z80: ^Z80) {
-	z80.fetch_opcode = z_fetch_opcode
-	z80.fetch        = z_fetch
-	z80.read         = z_read
-	z80.write        = z_write
-	z80.in_          = z_in
-	z80.out          = z_out
-	z80.halt         = z_halt
+	z80.fetch_opcode = (z.Z80Read)(z_fetch_opcode)
+	z80.fetch        = (z.Z80Read)(z_fetch)
+	z80.read         = (z.Z80Read)(z_read)
+	z80.write        = (z.Z80Write)(z_write)
+	z80.in_          = (z.Z80Read)(z_in)
+	z80.out          = (z.Z80Write)(z_out)
+	z80.halt         = (z.Z80Halt)(z_halt)
 }
