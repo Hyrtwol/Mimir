@@ -1,18 +1,22 @@
 package coreclr_example_gateway
 
-import "core:fmt"
-import "core:os"
+import "base:intrinsics"
 import "base:runtime"
+import "core:fmt"
+//import "core:os"
+import os "core:os/os2"
+import "core:path/filepath"
 import clr "shared:coreclr"
+import "shared:obug"
 
-CORECLR_DIR :: "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.8"
+coreclr_dir : string
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
-	if hr != .ok {fmt.printfln("Error %v (0x%X8) @ %v", hr, u32(hr), loc)}
+	if hr != .ok {fmt.printfln("Error %v (0x%8X) @ %v", hr, u32(hr), loc)}
 }
 
 event_callback :: proc(ch: ^clr.clr_host, type: clr.event_type, hr: clr.error) {
-	fmt.printfln("[%v] %v (%p,%p)", type, hr, ch.host, ch.hostHandle)
+	fmt.printfln("[%v] %v (0x%8X) host(%p,%p)", type, hr, u32(hr), ch.host, ch.hostHandle)
 }
 
 create_gateway_delegates :: proc(host: ^clr.clr_host, gateway: ^Gateway) -> (res: clr.error) {
@@ -51,27 +55,50 @@ execute_clr_host :: proc(tpa: string) -> clr.error {
 	}
 
 	// Prepare the coreclr lib
-	clr.load_coreclr_library(&host, CORECLR_DIR) or_return
+	clr.load_coreclr_library(&host, coreclr_dir) or_return
 	defer clr.unload_coreclr_library(&host)
 
+	exePath, err := os.get_executable_path(context.temp_allocator)
+	if err != nil {panic("get_executable_path")}
+	fmt.println("exePath:", exePath)
+
 	// Prepare the coreclr host
-	clr.initialize(&host, CORECLR_DIR, "SampleHost", tpa) or_return
+	clr.initialize(&host, exePath, "SampleHost", tpa) or_return
 	defer clr.shutdown(&host)
 
-	// Prepare the delegates for calling C#
-	gateway: Gateway = {}
-	create_gateway_delegates(&host, &gateway) or_return
+	{
+		// Prepare the delegates for calling C#
+		gateway: Gateway = {}
+		create_gateway_delegates(&host, &gateway) or_return
 
-	call_csharp(&gateway)
+		call_csharp(&gateway)
+	}
 
 	return .ok
 }
 
-main :: proc() {
+run :: proc() -> (exit_code: int) {
 	fmt.println(" -=< CoreCLR Host Demo >=- ")
-	tpa := clr.create_trusted_platform_assemblies(CORECLR_DIR, "../examples/coreclr")
+	coreclr_dir = clr.get_coreclr_dir()
+	fmt.println("coreclr_dir:", coreclr_dir)
+	working_directory, ok := os.get_working_directory(context.temp_allocator)
+	if ok != nil {panic("get_working_directory")}
+	fmt.println("working_directory:", working_directory)
+	//fmt.println(filepath.abs(".", context.temp_allocator))
+	cs_path := "../examples/coreclr"
+	fmt.println("cs_path:", filepath.abs(cs_path, context.temp_allocator))
+	tpa := clr.create_trusted_platform_assemblies(coreclr_dir, cs_path, allocator = context.temp_allocator)
 	clr.write_tpa("tpa.log", tpa)
-	exit_code := execute_clr_host(tpa)
-	fmt.println("Done.", exit_code)
-	os.exit(int(exit_code))
+	err := execute_clr_host(tpa)
+	fmt.println("Done.", err)
+	exit_code = int(err)
+	return
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		os.exit(obug.tracked_run(run))
+	} else {
+		os.exit(run())
+	}
 }
