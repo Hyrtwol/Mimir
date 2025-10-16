@@ -158,15 +158,15 @@ VS_OUTPUT :: struct {
 	texcoord: float2,
 }
 
-vertex_shader :: #type proc(shader: ^IShader, input: ^VS_INPUT, output: ^VS_OUTPUT)
-pixel_shader :: #type proc(shader: ^IShader, bc_clip: float3, color: ^byte4) -> bool
+vertex_shader :: #type proc(shader: ^Shader, input: ^VS_INPUT, output: ^VS_OUTPUT)
+pixel_shader :: #type proc(shader: ^Shader, bc_clip: float3, color: ^byte4) -> bool
 
 Model :: struct {
 	trans: float4x4,
 	color: float4,
 	tex:   i32,
 }
-IShader :: struct {
+Shader :: struct {
 	model:           ^Model,
 	model_view:      float4x4,
 	proj_view_model: float4x4,
@@ -180,7 +180,7 @@ IShader :: struct {
 	ps:              pixel_shader,
 }
 
-draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: ^float4x3, shader: ^IShader) {
+draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_verts: ^float4x3, shader: ^Shader) {
 
 	clip_z := float3{clip_verts[0].z, clip_verts[1].z, clip_verts[2].z}
 	if clip_z.x < 0 && clip_z.y < 0 && clip_z.z < 0 {return}

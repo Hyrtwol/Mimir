@@ -70,7 +70,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		color_bit_count :: color_byte_count * 8
 		bmi_header := owin.create_bmi_header(bitmap_size, false, color_bit_count)
 		//fmt.printfln("bmi_header %v", bmi_header)
-		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, &pvBits, nil, 0))
+		bitmap_handle = win32.HGDIOBJ(win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bmi_header, 0, (^^rawptr)(&pvBits), nil, 0))
 	}
 
 	if pvBits != nil {

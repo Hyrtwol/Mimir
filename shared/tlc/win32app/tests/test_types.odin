@@ -97,7 +97,6 @@ min_max_msg :: proc(t: ^testing.T) {
 
 @(test)
 verify_bitmap_headers :: proc(t: ^testing.T) {
-	//ot.expect_size(t, xatlasChart, 24)
 	size: [2]i32 = {300, 200}
 	ppm: i32 = 666
 	bpp: u16 = 4

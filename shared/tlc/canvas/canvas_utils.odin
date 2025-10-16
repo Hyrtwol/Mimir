@@ -234,9 +234,9 @@ perspective_divide :: #force_inline proc "contextless" (v: float4) -> float4 {
 	return v / v.w
 }
 
-viewport_transform :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
-	return viewport^ * v
-}
+// viewport_transform :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
+// 	return viewport^ * v
+// }
 
 // normalized_device_coordinates
 normalized_device_coordinates :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {

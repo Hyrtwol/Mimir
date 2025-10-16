@@ -94,7 +94,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
 	app := (^Game)(pcs.lpCreateParams)
 	if app == nil {show_error_and_panic("Missing app!")}
-	fmt.println(#procedure, hwnd, pcs, app)
+	//fmt.println(#procedure, hwnd, pcs, app)
 	set_app(hwnd, app)
 
 	app.timer_id = win32.SetTimer(hwnd, IDT_TIMER1, 1000 / FPS, nil)
@@ -136,7 +136,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		}
 	}
 
-	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, &app.pvBits, nil, 0)
+	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, (^^rawptr)(&app.pvBits), nil, 0)
 
 	fmt.println("app.hbitmap:", app.hbitmap, app.pvBits)
 	pvBits := app.pvBits
@@ -236,7 +236,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 // odinfmt: enable
 
 register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
-	icon: win32.HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(1))
+	icon: win32.HICON = win32.LoadIconW(instance, wstring(win32.MAKEINTRESOURCEW(1)))
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
 	cursor := win32.LoadCursorW(nil, wstring(win32._IDC_ARROW))
@@ -260,7 +260,7 @@ register_class :: proc(instance: win32.HINSTANCE) -> win32.ATOM {
 
 unregister_class :: proc(atom: win32.ATOM, instance: win32.HINSTANCE) {
 	if atom == 0 {show_error_and_panic("atom is zero")}
-	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
+	if !win32.UnregisterClassW(win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))), instance) {show_error_and_panic("UnregisterClassW")}
 }
 
 adjust_size_for_style :: proc(size: ^int2, dwStyle: win32.DWORD) {
@@ -279,7 +279,7 @@ center_window :: proc(position: ^int2, size: int2) {
 
 create_window :: #force_inline proc(atom: win32.ATOM, window_name: win32.LPCTSTR, style: win32.WS_STYLES, ex_style: win32.WS_EX_STYLES, position: int2, size: int2, instance: win32.HINSTANCE, lpParam: win32.LPVOID) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
-	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(uintptr(atom)), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
+	return win32.CreateWindowExW(ex_style, win32.LPCWSTR((win32.LPWSTR)(uintptr(atom))), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
 
 message_loop :: proc() -> int {

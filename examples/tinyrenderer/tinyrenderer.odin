@@ -75,9 +75,9 @@ vertices: [vert_count]cv.VS_INPUT = {
 vert: [vert_count]cv.VS_OUTPUT
 triangles := [?]int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 5, 0}, {2, 1, 5}, {2, 4, 1}}
 models: [9]cv.Model
-shader: cv.IShader
+shader: cv.Shader
 
-vs_default :: proc(shader: ^cv.IShader, input: ^cv.VS_INPUT, output: ^cv.VS_OUTPUT) {
+vs_default :: proc(shader: ^cv.Shader, input: ^cv.VS_INPUT, output: ^cv.VS_OUTPUT) {
 	output.position = shader.proj_view_model * cv.to_float4(input.position)
 	output.normal = lg.normalize(input.normal)
 	output.texcoord = input.texcoord
@@ -89,24 +89,24 @@ sample2D :: proc(uv: float2) -> byte4 {
 	return textures[shader.model.tex][tex_idx]
 }
 
-ps_default :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+ps_default :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	color^ = cv.to_color(bc_clip)
 	return false
 }
 
-ps_normal_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+ps_normal_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
 	color^ = cv.to_color(bn * 0.5 + 0.5)
 	return false
 }
 
-ps_uv_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+ps_uv_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	uv := lg.fract(float2(shader.varying_uv * bc_clip))
 	color^ = cv.to_color(float3{uv.x, uv.y, 0})
 	return false
 }
 
-ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+ps_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
 
@@ -121,7 +121,7 @@ ps_color :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
 	return false
 }
 
-ps_texture :: proc(shader: ^cv.IShader, bc_clip: float3, color: ^byte4) -> bool {
+ps_texture :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	// tex coord interpolation
 	//uv := lg.fract(shader.varying_uv * bc_clip)
 	uv := shader.varying_uv
@@ -160,16 +160,18 @@ on_create :: proc(app: ^ca.application) -> int {
 	fmt.println("proj      :", proj)
 	fmt.println("light_dir :", light_dir)
 
-	for y in -1 ..= 1 {for x in -1 ..= 1 {
+	for y in -1 ..= 1 {
+		for x in -1 ..= 1 {
 			idx := y * 3 + x + 4 // 0..8
 			models[idx] = cv.Model {
 				trans = lg.matrix4_translate(float3{f32(x), 0, f32(y)} * 2),
 				color = cv.color_hue_float4(rand.float32() * math.TAU, 0.3, 0.7),
 				tex   = i32(idx), // rand.int31_max(pics_count),
 			}
-		}}
+		}
+	}
 
-	shader = cv.IShader {
+	shader = cv.Shader {
 		vs = vs_default,
 		//ps = ps_default,
 		//ps = ps_color,
@@ -227,7 +229,7 @@ on_update :: proc(app: ^ca.application) -> int {
 		rotate = cv.matrix4_rotate_y_f32(rot_y)
 	}
 
-	update_shader :: #force_inline proc "contextless" (triangle: int3, clip_verts: ^float4x3, shader: ^cv.IShader) {
+	update_shader :: #force_inline proc "contextless" (triangle: int3, clip_verts: ^float4x3, shader: ^cv.Shader) {
 		update_vs_output :: #force_inline proc "contextless" (vso: ^cv.VS_OUTPUT, pos: ^float4, nrm: ^float3, uv: ^float2) {
 			pos^, nrm^, uv^ = vso.position, vso.normal, vso.texcoord
 		}

@@ -19,7 +19,7 @@ get_module_filename :: proc(module: HMODULE, allocator := context.temp_allocator
 	wname: [512]WCHAR
 	cc := win32.GetModuleFileNameW(module, &wname[0], len(wname) - 1)
 	if cc > 0 {
-		name, err := wstring_to_utf8(&wname[0], int(cc), allocator)
+		name, err := wstring_to_utf8(wstring(&wname[0]), int(cc), allocator)
 		if err == .None {
 			return name
 		}
@@ -28,7 +28,7 @@ get_module_filename :: proc(module: HMODULE, allocator := context.temp_allocator
 }
 
 load_icon :: proc(instance: HINSTANCE) -> HICON {
-	icon: HICON = win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(IDI_ICON1))
+	icon: HICON = win32.LoadIconW(instance, wstring((^win32.WCHAR)(win32.MAKEINTRESOURCEW(IDI_ICON1))))
 	if icon == nil {icon = win32.LoadIconW(nil, wstring(win32._IDI_APPLICATION))}
 	if icon == nil {icon = win32.LoadIconW(nil, wstring(win32._IDI_QUESTION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
@@ -68,7 +68,7 @@ register_window_class :: proc(instance: HINSTANCE, wndproc: win32.WNDPROC) -> AT
 
 unregister_window_class :: proc(atom: ATOM, instance: HINSTANCE) {
 	if atom == 0 {show_error_and_panic("atom is zero")}
-	if !win32.UnregisterClassW(win32.LPCWSTR(uintptr(atom)), instance) {show_error_and_panic("UnregisterClassW")}
+	if !win32.UnregisterClassW(win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))), instance) {show_error_and_panic("UnregisterClassW")}
 }
 
 create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_settings) -> HWND {
@@ -82,7 +82,7 @@ create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_setting
 
 	hwnd := win32.CreateWindowExW(
 		settings.dwExStyle,
-		win32.LPCWSTR(uintptr(atom)),
+		win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))),
 		utf8_to_wstring(settings.title),
 		settings.dwStyle,
 		position.x,
