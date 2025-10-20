@@ -163,24 +163,9 @@ rawinput: win32.RAWINPUT = {}
 
 put_it := 0
 
-get_raw_input_data :: proc(hRawInput: win32.HRAWINPUT) -> bool {
-	dwSize: win32.UINT
-	win32.GetRawInputData(hRawInput, win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
-	if dwSize == 0 {
-		owin.show_error_and_panic("dwSize is zero")
-	}
-	if dwSize > size_of(win32.RAWINPUT) {
-		owin.show_error_and_panic("dwSize too big")
-	}
-	if win32.GetRawInputData(hRawInput, win32.RID_INPUT, &rawinput, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
-		owin.show_error_and_panic("GetRawInputData Failed")
-	}
-	return true
-}
-
 WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	assert(win32.GET_RAWINPUT_CODE_WPARAM(wparam) == .RIM_INPUT)
-	get_raw_input_data(win32.HRAWINPUT(lparam))
+	owin.get_raw_input_data(win32.HRAWINPUT(lparam), &rawinput)
 
 	switch rawinput.header.dwType {
 	case win32.RIM_TYPEMOUSE:

@@ -107,3 +107,18 @@ register_raw_input :: proc(hwndTarget: HWND = nil, dwFlags: DWORD = win32.RIDEV_
 		show_error_and_panic("RegisterRawInputDevices Failed")
 	}
 }
+
+get_raw_input_data :: proc(hRawInput: win32.HRAWINPUT, rawinput: ^win32.RAWINPUT) -> bool {
+	dwSize: win32.UINT
+	win32.GetRawInputData(hRawInput, win32.RID_INPUT, nil, &dwSize, size_of(win32.RAWINPUTHEADER))
+	if dwSize == 0 {
+		show_error_and_panic("dwSize is zero")
+	}
+	if dwSize > size_of(win32.RAWINPUT) {
+		show_error_and_panic("dwSize too big")
+	}
+	if win32.GetRawInputData(hRawInput, win32.RID_INPUT, rawinput, &dwSize, size_of(win32.RAWINPUTHEADER)) != dwSize {
+		show_error_and_panic("GetRawInputData Failed")
+	}
+	return true
+}

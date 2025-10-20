@@ -32,6 +32,7 @@ vertex_sources:= [?]string {
 fragment_sources:= [?]string {
 	string(#load("shaders/col.fs")),
 	string(#load("shaders/tex.fs")),
+	string(#load("shaders/lit.fs")),
 }
 // odinfmt: enable
 
@@ -49,7 +50,6 @@ Texture :: u32
 global_vao: VAO
 global_shader: ShaderProgram
 
-running: b32 = true
 aspect: f32 = 1
 camera_up: float3 = linalg.normalize(float3{0, 1, 0}) // camera up vector
 
@@ -116,6 +116,10 @@ origos := [?]float3{
 	{6, 3, 0},
 	{-6, 3, 0},
 }
+
+//lightPos : float3 = linalg.normalize(float3{1,1,1})
+lightPos : float3 = float3{0,10,0}
+ambient : float3 = float3{0.1,0.1,0.1}
 
 FORCE_FACTOR :: 20
 
@@ -309,7 +313,12 @@ run :: proc() -> (exit_code: int) {
 	size_callback(window_handle, glfw.GetFramebufferSize(window_handle))
 
 	vertex_source := vertex_sources[vertex_flags]
-	fragment_source := fragment_sources[1]
+	fragment_source := fragment_sources[2]
+
+	fmt.println("vertex_source:")
+	fmt.println(vertex_source)
+	fmt.println("fragment_source:")
+	fmt.println(fragment_source)
 
 	program := gl.load_shaders_source(vertex_source, fragment_source) or_else panic("Failed to create GLSL program")
 	defer gl.DeleteProgram(program)
@@ -318,6 +327,10 @@ run :: proc() -> (exit_code: int) {
 
 	uniforms: gl.Uniforms = gl.get_uniforms_from_program(program)
 	defer gl.destroy_uniforms(uniforms)
+	fmt.println("uniforms", len(uniforms))
+	for u in uniforms {
+		fmt.println("uniform", u)
+	}
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
@@ -399,8 +412,25 @@ run :: proc() -> (exit_code: int) {
 	delta: f32
 
 	ui_transform: ^gl.Uniform_Info = &uniforms["u_transform"]
+	assert(ui_transform != nil)
+	u_proj_view: ^gl.Uniform_Info = &uniforms["u_proj_view"]
+	assert(u_proj_view != nil)
+	u_lightPos: ^gl.Uniform_Info = &uniforms["lightPos"]
+	//assert(u_lightPos != nil)
+	if u_lightPos != nil {
+		//lightPos = {1,0,0}
+		gl.Uniform3fv(u_lightPos.location, 1, &lightPos[0])
+		fmt.println("uniform", u_lightPos.name, lightPos);
+	}
+	u_ambient: ^gl.Uniform_Info = &uniforms["ambient"]
+	if u_ambient != nil {
+		//lightPos = {1,0,0}
+		gl.Uniform3fv(u_ambient.location, 1, &ambient[0])
+		fmt.println("uniform", u_ambient.name, ambient);
+	}
 
-	for !glfw.WindowShouldClose(window_handle) && running {
+
+	for !glfw.WindowShouldClose(window_handle) {
 
 		start_tick = time.tick_now()
 		delta = f32(time.duration_seconds(time.tick_diff(last_tick, start_tick)))
@@ -418,13 +448,16 @@ run :: proc() -> (exit_code: int) {
 		view := glm.mat4LookAt({0, 10, 20}, {0, 0, 0}, camera_up)
 		proj := glm.mat4Perspective(45, aspect, 0.1, 100.0)
 		proj_view := proj * view
+		gl.UniformMatrix4fv(u_proj_view.location, 1, false, &proj_view[0, 0])
 
 		ut: float4x4
 		for &ri in render_items {
 			//gl.ActiveTexture(gl.TEXTURE0)
 			gl.BindTexture(gl.TEXTURE_2D, textures[ri.texture_index])
-			ut = proj_view * ri.transform
-			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ut[0, 0])
+			//ut = proj_view * ri.transform
+			//gl.UniformMatrix4fv(u_proj_view.location, 1, false, &proj_view[0, 0])
+			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ri.transform[0, 0])
+			//gl.UniformMatrix4fv(ui_transform.location, 1, false, &ut[0, 0])
 			//gl.DrawElements(gl.TRIANGLES, i32(len(indices) * size_of(indices[0])), gl.UNSIGNED_SHORT, nil)
 			gl.DrawElementsBaseVertex(gl.TRIANGLES, ri.count, gl.UNSIGNED_SHORT, rawptr(uintptr(ri.base_index * 2)), ri.base_vertex)
 		}
@@ -437,7 +470,7 @@ run :: proc() -> (exit_code: int) {
 
 key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods: i32) {
 	if key == glfw.KEY_ESCAPE {
-		running = false
+		glfw.SetWindowShouldClose(window, true)
 	}
 }
 

@@ -31,8 +31,8 @@ mapWidth, mapHeight: i32 : 24, 24
 World_Map :: [mapWidth][mapHeight]u8 // World_Map
 world_map: World_Map
 
-plane_scale: scalar = 0.66
-heading: scalar = cv.PI
+plane_scale: scalar: 0.66
+avatar_heading: scalar = cv.PI
 pos: vector3 = {22, 11.5, 0.5} // pos.z = vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
 dir: vector2
 plane: vector2
@@ -71,6 +71,12 @@ sort_sprites_from_far_to_close :: proc() {
 // 	return 0
 // }
 
+/*update_heading :: proc() {
+	rot := matrix2_rotate(avatar_heading)
+	dir = rot[0]
+	plane = rot[1] * -plane_scale
+}*/
+
 handle_input :: proc(app: ^ca.application) {
 	frameTime := scalar(app.delta)
 	//speed modifiers
@@ -79,11 +85,16 @@ handle_input :: proc(app: ^ca.application) {
 	keys := &app.keys
 
 	if keys[win32.VK_RIGHT] {
-		heading -= rotSpeed
+		avatar_heading -= rotSpeed
 	}
 	if keys[win32.VK_LEFT] {
-		heading += rotSpeed
+		avatar_heading += rotSpeed
 	}
+
+	rot := matrix2_rotate(avatar_heading)
+	dir = rot[0]
+	plane = rot[1] * -plane_scale
+
 	if keys[win32.VK_UP] {
 		move := dir * moveSpeed
 		if (world_map[int(pos.x + move.x)][int(pos.y)] == 0) {pos.x += move.x}

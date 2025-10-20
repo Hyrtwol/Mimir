@@ -9,16 +9,18 @@ import "core:image"
 import "core:image/png"
 import glm "core:math/linalg/glsl"
 import "core:os"
+import "core:reflect"
 import "core:time"
 import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
 // cow, cube, gazebo, crisscross
-import model "../../data/models/cube"
+// import model "../../data/models/cube"
+import model "../../data/models/gazebo"
 SCALE :: 0.2
-// import model "../../data/models/platonic/icosahedron"
-// SCALE :: 1.0
+//import model "../../data/models/platonic/icosahedron"
+//SCALE :: 1.0
 
 _ :: png
 
@@ -147,29 +149,40 @@ run :: proc() -> (exit_code: int) {
 
 	fmt.printfln("vertex_flags: 0b%8b", model.vertex_flags)
 
-	size_of_vertex := i32(size_of(model.vertex))
-	when model.vertex_flags == 0b01 {
-		gl.EnableVertexAttribArray(0)
-		gl.EnableVertexAttribArray(1)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
-		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, texcoord))
-		// gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of_by_string(model.vertex, "pos"))
-		// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of_by_string(model.vertex, "texcoord"))
-	} else when model.vertex_flags == 0b10 {
-		gl.EnableVertexAttribArray(0)
-		gl.EnableVertexAttribArray(1)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
-		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, normal))
-	} else when model.vertex_flags == 0b11 {
-		gl.EnableVertexAttribArray(0)
-		gl.EnableVertexAttribArray(1)
-		gl.EnableVertexAttribArray(2)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
-		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, texcoord))
-		gl.VertexAttribPointer(2, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, normal))
-	} else {
-		gl.EnableVertexAttribArray(0)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of_vertex, offset_of(model.vertex, pos))
+	stride := i32(size_of(model.vertex))
+
+	fields := reflect.struct_fields_zipped(model.vertex)
+	for field, i in fields {
+		//fmt.printfln("%d :: %v", i, field)
+		fmt.printfln("%d :: %v %v tag=%v %v %v", i, field.name, field.type, field.tag, field.offset, field.is_using)
+
+		index := u32(i)
+		size: i32 = 0
+		type: u32 = 0
+
+		if reflect.is_array(field.type) {
+			y := field.type.variant.(reflect.Type_Info_Array)
+			fmt.printfln("%d :: type=%d type.size=%d %d %d elem=%v", index, field.type, field.type.size, y.count, y.elem_size, y.elem)
+			size = i32(y.count)
+
+			#partial switch info in y.elem.variant {
+			case reflect.Type_Info_Integer:
+				if info.signed {
+					type = gl.INT
+				} else {
+					type = gl.UNSIGNED_INT
+				}
+			case reflect.Type_Info_Float:
+				type = gl.FLOAT
+			}
+		}
+
+		offset: uintptr = field.offset
+		fmt.printfln("index=%d size=%d type=0x%x offset=%d", index, size, type, offset)
+		assert(size > 0)
+		assert(type > 0)
+		gl.EnableVertexAttribArray(index)
+		gl.VertexAttribPointer(index, size, type, false, stride, offset)
 	}
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)

@@ -79,9 +79,10 @@ on_create_raycaster_sprites :: proc(app: ^ca.application) -> int {
 
 on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 
-	rot := matrix2_rotate(heading)
-	dir = rot[0]
-	plane = rot[1] * -plane_scale
+	handle_input(app)
+	// rot := matrix2_rotate(heading)
+	// dir = rot[0]
+	// plane = rot[1] * -plane_scale
 
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
@@ -163,10 +164,12 @@ on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 
 		//calculate lowest and highest pixel to fill in current stripe
 		drawStart, drawEnd: i32
-		drawStart = i32(-line_height_half + scalar(h_half))
-		drawEnd = i32(line_height_half + scalar(h_half))
-		if drawStart < 0 {drawStart = 0}
-		if drawEnd >= h {drawEnd = h - 1}
+		{
+			drawStart = i32(-line_height_half + scalar(h_half))
+			drawEnd = i32(line_height_half + scalar(h_half))
+			if drawStart < 0 {drawStart = 0}
+			if drawEnd >= h {drawEnd = h - 1}
+		}
 
 		//texturing calculations
 		texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
@@ -174,7 +177,11 @@ on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
-		if side == 0 {wallX = pos.y + perpendicular_wall_distance * ray_dir.y} else {wallX = pos.x + perpendicular_wall_distance * ray_dir.x}
+		if side == 0 {
+			wallX = pos.y + perpendicular_wall_distance * ray_dir.y
+		} else {
+			wallX = pos.x + perpendicular_wall_distance * ray_dir.x
+		}
 		wallX -= math.floor(wallX)
 
 		//x coordinate on the texture
@@ -220,7 +227,7 @@ on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 		distWall = perpendicular_wall_distance
 		distPlayer = 0.0
 
-		if (drawEnd < 0) {drawEnd = h} 	//becomes < 0 when the integer overflows
+		if (drawEnd < 0) {drawEnd = 0} 	//becomes < 0 when the integer overflows
 
 		currentFloor: vector2
 
@@ -233,7 +240,7 @@ on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 			texIdx := texture_index(currentFloor)
 			// checkerBoardPattern
 			floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3
-			//floor
+			// floor
 			cv.canvas_set_dot(canvas, x, y, get_texture_color(floorTexture, texIdx) / 2)
 			//ceiling (symmetrical)
 			cv.canvas_set_dot(canvas, x, h - y, get_texture_color(6, texIdx))
@@ -308,6 +315,5 @@ on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
 		}
 	}
 
-	handle_input(app)
 	return 0
 }

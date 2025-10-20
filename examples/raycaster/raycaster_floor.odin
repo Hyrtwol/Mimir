@@ -36,9 +36,10 @@ worldmap_floor: World_Map =
 
 on_update_raycaster_floor :: proc(app: ^ca.application) -> int {
 
-	rot := matrix2_rotate(heading)
-	dir = rot[0]
-	plane = rot[1] * -plane_scale
+	handle_input(app)
+	// rot := matrix2_rotate(heading)
+	// dir = rot[0]
+	// plane = rot[1] * -plane_scale
 
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
@@ -209,6 +210,5 @@ on_update_raycaster_floor :: proc(app: ^ca.application) -> int {
 		}
 	}
 
-	handle_input(app)
 	return 0
 }

@@ -43,9 +43,10 @@ on_create_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
 on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
-	rot := matrix2_rotate(heading)
-	dir = rot[0]
-	plane = rot[1] * -plane_scale
+	handle_input(app)
+	// rot := matrix2_rotate(heading)
+	// dir = rot[0]
+	// plane = rot[1] * -plane_scale
 
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
@@ -193,7 +194,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
 		currentFloor: vector2
 
-		//ceiling
+		// ceiling
 		for y in 0 ..< drawStart {
 			currentDist = (scalar(h) - (2 * pos.z)) / (scalar(h) - 2 * (scalar(y) - pitch))
 			weight := (currentDist - distPlayer) / (distWall - distPlayer)
@@ -202,7 +203,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 			cv.canvas_set_dot(canvas, x, y, get_texture_color(6, texIdx))
 		}
 
-		//floor
+		// floor
 		for y in drawEnd + 1 ..< h {
 			currentDist = (scalar(h) + (2 * pos.z)) / (2 * (scalar(y) - pitch) - scalar(h))
 			weight := (currentDist - distPlayer) / (distWall - distPlayer)
@@ -283,6 +284,5 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 		}
 	}
 
-	handle_input(app)
 	return 0
 }

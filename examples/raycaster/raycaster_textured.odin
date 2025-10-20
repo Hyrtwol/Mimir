@@ -35,9 +35,10 @@ worldmap_textured: World_Map = {
 
 on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 
-	rot := matrix2_rotate(heading)
-	dir = rot[0]
-	plane = rot[1] * -plane_scale
+	handle_input(app)
+	// rot := matrix2_rotate(heading)
+	// dir = rot[0]
+	// plane = rot[1] * -plane_scale
 
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
@@ -49,7 +50,7 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 	wm := scalar(w) - 1
 	for x in 0 ..< w {
 		// calculate ray position and direction
-		cameraX := (2 * scalar(x) / wm) - 1 //x-coordinate in camera space
+		cameraX := (2 * scalar(x) / wm) - 1 // x-coordinate in camera space -1 to 1
 		ray_dir := dir + (plane * cameraX)
 
 		// which box of the map we're in
@@ -119,10 +120,12 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 
 		//calculate lowest and highest pixel to fill in current stripe
 		drawStart, drawEnd: i32
-		drawStart = -line_height_half + h_half
-		drawEnd = line_height_half + h_half
-		if drawStart < 0 {drawStart = 0}
-		if drawEnd >= h {drawEnd = h - 1}
+		{
+			drawStart = -line_height_half + h_half
+			drawEnd = line_height_half + h_half
+			if drawStart < 0 {drawStart = 0}
+			if drawEnd >= h {drawEnd = h - 1}
+		}
 
 		//texturing calculations
 		texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
@@ -130,7 +133,11 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
-		if side == 0 {wallX = pos.y + perpendicular_wall_distance * ray_dir.y} else {wallX = pos.x + perpendicular_wall_distance * ray_dir.x}
+		if side == 0 {
+			wallX = pos.y + perpendicular_wall_distance * ray_dir.y
+		} else {
+			wallX = pos.x + perpendicular_wall_distance * ray_dir.x
+		}
 		wallX -= math.floor(wallX)
 
 		//x coordinate on the texture
@@ -154,6 +161,5 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 		}
 	}
 
-	handle_input(app)
 	return 0
 }

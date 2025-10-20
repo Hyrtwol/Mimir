@@ -266,7 +266,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		rect: win32.RECT = {20, 20, 160, 220}
 		win32.RoundRect(hdc, rect.left, rect.top, rect.right, rect.bottom, 20, 20)
 		win32.InflateRect(&rect, -10, -10)
-		win32.DrawTextW(hdc, HELP, -1, &rect, .DT_TOP)
+		win32.DrawTextW(hdc, cstring16(HELP), -1, &rect, .DT_TOP)
 	}
 
 	return 0
@@ -344,7 +344,7 @@ create_window :: #force_inline proc(
 	lpParam: win32.LPVOID,
 ) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
-	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(uintptr(atom)), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
+	return win32.CreateWindowExW(ex_style, win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
 
 run :: proc() -> int {
