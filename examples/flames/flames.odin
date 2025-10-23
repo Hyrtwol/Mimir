@@ -31,7 +31,6 @@ ZOOM :: 8
 
 settings: owin.window_settings
 
-stopwatch := owin.create_stopwatch()
 fps: f64 = 0
 frame_counter := 0
 delta, frame_time: f64 = 0, 0
@@ -63,8 +62,7 @@ set_big_dot :: proc(x, y: i32, col: u8, r: i32) {
 	for iy in -r ..= r {
 		dy := iy * iy
 		for ix in -r ..= r {
-			d := ix * ix + dy
-			if d <= rr {
+			if ix * ix + dy <= rr {
 				set_dot(x + ix, y + iy, col)
 			}
 		}
@@ -275,6 +273,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 }
 
 run :: proc() -> (exit_code: int) {
+	stopwatch := owin.create_stopwatch()
 	calc_col :: proc(n: f64) -> u8 {return u8(n * (256 - (1 / 255)))}
 	for i in 0 ..< 256 {
 		f := (f64(i) / 255)
