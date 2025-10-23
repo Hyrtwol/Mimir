@@ -10,15 +10,16 @@ import owin "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
 
-ZOOM :: 32
-WIDTH :: ZOOM * 24
-HEIGHT :: ZOOM * 24
+ZOOM :: 12
+WIDTH :: ZOOM * 64
+HEIGHT :: ZOOM * 64
 FPS :: 20
 IDT_TIMER1: win32.UINT_PTR : 10001
 
 //COLOR :: cv.C64_COLOR
 COLOR :: cv.W95_COLOR
 //COLOR :: cv.AMSTRAD_COLOR
+
 clear_color: COLOR = .BLACK
 select: COLOR = .WHITE
 

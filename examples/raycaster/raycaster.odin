@@ -31,7 +31,7 @@ mapWidth, mapHeight: i32 : 24, 24
 World_Map :: [mapWidth][mapHeight]u8 // World_Map
 world_map: World_Map
 
-plane_scale: scalar: 0.66
+plane_scale: scalar : 0.66
 avatar_heading: scalar = cv.PI
 pos: vector3 = {22, 11.5, 0.5} // pos.z = vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
 dir: vector2
