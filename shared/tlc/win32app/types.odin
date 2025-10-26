@@ -16,8 +16,8 @@ L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
 utf8_to_wstring :: win32.utf8_to_wstring
 wstring_to_utf8 :: win32.wstring_to_utf8
-utf8_to_utf16 :: win32.utf8_to_utf16
-utf16_to_utf8 :: win32.utf16_to_utf8
+// utf8_to_utf16 :: win32.utf8_to_utf16
+// utf16_to_utf8 :: win32.utf16_to_utf8
 
 DWORD :: win32.DWORD
 BYTE :: win32.BYTE

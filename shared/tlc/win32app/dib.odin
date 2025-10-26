@@ -81,7 +81,7 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	return dib
 }
 
-draw_hgdiobj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hgdiobj: win32.HGDIOBJ, dest_size: int2) {
+draw_gdi_obj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hgdiobj: win32.HGDIOBJ, dest_size: int2) {
 	hdc_source := win32.CreateCompatibleDC(hdc)
 	defer win32.DeleteDC(hdc_source)
 	select_object(hdc_source, hgdiobj)
@@ -89,7 +89,7 @@ draw_hgdiobj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.H
 }
 
 draw_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, dib: ^DIB) {
-	draw_hgdiobj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
+	draw_gdi_obj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
 }
 
 @(private = "file")
@@ -100,7 +100,7 @@ _wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOB
 	defer win32.EndPaint(hwnd, &ps)
 
 	client_size := get_rect_size(&ps.rcPaint)
-	draw_hgdiobj(hwnd, hdc, client_size, hgdiobj, size)
+	draw_gdi_obj(hwnd, hdc, client_size, hgdiobj, size)
 
 	return 0
 }

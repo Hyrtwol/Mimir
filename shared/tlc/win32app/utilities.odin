@@ -91,7 +91,7 @@ adjust_window_size :: proc "contextless" (size: int2, dwStyle: WS_STYLES, dwExSt
 get_window_position :: proc(size: int2, center: bool) -> int2 {
 	if center {
 		if deviceMode: win32.DEVMODEW; win32.EnumDisplaySettingsW(nil, win32.ENUM_CURRENT_SETTINGS, &deviceMode) {
-			dmsize: int2 = {i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)} // is there an easier way to describe this?
+			dmsize: int2 = {i32(deviceMode.dmPelsWidth), i32(deviceMode.dmPelsHeight)}
 			return (dmsize - size) / 2
 		}
 	}
