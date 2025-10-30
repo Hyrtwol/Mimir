@@ -58,14 +58,11 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 	wm := scalar(w - 1)
 	for x in 0 ..< w {
 		// calculate ray position and direction
-		cameraX := (2 * scalar(x) / wm) - 1 // x-coordinate in camera space -1 to 1
+		cameraX := (scalar(x * 2) / wm) - 1 // x-coordinate in camera space -1 to 1
 		ray_dir := dir + (plane * cameraX)
 
 		// which box of the map we're in
 		mapX, mapY := i32(pos.x), i32(pos.y)
-
-		// length of ray from current position to next x or y-side
-		sideDistX, sideDistY: scalar
 
 		// length of ray from one x or y-side to next x or y-side
 		// these are derived as:
@@ -79,6 +76,8 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
+		// length of ray from current position to next x or y-side
+		sideDistX, sideDistY: scalar
 
 		// calculate step and initial sideDist
 		if ray_dir.x < 0 {
@@ -134,10 +133,6 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 			if drawEnd >= h {drawEnd = h - 1}
 		}
 
-		//texturing calculations
-		texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
-		tex := get_texture(texNum)
-
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
 		if side == 0 {
@@ -147,26 +142,31 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 		}
 		wallX -= math.floor(wallX)
 
-		//x coordinate on the texture
-		texX := i32(wallX * scalar(pics_w))
-		if side == 0 && ray_dir.x > 0 {texX = pics_wm - texX}
-		if side == 1 && ray_dir.y < 0 {texX = pics_wm - texX}
+		{
+			//x coordinate on the texture
+			texX := i32(wallX * scalar(pics_w))
+			if side == 0 && ray_dir.x > 0 {texX = pics_wm - texX}
+			if side == 1 && ray_dir.y < 0 {texX = pics_wm - texX}
 
-		// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
-		// How much to increase the texture coordinate per screen pixel
-		step: scalar = scalar(pics_h) / line_height
-		// Starting texture coordinate
-		texPos := (scalar(drawStart) - pitch - (pos.z / perpendicular_wall_distance) - h_half + line_height_half) * step
+			// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
+			// How much to increase the texture coordinate per screen pixel
+			step: scalar = scalar(pics_h) / line_height
+			// Starting texture coordinate
+			texPos := (scalar(drawStart) - (h_half + pitch + (pos.z / perpendicular_wall_distance) - line_height_half)) * step
 
-		for y in drawStart ..= drawEnd {
-			// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
-			texY := i32(texPos) & pics_hm
-			texPos += step
-			color := tex[pics_w * texY + texX]
-			//color := sample(tex, texX, texY)
-			// make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-			if (side == 1) {color /= 2}
-			cv.canvas_set_dot(canvas, x, y, color)
+			//texturing calculations
+			texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
+			tex := get_texture(texNum)
+			for y in drawStart ..= drawEnd {
+				// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
+				texY := i32(texPos) & pics_hm
+				texPos += step
+				color := tex[pics_w * texY + texX]
+				//color := sample(tex, texX, texY)
+				// make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+				if (side == 1) {color /= 2}
+				cv.canvas_set_dot(canvas, x, y, color)
+			}
 		}
 
 		//FLOOR CASTING
@@ -186,32 +186,31 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 			}
 		}
 
-		distWall, distPlayer, currentDist: scalar
-
-		distWall = perpendicular_wall_distance
-		distPlayer = 0.0
-
 		if (drawEnd < 0) {drawEnd = 0} 	//becomes < 0 when the integer overflows
 
-		currentFloor: vector2
+		{
+			distWall: scalar = perpendicular_wall_distance
+			distPlayer: scalar = 0.0
 
-		// ceiling
-		for y in 0 ..< drawStart {
-			currentDist = (scalar(h) - (2 * pos.z)) / (scalar(h) - 2 * (scalar(y) - pitch))
-			weight := (currentDist - distPlayer) / (distWall - distPlayer)
-			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
-			texIdx := texture_index(currentFloor)
-			cv.canvas_set_dot(canvas, x, y, get_texture_color(6, texIdx))
-		}
+			currentFloor: vector2
+			currentDist: scalar
 
-		// floor
-		for y in drawEnd + 1 ..< h {
-			currentDist = (scalar(h) + (2 * pos.z)) / (2 * (scalar(y) - pitch) - scalar(h))
-			weight := (currentDist - distPlayer) / (distWall - distPlayer)
-			currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
-			texIdx := texture_index(currentFloor)
-			floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3 // checkerBoardPattern
-			cv.canvas_set_dot(canvas, x, y, get_texture_color(floorTexture, texIdx) / 2)
+			// ceiling
+			for y in 0 ..< drawStart {
+				currentDist = (scalar(h) - (2 * pos.z)) / (scalar(h) - 2 * (scalar(y) - pitch))
+				weight := (currentDist - distPlayer) / (distWall - distPlayer)
+				currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
+				cv.canvas_set_dot(canvas, x, y, sample_texture(6, currentFloor))
+			}
+
+			// floor
+			for y in drawEnd + 1 ..< h {
+				currentDist = (scalar(h) + (2 * pos.z)) / (2 * (scalar(y) - pitch) - scalar(h))
+				weight := (currentDist - distPlayer) / (distWall - distPlayer)
+				currentFloor = linalg.lerp(pos.xy, floor_wall, weight)
+				floorTexture: i32 = ((i32(currentFloor.x) + i32(currentFloor.y)) & 1) + 3 // checkerBoardPattern
+				cv.canvas_set_dot(canvas, x, y, sample_texture(floorTexture, currentFloor) / 2)
+			}
 		}
 
 		//SET THE ZBUFFER FOR THE SPRITE CASTING

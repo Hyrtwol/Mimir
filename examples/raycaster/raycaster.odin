@@ -62,21 +62,6 @@ sort_sprites_from_far_to_close :: proc() {
 	slice.stable_sort_by(sprite_order[:], sprite_sort_by_dist)
 }
 
-// on_create :: proc(app: ^ca.application) -> int {
-// 	assert(len(textures) > 0)
-// 	return 0
-// }
-
-// on_destroy :: proc(app: ^ca.application) -> int {
-// 	return 0
-// }
-
-/*update_heading :: proc() {
-	rot := matrix2_rotate(avatar_heading)
-	dir = rot[0]
-	plane = rot[1] * -plane_scale
-}*/
-
 handle_input :: proc(app: ^ca.application) {
 	frameTime := scalar(app.delta)
 	//speed modifiers
