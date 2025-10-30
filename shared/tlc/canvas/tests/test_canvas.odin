@@ -96,6 +96,12 @@ verify_amstrad_colors :: proc(t: ^testing.T) {
 	expect_color(t, cv.get_color_amstrad(.BRIGHT_WHITE), cv.byte4{0xFF, 0xFF, 0xFF, 0xFF})
 }
 
+@(test)
+verify_vga_colors :: proc(t: ^testing.T) {
+	expect_value(t, len(cv.VGA_COLORS), 256)
+	expect_color(t, cv.VGA_COLORS[0], cv.byte4{0x00, 0x00, 0x00, 0xFF})
+}
+
 @(private = "file")
 print_map :: proc(m: [3][3]i32) {
 	prefix :: "// "

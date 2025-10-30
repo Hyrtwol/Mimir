@@ -118,6 +118,10 @@ handle_input :: proc(app: ^ca.application) {
 	if keys[win32.VK_X] {
 		pos.z += 1
 	}
+	if keys[win32.VK_C] {
+		pitch = 0
+		pos.z = 0
+	}
 }
 
 Run_Mode: enum {

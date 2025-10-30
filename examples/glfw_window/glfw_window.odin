@@ -24,6 +24,8 @@ SCALE :: 0.2
 
 _ :: png
 
+vertex_flags :: 0b00000010
+
 // odinfmt: disable
 image_file_bytes:= [?][]u8 {
 	#load("../../data/images/uv_checker_x.png"),
@@ -96,7 +98,7 @@ run :: proc() -> (exit_code: int) {
 
 	size_callback(window_handle, glfw.GetFramebufferSize(window_handle))
 
-	vertex_source := vertex_sources[model.vertex_flags]
+	vertex_source := vertex_sources[vertex_flags]
 	fragment_source := fragment_sources[1]
 
 	program := gl.load_shaders_source(vertex_source, fragment_source) or_else panic("Failed to create GLSL program")
@@ -147,7 +149,7 @@ run :: proc() -> (exit_code: int) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(model.vertices) * size_of(model.vertices[0]), raw_data(model.vertices), gl.STATIC_DRAW)
 
-	fmt.printfln("vertex_flags: 0b%8b", model.vertex_flags)
+	fmt.printfln("vertex_flags: 0b%8b", vertex_flags)
 
 	stride := i32(size_of(model.vertex))
 

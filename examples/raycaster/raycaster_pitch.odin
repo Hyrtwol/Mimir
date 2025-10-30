@@ -55,7 +55,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 	w_half, h_half := scalar(w) / 2, scalar(h) / 2
 
 	// WALL CASTING
-	wm := scalar(w) - 1
+	wm := scalar(w - 1)
 	for x in 0 ..< w {
 		// calculate ray position and direction
 		cameraX := (2 * scalar(x) / wm) - 1 // x-coordinate in camera space -1 to 1
@@ -127,8 +127,9 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 		//calculate lowest and highest pixel to fill in current stripe
 		drawStart, drawEnd: i32
 		{
-			drawStart = i32(-line_height_half + h_half + pitch + (pos.z / perpendicular_wall_distance))
-			drawEnd = i32(line_height_half + h_half + pitch + (pos.z / perpendicular_wall_distance))
+			hh := h_half + pitch + (pos.z / perpendicular_wall_distance)
+			drawStart = i32(hh - line_height_half)
+			drawEnd = i32(hh + line_height_half)
 			if drawStart < 0 {drawStart = 0}
 			if drawEnd >= h {drawEnd = h - 1}
 		}

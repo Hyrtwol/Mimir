@@ -6,6 +6,7 @@ import "core:os"
 import "core:math/rand"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
+import "shared:obug"
 
 WIDTH: i32 : 320
 HEIGHT: i32 : WIDTH * 3 / 4
@@ -47,12 +48,20 @@ on_update :: proc(app: ^ca.application) -> int {
 	return 0
 }
 
-main :: proc() {
+run :: proc() -> (exit_code: int) {
 	app := ca.default_application
 	app.size = {WIDTH, HEIGHT}
 	app.create = on_create
 	app.update = on_update
 	app.settings.window_size = app.size * ZOOM
-	exit_code := ca.run(&app)
-	os.exit(exit_code)
+	exit_code = ca.run(&app)
+	return
+}
+
+main :: proc() {
+	when intrinsics.is_package_imported("obug") {
+		os.exit(obug.tracked_run(run))
+	} else {
+		os.exit(run())
+	}
 }

@@ -1,4 +1,4 @@
-#+vet
+//#+vet
 package audioplayer
 
 import "core:fmt"
@@ -227,7 +227,10 @@ decode_scrpos :: #force_inline proc "contextless" (lparam: win32.LPARAM) -> owin
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.println(#procedure, hwnd, owin.decode_lparam_as_createstruct(lparam))
+	pcs := owin.decode_lparam_as_createstruct(lparam)
+	//fmt.println(#procedure, hwnd, lparam)
+	//fmt.println(#procedure, hwnd, owin.decode_lparam_as_createstruct(lparam))
+	fmt.println(#procedure, hwnd, pcs.lpszName, pcs.style, pcs.dwExStyle)
 
 	client_size := owin.get_client_size(hwnd)
 
@@ -395,7 +398,7 @@ list_audio_devices :: proc() {
 	woc: win32.WAVEOUTCAPSW
 	for i in 0 ..< num_devs {
 		if win32.waveOutGetDevCapsW(win32.UINT_PTR(i), &woc, size_of(win32.WAVEOUTCAPSW)) == .MMSYSERR_NOERROR {
-			fmt.printfln("Device ID #%d: '%s'", i, woc.szPname)
+			fmt.printfln("  Device ID #%d: '%s' Channels %d", i, woc.szPname, woc.wChannels)
 		}
 	}
 }
