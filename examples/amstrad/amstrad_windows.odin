@@ -38,7 +38,7 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
 fill_screen_with_image :: proc(app: papp) {
 	pvBits := app.pvBits
 	if pvBits != nil {
-		cc := min(screen_byte_count, len(p_image))
+		cc := min(SCREEN_BYTE_COUNT, len(p_image))
 		for i in 0 ..< cc {
 			pvBits[i] = p_image[i]
 		}

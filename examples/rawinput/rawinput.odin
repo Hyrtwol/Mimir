@@ -136,9 +136,10 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	active := wparam != 0
 	fmt.println(#procedure, active, cursor_state)
-	if is_active == active {return 0}
-	is_active = active
-	clip_cursor(hwnd, active)
+	if is_active != active {
+		is_active = active
+		clip_cursor(hwnd, active)
+	}
 	return 0
 }
 
@@ -153,7 +154,7 @@ WM_ACTIVATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM
 }
 
 // wparam: A handle to the window that has lost the keyboard focus. This parameter can be NULL.
-wm_focus :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32.LRESULT {
+WM_FOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32.LRESULT {
 	is_focused = focused
 	fmt.println(#procedure, "hwnd=", hwnd, "wparam=", wparam, "is_focused=", is_focused)
 	return 0
@@ -218,8 +219,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_PAINT:		return WM_PAINT(hwnd)
 	case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
 	case win32.WM_ACTIVATE:     return WM_ACTIVATE(hwnd, wparam, lparam)
-	case win32.WM_SETFOCUS:		return wm_focus(hwnd, wparam, true)
-	case win32.WM_KILLFOCUS:	return wm_focus(hwnd, wparam, false)
+	case win32.WM_SETFOCUS:		return WM_FOCUS(hwnd, wparam, true)
+	case win32.WM_KILLFOCUS:	return WM_FOCUS(hwnd, wparam, false)
 
 	case win32.WM_INPUT:		return WM_INPUT(hwnd, wparam, lparam)
 

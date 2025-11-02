@@ -158,8 +158,8 @@ VS_OUTPUT :: struct {
 	texcoord: float2,
 }
 
-vertex_shader :: #type proc(shader: ^Shader, input: ^VS_INPUT, output: ^VS_OUTPUT)
-pixel_shader :: #type proc(shader: ^Shader, bc_clip: float3, color: ^byte4) -> bool
+vertex_shader :: #type proc "contextless" (shader: ^Shader, input: ^VS_INPUT, output: ^VS_OUTPUT)
+pixel_shader :: #type proc "contextless" (shader: ^Shader, bc_clip: float3, color: ^byte4) -> bool
 
 Model :: struct {
 	trans: float4x4,
@@ -189,7 +189,9 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	// triangle screen coordinates before persp. division
 	pts := viewport^ * clip_verts^
 	// triangle screen coordinates after perps. division
-	pts2: [3]float4 = {pts[0] / pts[0].w, pts[1] / pts[1].w, pts[2] / pts[2].w}
+	//pts2: [3]float4 = {pts[0] / pts[0].w, pts[1] / pts[1].w, pts[2] / pts[2].w}
+	piw := float3{1 / pts[0].w, 1 / pts[1].w, 1 / pts[2].w}
+	pts2: [3]float4 = {pts[0] * piw.x, pts[1] * piw.y, pts[2] * piw.z}
 
 	abc := float3x3{pts2[0].x, pts2[0].y, 1, pts2[1].x, pts2[1].y, 1, pts2[2].x, pts2[2].y, 1}
 	det := linalg.determinant(abc)
@@ -211,20 +213,21 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 	//it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det) // linalg.matrix3x3_inverse_transpose(abc)
 	it_abc := linalg.matrix_mul(linalg.cofactor(abc), 1 / det) // linalg.matrix3x3_inverse_transpose(abc)
 
-	iw := i32(pc.size.x)
+	width := i32(pc.size.x)
 	bits := pc.pvBits
 	pp: float3 = {0, 0, 1}
 	iy: i32
 	color: byte4
 	for y in y1 ..= y2 {
 		pp.y = f32(y) + 0.5
-		iy = y * iw
+		iy = y * width
 		for x in x1 ..= x2 {
 			pp.x = f32(x) + 0.5
 			bc_screen := it_abc * pp // barycentric(&abc, pp)
 			if bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 {continue}
 
-			bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
+			//bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
+			bc_clip := bc_screen * piw
 			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z) // check https://github.com/ssloy/tinyrenderer/wiki/Technical-difficulties-linear-interpolation-with-perspective-deformations
 
 			frag_depth := linalg.dot(clip_z, bc_clip)

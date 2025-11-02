@@ -13,8 +13,8 @@ color_palette	:: [palette_count]color
 
 SCREEN_WIDTH  	:: 640
 SCREEN_HEIGHT 	:: 200
-screen_pixel_count :: SCREEN_WIDTH * SCREEN_HEIGHT
-screen_byte_count :: screen_pixel_count * color_bits / 8
+SCREEN_PIXEL_COUNT :: SCREEN_WIDTH * SCREEN_HEIGHT
+SCREEN_BYTE_COUNT :: SCREEN_PIXEL_COUNT * color_bits / 8
 
 screen_buffer :: [^]u8
 
@@ -24,8 +24,8 @@ print_screen_info :: proc() {
 	fmt.printfln("len(color_palette)     =%v", len(color_palette))
 	fmt.printfln("size_of(color)         =%v", size_of(color))
 	fmt.printfln("size_of(color_palette) =%v", size_of(color_palette))
-	fmt.printfln("screen_pixel_count     =%v", screen_pixel_count)
-	fmt.printfln("screen_byte_count      =%v", screen_byte_count)
+	fmt.printfln("SCREEN_PIXEL_COUNT     =%v", SCREEN_PIXEL_COUNT)
+	fmt.printfln("SCREEN_BYTE_COUNT      =%v", SCREEN_BYTE_COUNT)
 }
 
 /*
@@ -89,7 +89,7 @@ screen_sizes: [3]screen_size : {{size = {160, 200}, bpp = 4}, {size = {320, 200}
 update_screen_1 :: proc(app: papp) {
 	pvBits := app.pvBits
 	if pvBits != nil {
-		for i in 0 ..< screen_byte_count {
+		for i in 0 ..< SCREEN_BYTE_COUNT {
 			//pvBits[i] = u8(i & 255)
 			pvBits[i] = u8(rand.int31_max(255))
 		}

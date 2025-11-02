@@ -231,8 +231,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_LBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	case win32.WM_RBUTTONDOWN:	return handle_input(hwnd, wparam, lparam)
 	// case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
-	// case win32.WM_SETFOCUS:		return wm_focus(hwnd, wparam, true)
-	// case win32.WM_KILLFOCUS:		return wm_focus(hwnd, wparam, false)
+	// case win32.WM_SETFOCUS:		return WM_FOCUS(hwnd, wparam, true)
+	// case win32.WM_KILLFOCUS:		return WM_FOCUS(hwnd, wparam, false)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable

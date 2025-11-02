@@ -15,7 +15,7 @@ import lg "core:math/linalg"
 import cv "libs:tlc/canvas"
 //import ca "libs:tlc/canvas_app"
 
-ps_texture_wip :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
+ps_texture_wip :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
 	// tex coord interpolation

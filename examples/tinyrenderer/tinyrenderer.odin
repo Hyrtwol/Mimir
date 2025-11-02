@@ -77,36 +77,41 @@ triangles := [?]int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 
 models: [9]cv.Model
 shader: cv.Shader
 
-vs_default :: proc(shader: ^cv.Shader, input: ^cv.VS_INPUT, output: ^cv.VS_OUTPUT) {
+// application :: struct {
+// 	#subtype app: ca.application,
+// 	shader: cv.Shader
+// }
+
+vs_default :: proc "contextless" (shader: ^cv.Shader, input: ^cv.VS_INPUT, output: ^cv.VS_OUTPUT) {
 	output.position = shader.proj_view_model * cv.to_float4(input.position)
 	output.normal = lg.normalize(input.normal)
 	output.texcoord = input.texcoord
 }
 
-sample2D :: proc(uv: float2) -> byte4 {
+sample2D :: proc "contextless" (uv: float2) -> byte4 {
 	uv := cv.to_int2(lg.fract(uv) * pics_size)
 	tex_idx := lg.dot(uv, pics_tex_lookup)
 	return textures[shader.model.tex][tex_idx]
 }
 
-ps_default :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
+ps_default :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	color^ = cv.to_color(bc_clip)
 	return false
 }
 
-ps_normal_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
+ps_normal_color :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
 	color^ = cv.to_color(bn * 0.5 + 0.5)
 	return false
 }
 
-ps_uv_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
+ps_uv_color :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	uv := lg.fract(float2(shader.varying_uv * bc_clip))
 	color^ = cv.to_color(float3{uv.x, uv.y, 0})
 	return false
 }
 
-ps_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
+ps_color :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	// per-vertex normal interpolation
 	bn: float3 = lg.normalize(shader.varying_nrm * bc_clip)
 
@@ -121,11 +126,11 @@ ps_color :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	return false
 }
 
-ps_texture :: proc(shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
+ps_texture :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^byte4) -> bool {
 	// tex coord interpolation
 	//uv := lg.fract(shader.varying_uv * bc_clip)
-	uv := shader.varying_uv
-	tex_col := sample2D(uv * bc_clip)
+	//uv := shader.varying_uv
+	tex_col := sample2D(shader.varying_uv * bc_clip)
 	if tex_col.a == 0 {return true}
 
 	// per-vertex normal interpolation
