@@ -4,6 +4,8 @@ package owin
 
 import win32 "core:sys/windows"
 
+MSG :: win32.MSG
+
 decode_lparam_as_int2 :: #force_inline proc "contextless" (lparam: LPARAM) -> int2 {
 	return {win32.GET_X_LPARAM(lparam), win32.GET_Y_LPARAM(lparam)}
 }
@@ -85,9 +87,10 @@ WM_MSG :: enum UINT {
 	WM_CREATE      = win32.WM_CREATE,
 	WM_DESTROY     = win32.WM_DESTROY,
 	WM_ERASEBKGND  = win32.WM_ERASEBKGND,
+	WM_SIZE        = win32.WM_SIZE,
+	WM_ACTIVATE    = win32.WM_ACTIVATE,
 	WM_SETFOCUS    = win32.WM_SETFOCUS,
 	WM_KILLFOCUS   = win32.WM_KILLFOCUS,
-	WM_SIZE        = win32.WM_SIZE,
 	WM_SIZING      = win32.WM_SIZING,
 	WM_PAINT       = win32.WM_PAINT,
 	WM_CHAR        = win32.WM_CHAR,
@@ -95,8 +98,13 @@ WM_MSG :: enum UINT {
 	WM_MOUSEMOVE   = win32.WM_MOUSEMOVE,
 	WM_LBUTTONDOWN = win32.WM_LBUTTONDOWN,
 	WM_RBUTTONDOWN = win32.WM_RBUTTONDOWN,
+	WM_ACTIVATEAPP = win32.WM_ACTIVATEAPP,
+	WM_KEYDOWN     = win32.WM_KEYDOWN,
+	WM_KEYUP       = win32.WM_KEYUP,
+	WM_INPUT       = win32.WM_INPUT,
 }
 
+// see win32.WNDPROC
 WNDPROC :: #type proc "system" (hwnd: HWND, msg: WM_MSG, wparam: WPARAM, lparam: LPARAM) -> LRESULT
 
 // Key State Masks for Mouse Messages

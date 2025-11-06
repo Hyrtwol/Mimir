@@ -171,7 +171,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 	if !owin.delete_object(&app.hbitmap) {owin.show_message_box("Unable to delete hbitmap", "Error")}
 
-	//owin.dib_free_section(&dib)
+	//owin.dib_free(&dib)
 	owin.post_quit_message()
 	return 0
 }
@@ -304,20 +304,14 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-sleep :: proc(duration: time.Duration) {
-	if duration >= 0 {
-		time.accurate_sleep(duration)
-	}
-}
-
 run :: proc() -> (exit_code: int) {
 
 	app: application = {
 		settings = owin.window_settings {
 			options = {.Center, .Raw_Input},
-			dwStyle = owin.default_dwStyle,
-			dwExStyle = owin.default_dwExStyle,
-			sleep = owin.default_sleep,
+			dwStyle = owin.DEFAULT_WS_STYLE,
+			dwExStyle = owin.DEFAULT_WS_EX_STYLE,
+			sleep = owin.DEFAULT_SLEEP,
 			window_size = {SCREEN_WIDTH * ZOOM, SCREEN_HEIGHT * ZOOM},
 			wndproc = wndproc,
 			title = TITLE,
@@ -357,7 +351,7 @@ run :: proc() -> (exit_code: int) {
 		}
 
 		draw_frame(hwnd)
-		sleep(app.settings.sleep)
+		owin.sleep(app.settings.sleep)
 	}
 
 	stopwatch->stop()

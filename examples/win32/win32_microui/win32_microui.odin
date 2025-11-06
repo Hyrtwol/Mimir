@@ -340,7 +340,7 @@ main :: proc() {
 	}
 	state.settings.window_size = {800, 600}
 	state.settings.wndproc = wndproc
-	state.settings.dwStyle = owin.default_dwStyle | win32.WS_SIZEBOX
+	state.settings.dwStyle = owin.DEFAULT_WS_STYLE | win32.WS_SIZEBOX
 
 	//queue.init(&state.char_queue)
 	//defer queue.destroy(&state.char_queue)

@@ -5,7 +5,7 @@ package owin
 import "core:fmt"
 import fp "core:path/filepath"
 import win32 "core:sys/windows"
-//import ow "shared:owin"
+import "core:time"
 
 get_module_handle :: proc(lpModuleName: wstring = nil) -> HMODULE {
 	module_handle := win32.GetModuleHandleW(lpModuleName)
@@ -74,8 +74,8 @@ unregister_window_class :: proc(atom: ATOM, instance: HINSTANCE) {
 create_window :: proc(instance: HINSTANCE, atom: ATOM, settings: ^window_settings) -> HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 
-	if settings.dwStyle == {} {settings.dwStyle = default_dwStyle}
-	if settings.dwExStyle == {} {settings.dwExStyle = default_dwExStyle}
+	if settings.dwStyle == {} {settings.dwStyle = DEFAULT_WS_STYLE}
+	if settings.dwExStyle == {} {settings.dwExStyle = DEFAULT_WS_EX_STYLE}
 
 	size := adjust_window_size(settings.window_size, settings.dwStyle, settings.dwExStyle)
 	position := get_window_position(size, .Center in settings.options)
@@ -119,6 +119,10 @@ translate_and_dispatch_message :: #force_inline proc "contextless" (msg: ^win32.
 	win32.DispatchMessageW(msg)
 }
 
+def_window_proc :: #force_inline proc "contextless" (hwnd: HWND, msg: WM_MSG, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+	return win32.DefWindowProcW(hwnd, win32.UINT(msg), wparam, lparam)
+}
+
 pull_messages :: #force_inline proc "contextless" (msg: ^win32.MSG, hwnd: HWND = nil) -> bool {
 	for win32.PeekMessageW(msg, hwnd, 0, 0, win32.PM_REMOVE) {
 		translate_and_dispatch_message(msg)
@@ -149,6 +153,12 @@ run :: proc(settings: ^window_settings) -> int {
 	msg: win32.MSG
 	loop_messages(&msg)
 	return int(msg.wParam)
+}
+
+sleep :: proc(duration: time.Duration) {
+	if duration > 0 {
+		time.accurate_sleep(duration)
+	}
 }
 
 // default no draw background erase
@@ -250,16 +260,19 @@ dib_usage :: enum UINT {
 	DIB_PAL_COLORS = win32.DIB_PAL_COLORS,
 }
 
-create_dib_section :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^[^]$T, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
-	return win32.CreateDIBSection(
-		hdc,
-		pbmi,
-		UINT(usage),
-		// TODO remove this cast
-		(^^win32.VOID)(ppvBits),
-		hSection,
-		offset,
-	)
+//@(private = "file")
+create_dib_section_rawptr :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^^win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
+	return win32.CreateDIBSection(hdc, pbmi, UINT(usage), ppvBits, hSection, offset)
+}
+
+//@(private = "file")
+create_dib_section_slice :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^[^]$T, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
+	return create_dib_section_rawptr(hdc, pbmi, usage, (^^win32.VOID)(ppvBits), hSection, offset)
+}
+
+create_dib_section :: proc {
+	create_dib_section_rawptr,
+	create_dib_section_slice,
 }
 
 @(private = "file")

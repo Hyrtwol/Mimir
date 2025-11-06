@@ -82,7 +82,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if cursor_state < 1 {
 		show_cursor(true)
 	}
-	owin.dib_free_section(&dib)
+	owin.dib_free(&dib)
 	owin.post_quit_message()
 	return 0
 }

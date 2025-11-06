@@ -37,9 +37,9 @@ on_idle :: proc(app: ^application) -> int {return 0}
 default_application :: application {
 	settings = owin.window_settings {
 		options     = {.Center},
-		dwStyle     = owin.default_dwStyle,
-		dwExStyle   = owin.default_dwExStyle,
-		sleep       = owin.default_sleep,
+		dwStyle     = owin.DEFAULT_WS_STYLE,
+		dwExStyle   = owin.DEFAULT_WS_EX_STYLE,
+		sleep       = owin.DEFAULT_SLEEP,
 		window_size = {640, 480},
 		wndproc = wndproc,
 	},

@@ -35,9 +35,9 @@ run :: proc() -> (exit_code: int) {
 	app: application = {
 		settings = owin.window_settings {
 			options = {.Center},
-			dwStyle = owin.default_dwStyle,
-			dwExStyle = owin.default_dwExStyle,
-			sleep = owin.default_sleep,
+			dwStyle = owin.DEFAULT_WS_STYLE,
+			dwExStyle = owin.DEFAULT_WS_EX_STYLE,
+			sleep = owin.DEFAULT_SLEEP,
 			window_size = {WIDTH, HEIGHT * SCREEN_HEIGHT_SCALE},
 			wndproc = wndproc,
 			title = TITLE,

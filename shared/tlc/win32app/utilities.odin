@@ -53,7 +53,6 @@ show_last_errorf :: #force_inline proc(format: string, args: ..any, loc := #call
 	show_last_error(fmt.tprintf(format, ..args), loc = loc)
 }
 
-// TODO rename to pif
 panic_if_failed :: proc(res: win32.HRESULT, message: string = #caller_expression(res), loc := #caller_location) {
 	if win32.SUCCEEDED(res) {
 		return
@@ -95,7 +94,7 @@ get_window_position :: proc(size: int2, center: bool) -> int2 {
 			return (dmsize - size) / 2
 		}
 	}
-	return default_window_position
+	return DEFAULT_WINDOW_POSITION
 }
 
 register_raw_input :: proc(hwndTarget: HWND = nil, dwFlags: DWORD = win32.RIDEV_NOLEGACY) {

@@ -41,9 +41,9 @@ get_settings_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPAR
 
 default_window_settings :: window_settings {
 	options     = {.Center},
-	dwStyle     = default_dwStyle,
-	dwExStyle   = default_dwExStyle,
-	sleep       = default_sleep,
+	dwStyle     = DEFAULT_WS_STYLE,
+	dwExStyle   = DEFAULT_WS_EX_STYLE,
+	sleep       = DEFAULT_SLEEP,
 }
 
 @(private = "file")

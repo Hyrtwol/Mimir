@@ -249,7 +249,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	owin.dib_free_section(&dib)
+	owin.dib_free(&dib)
 	//CloseFile()
 	owin.post_quit_message(0)
 	return 0

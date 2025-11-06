@@ -95,7 +95,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	owin.kill_timer(hwnd, &timer_id)
-	owin.dib_free_section(&dib)
+	owin.dib_free(&dib)
 	owin.post_quit_message(0)
 	return 0
 }

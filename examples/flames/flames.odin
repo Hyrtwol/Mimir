@@ -174,7 +174,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
-	owin.dib_free_section(&dib)
+	owin.dib_free(&dib)
 	assert(dib.hbitmap == nil)
 	owin.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
@@ -293,11 +293,11 @@ run :: proc() -> (exit_code: int) {
 		frame_time += delta
 		frame_counter += 1
 		draw_frame(hwnd)
-		time.sleep(settings.sleep)
+		owin.sleep(settings.sleep)
 	}
-	exit_code = int(msg.wParam)
 	stopwatch->stop()
 	fmt.printfln("Done. %fs", stopwatch->get_elapsed_seconds())
+	exit_code = int(msg.wParam)
 	return
 }
 

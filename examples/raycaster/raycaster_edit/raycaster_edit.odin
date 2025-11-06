@@ -103,9 +103,9 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	owin.kill_timer(hwnd, &timer_id)
 	// owin.clip_cursor(hwnd, false)
 	// if cursor_state < 1 {show_cursor(true)}
-	owin.dib_free_section(&dib)
+	owin.dib_free(&dib)
 	for i in 0 ..< fbc {
-		owin.dib_free_section(&fbs[i])
+		owin.dib_free(&fbs[i])
 	}
 	owin.post_quit_message()
 	return 0
@@ -243,9 +243,9 @@ main :: proc() {
 	app := application {
 		settings = owin.window_settings {
 			options     = {.Center},
-			dwStyle     = owin.default_dwStyle,
-			dwExStyle   = owin.default_dwExStyle,
-			sleep       = owin.default_sleep,
+			dwStyle     = owin.DEFAULT_WS_STYLE,
+			dwExStyle   = owin.DEFAULT_WS_EX_STYLE,
+			sleep       = owin.DEFAULT_SLEEP,
 			window_size = {WIDTH, HEIGHT},
 			wndproc = wndproc,
 		},

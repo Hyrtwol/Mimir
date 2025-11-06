@@ -374,10 +374,9 @@ run :: proc() -> int {
 	if atom == 0 {show_error_and_panic("Failed to register window class")}
 	defer owin.unregister_window_class(atom, instance)
 
-	dwStyle :: owin.default_dwStyle
-	dwExStyle :: owin.default_dwExStyle
-
-	position := owin.default_window_position
+	dwStyle :: owin.DEFAULT_WS_STYLE
+	dwExStyle :: owin.DEFAULT_WS_EX_STYLE
+	position := owin.DEFAULT_WINDOW_POSITION
 	size := owin.adjust_window_size(window.size, dwStyle, dwExStyle)
 	if .CENTER in window.control_flags {
 		center_window(&position, size)

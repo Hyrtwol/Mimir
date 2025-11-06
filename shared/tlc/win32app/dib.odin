@@ -2,7 +2,6 @@
 #+vet
 package owin
 
-import "base:intrinsics"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 
@@ -21,11 +20,13 @@ dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.B
 
 @(private = "file")
 dib_create_section_bitmap_info_header :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFOHEADER) {
+	assert(pbmi.biSize == size_of(win32.BITMAPINFOHEADER))
 	dib_create_section_bitmap_info(dib, hdc, cast(^win32.BITMAPINFO)pbmi)
 }
 
 @(private = "file")
 dib_create_section_bitmap_info_header_v5 :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPV5HEADER) {
+	assert(pbmi.bV5Size == size_of(win32.BITMAPV5HEADER))
 	dib_create_section_bitmap_info(dib, hdc, cast(^win32.BITMAPINFO)pbmi)
 }
 
@@ -35,7 +36,7 @@ dib_create_section :: proc {
 	dib_create_section_bitmap_info_header_v5,
 }
 
-dib_free_section :: proc(dib: ^DIB, loc := #caller_location) {
+dib_free :: proc(dib: ^DIB, loc := #caller_location) {
 	if dib.hbitmap != nil {
 		if !delete_object(&dib.hbitmap) {
 			//fmt.panicf("Unable to delete object %v", dib.hbitmap, loc = loc)
@@ -86,6 +87,10 @@ draw_gdi_obj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.H
 	defer win32.DeleteDC(hdc_source)
 	select_object(hdc_source, hgdiobj)
 	stretch_blt(hdc, hdc_size, hdc_source, dest_size)
+}
+
+draw_dib_hbitmap :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hbitmap: win32.HBITMAP, dest_size: int2) {
+	draw_gdi_obj(hwnd, hdc, hdc_size, win32.HGDIOBJ(hbitmap), dest_size)
 }
 
 draw_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, dib: ^DIB) {

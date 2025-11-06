@@ -41,9 +41,9 @@ on_idle :: proc(app: ^application) -> int {return 0}
 default_application :: application {
 	settings = owin.window_settings {
 		options     = {.Center},
-		dwStyle     = owin.default_dwStyle,
-		dwExStyle   = owin.default_dwExStyle,
-		sleep       = owin.default_sleep,
+		dwStyle     = owin.DEFAULT_WS_STYLE,
+		dwExStyle   = owin.DEFAULT_WS_EX_STYLE,
+		sleep       = owin.DEFAULT_SLEEP,
 		window_size = {640, 480},
 		wndproc = wndproc,
 	},
@@ -122,7 +122,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := get_app(hwnd)
 	app->destroy()
-	owin.dib_free_section(&dib)
+	owin.dib_free(&dib)
 	owin.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
 	owin.post_quit_message(0)
@@ -208,8 +208,8 @@ handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.L
 
 handle_mouse_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	app.mouse_pos = owin.decode_lparam_as_int2(lparam)
 	app.mouse_buttons = owin.decode_wparam_as_mouse_key_state(wparam)
+	app.mouse_pos = owin.decode_lparam_as_int2(lparam)
 	return 0
 }
 
@@ -243,8 +243,9 @@ sleep :: proc(duration: time.Duration) {
 }
 
 run :: proc(app: ^application) -> (exit_code: int) {
-	// queue.init(&app.char_queue)
-	// defer queue.destroy(&app.char_queue)
+	queue.init(&app.char_queue)
+	defer queue.destroy(&app.char_queue)
+
 	_, _, hwnd := owin.prepare_run(app)
 	res: int
 	stopwatch := owin.create_stopwatch()

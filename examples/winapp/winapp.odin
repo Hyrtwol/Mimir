@@ -224,7 +224,7 @@ handle_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARA
 wndproc :: proc "system" (hwnd: win32.HWND, msg: owin.WM_MSG, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	context = runtime.default_context()
 	// odinfmt: disable
-	switch msg {
+	#partial switch msg {
 	case .WM_CREATE:      return WM_CREATE(hwnd, lparam)
 	case .WM_DESTROY:     return WM_DESTROY(hwnd)
 	case .WM_ERASEBKGND:  return WM_ERASEBKGND(hwnd, wparam)
