@@ -16,13 +16,14 @@ import gl "vendor:OpenGL"
 import "vendor:glfw"
 
 // cow, cube, gazebo, crisscross
-// import model "../../data/models/cube"
 import model "../../data/models/gazebo"
-SCALE :: 0.2
 //import model "../../data/models/platonic/icosahedron"
-//SCALE :: 1.0
+
+SCALE :: 0.5
 
 _ :: png
+
+vec3 :: glm.vec3
 
 vertex_flags :: 0b00000010
 
@@ -66,10 +67,32 @@ texture_def :: struct {
 
 vertex :: model.vertex
 
+bounding_sphere :: struct {
+	origo:    vec3,
+	radius: f32,
+}
+
+calc_bounding_sphere :: proc(vertices: []vertex) -> bounding_sphere {
+	origo: vec3 = {0, 0, 0}
+	radius: f32 = 0
+	for &vertex in vertices {
+		origo += vertex.pos
+	}
+	origo *= (1 / f32(len(vertices)))
+	for &vertex in vertices {
+		d := glm.distance(origo, vertex.pos)
+		if d > radius {radius = d}
+	}
+	return {origo = origo, radius = radius}
+}
+
 run :: proc() -> (exit_code: int) {
 	when #defined(model.material) {
 		fmt.println("size_of(model.material)=", size_of(model.material))
 	}
+
+	sb := calc_bounding_sphere(model.vertices)
+	fmt.println(sb)
 
 	if !bool(glfw.Init()) {
 		fmt.eprintln("Failed to initialize GLFW")
@@ -138,13 +161,13 @@ run :: proc() -> (exit_code: int) {
 	defer for td in texture_data {delete(td.data)}
 
 	vao: u32
-	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
+	gl.GenVertexArrays(1, &vao); defer gl.DeleteVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
 
 	// initialization of OpenGL buffers
 	vbo, ebo: u32
-	gl.GenBuffers(1, &vbo);defer gl.DeleteBuffers(1, &vbo)
-	gl.GenBuffers(1, &ebo);defer gl.DeleteBuffers(1, &ebo)
+	gl.GenBuffers(1, &vbo); defer gl.DeleteBuffers(1, &vbo)
+	gl.GenBuffers(1, &ebo); defer gl.DeleteBuffers(1, &ebo)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(model.vertices) * size_of(model.vertices[0]), raw_data(model.vertices), gl.STATIC_DRAW)
@@ -231,6 +254,11 @@ run :: proc() -> (exit_code: int) {
 	ui_transform := &uniforms["u_transform"]
 	u_transform: [2]glm.mat4
 
+	ms := SCALE / sb.radius
+	fmt.println("scale=", ms)
+	scale := vec3{ms, ms, ms}
+	model_scale := glm.mat4Scale(scale)
+
 	for !glfw.WindowShouldClose(window_handle) && running {
 		duration := time.tick_since(start_tick)
 		t := f32(time.duration_seconds(duration))
@@ -242,11 +270,11 @@ run :: proc() -> (exit_code: int) {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		pos := glm.vec3{glm.cos(t * 2), glm.sin(t * 2), 0}
-		pos *= 1.3
+		pos *= 1
 
 		model_transform := glm.identity(glm.mat4)
 		model_transform *= glm.mat4Translate(pos)
-		model_transform *= glm.mat4Scale({SCALE, SCALE, SCALE})
+		model_transform *= model_scale
 
 		view := glm.mat4LookAt({0, -1, 4}, {0, 0, 0}, {0, 0, 1})
 		proj := glm.mat4Perspective(45, aspect, 0.1, 100.0)
