@@ -1,5 +1,6 @@
-// https://lodev.org/cgtutor/raycasting.html
 #+vet
+// https://lodev.org/cgtutor/raycasting.html
+
 package raycaster
 
 import "core:math"
@@ -7,30 +8,30 @@ import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
 worldmap_textured: World_Map = {
-	{4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,7,7,7,7,7,7,7,7},
-	{4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
-	{4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-	{4,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-	{4,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
-	{4,0,4,0,0,0,0,5,5,5,5,5,5,5,5,5,7,7,0,7,7,7,7,7},
-	{4,0,5,0,0,0,0,5,0,5,0,5,0,5,0,5,7,0,0,0,7,7,7,1},
-	{4,0,6,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
-	{4,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,1},
-	{4,0,8,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
-	{4,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,7,7,7,1},
-	{4,0,0,0,0,0,0,5,5,5,5,0,5,5,5,5,7,7,7,7,7,7,7,1},
-	{6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
-	{8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-	{6,6,6,6,6,6,0,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
-	{4,4,4,4,4,4,0,4,4,4,6,0,6,2,2,2,2,2,2,2,3,3,3,3},
-	{4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
-	{4,0,0,0,0,0,0,0,0,0,0,0,6,2,0,0,5,0,0,2,0,0,0,2},
-	{4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
-	{4,0,6,0,6,0,0,0,0,4,6,0,0,0,0,0,5,0,0,0,0,0,0,2},
-	{4,0,0,5,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
-	{4,0,6,0,6,0,0,0,0,4,6,0,6,2,0,0,5,0,0,2,0,0,0,2},
-	{4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
-	{4,4,4,4,4,4,4,4,4,4,1,1,1,2,2,2,2,2,2,3,3,3,3,3},
+	{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7},
+	{4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 7},
+	{4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7},
+	{4, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7},
+	{4, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 7},
+	{4, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 0, 7, 7, 7, 7, 7},
+	{4, 0, 5, 0, 0, 0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 7, 0, 0, 0, 7, 7, 7, 1},
+	{4, 0, 6, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 0, 0, 0, 8},
+	{4, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 1},
+	{4, 0, 8, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 0, 0, 0, 8},
+	{4, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 7, 7, 7, 1},
+	{4, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 1},
+	{6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6},
+	{8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4},
+	{6, 6, 6, 6, 6, 6, 0, 6, 6, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6},
+	{4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 6, 0, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3},
+	{4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2},
+	{4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 5, 0, 0, 2, 0, 0, 0, 2},
+	{4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2},
+	{4, 0, 6, 0, 6, 0, 0, 0, 0, 4, 6, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 2},
+	{4, 0, 0, 5, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2},
+	{4, 0, 6, 0, 6, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 5, 0, 0, 2, 0, 0, 0, 2},
+	{4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2},
+	{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3},
 }
 
 on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
@@ -44,20 +45,17 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 	cv.canvas_clear(canvas)
 
 	w, h := app.size.x, app.size.y
-	h_half := h / 2
+	h_half := scalar(h) / 2
 
 	// WALL CASTING
-	wm := scalar(w) - 1
+	wm := scalar(w - 1)
 	for x in 0 ..< w {
 		// calculate ray position and direction
-		cameraX := (2 * scalar(x) / wm) - 1 // x-coordinate in camera space -1 to 1
+		cameraX := (scalar(x * 2) / wm) - 1 // x-coordinate in camera space -1 to 1
 		ray_dir := dir + (plane * cameraX)
 
 		// which box of the map we're in
 		mapX, mapY := i32(pos.x), i32(pos.y)
-
-		// length of ray from current position to next x or y-side
-		sideDistX, sideDistY: scalar
 
 		// length of ray from one x or y-side to next x or y-side
 		// these are derived as:
@@ -71,6 +69,8 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
+		// length of ray from current position to next x or y-side
+		sideDistX, sideDistY: scalar
 
 		// calculate step and initial sideDist
 		if ray_dir.x < 0 {
@@ -113,23 +113,19 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 		perpendicular_wall_distance: scalar = side == 0 ? sideDistX - deltaDist.x : sideDistY - deltaDist.y
 
 		//Calculate height of line to draw on screen
-		line_height := (i32)(scalar(h) / perpendicular_wall_distance)
+		line_height := scalar(h) / perpendicular_wall_distance
 		line_height_half := line_height / 2
 
-		pitch: i32 = 0 //100
+		pitch: scalar = 0
 
 		//calculate lowest and highest pixel to fill in current stripe
 		drawStart, drawEnd: i32
 		{
-			drawStart = -line_height_half + h_half
-			drawEnd = line_height_half + h_half
+			drawStart = i32(h_half - line_height_half)
+			drawEnd = i32(h_half + line_height_half)
 			if drawStart < 0 {drawStart = 0}
 			if drawEnd >= h {drawEnd = h - 1}
 		}
-
-		//texturing calculations
-		texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
-		tex := get_texture(texNum)
 
 		//calculate value of wallX
 		wallX: scalar //where exactly the wall was hit
@@ -140,24 +136,30 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 		}
 		wallX -= math.floor(wallX)
 
-		//x coordinate on the texture
-		texX := i32(wallX * scalar(pics_w))
-		if side == 0 && ray_dir.x > 0 {texX = pics_wm - texX}
-		if side == 1 && ray_dir.y < 0 {texX = pics_wm - texX}
+		{
+			//x coordinate on the texture
+			texX := i32(wallX * scalar(pics_w))
+			if side == 0 && ray_dir.x > 0 {texX = pics_wm - texX}
+			if side == 1 && ray_dir.y < 0 {texX = pics_wm - texX}
 
-		// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
-		// How much to increase the texture coordinate per screen pixel
-		step: scalar = scalar(pics_h) / scalar(line_height)
-		// Starting texture coordinate
-		texPos := scalar(drawStart - pitch - h_half + line_height_half) * step
-		for y in drawStart ..< drawEnd {
-			// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
-			texY := i32(texPos) & pics_hm
-			texPos += step
-			color := tex[pics_w * texY + texX]
-			// make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-			if (side == 1) {color /= 2}
-			cv.canvas_set_dot(canvas, x, y, color)
+			// TODO: an integer-only bresenham or DDA like algorithm could make the texture coordinate stepping faster
+			// How much to increase the texture coordinate per screen pixel
+			step: scalar = scalar(pics_h) / line_height
+			// Starting texture coordinate
+			texPos := (scalar(drawStart) - (h_half + pitch - line_height_half)) * step
+
+			//texturing calculations
+			texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
+			tex := get_texture(texNum)
+			for y in drawStart ..= drawEnd {
+				// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
+				texY := i32(texPos) & pics_hm
+				texPos += step
+				color := tex[pics_w * texY + texX]
+				// make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+				if (side == 1) {color /= 2}
+				cv.canvas_set_dot(canvas, x, y, color)
+			}
 		}
 	}
 

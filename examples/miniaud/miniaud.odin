@@ -51,7 +51,7 @@ main :: proc() {
 
 	decoder_result := ma.decoder_init_memory(pData = raw_data(AUDIO_FILE), dataSize = len(AUDIO_FILE), pConfig = &decoder_config, pDecoder = &decoder)
 	if decoder_result != .SUCCESS {fmt.panicf("failed to init decoder: %v", decoder_result)}
-	sound_result := ma.sound_init_from_data_source(pEngine = &engine, pDataSource = decoder.ds.pCurrent, flags = 0, pGroup = nil, pSound = &sound)
+	sound_result := ma.sound_init_from_data_source(pEngine = &engine, pDataSource = decoder.ds.pCurrent, flags = {}, pGroup = nil, pSound = &sound)
 	if sound_result != .SUCCESS {fmt.panicf("failed to init sound file from memory: %v", sound_result)}
 
 	fmt.println("Playing", decoder_config.encodingFormat)
