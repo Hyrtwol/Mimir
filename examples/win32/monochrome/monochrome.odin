@@ -1,27 +1,20 @@
 package monochrome
 
 import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
-import "base:runtime"
-import "core:time"
 import win32 "core:sys/windows"
+import "core:time"
 
 // defines
-L				:: intrinsics.constant_utf16_cstring
-color			:: [4]u8
-wstring			:: win32.wstring
-utf8_to_wstring	:: win32.utf8_to_wstring
-int2			:: [2]i32
+L :: intrinsics.constant_utf16_cstring
+wstring :: win32.wstring
+utf8_to_wstring :: win32.utf8_to_wstring
+int2 :: [2]i32
 
 // constants
-COLOR_MODE :: 2
-
-BLACK :: color{0, 0, 0, 255}
-WHITE :: color{255, 255, 255, 255}
-
-//TITLE :: "Monochrome Bitmap"
 WIDTH :: 320
 HEIGHT :: 200
 CENTER :: true
@@ -33,7 +26,9 @@ IDT_TIMER1: win32.UINT_PTR : 10001
 
 color_bits :: 1
 palette_count :: 1 << color_bits
-color_palette :: [palette_count]color
+RGBQUAD :: win32.RGBQUAD
+color_palette :: [palette_count]RGBQUAD
+colors: color_palette
 
 BITMAPINFO :: struct {
 	bmiHeader: win32.BITMAPINFOHEADER,
@@ -50,7 +45,7 @@ print_info :: proc() {
 	fmt.printfln("color_bits             =%v", color_bits)
 	fmt.printfln("palette_count          =%v", palette_count)
 	fmt.printfln("len(color_palette)     =%v", len(color_palette))
-	fmt.printfln("size_of(color)         =%v", size_of(color))
+	fmt.printfln("size_of(color)         =%v", size_of(RGBQUAD))
 	fmt.printfln("size_of(color_palette) =%v", size_of(color_palette))
 }
 
@@ -70,12 +65,21 @@ Game :: struct {
 	tick_rate: time.Duration,
 	last_tick: time.Time,
 	pause:     bool,
-	colors:    []color,
+	//colors:    []color,
 	size:      int2,
 	timer_id:  win32.UINT_PTR,
 	tick:      u32,
 	hbitmap:   win32.HBITMAP,
 	pvBits:    screen_buffer,
+}
+
+random_color :: proc() -> RGBQUAD {
+	return RGBQUAD {
+		rgbBlue     = win32.BYTE(rand.int31_max(255)),
+		rgbGreen    = win32.BYTE(rand.int31_max(255)),
+		rgbRed      = win32.BYTE(rand.int31_max(255)),
+		rgbReserved = 0,
+	}
 }
 
 show_error_and_panic :: proc(msg: string, loc := #caller_location) {
@@ -103,37 +107,29 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
+	assert(palette_count == 2)
+
+	{
+		scale := 1 / f32(palette_count - 1); rbg: [3]f32; w: f32
+		for i in 0 ..< palette_count {
+			colors[i] = random_color()
+		}
+	}
+
 	bitmap_info := BITMAPINFO {
 		bmiHeader = win32.BITMAPINFOHEADER {
-			biSize          = size_of(win32.BITMAPINFOHEADER),
-			biWidth         = bwidth,
-			biHeight        = -bheight, // minus for top-down
-			biPlanes        = 1,
-			biBitCount      = 1,
-			biCompression   = win32.BI_RGB,
-			biClrUsed       = 2,
+			biSize        = size_of(win32.BITMAPINFOHEADER),
+			biWidth       = bwidth,
+			biHeight      = -bheight, // minus for top-down
+			biPlanes      = 1,
+			biBitCount    = 1,
+			biCompression = win32.BI_RGB,
+			biClrUsed     = 2,
 		},
 	}
 
-	if palette_count > 1 {
-		scale := 1 / f32(palette_count - 1);rbg: [3]f32;w: f32
-		for i in 0 ..< palette_count {
-			w = scale * f32(i)
-			when COLOR_MODE == 1 {
-				rbg = [3]f32{rand.float32(), rand.float32(), rand.float32()}
-			} else {
-				rbg = [3]f32{w, w, w}
-			}
-			rbg *= 255
-			bitmap_info.bmiColors[i] = color{u8(rbg.b), u8(rbg.g), u8(rbg.r), 0}
-		}
-	}
-
-	when COLOR_MODE == 2 {
-		if palette_count >= 2 {
-			bitmap_info.bmiColors[0] = color{255, 0, 0, 0}
-			bitmap_info.bmiColors[1] = color{0, 255, 255, 0}
-		}
+	for i in 0 ..< palette_count {
+		bitmap_info.bmiColors[i] = colors[i]
 	}
 
 	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, (^^rawptr)(&app.pvBits), nil, 0)
@@ -181,10 +177,15 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 		hdc_source := win32.CreateCompatibleDC(ps.hdc)
 		defer win32.DeleteDC(hdc_source)
 
-		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
+		old_gdiobj := win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
+
+		win32.SetDIBColorTable(hdc_source, 0, palette_count, &colors[0])
+
 		client_size := get_rect_size(&ps.rcPaint)
 		//win32.BitBlt(ps.hdc, 0, 0, bwidth, bheight, hdc_source, 0, 0, win32.SRCCOPY)
 		win32.StretchBlt(ps.hdc, 0, 0, client_size.x, client_size.y, hdc_source, 0, 0, bwidth, bheight, win32.SRCCOPY)
+
+		win32.SelectObject(hdc_source, old_gdiobj)
 	}
 
 	win32.SetBkMode(ps.hdc, .TRANSPARENT)
@@ -204,8 +205,14 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	case:
 		fmt.println(#procedure, hwnd, wparam, lparam)
 	}
+
+	for i in 0 ..< palette_count {
+		colors[i] = random_color()
+	}
+
 	return 0
 }
+
 
 
 // odinfmt: disable
@@ -277,7 +284,16 @@ center_window :: proc(position: ^int2, size: int2) {
 	}
 }
 
-create_window :: #force_inline proc(atom: win32.ATOM, window_name: win32.LPCTSTR, style: win32.WS_STYLES, ex_style: win32.WS_EX_STYLES, position: int2, size: int2, instance: win32.HINSTANCE, lpParam: win32.LPVOID) -> win32.HWND {
+create_window :: #force_inline proc(
+	atom: win32.ATOM,
+	window_name: win32.LPCTSTR,
+	style: win32.WS_STYLES,
+	ex_style: win32.WS_EX_STYLES,
+	position: int2,
+	size: int2,
+	instance: win32.HINSTANCE,
+	lpParam: win32.LPVOID,
+) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 	return win32.CreateWindowExW(ex_style, win32.LPCWSTR((win32.LPWSTR)(uintptr(atom))), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
@@ -293,16 +309,16 @@ message_loop :: proc() -> int {
 
 run :: proc() -> int {
 	window := Window {
-		name = L("Monochrome Bitmap"),
-		size = {640, 400},
-		fps  = 60,
+		name          = L("Monochrome Bitmap"),
+		size          = {640, 400},
+		fps           = 60,
 		control_flags = {.CENTER},
 	}
 	game := Game {
 		tick_rate = 300 * time.Millisecond,
 		last_tick = time.now(),
 		pause     = true,
-		colors    = []color{BLACK, WHITE},
+		//colors    = []color{BLACK, WHITE},
 		size      = {64, 64},
 		//window    = window,
 	}
