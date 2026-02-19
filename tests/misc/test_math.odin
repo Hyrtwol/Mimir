@@ -10,6 +10,7 @@ import "core:testing"
 import o "shared:ounit"
 
 int2 :: [2]i32
+float2 :: [2]f32
 
 @(test)
 can_i_swizzle :: proc(t: ^testing.T) {
@@ -196,6 +197,13 @@ vector2_max :: proc(t: ^testing.T) {
 	testing.expect(t, m == {3, 4})
 }
 
+@(test)
+vector_cast :: proc(t: ^testing.T) {
+	v1: int2 = {1, 4}
+	v2 := linalg.array_cast(v1, f32)
+	testing.expect(t, v2 == {1, 4})
+}
+
 /*
 150 50 ; 80 150 ; 50 50
 abc:150 50 1
@@ -287,7 +295,7 @@ fixed_u8_8 :: fixed.Fixed(u8, 8)
 
 @(test)
 small_fixed_i8 :: proc(t: ^testing.T) {
-	fv : fixed_i8_7
+	fv: fixed_i8_7
 	// raw := i8(127)
 	// fv = transmute(fixed_i8_7)raw
 	fixed.init_from_parts(&fv, 0, 127)
@@ -300,7 +308,7 @@ small_fixed_i8 :: proc(t: ^testing.T) {
 
 @(test)
 small_fixed_u8 :: proc(t: ^testing.T) {
-	fv : fixed_u8_8
+	fv: fixed_u8_8
 	// raw := u8(255)
 	// fv = transmute(fixed_u8_8)raw
 	fixed.init_from_parts(&fv, 0, 255)

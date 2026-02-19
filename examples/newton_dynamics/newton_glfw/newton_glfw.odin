@@ -112,14 +112,11 @@ set_transform_callback :: proc "c" (body: ^newton.Body, transform: ^float4x4, th
 	}
 }
 
-origos := [?]float3{
-	{6, 3, 0},
-	{-6, 3, 0},
-}
+origos := [?]float3{{6, 3, 0}, {-6, 3, 0}}
 
 //lightPos : float3 = linalg.normalize(float3{1,1,1})
-lightPos : float3 = float3{0,10,0}
-ambient : float3 = float3{0.1,0.1,0.1}
+lightPos: float3 = float3{0, 10, 0}
+ambient: float3 = float3{0.1, 0.1, 0.1}
 
 FORCE_FACTOR :: 20
 
@@ -161,7 +158,7 @@ run :: proc() -> (exit_code: int) {
 	texture_data := make([dynamic]texture_def, 0, 0)
 	defer delete(texture_data)
 	load_texture_data(&texture_data)
-	for td in texture_data {fmt.println("Image:", td.size, len(td.data));assert(td.data != nil)}
+	for td in texture_data {fmt.println("Image:", td.size, len(td.data)); assert(td.data != nil)}
 	defer {for td in texture_data {delete(td.data)}}
 
 	write_globals()
@@ -180,7 +177,7 @@ run :: proc() -> (exit_code: int) {
 	// Create collisions
 
 	collisions = make([dynamic]^newton.Collision)
-	defer {{for &collision in collisions {newton.DestroyCollision(collision)}};delete(collisions)}
+	defer {{for &collision in collisions {newton.DestroyCollision(collision)}}; delete(collisions)}
 	append(&collisions, newton.CreateBox(world, 400, 2, 400, i32(len(collisions)), nil))
 	append(&collisions, newton.CreateSphere(world, 0.5, i32(len(collisions)), nil))
 	append(&collisions, newton.CreateSphere(world, 1.0, i32(len(collisions)), nil))
@@ -199,7 +196,7 @@ run :: proc() -> (exit_code: int) {
 	// Create meshes
 
 	meshes = make([dynamic]^newton.Mesh)
-	defer {{for &mesh in meshes {newton.MeshDestroy(mesh)}};delete(meshes)}
+	defer {{for &mesh in meshes {newton.MeshDestroy(mesh)}}; delete(meshes)}
 	for i in 0 ..< len(collisions) {
 		mesh := newton.MeshCreateFromCollision(collisions[i])
 		if TRIANGULATE_WITH_NEWTON {newton.MeshTriangulate(mesh)}
@@ -254,7 +251,7 @@ run :: proc() -> (exit_code: int) {
 	// Create bodies
 
 	bodies = make([dynamic]^newton.Body, 0, 8)
-	defer {{for &body in bodies {newton.DestroyBody(body)}};delete(bodies)}
+	defer {{for &body in bodies {newton.DestroyBody(body)}}; delete(bodies)}
 
 	{
 		identity := linalg.identity(newton.float4x4)
@@ -333,13 +330,13 @@ run :: proc() -> (exit_code: int) {
 	}
 
 	vao: u32
-	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
+	gl.GenVertexArrays(1, &vao); defer gl.DeleteVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
 
 	// initialization of OpenGL buffers
 	vbo, ebo: u32
-	gl.GenBuffers(1, &vbo);defer gl.DeleteBuffers(1, &vbo)
-	gl.GenBuffers(1, &ebo);defer gl.DeleteBuffers(1, &ebo)
+	gl.GenBuffers(1, &vbo); defer gl.DeleteBuffers(1, &vbo)
+	gl.GenBuffers(1, &ebo); defer gl.DeleteBuffers(1, &ebo)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(vertices[0]), raw_data(vertices), gl.STATIC_DRAW)
@@ -415,20 +412,16 @@ run :: proc() -> (exit_code: int) {
 	assert(ui_transform != nil)
 	u_proj_view: ^gl.Uniform_Info = &uniforms["u_proj_view"]
 	assert(u_proj_view != nil)
-	u_lightPos: ^gl.Uniform_Info = &uniforms["lightPos"]
-	//assert(u_lightPos != nil)
-	if u_lightPos != nil {
-		//lightPos = {1,0,0}
-		gl.Uniform3fv(u_lightPos.location, 1, &lightPos[0])
-		fmt.println("uniform", u_lightPos.name, lightPos);
-	}
-	u_ambient: ^gl.Uniform_Info = &uniforms["ambient"]
-	if u_ambient != nil {
-		//lightPos = {1,0,0}
-		gl.Uniform3fv(u_ambient.location, 1, &ambient[0])
-		fmt.println("uniform", u_ambient.name, ambient);
-	}
 
+	u_lightPos: ^gl.Uniform_Info = &uniforms["lightPos"]
+	assert(u_lightPos != nil)
+	gl.Uniform3fv(u_lightPos.location, 1, &lightPos[0])
+	fmt.println("uniform", u_lightPos.name, lightPos)
+
+	u_ambient: ^gl.Uniform_Info = &uniforms["ambient"]
+	assert(u_ambient != nil)
+	gl.Uniform3fv(u_ambient.location, 1, &ambient[0])
+	fmt.println("uniform", u_ambient.name, ambient)
 
 	for !glfw.WindowShouldClose(window_handle) {
 
@@ -436,11 +429,11 @@ run :: proc() -> (exit_code: int) {
 		delta = f32(time.duration_seconds(time.tick_diff(last_tick, start_tick)))
 		last_tick = start_tick
 
-		newton.Update(world, delta)
-		//fmt.println("LastUpdateTime", newton.GetLastUpdateTime(world), delta)
-
 		// Process all incoming events like keyboard press, window resize, and etc.
 		glfw.PollEvents()
+
+		newton.Update(world, delta)
+		//fmt.println("LastUpdateTime", newton.GetLastUpdateTime(world), delta)
 
 		//gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

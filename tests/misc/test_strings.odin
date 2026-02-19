@@ -50,5 +50,7 @@ verify_cstrings :: proc(t: ^T) {
 	data: [10]u8 = "1234567890"
 	expect_value(t, len(data), 10)
 	cs : cstring = cstring(&data[0])
-	expect_value(t, cs[1], "2")
+	//expect_value(t, cs[1], "2")
+	ps := ([^]byte)(cs)
+	expect_value(t, ps[1], '2')
 }

@@ -1,9 +1,10 @@
-#+vet
+//#+vet
 // https://lodev.org/cgtutor/raycasting.html
 
 package raycaster
 
 import "core:math"
+import "core:math/linalg"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 
@@ -56,6 +57,7 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 
 		// which box of the map we're in
 		mapX, mapY := i32(pos.x), i32(pos.y)
+		map_pos := linalg.array_cast(pos, i32)
 
 		// length of ray from one x or y-side to next x or y-side
 		// these are derived as:
@@ -67,42 +69,43 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 		// stepping further below works. So the values can be computed as below.
 		deltaDist := cv.reciprocal_abs(ray_dir)
 
+		// length of ray from current position to next x or y-side
+		//sideDistX, sideDistY: scalar
+		sideDist: vector2
+
 		// what direction to step in x or y-direction (either +1 or -1)
 		stepX, stepY: i32
-		// length of ray from current position to next x or y-side
-		sideDistX, sideDistY: scalar
-
 		// calculate step and initial sideDist
 		if ray_dir.x < 0 {
 			stepX = -1
-			sideDistX = (pos.x - scalar(mapX)) * deltaDist.x
+			sideDist.x = (pos.x - scalar(mapX)) * deltaDist.x
 		} else {
 			stepX = 1
-			sideDistX = (scalar(mapX) + 1 - pos.x) * deltaDist.x
+			sideDist.x = (scalar(mapX) + 1 - pos.x) * deltaDist.x
 		}
 		if ray_dir.y < 0 {
 			stepY = -1
-			sideDistY = (pos.y - scalar(mapY)) * deltaDist.y
+			sideDist.y = (pos.y - scalar(mapY)) * deltaDist.y
 		} else {
 			stepY = 1
-			sideDistY = (scalar(mapY) + 1 - pos.y) * deltaDist.y
+			sideDist.y = (scalar(mapY) + 1 - pos.y) * deltaDist.y
 		}
 
 		side: i32 // was a NS or a EW wall hit?
 		//perform DDA
-		for hit: i32 = 0; hit == 0; {
+		for scan := true; scan; {
 			//jump to next map square, either in x-direction, or in y-direction
-			if sideDistX < sideDistY {
-				sideDistX += deltaDist.x
+			if sideDist.x < sideDist.y {
+				sideDist.x += deltaDist.x
 				mapX += stepX
 				side = 0
 			} else {
-				sideDistY += deltaDist.y
+				sideDist.y += deltaDist.y
 				mapY += stepY
 				side = 1
 			}
 			//Check if ray has hit a wall
-			if (world_map[mapX][mapY] > 0) {hit = 1}
+			if (world_map[mapX][mapY] > 0) {scan = false}
 		}
 		//Calculate distance projected on camera direction. This is the shortest distance from the point where the wall is
 		//hit to the camera plane. Euclidean to center camera point would give fisheye effect!
@@ -110,7 +113,7 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 		//for size == 1, but can be simplified to the code below thanks to how sideDist and deltaDist are computed:
 		//because they were left scaled to |ray_dir|. sideDist is the entire length of the ray above after the multiple
 		//steps, but we subtract deltaDist once because one step more into the wall was taken above.
-		perpendicular_wall_distance: scalar = side == 0 ? sideDistX - deltaDist.x : sideDistY - deltaDist.y
+		perpendicular_wall_distance: scalar = side == 0 ? sideDist.x - deltaDist.x : sideDist.y - deltaDist.y
 
 		//Calculate height of line to draw on screen
 		line_height := scalar(h) / perpendicular_wall_distance
@@ -150,12 +153,12 @@ on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
 
 			//texturing calculations
 			texNum := world_map[mapX][mapY] - 1 //1 subtracted from it so that texture 0 can be used!
-			tex := get_texture(texNum)
+			texture := get_texture(texNum)
 			for y in drawStart ..= drawEnd {
 				// Cast the texture coordinate to integer, and mask with (pics_h - 1) in case of overflow
 				texY := i32(texPos) & pics_hm
 				texPos += step
-				color := tex[pics_w * texY + texX]
+				color := texture[pics_w * texY + texX]
 				// make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
 				if (side == 1) {color /= 2}
 				cv.canvas_set_dot(canvas, x, y, color)

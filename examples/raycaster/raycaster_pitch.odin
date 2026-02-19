@@ -97,7 +97,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
 		side: i32 // was a NS or a EW wall hit?
 		//perform DDA
-		for hit: i32 = 0; hit == 0; {
+		for scan := true; scan; {
 			//jump to next map square, either in x-direction, or in y-direction
 			if sideDistX < sideDistY {
 				sideDistX += deltaDist.x
@@ -109,7 +109,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 				side = 1
 			}
 			//Check if ray has hit a wall
-			if (world_map[mapX][mapY] > 0) {hit = 1}
+			if (world_map[mapX][mapY] > 0) {scan = false}
 		}
 		//Calculate distance projected on camera direction. This is the shortest distance from the point where the wall is
 		//hit to the camera plane. Euclidean to center camera point would give fisheye effect!

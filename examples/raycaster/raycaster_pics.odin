@@ -33,3 +33,8 @@ get_texture :: #force_inline proc "contextless" (#any_int tex: int) -> ^pics_buf
 get_texture_count :: #force_inline proc "contextless" () -> i32 {
 	return i32(len(textures))
 }
+
+sample_texture :: #force_inline proc "contextless" (tex: i32, uv: vector2) -> byte4 {
+	idx := texture_index(uv)
+	return textures[tex][idx]
+}
