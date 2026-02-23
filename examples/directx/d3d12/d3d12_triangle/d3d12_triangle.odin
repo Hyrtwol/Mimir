@@ -41,7 +41,7 @@ panic_if_failed :: owin.panic_if_failed
 
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	ESC :: '\x1b'
-	context = runtime.default_context()
+	//context = runtime.default_context()
 	switch msg {
 	case win32.WM_DESTROY:
 		owin.post_quit_message();return 0
