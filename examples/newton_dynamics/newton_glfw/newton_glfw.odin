@@ -133,10 +133,13 @@ force_and_torque_callback :: proc "c" (body: ^newton.Body, timestep: f32, thread
 		v := origo - position
 		sqrMagnitude := linalg.dot(v, v) // aka vector_length2
 		if sqrMagnitude > 0.1 {
+			v *= FORCE_FACTOR * mass;
 			if sqrMagnitude > 1 {
-				v *= FORCE_FACTOR * mass / (sqrMagnitude * math.sqrt(sqrMagnitude))
+				//v *= FORCE_FACTOR * mass / (sqrMagnitude * math.sqrt(sqrMagnitude))
+				v /= sqrMagnitude * math.sqrt(sqrMagnitude)
 			} else {
-				v *= FORCE_FACTOR * mass * math.sqrt(sqrMagnitude)
+				//v *= FORCE_FACTOR * mass * math.sqrt(sqrMagnitude)
+				v *= math.sqrt(sqrMagnitude)
 			}
 			force += v
 		}

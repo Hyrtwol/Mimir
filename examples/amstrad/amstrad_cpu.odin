@@ -129,8 +129,8 @@ reset :: proc() {
 load_rom :: proc(filename: string) {
 	//reset()
 	fmt.printfln("loading rom %v", filename)
-	data, ok := os.read_entire_file(filename)
-	if ok {
+	data, ok := os.read_entire_file_from_path(filename, allocator = context.allocator)
+	if ok == nil {
 		defer delete(data)
 		rom_size := min(len(data), len(memory))
 		intrinsics.mem_copy(&memory[0], &data[0], rom_size)

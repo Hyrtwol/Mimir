@@ -123,27 +123,27 @@ run :: proc() -> (exit_code: int) {
 		vertex_attrib := 0
 		when intrinsics.type_has_field(vertex, "pos") {
 			newton.MeshGetVertexChannel(mesh, size_of(vertex), &vertices[0].pos)
-			vertex_attrib += 1
+			vertex_attrib |= 0b0000_0001
 		}
 		when intrinsics.type_has_field(vertex, "nml") {
 			newton.MeshGetNormalChannel(mesh, size_of(vertex), &vertices[0].nml)
-			vertex_attrib += 1
+			vertex_attrib |= 0b0000_0010
 		}
 		when intrinsics.type_has_field(vertex, "bnl") {
 			newton.MeshGetBinormalChannel(mesh, size_of(vertex), &vertices[0].bnl)
-			vertex_attrib += 1
+			vertex_attrib |= 0b0000_0100
 		}
 		when intrinsics.type_has_field(vertex, "uv0") {
 			newton.MeshGetUV0Channel(mesh, size_of(vertex), &vertices[0].uv0)
-			vertex_attrib += 1
+			vertex_attrib |= 0b0000_1000
 		}
 		when intrinsics.type_has_field(vertex, "uv1") {
 			newton.MeshGetUV1Channel(mesh, size_of(vertex), &vertices[0].uv1)
-			vertex_attrib += 1
+			vertex_attrib |= 0b0001_0000
 		}
 		when intrinsics.type_has_field(vertex, "col") {
 			newton.MeshGetVertexColorChannel(mesh, size_of(vertex), &vertices[0].col)
-			vertex_attrib += 1
+			vertex_attrib |= 0b0010_0000
 		}
 		fmt.printfln("vertex_attrib: %d", vertex_attrib)
 

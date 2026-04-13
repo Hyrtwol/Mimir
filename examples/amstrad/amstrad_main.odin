@@ -48,7 +48,7 @@ run :: proc() -> (exit_code: int) {
 
 	//z.z80_power(&cpu, true)
 
-	snapshot_path := filepath.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
+	snapshot_path, _ := filepath.join({AMSTRAD_PATH, "pinup.sna"}, allocator = context.temp_allocator)
 	fmt.printfln("loading snapshot %s", snapshot_path)
 	ss: snapshot
 	err := a.load_snapshot(snapshot_path, &ss, memory[:])
@@ -58,7 +58,7 @@ run :: proc() -> (exit_code: int) {
 	// cpu.sp = ss.SP
 	// fmt.printfln("CPU %v", cpu)
 
-	rom_path := filepath.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
+	rom_path, _ := filepath.join({ROM_PATH, "hello.rom"}, allocator = context.temp_allocator)
 	load_rom(rom_path)
 
 	running = true
@@ -72,8 +72,8 @@ run :: proc() -> (exit_code: int) {
 }
 
 main :: proc() {
-	ROM_PATH = filepath.clean("../data/z80/") or_else panic("filepath.clean")
-	AMSTRAD_PATH = filepath.clean("../examples/amstrad/data/") or_else panic("filepath.clean")
+	ROM_PATH = filepath.clean("../data/z80/", allocator = context.temp_allocator) or_else panic("filepath.clean")
+	AMSTRAD_PATH = filepath.clean("../examples/amstrad/data/", allocator = context.temp_allocator) or_else panic("filepath.clean")
 	when intrinsics.is_package_imported("obug") {
 		os.exit(obug.tracked_run(run))
 	} else {

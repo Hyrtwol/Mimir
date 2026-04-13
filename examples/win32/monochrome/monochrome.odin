@@ -132,7 +132,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		bitmap_info.bmiColors[i] = colors[i]
 	}
 
-	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, (^^rawptr)(&app.pvBits), nil, 0)
+	app.hbitmap = win32.CreateDIBSection(hdc, cast(^win32.BITMAPINFO)&bitmap_info, win32.DIB_RGB_COLORS, (^rawptr)(&app.pvBits), nil, 0)
 
 	fmt.println("app.hbitmap:", app.hbitmap, app.pvBits)
 	pvBits := app.pvBits
@@ -295,7 +295,7 @@ create_window :: #force_inline proc(
 	lpParam: win32.LPVOID,
 ) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
-	return win32.CreateWindowExW(ex_style, win32.LPCWSTR((win32.LPWSTR)(uintptr(atom))), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
+	return win32.CreateWindowExW(ex_style, win32.LPCWSTR(win32.LPWSTR(uintptr(atom))), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
 }
 
 message_loop :: proc() -> int {

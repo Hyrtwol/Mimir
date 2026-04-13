@@ -111,7 +111,6 @@ dib_flames :: proc(dib: ^canvas) {
 cnp := noise.Vec3{0, 0, 0}
 //n_scale := 0.01 // nice
 n_scale := 0.02
-//n_scale := 0.03
 
 dib_flames_2 :: proc(dib: ^canvas) {
 	w, h := i32(dib.size.x), i32(dib.size.y)
@@ -121,7 +120,6 @@ dib_flames_2 :: proc(dib: ^canvas) {
 			// add the values of the surrounding pixels
 			c: i32 = get_dot(x, y + 1) + get_dot(x - 1, y + 1) + get_dot(x + 1, y + 1) + get_dot(x, y)
 			// divide by the number of pixels added up
-			//c /= 4
 			c >>= 2
 			// decrement by the decay value
 			if c > 0 {
@@ -284,7 +282,7 @@ run :: proc() -> (exit_code: int) {
 	settings.window_size = {WIDTH * ZOOM, HEIGHT * ZOOM}
 	settings.title = TITLE
 	settings.wndproc = wndproc
-	settings.sleep = time.Millisecond * 4
+	settings.sleep = time.Millisecond * 8
 	_, _, hwnd := owin.prepare_run(&settings)
 	stopwatch->start()
 	msg: win32.MSG

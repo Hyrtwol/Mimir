@@ -261,13 +261,13 @@ dib_usage :: enum UINT {
 }
 
 //@(private = "file")
-create_dib_section_rawptr :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^^win32.VOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
+create_dib_section_rawptr :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^win32.PVOID, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
 	return win32.CreateDIBSection(hdc, pbmi, UINT(usage), ppvBits, hSection, offset)
 }
 
 //@(private = "file")
 create_dib_section_slice :: #force_inline proc "contextless" (hdc: HDC, pbmi: ^win32.BITMAPINFO, usage: dib_usage, ppvBits: ^[^]$T, hSection: HANDLE = nil, offset: DWORD = 0) -> HBITMAP {
-	return create_dib_section_rawptr(hdc, pbmi, usage, (^^win32.VOID)(ppvBits), hSection, offset)
+	return create_dib_section_rawptr(hdc, pbmi, usage, (^win32.PVOID)(ppvBits), hSection, offset)
 }
 
 create_dib_section :: proc {

@@ -257,7 +257,7 @@ psnapshot :: ^snapshot
 
 load_snapshot :: proc(path: string, pss: psnapshot, ram: []u8) -> os.Error {
 	err: os.Error
-	fd: os.Handle
+	fd: ^os.File
 	fd, err = os.open(path)
 	if err != os.ERROR_NONE {return err}
 	defer os.close(fd)

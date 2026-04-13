@@ -23,8 +23,8 @@ show_error_and_panic :: proc(msg: string, type: win32.UINT = win32.MB_ICONSTOP |
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
-	fmt.printfln("%#v", pcs)
+	//pcs := (^win32.CREATESTRUCTW)(rawptr(uintptr(lparam)))
+	//fmt.printfln("%#v", pcs)
 	hbrGray = win32.HBRUSH(win32.GetStockObject(win32.DKGRAY_BRUSH))
 	return 0
 }
@@ -94,7 +94,7 @@ main :: proc() {
 	instance := win32.HINSTANCE(win32.GetModuleHandleW(nil))
 	if (instance == nil) {show_error_and_panic("No instance")}
 
-	icon := win32.LoadIconW(instance, win32.MAKEINTRESOURCEW(101))
+	icon := win32.LoadIconW(instance, win32.wstring(win32.MAKEINTRESOURCEW(101)))
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
 
@@ -139,7 +139,7 @@ main :: proc() {
 		}
 	}
 
-	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR(uintptr(atom)), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
+	hwnd := win32.CreateWindowExW(dwExStyle, win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))), L(TITLE), dwStyle, position.x, position.y, size.x, size.y, nil, nil, instance, nil)
 	if hwnd == nil {show_error_and_panic("CreateWindowEx failed")}
 
 	win32.ShowWindow(hwnd, win32.SW_SHOWDEFAULT)
