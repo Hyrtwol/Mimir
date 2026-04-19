@@ -1,3 +1,5 @@
-@echo off
+@echo Executing: dotnet build .
 dotnet build .
-odin run . -vet
+@echo Executing: odin run . -vet
+odin run . -vet -collection:shared=C:\dev\odin\shared
+@echo Done. %ERRORLEVEL%

@@ -3,13 +3,11 @@ package coreclr_example_gateway
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
-//import "core:os"
-import os "core:os/os2"
-import "core:path/filepath"
+import "core:os"
 import clr "shared:coreclr"
 import "shared:obug"
 
-coreclr_dir : string
+coreclr_dir: string
 
 print_if_error :: proc(hr: clr.error, loc := #caller_location) {
 	if hr != .ok {fmt.printfln("Error %v (0x%8X) @ %v", hr, u32(hr), loc)}
@@ -22,7 +20,8 @@ event_callback :: proc(ch: ^clr.clr_host, type: clr.event_type, hr: clr.error) {
 create_gateway_delegates :: proc(host: ^clr.clr_host, gateway: ^Gateway) -> (res: clr.error) {
 	an :: "gateway"
 	tn :: "Gateway"
-	print_if_error(clr.create_delegate(host, an, tn, "Bootstrap", &gateway.Bootstrap))
+	print_if_error(clr.create_delegate(host, an, tn, "AssemblyLocation", &gateway.AssemblyLocation))
+	print_if_error(clr.create_delegate(host, an, tn, "SizeOfStuff", &gateway.SizeOfStuff))
 	print_if_error(clr.create_delegate(host, an, tn, "Plus", &gateway.Plus))
 	print_if_error(clr.create_delegate(host, an, tn, "Sum", &gateway.Sum))
 	print_if_error(clr.create_delegate(host, an, tn, "Sum2", &gateway.Sum2))
@@ -38,11 +37,16 @@ unmanaged_callback :: proc "c" (actionName: cstring, jsonArgs: cstring) -> bool 
 
 call_csharp :: proc(gateway: ^Gateway) {
 
-	f := gateway.Plus(13, 27)
-	fmt.println("Plus:", f)
+	fmt.println("AssemblyLocation:", gateway.AssemblyLocation())
 
-	s := gateway.Bootstrap()
-	fmt.println("Bootstrap:", s)
+	sof: SizeOf
+	gateway.SizeOfStuff(&sof)
+	fmt.println("SizeOfStuff:", sof)
+
+	fmt.println("Plus:", gateway.Plus(1.3, 37))
+
+	vals := [?]f64{1.0, 2.1, 3.2, 4.3}
+	fmt.println("Sum:", gateway.Sum(&vals[0], len(vals)))
 
 	fmt.println("ManagedDirectMethod")
 	ok := gateway.ManagedDirectMethod("funky", "json doc", unmanaged_callback)
@@ -70,7 +74,6 @@ execute_clr_host :: proc(tpa: string) -> clr.error {
 		// Prepare the delegates for calling C#
 		gateway: Gateway = {}
 		create_gateway_delegates(&host, &gateway) or_return
-
 		call_csharp(&gateway)
 	}
 
@@ -84,9 +87,8 @@ run :: proc() -> (exit_code: int) {
 	working_directory, ok := os.get_working_directory(context.temp_allocator)
 	if ok != nil {panic("get_working_directory")}
 	fmt.println("working_directory:", working_directory)
-	//fmt.println(filepath.abs(".", context.temp_allocator))
 	cs_path := "../examples/coreclr"
-	fmt.println("cs_path:", filepath.abs(cs_path, context.temp_allocator))
+	fmt.println("cs_path:", os.get_absolute_path(cs_path, context.temp_allocator))
 	tpa := clr.create_trusted_platform_assemblies(coreclr_dir, cs_path, allocator = context.temp_allocator)
 	clr.write_tpa("tpa.log", tpa)
 	err := execute_clr_host(tpa)

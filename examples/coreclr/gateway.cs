@@ -3,9 +3,22 @@ using System.Runtime.InteropServices;
 
 public delegate bool UnmanagedCallbackDelegate(string funcName, string jsonArgs);
 
+public struct SizeOf
+{
+    public int Int, Double, Float, Pointer;
+}
+
 public static unsafe class Gateway
 {
-    public static string Bootstrap() => typeof(Gateway).Assembly.Location;
+    public static string AssemblyLocation() => typeof(Gateway).Assembly.Location;
+
+    public static void SizeOfStuff(SizeOf* sof)
+    {
+        sof->Int = sizeof(int);
+        sof->Double = sizeof(double);
+        sof->Float = sizeof(float);
+        sof->Pointer = sizeof(nint);
+    }
 
     public static double Plus(double x, double y) => x + y;
 
