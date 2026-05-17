@@ -1,9 +1,9 @@
 {
 	"recommendations": [
 		"editorconfig.editorconfig",
-		"danielgavin.ols",
-		"streetsidesoftware.code-spell-checker",
-		"davidanson.vscode-markdownlint",
-        "dtsvet.vscode-wasm"
+		"danielgavin.ols"
+		// "streetsidesoftware.code-spell-checker",
+		// "davidanson.vscode-markdownlint",
+        // "dtsvet.vscode-wasm"
 	]
 }
