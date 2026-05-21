@@ -44,6 +44,7 @@ dib_free :: proc(dib: ^DIB, loc := #caller_location) {
 		}
 	}
 	dib.hbitmap = nil
+	dib.canvas.pvBits = nil
 }
 
 dib_create :: proc(hdc: win32.HDC, size: int2) -> DIB {

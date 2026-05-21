@@ -2,8 +2,8 @@
 package movers
 
 import "base:intrinsics"
-import "core:os"
 import "core:math/rand"
+import "core:os"
 import cv "libs:tlc/canvas"
 import ca "libs:tlc/canvas_app"
 import "shared:obug"

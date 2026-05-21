@@ -335,7 +335,7 @@ main :: proc() {
 	//defer rl.CloseWindow()
 
 	state = {
-		settings = owin.default_window_settings,
+		settings = owin.DEFAULT_WINDOW_SETTINGS,
 		bg       = {90, 95, 100, 255},
 	}
 	state.settings.window_size = {800, 600}

@@ -124,7 +124,7 @@ WaitForPreviousFrame :: proc() {
 
 run :: proc() -> (exit_code: int) {
 
-	settings := owin.default_window_settings
+	settings := owin.DEFAULT_WINDOW_SETTINGS
 	settings.window_size = {WIDTH, HEIGHT}
 	settings.title = TITLE
 	settings.wndproc = wndproc

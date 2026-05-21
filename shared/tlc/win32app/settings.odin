@@ -39,7 +39,7 @@ get_settings_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPAR
 	return get_settings_from_createstruct(pcs, T)
 }
 
-default_window_settings :: window_settings {
+DEFAULT_WINDOW_SETTINGS :: window_settings {
 	options     = {.Center},
 	dwStyle     = DEFAULT_WS_STYLE,
 	dwExStyle   = DEFAULT_WS_EX_STYLE,
@@ -48,7 +48,7 @@ default_window_settings :: window_settings {
 
 @(private = "file")
 create_window_settings_wndproc :: proc "contextless" (size: int2, title: string, wndproc: win32.WNDPROC) -> window_settings {
-	settings := default_window_settings
+	settings := DEFAULT_WINDOW_SETTINGS
 	settings.window_size = size
 	settings.wndproc = wndproc
 	//settings.run = run

@@ -278,7 +278,7 @@ run :: proc() -> (exit_code: int) {
 		palette[i] = {calc_col(math.pow(f, 0.5)), calc_col(math.pow(f, 1.25)), calc_col(math.pow(f, 3.0)), 255}
 	}
 
-	settings = owin.default_window_settings
+	settings = owin.DEFAULT_WINDOW_SETTINGS
 	settings.window_size = {WIDTH * ZOOM, HEIGHT * ZOOM}
 	settings.title = TITLE
 	settings.wndproc = wndproc
