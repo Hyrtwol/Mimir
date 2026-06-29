@@ -239,16 +239,14 @@ on_update :: proc(app: ^ca.application) -> int {
 			pos^, nrm^, uv^ = vso.position, vso.normal, vso.texcoord
 		}
 		nrm: float3x3
-		update_vs_output(&vert[triangle[0]], &clip_verts[0], &nrm[0], &shader.varying_uv[0])
-		update_vs_output(&vert[triangle[1]], &clip_verts[1], &nrm[1], &shader.varying_uv[1])
-		update_vs_output(&vert[triangle[2]], &clip_verts[2], &nrm[2], &shader.varying_uv[2])
-		// #unroll for vi in 0..<3 {
-		//   update_vs_output(&vert[triangle[vi]], &clip_verts[vi], &nrm[vi], &shader.varying_uv[vi])
-		// }
+		#unroll for vi in 0 ..< 3 {
+			update_vs_output(&vert[triangle[vi]], &clip_verts[vi], &nrm[vi], &shader.varying_uv[vi])
+		}
 
 		shader.varying_nrm = shader.it_model_view * nrm
 		mvv: float4x3 = shader.model_view * clip_verts^
-		shader.view_tri = cv.to_float3x3(&mvv)
+		//shader.view_tri = cv.to_float3x3(&mvv)
+		shader.view_tri = ((^float3x3)(&mvv))^
 		// transform the light vector to view coordinates
 		shader.uniform_l = lg.normalize((shader.model_view * cv.to_float4(light_dir, 0)).xyz)
 	}

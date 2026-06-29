@@ -32,16 +32,25 @@ on_create :: proc(app: ^ca.application) -> int {
 	return 0
 }
 
+wrap_scalar :: #force_inline proc "contextless" (v: ^i32, size: i32)  {
+ 	if v^ < 0 {v^ += size} else if v^ >= size {v^ -= size}
+}
+
+wrap_vector :: #force_inline proc "contextless" (v: ^[$N]i32, size: [N]i32)  {
+	#unroll	for i in 0 ..< N {
+		wrap_scalar(&v[i], size[i])
+	}
+}
+
 on_update :: proc(app: ^ca.application) -> int {
 	pc := &ca.dib.canvas
 	pp: ^cv.int2
-	mx, my := cv.canvas_max_xy(pc)
+	siz := cv.get_canvas_size(pc)
 	for &d in dudes {
 		pp = &d.pos
 		d.dir += rand.int31_max(3) - 1
 		pp^ += dirs[(d.dir >> 1) & 7]
-		if pp.x < 0 {pp.x = mx} else if pp.x > mx {pp.x = 0}
-		if pp.y < 0 {pp.y = my} else if pp.y > my {pp.y = 0}
+		wrap_vector(pp, siz)
 		cv.canvas_set_dot(pc, d.pos, d.col)
 	}
 	cv.fade_to_black(pc)

@@ -10,15 +10,21 @@ import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"
 import win32ex "libs:sys/windows"
-import ot "shared:ounit"
+import "shared:ounit"
 
 L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
 utf8_to_wstring :: win32.utf8_to_wstring
 
-expect_flags :: ot.expect_flags
-expect_size :: ot.expect_size
-expect_value :: ot.expect_any_int
+expect_flags :: ounit.expect_flags
+expect_size :: ounit.expect_size
+expect_value :: ounit.expect_any_int
+
+@(test)
+verify_sizes :: proc(t: ^testing.T) {
+	expect_size(t, owin.CREATESTRUCTW, 80)
+	expect_size(t, owin.CREATESTRUCT, 80)
+}
 
 @(test)
 make_lresult_from_false :: proc(t: ^testing.T) {
@@ -175,12 +181,6 @@ check_mouse_key_state_flags :: proc(t: ^testing.T) {
 	expect_state(t, {.MK_MBUTTON}, win32.MK_MBUTTON)
 	expect_state(t, {.MK_XBUTTON1}, win32.MK_XBUTTON1)
 	expect_state(t, {.MK_XBUTTON2}, win32.MK_XBUTTON2)
-}
-
-@(test)
-verify_sizes :: proc(t: ^testing.T) {
-	expect_size(t, owin.CREATESTRUCTW, 80)
-	expect_size(t, owin.CREATESTRUCT, 80)
 }
 
 @(test)
