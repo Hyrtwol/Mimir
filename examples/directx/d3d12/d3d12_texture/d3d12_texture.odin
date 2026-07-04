@@ -414,8 +414,9 @@ run :: proc() -> (exit_code: int) {
 
 		heap_props := d3d12.CD3DX12_HEAP_PROPERTIES(.UPLOAD)
 
-		fmt.println("size_of(vertex):", size_of(vertex))
-		vertex_buffer_size := len(vertices) * size_of(vertices[0])
+		stride := size_of(vertex)
+		fmt.println("size_of(vertex):", stride)
+		vertex_buffer_size := len(vertices) * stride
 		fmt.println("vertex_buffer_size:", vertex_buffer_size)
 
 		resource_desc := d3d12.RESOURCE_DESC {
@@ -450,10 +451,10 @@ run :: proc() -> (exit_code: int) {
 
 		vertex_buffer_view = d3d12.VERTEX_BUFFER_VIEW {
 			BufferLocation = vertex_buffer->GetGPUVirtualAddress(),
-			//StrideInBytes  = u32(vertex_buffer_size / 3),
-			StrideInBytes  = u32(size_of(vertex)),
+			StrideInBytes  = u32(stride),
 			SizeInBytes    = u32(vertex_buffer_size),
 		}
+		fmt.println("vertex_buffer_view:", vertex_buffer_view)
 	}
 
 	// Note: ComPtr's are CPU objects but this resource needs to stay in scope until

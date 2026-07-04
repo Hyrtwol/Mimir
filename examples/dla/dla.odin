@@ -21,6 +21,7 @@ WIDTH: i32 : (256 * 3) / ZOOM
 HEIGHT: i32 : WIDTH
 
 point_count :: 50000
+steps_per_update :: 16 * 4
 
 world_radius :: u32(WIDTH)
 world_radius_mask :: world_radius - 1
@@ -134,7 +135,7 @@ on_update :: proc(app: ^ca.application) -> int {
 	dir: int2
 	mx, my := i32(pc.size.x - 1), i32(pc.size.y - 1)
 
-	for _ in 0 ..< 16 * 4 {
+	for _ in 0 ..< steps_per_update {
 		for &d in dudes {
 			pp = &d.pos
 			dir = get_direction(rand.int31_max(8))
