@@ -6,7 +6,7 @@ import "base:runtime"
 import "core:fmt"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 import z "shared:z80"
 
 // constants

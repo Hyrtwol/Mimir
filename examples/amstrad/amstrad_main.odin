@@ -7,7 +7,7 @@ import "core:os"
 import "core:path/filepath"
 import win32 "core:sys/windows"
 import a "libs:amstrad"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 import "shared:obug"
 
 ROM_PATH : string
@@ -53,6 +53,7 @@ run :: proc() -> (exit_code: int) {
 	ss: snapshot
 	err := a.load_snapshot(snapshot_path, &ss, memory[:])
 	assert(err == os.ERROR_NONE)
+	// fmt.printfln("%v", ss)
 
 	// cpu.pc = ss.PC
 	// cpu.sp = ss.SP

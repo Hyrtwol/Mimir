@@ -28,17 +28,20 @@ float3x3 :: cv.float3x3
 float4x3 :: cv.float4x3
 float4x4 :: cv.float4x4
 
-width: i32 : 160
+width: i32 : 160 * 1
 height: i32 : width * 3 / 4
-ZOOM :: 6
-FOV_ANGLE :: 90
+ZOOM: i32 : 960 / width
 
 do_rotate := true
 rot_y: f32 = 0
 
-fov: f32
-aspect: f32
-near, far: f32 = 1, 10
+Perspective_f32 :: struct {
+	fov:       f32,
+	aspect:    f32,
+	near, far: f32,
+}
+
+perspective: Perspective_f32 = {45 * math.RAD_PER_DEG, 1, 1, 10}
 
 viewport, proj, view, rotate: float4x4
 
@@ -59,9 +62,18 @@ pics_count := i32(len(pics_data)) / pics_buf_byte_size
 textures: []pics_buf = slice.from_ptr((^pics_buf)(&pics_data[0]), int(pics_count))
 
 light_dir := float3{1, -1, 1} // light source
-eye := float3{1, -2.5, 3} // camera position
-center := float3{0, 0, 0} // camera direction
-up := float3{0, 1, 0} // camera up vector
+
+Camera_f32 :: struct {
+	eye:    float3,
+	center: float3,
+	up:     float3,
+}
+
+camera: Camera_f32 = {
+	eye = float3{1, -2.5, 3},
+	center = float3{0, 0, 0},
+	up = float3{0, 1, 0},
+}
 
 vert_count :: 6
 vertices: [vert_count]cv.VS_INPUT = {
@@ -148,18 +160,30 @@ ps_texture :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^b
 	return false
 }
 
+create_look_at :: #force_inline proc "contextless" (cam: Camera_f32) -> float4x4 {
+	return lg.matrix4_look_at_f32(cam.eye, cam.center, cam.up, flip_z_axis)
+}
+
+create_perspective :: #force_inline proc "contextless" (pers: Perspective_f32) -> float4x4 {
+	return cv.matrix4_perspective_f32_01(pers.fov, pers.aspect, pers.far, pers.near, flip_z_axis)
+}
+
 on_create :: proc(app: ^ca.application) -> int {
 	canvas := &ca.dib.canvas
 	size := cv.get_canvas_size(canvas)
-	fov = FOV_ANGLE * math.PI / 360
-	aspect = f32(size.x) / f32(size.y)
+	perspective.aspect = f32(size.x) / f32(size.y)
 	viewport = cv.create_viewport(size)
-	view = lg.matrix4_look_at_f32(eye, center, up, flip_z_axis)
-	proj = cv.matrix4_perspective_f32_01(fov, aspect, far, near, flip_z_axis)
+	// view = lg.matrix4_look_at_f32(camera.eye, camera.center, camera.up, flip_z_axis)
+	view = create_look_at(camera)
+	//view = camera.look_at(camera.eye, camera.center, camera.up, flip_z_axis)
+	//fmt.println("perspective :", fov, aspect, far, near)
+	fmt.println("perspective:", perspective)
+	//proj = cv.matrix4_perspective_f32_01(perspective.fov, perspective.aspect, perspective.far, perspective.near, flip_z_axis)
+	proj = create_perspective(perspective)
 	rotate = lg.identity(float4x4)
 	light_dir = lg.normalize(light_dir)
 
-	fmt.println("size      :", size)
+	fmt.println("size      :", size, "Zoom:", ZOOM)
 	fmt.println("viewport  :", viewport)
 	fmt.println("view      :", view)
 	fmt.println("proj      :", proj)
@@ -189,12 +213,12 @@ on_update :: proc(app: ^ca.application) -> int {
 
 	if .MK_LBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_ndc(app)
-		eye.x = mp.x * 10
-		eye.y = mp.y * 5
+		camera.eye.x = mp.x * 10
+		camera.eye.y = mp.y * 5
 	}
 	if .MK_RBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_01(app)
-		eye = lg.normalize(eye) * (1 + mp.y * 10)
+		camera.eye = lg.normalize(camera.eye) * (1 + mp.y * 10)
 	}
 	if .MK_MBUTTON in app.mouse_buttons {
 	}
@@ -226,7 +250,9 @@ on_update :: proc(app: ^ca.application) -> int {
 	cv.canvas_clear(canvas)
 	mem.zero(&zbuffer, size_of(zbuffer))
 
-	view = lg.matrix4_look_at(eye, center, up)
+	// proj = create_perspective(perspective)
+	//view = lg.matrix4_look_at(camera.eye, camera.center, camera.up)
+	view = create_look_at(camera)
 	proj_view := proj * view
 
 	if do_rotate {

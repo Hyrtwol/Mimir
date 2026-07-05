@@ -98,7 +98,7 @@ main :: proc() {
 	if icon == nil {icon = win32.LoadIconW(nil, win32.wstring(win32._IDI_APPLICATION))}
 	if icon == nil {show_error_and_panic("Missing icon")}
 
-	cursor := win32.LoadCursorW(nil, win32.wstring(win32._IDC_ARROW))
+	cursor := win32.LoadCursorW(nil,  win32.wstring(win32._IDC_ARROW))
 	if cursor == nil {show_error_and_panic("Missing cursor")}
 
 	wcx := win32.WNDCLASSEXW {

@@ -9,7 +9,7 @@ import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
 import cw "libs:tlc/canvas_win32"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 
 TimerTickPS :: 5
 

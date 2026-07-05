@@ -5,7 +5,7 @@ import "core:os/os2"
 import "core:path/filepath"
 import "core:reflect"
 import "core:time"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 
 DOT_EXE :: "%GRAPHVIZ%\\dot.exe"
 

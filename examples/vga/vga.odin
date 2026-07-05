@@ -9,7 +9,7 @@ import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 import "shared:obug"
 
 int2 :: [2]i32

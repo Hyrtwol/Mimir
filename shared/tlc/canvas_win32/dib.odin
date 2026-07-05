@@ -4,7 +4,7 @@ package canvas_win32
 
 import win32 "core:sys/windows"
 import cv "../canvas"
-import owin "../win32app"
+import "shared:owin"
 
 int2 :: cv.int2
 
@@ -86,19 +86,8 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 	return dib
 }
 
-draw_gdi_obj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hgdiobj: win32.HGDIOBJ, dest_size: int2) {
-	hdc_source := win32.CreateCompatibleDC(hdc)
-	defer win32.DeleteDC(hdc_source)
-	owin.select_object(hdc_source, hgdiobj)
-	owin.stretch_blt(hdc, hdc_size, hdc_source, dest_size)
-}
-
-draw_dib_hbitmap :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hbitmap: win32.HBITMAP, dest_size: int2) {
-	draw_gdi_obj(hwnd, hdc, hdc_size, win32.HGDIOBJ(hbitmap), dest_size)
-}
-
 draw_dib :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, dib: ^DIB) {
-	draw_gdi_obj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
+	owin.draw_gdi_obj(hwnd, hdc, hdc_size, win32.HGDIOBJ(dib.hbitmap), transmute(int2)dib.canvas.size)
 }
 
 @(private = "file")
@@ -109,7 +98,7 @@ _wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOB
 	defer win32.EndPaint(hwnd, &ps)
 
 	client_size := owin.get_rect_size(&ps.rcPaint)
-	draw_gdi_obj(hwnd, hdc, client_size, hgdiobj, size)
+	owin.draw_gdi_obj(hwnd, hdc, client_size, hgdiobj, size)
 
 	return 0
 }

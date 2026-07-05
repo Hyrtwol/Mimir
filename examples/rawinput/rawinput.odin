@@ -8,7 +8,7 @@ import "core:math/linalg"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import cw "libs:tlc/canvas_win32"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 
 L :: owin.L
 

@@ -2,7 +2,7 @@
 package capturing_an_image
 
 import "core:fmt"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 
 main :: proc() {
 	fmt.println("hello world")

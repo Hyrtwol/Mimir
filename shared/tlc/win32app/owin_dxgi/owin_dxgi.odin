@@ -1,7 +1,7 @@
 package owin_dxgi
 
 import dxgi "vendor:directx/dxgi"
-import owin ".."
+import "shared:owin"
 
 @(private = "file")
 present1 :: proc(swap_chain: ^dxgi.ISwapChain1, flags: dxgi.PRESENT = {}) {

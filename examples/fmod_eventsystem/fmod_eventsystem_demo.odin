@@ -7,8 +7,9 @@ import          "core:math"
 import          "base:runtime"
 import win32	"core:sys/windows"
 import fmod		"shared:fmodex"
-import owin     "libs:tlc/win32app"
+import          "shared:owin"
 import cv		"libs:tlc/canvas"
+import cw       "libs:tlc/canvas_win32"
 import			"libs:tlc/wolf"
 
 L :: intrinsics.constant_utf16_cstring
@@ -261,7 +262,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_PAINT:		return owin.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
+	case win32.WM_PAINT:		return cw.wm_paint_dib(hwnd, bitmap_handle, bitmap_size)
 	case win32.WM_CHAR:			return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:	return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:	return WM_LBUTTONDOWN(hwnd, wparam, lparam)

@@ -7,7 +7,7 @@ import "core:fmt"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:time"
-import owin "../win32app"
+import "shared:owin"
 
 int2 :: [2]i32
 color: [4]byte

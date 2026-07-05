@@ -22,11 +22,11 @@ window_settings :: struct {
 	sleep:       time.Duration,
 }
 
-set_settings :: #force_inline proc "contextless" (hwnd: win32.HWND, settings: ^window_settings) {
-	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(settings)))
+set_settings :: #force_inline proc "contextless" (hwnd: HWND, settings: ^window_settings) {
+	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, LONG_PTR(uintptr(settings)))
 }
 
-get_settings :: #force_inline proc "contextless" (hwnd: win32.HWND, $T: typeid) -> ^T where intrinsics.type_is_subtype_of(T, window_settings) {
+get_settings :: #force_inline proc "contextless" (hwnd: HWND, $T: typeid) -> ^T where intrinsics.type_is_subtype_of(T, window_settings) {
 	return (^T)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
 }
 
@@ -34,7 +34,7 @@ get_settings_from_createstruct :: #force_inline proc "contextless" (pcs: ^CREATE
 	return (^T)(pcs.lpCreateParams) if pcs != nil else nil
 }
 
-get_settings_from_lparam :: #force_inline proc "contextless" (lparam: win32.LPARAM, $T: typeid) -> ^T where intrinsics.type_is_subtype_of(T, window_settings) {
+get_settings_from_lparam :: #force_inline proc "contextless" (lparam: LPARAM, $T: typeid) -> ^T where intrinsics.type_is_subtype_of(T, window_settings) {
 	pcs := decode_lparam_as_createstruct(lparam)
 	return get_settings_from_createstruct(pcs, T)
 }

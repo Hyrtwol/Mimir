@@ -7,7 +7,7 @@ import "core:fmt"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
 import cw "libs:tlc/canvas_win32"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 
 L :: intrinsics.constant_utf16_cstring
 

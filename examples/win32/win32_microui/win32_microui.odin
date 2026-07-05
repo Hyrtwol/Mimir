@@ -8,7 +8,7 @@ import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"
 import cw "libs:tlc/canvas_win32"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 import mu "vendor:microui"
 
 _ :: mud
