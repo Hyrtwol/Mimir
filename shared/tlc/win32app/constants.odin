@@ -5,8 +5,8 @@ package owin
 import win32 "core:sys/windows"
 import "core:time"
 
-IDT_TIMER1: win32.UINT_PTR : 10001
-IDT_TIMER2: win32.UINT_PTR : 10002
+IDT_TIMER1: UINT_PTR : 10001
+IDT_TIMER2: UINT_PTR : 10002
 
 IDI_ICON1 :: 101
 
@@ -19,3 +19,6 @@ HPEN_NULL :: win32.HPEN(uintptr(win32.PS_NULL))
 HBRUSH_NULL :: win32.HBRUSH(uintptr(win32.BS_NULL))
 
 LANGID_NEUTRAL_DEFAULT :: DWORD(win32.SUBLANG_DEFAULT) << 10 | DWORD(win32.LANG_NEUTRAL) & 0x3FF
+
+// SRCCOPY :: win32.SRCCOPY
+BI_RGB :: win32.BI_RGB

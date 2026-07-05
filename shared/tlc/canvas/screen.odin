@@ -207,11 +207,13 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 
 	bbmin = linalg.max(bbmin, cmin)
 	bbmax = linalg.min(bbmax, cmax)
+
 	x1, x2, y1, y2 := bbmin.x, bbmax.x, bbmin.y, bbmax.y
 
 	// inverse transpose abc
-	//it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det) // linalg.matrix3x3_inverse_transpose(abc)
-	it_abc := linalg.matrix_mul(linalg.cofactor(abc), 1 / det) // linalg.matrix3x3_inverse_transpose(abc)
+	//it_abc := linalg.matrix3x3_inverse_transpose(abc)
+	//it_abc := linalg.matrix_mul(linalg.adjugate(abc), 1 / det)
+	it_abc := linalg.matrix_mul(linalg.cofactor(abc), 1 / det)
 
 	width := i32(pc.size.x)
 	bits := pc.pvBits

@@ -21,9 +21,31 @@ expect_size :: ounit.expect_size
 expect_value :: ounit.expect_any_int
 
 @(test)
+verify_winnt :: proc(t: ^testing.T) {
+	// winnt.h
+	expect_size(t, owin.BYTE, 1)
+	expect_size(t, owin.BOOL, 4)
+	expect_size(t, owin.WORD, 2)
+	expect_size(t, owin.LONG, 4)
+	expect_size(t, owin.DWORD, 4)
+	expect_size(t, owin.WCHAR, 2)
+	expect_size(t, owin.HANDLE, 8)
+	expect_size(t, owin.HRESULT, 4)
+	expect_size(t, owin.HRESULT_DETAILS, 4)
+}
+
+@(test)
 verify_sizes :: proc(t: ^testing.T) {
 	expect_size(t, owin.CREATESTRUCTW, 80)
 	expect_size(t, owin.CREATESTRUCT, 80)
+}
+
+@(test)
+verify_consts :: proc(t: ^testing.T) {
+	testing.expect_value(t, owin.HPEN_NULL, owin.HPEN(uintptr(5)))
+	testing.expect_value(t, owin.HBRUSH_NULL, owin.HBRUSH(uintptr(1)))
+	testing.expect_value(t, owin.LANGID_NEUTRAL_DEFAULT, 0x400)
+	testing.expect_value(t, owin.LANGID_NEUTRAL_DEFAULT, win32.MAKELANGID(win32.LANG_NEUTRAL, win32.SUBLANG_DEFAULT))
 }
 
 @(test)
@@ -42,36 +64,36 @@ make_lresult_from_true :: proc(t: ^testing.T) {
 
 @(test)
 verify_error_helpers :: proc(t: ^testing.T) {
-	expect_value(t, owin.SUCCEEDED(-1), 0x00000000)
-	expect_value(t, owin.SUCCEEDED(0), 0x00000001)
-	expect_value(t, owin.SUCCEEDED(1), 0x00000001)
+	testing.expect_value(t, owin.SUCCEEDED(-1), false)
+	testing.expect_value(t, owin.SUCCEEDED(0), true)
+	testing.expect_value(t, owin.SUCCEEDED(1), true)
 
-	expect_value(t, owin.FAILED(-1), 0x00000001)
-	expect_value(t, owin.FAILED(0), 0x00000000)
-	expect_value(t, owin.FAILED(1), 0x00000000)
+	testing.expect_value(t, owin.FAILED(-1), true)
+	testing.expect_value(t, owin.FAILED(0), false)
+	testing.expect_value(t, owin.FAILED(1), false)
 
-	expect_value(t, owin.IS_ERROR(-1), 0x00000001)
-	expect_value(t, owin.IS_ERROR(0), 0x00000000)
-	expect_value(t, owin.IS_ERROR(1), 0x00000000)
+	testing.expect_value(t, owin.IS_ERROR(-1), true)
+	testing.expect_value(t, owin.IS_ERROR(0), false)
+	testing.expect_value(t, owin.IS_ERROR(1), false)
 
-	expect_value(t, owin.HRESULT_CODE(0xFFFFCCCC), 0x0000CCCC)
-	expect_value(t, owin.HRESULT_FACILITY(0xFFFFCCCC), 0x00001FFF)
-	expect_value(t, owin.HRESULT_SEVERITY(0x12345678), 0x00000000)
-	expect_value(t, owin.HRESULT_SEVERITY(0x87654321), 0x00000001)
+	testing.expect_value(t, owin.HRESULT_CODE(0xFFFFCCCC), 0x0000CCCC)
+	testing.expect_value(t, owin.HRESULT_FACILITY(0xFFFFCCCC), owin.FACILITY(0x00001FFF))
+	testing.expect_value(t, owin.HRESULT_SEVERITY(0x12345678), owin.SEVERITY(0x00000000))
+	testing.expect_value(t, owin.HRESULT_SEVERITY(0x87654321), owin.SEVERITY(0x00000001))
 
-	expect_value(t, u32(owin.MAKE_HRESULT(1, 2, 3)), 0x80020003)
+	testing.expect_value(t, u32(owin.MAKE_HRESULT(1, 2, 3)), 0x80020003)
 }
 
 @(test)
 decode_hresult :: proc(t: ^testing.T) {
 	hr := owin.DECODE_HRESULT(win32.E_INVALIDARG)
-	expect_value(t, hr.IsError, true)
-	expect_value(t, hr.R, false)
-	expect_value(t, hr.Customer, false)
-	expect_value(t, hr.N, false)
-	expect_value(t, hr.X, false)
-	expect_value(t, hr.Facility, owin.FACILITY.WIN32)
-	expect_value(t, hr.Code, win32.System_Error.INVALID_PARAMETER)
+	testing.expect_value(t, hr.IsError, true)
+	testing.expect_value(t, hr.R, false)
+	testing.expect_value(t, hr.Customer, false)
+	testing.expect_value(t, hr.N, false)
+	testing.expect_value(t, hr.X, false)
+	testing.expect_value(t, hr.Facility, owin.FACILITY.WIN32)
+	testing.expect_value(t, hr.Code, u16(win32.System_Error.INVALID_PARAMETER))
 }
 
 @(test)
@@ -84,21 +106,21 @@ get_hresult_details :: proc(t: ^testing.T) {
 	testing.expect_value(t, hr.N, false)
 	testing.expect_value(t, hr.X, false)
 	testing.expect_value(t, hr.Facility, owin.FACILITY.WIN32)
-	expect_value(t, hr.Code, win32.System_Error.INVALID_PARAMETER)
-	ot.expect_value_str(t, fmt.tprintf("%v", hr), "HRESULT{Code = 87, Facility = WIN32, X = false, N = false, Customer = false, R = false, IsError = true}")
+	testing.expect_value(t, hr.Code, u16(win32.System_Error.INVALID_PARAMETER))
+	ounit.expect_value_str(t, fmt.tprintf("%v", hr), "HRESULT_DETAILS{Code = 87, Facility = WIN32, X = false, N = false, Customer = false, R = false, IsError = true}")
 }
 
 @(test)
 min_max_msg :: proc(t: ^testing.T) {
 
 	p := min_max_msg
-	ot.expect_any_int(t, min(owin.WM_MSG), 0x0001)
-	ot.expect_any_int(t, max(owin.WM_MSG), 0x0214)
-	ot.expect_value(t, size_of(p), 8)
-	ot.expect_value(t, int(max(owin.WM_MSG)) * size_of(p), 4256)
+	ounit.expect_any_int(t, min(owin.WM_MSG), 0x0001)
+	ounit.expect_any_int(t, max(owin.WM_MSG), 0x0214)
+	ounit.expect_value(t, size_of(p), 8)
+	ounit.expect_value(t, int(max(owin.WM_MSG)) * size_of(p), 4256)
 
-	ot.expect_value(t, min(owin.WM_MSG), owin.WM_MSG.WM_CREATE)
-	ot.expect_value(t, max(owin.WM_MSG), owin.WM_MSG.WM_SIZING)
+	ounit.expect_value(t, min(owin.WM_MSG), owin.WM_MSG.WM_CREATE)
+	ounit.expect_value(t, max(owin.WM_MSG), owin.WM_MSG.WM_SIZING)
 }
 
 @(test)
@@ -122,17 +144,17 @@ verify_bitmap_headers :: proc(t: ^testing.T) {
 	}
 	pbmp5 := &bmp5
 	pbmp := cast(^win32.BITMAPINFOHEADER)pbmp5
-	ot.expect_value(t, pbmp5.bV5Size, pbmp.biSize)
-	ot.expect_value(t, pbmp5.bV5Width, pbmp.biWidth)
-	ot.expect_value(t, pbmp5.bV5Height, pbmp.biHeight)
-	ot.expect_value(t, pbmp5.bV5Planes, pbmp.biPlanes)
-	ot.expect_value(t, pbmp5.bV5BitCount, pbmp.biBitCount)
-	ot.expect_value(t, pbmp5.bV5Compression, pbmp.biCompression)
-	ot.expect_value(t, pbmp5.bV5SizeImage, pbmp.biSizeImage)
-	ot.expect_value(t, pbmp5.bV5XPelsPerMeter, pbmp.biXPelsPerMeter)
-	ot.expect_value(t, pbmp5.bV5YPelsPerMeter, pbmp.biYPelsPerMeter)
-	ot.expect_value(t, pbmp5.bV5ClrUsed, pbmp.biClrUsed)
-	ot.expect_value(t, pbmp5.bV5ClrImportant, pbmp.biClrImportant)
+	ounit.expect_value(t, pbmp5.bV5Size, pbmp.biSize)
+	ounit.expect_value(t, pbmp5.bV5Width, pbmp.biWidth)
+	ounit.expect_value(t, pbmp5.bV5Height, pbmp.biHeight)
+	ounit.expect_value(t, pbmp5.bV5Planes, pbmp.biPlanes)
+	ounit.expect_value(t, pbmp5.bV5BitCount, pbmp.biBitCount)
+	ounit.expect_value(t, pbmp5.bV5Compression, pbmp.biCompression)
+	ounit.expect_value(t, pbmp5.bV5SizeImage, pbmp.biSizeImage)
+	ounit.expect_value(t, pbmp5.bV5XPelsPerMeter, pbmp.biXPelsPerMeter)
+	ounit.expect_value(t, pbmp5.bV5YPelsPerMeter, pbmp.biYPelsPerMeter)
+	ounit.expect_value(t, pbmp5.bV5ClrUsed, pbmp.biClrUsed)
+	ounit.expect_value(t, pbmp5.bV5ClrImportant, pbmp.biClrImportant)
 }
 
 @(test)
@@ -144,8 +166,8 @@ wstring_print :: proc(t: ^testing.T) {
 	smsg: string = msg
 	cmsg: cstring = cstring("Hello!")
 	wmsg: wstring = L("Hello!")
-	ot.expect_value(t, owin.wstring_byte_size(wmsg), 12)
-	ot.expect_value(t, owin.wstring_len(wmsg), 6)
+	ounit.expect_value(t, owin.wstring_byte_size(wmsg), 12)
+	ounit.expect_value(t, owin.wstring_len(wmsg), 6)
 
 
 	cmsg = fmt.ctprintf(f, msg)
@@ -155,7 +177,7 @@ wstring_print :: proc(t: ^testing.T) {
 	testing.expectf(t, smsg == exp, "%v (should be: %v)", smsg, exp)
 	testing.expectf(t, cmsg == exp, "%v (should be: %v)", cmsg, exp)
 
-	wexp := L(exp)
+	wexp: wstring = L(exp)
 	wexp_size := len(exp) * size_of(win32.WCHAR)
 
 	testing.expect(t, owin.wstring_equal(wmsg, wexp))
@@ -165,7 +187,8 @@ wstring_print :: proc(t: ^testing.T) {
 	fmt.sbprintf(&str, f, msg)
 	wmsg = owin.to_wstring(str)
 
-	ot.expect_value(t, mem.compare_byte_ptrs((^u8)(&wmsg[0]), (^u8)(&wexp[0]), wexp_size), 0)
+	// ounit.expect_value(t, mem.compare_byte_ptrs((^u8)(&wmsg[0]), (^u8)(&wexp[0]), wexp_size), 0)
+	testing.expect_value(t, wmsg, wexp)
 }
 
 @(test)
@@ -181,20 +204,6 @@ check_mouse_key_state_flags :: proc(t: ^testing.T) {
 	expect_state(t, {.MK_MBUTTON}, win32.MK_MBUTTON)
 	expect_state(t, {.MK_XBUTTON1}, win32.MK_XBUTTON1)
 	expect_state(t, {.MK_XBUTTON2}, win32.MK_XBUTTON2)
-}
-
-@(test)
-verify_winnt :: proc(t: ^testing.T) {
-	// winnt.h
-	expect_size(t, owin.BYTE, 1)
-	expect_size(t, owin.BOOL, 4)
-	expect_size(t, owin.WORD, 2)
-	expect_size(t, owin.LONG, 4)
-	expect_size(t, owin.DWORD, 4)
-	expect_size(t, owin.WCHAR, 2)
-	expect_size(t, owin.HANDLE, 8)
-	expect_size(t, owin.HRESULT, 4)
-	expect_size(t, owin.HRESULT_DETAILS, 4)
 }
 
 @(test)

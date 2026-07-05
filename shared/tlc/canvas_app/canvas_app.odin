@@ -8,13 +8,14 @@ import "core:math/linalg"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 
 TimerTickPS :: 5
 
 int2 :: cv.int2
 color: cv.color
-dib: owin.DIB
+dib: cw.DIB
 
 app_action :: #type proc(app: ^application) -> int
 
@@ -85,7 +86,7 @@ set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 @(private = "file")
 draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
 	app := get_app(hwnd)
-	owin.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
+	cw.draw_dib(hwnd, hdc, app.settings.window_size, &dib)
 }
 
 @(private = "file")
@@ -106,7 +107,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = owin.dib_create_v5(hdc, app.size)
+	dib = cw.dib_create_v5(hdc, app.size)
 	if dib.canvas.pvBits == nil {owin.show_error_and_panic("No DIB")}
 	cv.canvas_clear(&dib, cv.COLOR_BLACK)
 
@@ -122,7 +123,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := get_app(hwnd)
 	app->destroy()
-	owin.dib_free(&dib)
+	cw.dib_free(&dib)
 	owin.kill_timer(hwnd, &app.timer_id)
 	assert(app.timer_id == 0)
 	owin.post_quit_message(0)

@@ -12,6 +12,7 @@ import "base:runtime"
 //import "core:time"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 import f "shared:flac"
 
@@ -70,7 +71,7 @@ PNoiseDisplay :: ^TNoiseDisplay
 
 TDoBuffer :: proc(Buf: rawptr)
 
-dib: owin.DIB
+dib: cw.DIB
 colidx := 1
 cols := cv.C64_COLORS
 
@@ -237,7 +238,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = owin.dib_create_v5(hdc, client_size / ZOOM)
+	dib = cw.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
 		cv.canvas_clear(&dib, cv.byte4{50, 100, 150, 255})
 	}
@@ -249,7 +250,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	owin.dib_free(&dib)
+	cw.dib_free(&dib)
 	//CloseFile()
 	owin.post_quit_message(0)
 	return 0
@@ -377,7 +378,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_ERASEBKGND:    return 1
 	case win32.WM_SIZE:          return WM_SIZE(hwnd, wparam, lparam)
 	//case win32.WM_PAINT:       return WM_PAINT(hwnd)
-	case win32.WM_PAINT:         return owin.wm_paint_dib(hwnd, dib)
+	case win32.WM_PAINT:         return cw.wm_paint_dib(hwnd, dib)
 	case win32.WM_CHAR:          return WM_CHAR(hwnd, wparam, lparam)
 	case win32.WM_MOUSEMOVE:     return WM_MOUSEMOVE(hwnd, wparam, lparam)
 	case win32.WM_LBUTTONDOWN:   return WM_LBUTTONDOWN(hwnd, wparam, lparam)

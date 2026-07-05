@@ -181,11 +181,11 @@ invalidate_window :: #force_inline proc "contextless" (hwnd: HWND) {
 }
 
 
-set_window_user_data :: #force_inline proc "contextless" (hwnd: win32.HWND, user_data: rawptr) {
+set_window_user_data :: #force_inline proc "contextless" (hwnd: HWND, user_data: rawptr) {
 	win32.SetWindowLongPtrW(hwnd, win32.GWLP_USERDATA, win32.LONG_PTR(uintptr(user_data)))
 }
 
-get_window_user_data :: #force_inline proc "contextless" (hwnd: win32.HWND, $T: typeid) {
+get_window_user_data :: #force_inline proc "contextless" (hwnd: HWND, $T: typeid) {
 	return (^T)(rawptr(uintptr(win32.GetWindowLongPtrW(hwnd, win32.GWLP_USERDATA))))
 }
 

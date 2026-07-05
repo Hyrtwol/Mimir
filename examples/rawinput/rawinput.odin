@@ -7,6 +7,7 @@ import "core:fmt"
 import "core:math/linalg"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 
 L :: owin.L
@@ -20,7 +21,7 @@ application :: struct {
 	#subtype settings: owin.window_settings,
 }
 
-dib: owin.DIB
+dib: cw.DIB
 selected_color: i32 = 1
 cols := cv.C64_COLORS
 
@@ -68,7 +69,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
-	dib = owin.dib_create_v5(hdc, client_size / ZOOM)
+	dib = cw.dib_create_v5(hdc, client_size / ZOOM)
 	if dib.canvas.pvBits != nil {
 		cv.canvas_clear(&dib, cols[0])
 	}
@@ -82,7 +83,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	if cursor_state < 1 {
 		show_cursor(true)
 	}
-	owin.dib_free(&dib)
+	cw.dib_free(&dib)
 	owin.post_quit_message()
 	return 0
 }

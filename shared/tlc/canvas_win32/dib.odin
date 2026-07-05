@@ -1,9 +1,12 @@
 #+build windows
 #+vet
-package owin
+package canvas_win32
 
 import win32 "core:sys/windows"
-import cv "libs:tlc/canvas"
+import cv "../canvas"
+import owin "../win32app"
+
+int2 :: cv.int2
 
 DIB :: struct {
 	#subtype canvas: cv.canvas,
@@ -12,7 +15,7 @@ DIB :: struct {
 
 @(private = "file")
 dib_create_section_bitmap_info :: proc(dib: ^DIB, hdc: win32.HDC, pbmi: ^win32.BITMAPINFO) {
-	dib.hbitmap = create_dib_section(hdc, pbmi, .DIB_RGB_COLORS, &dib.canvas.pvBits)
+	dib.hbitmap = owin.create_dib_section(hdc, pbmi, .DIB_RGB_COLORS, &dib.canvas.pvBits)
 	if dib.hbitmap == nil || dib.canvas.pvBits == nil {
 		cv.canvas_zero(&dib.canvas)
 	}
@@ -38,9 +41,9 @@ dib_create_section :: proc {
 
 dib_free :: proc(dib: ^DIB, loc := #caller_location) {
 	if dib.hbitmap != nil {
-		if !delete_object(&dib.hbitmap) {
+		if !owin.delete_object(&dib.hbitmap) {
 			//fmt.panicf("Unable to delete object %v", dib.hbitmap, loc = loc)
-			show_message_boxf("Error", "Unable to delete object %v", dib.hbitmap, loc)
+			owin.show_message_boxf("Error", "Unable to delete object %v", dib.hbitmap, loc)
 		}
 	}
 	dib.hbitmap = nil
@@ -86,8 +89,8 @@ dib_create_v5 :: proc(hdc: win32.HDC, size: int2) -> DIB {
 draw_gdi_obj :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hgdiobj: win32.HGDIOBJ, dest_size: int2) {
 	hdc_source := win32.CreateCompatibleDC(hdc)
 	defer win32.DeleteDC(hdc_source)
-	select_object(hdc_source, hgdiobj)
-	stretch_blt(hdc, hdc_size, hdc_source, dest_size)
+	owin.select_object(hdc_source, hgdiobj)
+	owin.stretch_blt(hdc, hdc_size, hdc_source, dest_size)
 }
 
 draw_dib_hbitmap :: #force_inline proc "contextless" (hwnd: win32.HWND, hdc: win32.HDC, hdc_size: int2, hbitmap: win32.HBITMAP, dest_size: int2) {
@@ -105,7 +108,7 @@ _wm_paint_hgdiobj :: proc "contextless" (hwnd: win32.HWND, hgdiobj: win32.HGDIOB
 	if hdc == nil {return 1}
 	defer win32.EndPaint(hwnd, &ps)
 
-	client_size := get_rect_size(&ps.rcPaint)
+	client_size := owin.get_rect_size(&ps.rcPaint)
 	draw_gdi_obj(hwnd, hdc, client_size, hgdiobj, size)
 
 	return 0

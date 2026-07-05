@@ -25,7 +25,7 @@ bitmap_size   : owin.int2
 bitmap_count  : i32
 pvBits        : screen_buffer
 
-dib           : owin.DIB
+// dib           : cw.DIB
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 

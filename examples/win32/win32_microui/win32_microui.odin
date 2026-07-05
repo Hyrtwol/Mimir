@@ -7,6 +7,7 @@ import "core:fmt"
 import win32 "core:sys/windows"
 import mud "libs:microui/demo"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 import mu "vendor:microui"
 
@@ -18,7 +19,7 @@ FPS :: 5
 IDT_TIMER1: win32.UINT_PTR : 10001
 timer1_id: win32.UINT_PTR
 
-DIB :: owin.DIB
+DIB :: cw.DIB
 canvas :: cv.canvas
 
 mouse_event :: struct {
@@ -37,7 +38,7 @@ application :: struct {
 	log_buf_len:     int,
 	log_buf_updated: bool,
 	bg:              mu.Color,
-	atlas_texture:   owin.DIB,
+	atlas_texture:   cw.DIB,
 	//char_queue:      queue.Queue(u8),
 	//mouse_queue:     queue.Queue(mouse_event),
 }

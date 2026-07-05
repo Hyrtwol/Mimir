@@ -6,6 +6,7 @@ import "base:runtime"
 import "core:math/noise"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
@@ -14,7 +15,7 @@ int2 :: [2]i32
 float2 :: [2]f32
 double2 :: [2]f64
 double3 :: [3]f64
-DIB :: owin.DIB
+DIB :: cw.DIB
 canvas :: cv.canvas
 
 TITLE :: "Noise"
@@ -88,14 +89,14 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	timer_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 50)
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
-	dib = owin.dib_create_v5(hdc, owin.get_client_size(hwnd) / ZOOM)
+	dib = cw.dib_create_v5(hdc, owin.get_client_size(hwnd) / ZOOM)
 	cv.canvas_clear(&dib, cv.byte4{50, 150, 100, 255})
 	return 0
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	owin.kill_timer(hwnd, &timer_id)
-	owin.dib_free(&dib)
+	cw.dib_free(&dib)
 	owin.post_quit_message(0)
 	return 0
 }

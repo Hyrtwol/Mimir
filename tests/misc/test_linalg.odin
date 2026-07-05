@@ -21,8 +21,10 @@ calc_projection :: proc(t: ^T) {
 		0, 0, 1, 0,
 	}
 	projection2 = linalg.matrix4_perspective_f32(fov, aspect, near, far, false)
-	fmt.println("projection1:", projection1)
-	fmt.println("projection2:", projection2)
+	// fmt.println("projection1:", projection1)
+	// fmt.println("projection2:", projection2)
+	// projection1: matrix[2,         0, 0, 0; 0, 2,         0, 0; 0, 0, 1.125, -1.125; 0, 0, 1, 0]
+	// projection2: matrix[2.0056896, 0, 0, 0; 0, 2.0056896, 0, 0; 0, 0, 1.25 , -2.25 ; 0, 0, 1, 0]
 
 	_t.expect_value(t, projection1[0, 0], 2)
 }

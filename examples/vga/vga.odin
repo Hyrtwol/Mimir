@@ -59,7 +59,7 @@ frame_stats: struct {
 //#assert(size_of(color_palette) == 64)
 //#assert(size_of(BITMAPINFO) == 124 + 64)
 
-//dib: owin.DIB
+//dib: cw.DIB
 selected_color: u8 = 1
 cols := cv.VGA_COLORS
 

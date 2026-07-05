@@ -19,3 +19,11 @@ Odin executable
 ```txt
 %ODIN_ROOT%\odin.exe
 ```
+
+## notes
+
+Obsolete
+
+```odin
+@(deprecated="Use strconv.parse_f64() instead")
+```

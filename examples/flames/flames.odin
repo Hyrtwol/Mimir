@@ -11,6 +11,7 @@ import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 import "shared:obug"
 
@@ -20,7 +21,7 @@ int2 :: cv.int2
 double2 :: [2]f64
 double3 :: [3]f64
 
-DIB :: owin.DIB
+DIB :: cw.DIB
 canvas :: cv.canvas
 
 TITLE :: "Flames"
@@ -159,7 +160,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	hdc := win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
-	dib = owin.dib_create_v5(hdc, {WIDTH, HEIGHT})
+	dib = cw.dib_create_v5(hdc, {WIDTH, HEIGHT})
 	if dib.canvas.pvBits == nil {owin.show_error_and_panic("No DIB")}
 	cv.canvas_clear(&dib, cv.byte4{0, 0, 0, 255})
 
@@ -172,7 +173,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 
-	owin.dib_free(&dib)
+	cw.dib_free(&dib)
 	assert(dib.hbitmap == nil)
 	owin.kill_timer(hwnd, &timer_id)
 	assert(timer_id == 0)
@@ -189,7 +190,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 }
 
 draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
-	owin.draw_dib(hwnd, hdc, settings.window_size, &dib)
+	cw.draw_dib(hwnd, hdc, settings.window_size, &dib)
 }
 
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {

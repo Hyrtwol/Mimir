@@ -6,6 +6,7 @@ import "base:runtime"
 import "core:fmt"
 import win32 "core:sys/windows"
 import cv "libs:tlc/canvas"
+import cw "libs:tlc/canvas_win32"
 import owin "libs:tlc/win32app"
 
 L :: intrinsics.constant_utf16_cstring
@@ -27,10 +28,10 @@ application :: struct {
 	#subtype settings: owin.window_settings,
 }
 
-dib: owin.DIB
+dib: cw.DIB
 // frame buffers
 fbc :: 2
-fbs: [fbc]owin.DIB
+fbs: [fbc]cw.DIB
 fps: f64 = 0
 frame_counter := 0
 
@@ -85,11 +86,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	cc := cv.get_color(clear_color)
 	for i in 0 ..< fbc {
-		fbs[i] = owin.dib_create_v5(hdc, client_size)
+		fbs[i] = cw.dib_create_v5(hdc, client_size)
 		cv.canvas_clear(&fbs[i], cc)
 	}
 
-	dib = owin.dib_create_v5(hdc, client_size / ZOOM)
+	dib = cw.dib_create_v5(hdc, client_size / ZOOM)
 	cv.canvas_clear(&dib, cc)
 
 	timer_id = owin.set_timer(hwnd, IDT_TIMER1, 1000 / FPS)
@@ -103,9 +104,9 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	owin.kill_timer(hwnd, &timer_id)
 	// owin.clip_cursor(hwnd, false)
 	// if cursor_state < 1 {show_cursor(true)}
-	owin.dib_free(&dib)
+	cw.dib_free(&dib)
 	for i in 0 ..< fbc {
-		owin.dib_free(&fbs[i])
+		cw.dib_free(&fbs[i])
 	}
 	owin.post_quit_message()
 	return 0
