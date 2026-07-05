@@ -123,17 +123,17 @@ get_random_direction8 :: #force_inline proc() -> int2 {
 
 @(require_results)
 matrix4_rotate_x_f32 :: proc "contextless" (angle: f32) -> float4x4 {
-	return auto_cast linalg.matrix4_rotate_f32(angle, float3_xunit)
+	return linalg.matrix4_rotate_f32(angle, float3_xunit)
 }
 
 @(require_results)
 matrix4_rotate_y_f32 :: proc "contextless" (angle: f32) -> float4x4 {
-	return auto_cast linalg.matrix4_rotate_f32(angle, float3_yunit)
+	return linalg.matrix4_rotate_f32(angle, float3_yunit)
 }
 
 @(require_results)
 matrix4_rotate_z_f32 :: proc "contextless" (angle: f32) -> float4x4 {
-	return auto_cast linalg.matrix4_rotate_f32(angle, float3_zunit)
+	return linalg.matrix4_rotate_f32(angle, float3_zunit)
 }
 
 @(private = "file")
