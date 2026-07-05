@@ -1,8 +1,9 @@
 package test_misc
 
+import "base:runtime"
 import "core:fmt"
-import "core:os"
 import "core:io"
+import "core:os"
 import "core:path/filepath"
 import "core:slice"
 import "core:strings"
@@ -14,11 +15,12 @@ write_hello_txt :: proc(t: ^testing.T) {
 	path := "hello.log"
 	// fmt.printfln("writing %s", path)
 	data := "ABCD"
-	ok := os.write_entire_file(path, transmute([]byte)data)
-	testing.expect(t, ok)
+	err: os.Error
+	err = os.write_entire_file(path, transmute([]byte)data)
+	testing.expect_value(t, err, 0)
 	testing.expect(t, os.exists(path))
-	err := os.remove(path)
-	testing.expect(t, err == 0)
+	err = os.remove(path)
+	testing.expect_value(t, err, 0)
 	testing.expect(t, !os.exists(path))
 }
 
@@ -26,11 +28,12 @@ EXPECTED_FILE_SIZE :: 3114
 
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
-	path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	path, _ := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 	//fmt.printfln("reading %s", path)
 
-	data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
-	testing.expect(t, ok)
+	// data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
+	data, err := os.read_entire_file(path, allocator = context.temp_allocator)
+	testing.expect_value(t, err, 0)
 	testing.expectf(t, len(data) == EXPECTED_FILE_SIZE, "len=%d", len(data))
 	//data: []byte = {65, 66, 67, 68} // "ABCD"
 	// data := "ABCD"
@@ -41,20 +44,21 @@ read_some_bytes :: proc(t: ^testing.T) {
 
 @(test)
 file_io :: proc(t: ^testing.T) {
-	path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	path, _ := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 
-	fd: os.Handle
-	err: os.Errno
+	//fd: os.Handle
+	fd: ^os.File
+	err: os.Error
 
-	fd, err = os.open(path, os.O_RDONLY, 0)
-	testing.expect(t, err == 0)
+	fd, err = os.open(path, os.O_RDONLY)
+	testing.expect_value(t, err, os.ERROR_NONE)
 	if err != 0 {return}
 
 	defer os.close(fd)
 
 	length: i64
 	if length, err = os.file_size(fd); err != 0 {
-		testing.expect(t, err == 0)
+		testing.expect_value(t, err, 0)
 		return
 	}
 	testing.expectf(t, length == EXPECTED_FILE_SIZE, "%d != %d", length, EXPECTED_FILE_SIZE)
@@ -91,32 +95,34 @@ file_io :: proc(t: ^testing.T) {
 @(test)
 file_reader_writer :: proc(t: ^testing.T) {
 	//input_path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
-	input_path := filepath.clean("../../README.md", allocator = context.temp_allocator)
+	input_path, _ := filepath.clean("../../README.md", allocator = context.temp_allocator)
 	output_path := "file_reader_writer.log"
 
-	fi, fo: os.Handle
-	ferr: os.Errno
+	// fi, fo: os.Handle
+	fi, fo: ^os.File
+	ferr: os.Error
 
-	fi, ferr = os.open(input_path, os.O_RDONLY, 0)
+	fi, ferr = os.open(input_path, os.O_RDONLY)
 	testing.expect_value(t, ferr, os.ERROR_NONE)
 	if ferr != os.ERROR_NONE {return}
 	defer os.close(fi)
 
-	fo, ferr = os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
+	fo, ferr = os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
 	testing.expect_value(t, ferr, os.ERROR_NONE)
 	if ferr != os.ERROR_NONE {return}
 	defer os.close(fo)
 
-	r := io.to_reader(os.stream_from_handle(fi))
-	w := io.to_writer(os.stream_from_handle(fo))
+	//r := io.to_reader(os.stream_from_handle(fi))
+	r := io.to_reader(os.to_stream(fi))
+	w := io.to_writer(os.to_stream(fo))
 
 	//fmt.wprintln(w, "file_reader_writer")
 	//io.reader_write_to()
 
 	ch: rune = 0; size, wsize: int; err: io.Error
 	for ch, size, err = io.read_rune(r); ch > 0; ch, size, err = io.read_rune(r) {
-		testing.expect_value(t, ferr, os.ERROR_NONE)
-		if ferr != os.ERROR_NONE {return}
+		testing.expect_value(t, err, io.Error.None)
+		if err != io.Error.None {return}
 		//fmt.wprintfln(w, "read_rune: '%v' %d %v", ch, size, err)
 		if ch == '\r' {
 			//ch = '~'
@@ -131,18 +137,20 @@ file_reader_writer :: proc(t: ^testing.T) {
 
 @(test)
 lowercase_dictionary :: proc(t: ^testing.T) {
-	path := filepath.join({"..", "..", "doc", "odin-dictionary.txt"}, context.temp_allocator)
+	path, _ := filepath.join({"..", "..", "doc", "odin-dictionary.txt"}, context.temp_allocator)
 
 	// fmt.printfln("reading %s", path)
-	data, ok := os.read_entire_file_from_filename(path, context.temp_allocator)
-	testing.expect(t, ok)
-	if !ok {return}
+	//data, err := os.read_entire_file_from_filename(path, context.temp_allocator)
+	data, err := os.read_entire_file(path, allocator = context.temp_allocator)
+	testing.expect_value(t, err, 0)
+	if err != 0 {return}
 
 	newline :: "\r\n"
 
-	words, err := strings.split(string(data), newline, context.temp_allocator)
-	testing.expect(t, err == .None)
-	if err != .None {return}
+	words, aerr := strings.split(string(data), newline, context.temp_allocator)
+	// testing.expect(t, err == .None)
+	testing.expect_value(t, aerr, runtime.Allocator_Error.None)
+	if aerr != .None {return}
 
 	new_words := make([dynamic]string, 0, len(words), context.temp_allocator)
 
@@ -155,7 +163,7 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 	slice.sort(new_words[:])
 
 	// fmt.printfln("writing %s", path)
-	fd, fe := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
+	fd, fe := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
 	testing.expect(t, fe == 0)
 	if fe != 0 {return}
 	defer os.close(fd)

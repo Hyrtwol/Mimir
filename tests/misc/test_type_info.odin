@@ -47,11 +47,11 @@ struct_tags :: proc(t: ^testing.T) {
 		uv0: [2]f32 `TEXCOORD:"2"`,
 	}
 
-	fd, fe := os.open("struct_fields_zipped.log", os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
+	fd, fe := os.open("struct_fields_zipped.log", os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
 	testing.expect(t, fe == 0)
 	if fe != 0 {return}
 	defer os.close(fd)
-	w := io.to_writer(os.stream_from_handle(fd))
+	w := io.to_writer(os.to_stream(fd))
 
 	vt: string
 	ok: bool
