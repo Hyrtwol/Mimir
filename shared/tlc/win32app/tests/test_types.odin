@@ -16,12 +16,13 @@ L :: intrinsics.constant_utf16_cstring
 wstring :: win32.wstring
 utf8_to_wstring :: win32.utf8_to_wstring
 
-expect_flags :: ounit.expect_flags
+//expect_value :: ounit.expect_any_int
+expect_value :: testing.expect_value
 expect_size :: ounit.expect_size
-expect_value :: ounit.expect_any_int
+expect_flags :: ounit.expect_flags
 
 @(test)
-verify_winnt :: proc(t: ^testing.T) {
+verify_sizes :: proc(t: ^testing.T) {
 	// winnt.h
 	expect_size(t, owin.BYTE, 1)
 	expect_size(t, owin.BOOL, 4)
@@ -32,20 +33,16 @@ verify_winnt :: proc(t: ^testing.T) {
 	expect_size(t, owin.HANDLE, 8)
 	expect_size(t, owin.HRESULT, 4)
 	expect_size(t, owin.HRESULT_DETAILS, 4)
-}
-
-@(test)
-verify_sizes :: proc(t: ^testing.T) {
 	expect_size(t, owin.CREATESTRUCTW, 80)
 	expect_size(t, owin.CREATESTRUCT, 80)
 }
 
 @(test)
 verify_consts :: proc(t: ^testing.T) {
-	testing.expect_value(t, owin.HPEN_NULL, owin.HPEN(uintptr(5)))
-	testing.expect_value(t, owin.HBRUSH_NULL, owin.HBRUSH(uintptr(1)))
-	testing.expect_value(t, owin.LANGID_NEUTRAL_DEFAULT, 0x400)
-	testing.expect_value(t, owin.LANGID_NEUTRAL_DEFAULT, win32.MAKELANGID(win32.LANG_NEUTRAL, win32.SUBLANG_DEFAULT))
+	expect_value(t, owin.HPEN_NULL, owin.HPEN(uintptr(5)))
+	expect_value(t, owin.HBRUSH_NULL, owin.HBRUSH(uintptr(1)))
+	expect_value(t, owin.LANGID_NEUTRAL_DEFAULT, 0x400)
+	expect_value(t, owin.LANGID_NEUTRAL_DEFAULT, win32.MAKELANGID(win32.LANG_NEUTRAL, win32.SUBLANG_DEFAULT))
 }
 
 @(test)

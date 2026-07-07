@@ -6,7 +6,7 @@
 	"enable_snippets": false,
 	"verbose": false,
 	"file_log": false,
-	"enable_inlay_hints": false,
+	// "enable_inlay_hints": false,
 	"enable_references": true,
 	"collections": [
 		{

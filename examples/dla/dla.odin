@@ -50,6 +50,7 @@ map_set_dot :: #force_inline proc "contextless" (pos: uint2, val: u8) {
 		dla_map[pos.y * world_radius + pos.x] = val
 	}
 }
+
 map_get_dot :: #force_inline proc "contextless" (x, y: u32) -> u8 {
 	if x < world_radius && y < world_radius {
 		return dla_map[y * world_radius + x]
@@ -58,10 +59,7 @@ map_get_dot :: #force_inline proc "contextless" (x, y: u32) -> u8 {
 }
 
 map_is_free :: #force_inline proc "contextless" (x, y: u32) -> bool {
-	if x < world_radius && y < world_radius {
-		return dla_map[y * world_radius + x] == 0
-	}
-	return true
+	return map_get_dot(x, y) == 0
 }
 
 map_check_free4 :: #force_inline proc "contextless" (x, y: u32) -> bool {

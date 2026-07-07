@@ -3,10 +3,10 @@ package main
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
-import win32 "core:sys/windows"
-import "shared:owin"
-import "shared:obug"
 import "core:os"
+import win32 "core:sys/windows"
+import "shared:obug"
+import "shared:owin"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
@@ -73,6 +73,43 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := owin.get_settings_from_lparam(lparam, application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
+
+	ourWindowHandleToDeviceContext: win32.HDC = win32.GetDC(hwnd)
+	defer win32.ReleaseDC(hwnd, ourWindowHandleToDeviceContext)
+
+	pfd : win32.PIXELFORMATDESCRIPTOR = {
+		size_of(win32.PIXELFORMATDESCRIPTOR),
+		1,
+		win32.PFD_DRAW_TO_WINDOW | win32.PFD_SUPPORT_OPENGL | win32.PFD_DOUBLEBUFFER,    //Flags
+		win32.PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
+		32,                   // Colordepth of the framebuffer.
+		0, 0, 0, 0, 0, 0,
+		0,
+		0,
+		0,
+		0, 0, 0, 0,
+		24,                   // Number of bits for the depthbuffer
+		8,                    // Number of bits for the stencilbuffer
+		0,                    // Number of Aux buffers in the framebuffer.
+		win32.PFD_MAIN_PLANE,
+		0,
+		0, 0, 0
+	}
+
+	// int  letWindowsChooseThisPixelFormat;
+	// letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd);
+	letWindowsChooseThisPixelFormat := win32.ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd)
+	fmt.println("letWindowsChooseThisPixelFormat:", letWindowsChooseThisPixelFormat)
+	// SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+
+	// HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
+	// wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+
+	// MessageBoxA(0,(char*)glGetString(GL_VERSION), "OPENGL VERSION",0);
+
+	// //wglMakeCurrent(ourWindowHandleToDeviceContext, NULL); Unnecessary; wglDeleteContext will make the context not current
+	// wglDeleteContext(ourOpenGLRenderingContext);
+
 	return 0
 }
 
@@ -160,7 +197,11 @@ run :: proc() -> (exit_code: int) {
 	return
 }
 
-// run :: proc() -> (exit_code: int) {
+run2 :: proc() -> (exit_code: int) {
+
+}
+
+// run3 :: proc() -> (exit_code: int) {
 // 	app := ca.default_application
 // 	app.size = {WIDTH, HEIGHT}
 // 	app.create = on_create
