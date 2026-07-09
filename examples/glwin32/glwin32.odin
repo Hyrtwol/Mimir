@@ -5,6 +5,8 @@ import "base:runtime"
 import "core:fmt"
 import "core:os"
 import win32 "core:sys/windows"
+import "core:time"
+import "libs:tlc/win32app/owin_gl"
 import "shared:obug"
 import "shared:owin"
 import gl "vendor:OpenGL"
@@ -14,6 +16,10 @@ PROGRAMNAME :: "Program"
 
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
+
+TITLE :: "glwin32"
+WIDTH :: 640
+HEIGHT :: WIDTH * 9 / 16
 
 application :: struct {
 	#subtype settings: owin.window_settings,
@@ -68,20 +74,25 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 	gl.Viewport(0, 0, width, height)
 }
 
+ourOpenGLRenderingContext: win32.HGLRC = nil
+
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := owin.get_settings_from_lparam(lparam, application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 
+	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, owin_gl.gl_set_proc_address)
+
 	ourWindowHandleToDeviceContext: win32.HDC = win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, ourWindowHandleToDeviceContext)
 
+	// odinfmt: disable
 	pfd : win32.PIXELFORMATDESCRIPTOR = {
 		size_of(win32.PIXELFORMATDESCRIPTOR),
 		1,
 		win32.PFD_DRAW_TO_WINDOW | win32.PFD_SUPPORT_OPENGL | win32.PFD_DOUBLEBUFFER,    //Flags
-		win32.PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
+		win32.PFD_TYPE_RGBA,  // The kind of framebuffer. RGBA or palette.
 		32,                   // Colordepth of the framebuffer.
 		0, 0, 0, 0, 0, 0,
 		0,
@@ -95,20 +106,24 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 		0,
 		0, 0, 0
 	}
+	// odinfmt: enable
 
-	// int  letWindowsChooseThisPixelFormat;
-	// letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd);
 	letWindowsChooseThisPixelFormat := win32.ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd)
 	fmt.println("letWindowsChooseThisPixelFormat:", letWindowsChooseThisPixelFormat)
-	// SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+	ok := win32.SetPixelFormat(ourWindowHandleToDeviceContext, letWindowsChooseThisPixelFormat, &pfd)
+	fmt.println("SetPixelFormat:", ok)
 
 	// HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
+	ourOpenGLRenderingContext = win32.wglCreateContext(ourWindowHandleToDeviceContext)
+	fmt.println("ourOpenGLRenderingContext:", ourOpenGLRenderingContext)
 	// wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+	ok = win32.wglMakeCurrent(ourWindowHandleToDeviceContext, ourOpenGLRenderingContext)
+	fmt.println("wglMakeCurrent:", ok)
 
-	// MessageBoxA(0,(char*)glGetString(GL_VERSION), "OPENGL VERSION",0);
+	assert(gl.impl_GetString != nil)
 
-	// //wglMakeCurrent(ourWindowHandleToDeviceContext, NULL); Unnecessary; wglDeleteContext will make the context not current
-	// wglDeleteContext(ourOpenGLRenderingContext);
+	ver := gl.GetString(gl.VERSION)
+	fmt.printfln("GL_VERSION=%s", ver)
 
 	return 0
 }
@@ -116,6 +131,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/deleting-a-rendering-context>
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	// app := get_app(hwnd)
+	// //wglMakeCurrent(ourWindowHandleToDeviceContext, NULL); Unnecessary; wglDeleteContext will make the context not current
+	win32.wglDeleteContext(ourOpenGLRenderingContext)
 	owin.post_quit_message(0)
 	return 0
 }
@@ -197,8 +214,56 @@ run :: proc() -> (exit_code: int) {
 	return
 }
 
-run2 :: proc() -> (exit_code: int) {
+draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
+	hdc := win32.GetDC(hwnd)
+	assert(hdc != nil)
+	defer win32.ReleaseDC(hwnd, hdc)
+	// draw_dib(hwnd, hdc)
 
+	draw()
+
+	sr := owin_gl.SwapBuffers(hdc)
+	assert(sr == true)
+
+	return 0
+}
+
+app_sleep: time.Duration = time.Millisecond * 20
+
+sleep :: proc(duration: time.Duration) {
+	if duration >= 0 {
+		time.accurate_sleep(duration)
+	}
+}
+
+run2 :: proc() -> (exit_code: int) {
+	settings := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
+	//exit_code = owin.run(&settings)
+
+	_, _, hwnd := owin.prepare_run(&settings)
+	res: int
+	stopwatch := owin.create_stopwatch()
+	stopwatch->start()
+	msg: win32.MSG
+	for owin.pull_messages(&msg) {
+
+		// app.delta = f32(stopwatch->get_delta_seconds())
+		// frame_stats.frame_time += app.delta
+		// frame_stats.frame_counter += 1
+		// app.tick += 1
+
+		// res = app.update(app)
+		// if res != 0 {break}
+		// draw_frame(hwnd)
+
+		draw_frame(hwnd)
+
+		sleep(app_sleep)
+	}
+	stopwatch->stop()
+	exit_code = int(msg.wParam)
+
+	return
 }
 
 // run3 :: proc() -> (exit_code: int) {
@@ -215,7 +280,7 @@ run2 :: proc() -> (exit_code: int) {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		os.exit(obug.tracked_run(run))
+		os.exit(obug.tracked_run(run2))
 	} else {
 		os.exit(run())
 	}
