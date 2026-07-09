@@ -1,7 +1,7 @@
 package test_owin
 
-import owin ".."
-//import "shared:owin"
+import owin_old ".."
+import "shared:owin"
 import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
@@ -162,12 +162,12 @@ wstring_print :: proc(t: ^testing.T) {
 	smsg: string = msg
 	cmsg: cstring = cstring("Hello!")
 	wmsg: wstring = L("Hello!")
-	ounit.expect_value(t, owin.wstring_byte_size(wmsg), 12)
-	ounit.expect_value(t, owin.wstring_len(wmsg), 6)
+	ounit.expect_value(t, owin_old.wstring_byte_size(wmsg), 12)
+	ounit.expect_value(t, owin_old.wstring_len(wmsg), 6)
 
 
 	cmsg = fmt.ctprintf(f, msg)
-	wmsg = owin.wtprintf(f, msg)
+	wmsg = owin_old.wtprintf(f, msg)
 	smsg = fmt.tprintf(f, msg)
 
 	testing.expectf(t, smsg == exp, "%v (should be: %v)", smsg, exp)
@@ -176,12 +176,12 @@ wstring_print :: proc(t: ^testing.T) {
 	wexp: wstring = L(exp)
 	wexp_size := len(exp) * size_of(win32.WCHAR)
 
-	testing.expect(t, owin.wstring_equal(wmsg, wexp))
+	testing.expect(t, owin_old.wstring_equal(wmsg, wexp))
 
 	str: strings.Builder
 	strings.builder_init(&str, context.temp_allocator)
 	fmt.sbprintf(&str, f, msg)
-	wmsg = owin.to_wstring(str)
+	wmsg = owin_old.to_wstring(str)
 
 	// ounit.expect_value(t, mem.compare_byte_ptrs((^u8)(&wmsg[0]), (^u8)(&wexp[0]), wexp_size), 0)
 	testing.expect_value(t, wmsg, wexp)

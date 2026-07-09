@@ -1,11 +1,15 @@
 #+build windows
 #+vet
-package owin
+package owin_old
 
 import "core:fmt"
 import "core:mem"
 import "core:strings"
-//import win32 "core:sys/windows"
+import win32 "core:sys/windows"
+
+wstring :: win32.wstring
+utf8_to_wstring :: win32.utf8_to_wstring
+WCHAR :: win32.WCHAR
 
 // similar to strings.to_string
 to_wstring :: #force_inline proc(b: strings.Builder, allocator := context.temp_allocator) -> wstring {
