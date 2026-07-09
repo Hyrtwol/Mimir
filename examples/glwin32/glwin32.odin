@@ -12,11 +12,6 @@ import "shared:owin"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
-PROGRAMNAME :: "Program"
-
-GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 6
-
 TITLE :: "glwin32"
 WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
@@ -82,7 +77,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 
-	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, owin_gl.gl_set_proc_address)
+	//owin_gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION)
+	owin_gl.load_up_to()
 
 	ourWindowHandleToDeviceContext: win32.HDC = win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, ourWindowHandleToDeviceContext)
@@ -108,10 +104,12 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	}
 	// odinfmt: enable
 
-	letWindowsChooseThisPixelFormat := win32.ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd)
-	fmt.println("letWindowsChooseThisPixelFormat:", letWindowsChooseThisPixelFormat)
-	ok := win32.SetPixelFormat(ourWindowHandleToDeviceContext, letWindowsChooseThisPixelFormat, &pfd)
+	pixelFormat := win32.ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd)
+	ok := win32.SetPixelFormat(ourWindowHandleToDeviceContext, pixelFormat, &pfd)
+
+	fmt.println("pixelFormat:", pixelFormat)
 	fmt.println("SetPixelFormat:", ok)
+	assert(ok == true)
 
 	// HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
 	ourOpenGLRenderingContext = win32.wglCreateContext(ourWindowHandleToDeviceContext)
@@ -158,62 +156,6 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-run :: proc() -> (exit_code: int) {
-
-	// https://learn.microsoft.com/en-us/windows/win32/opengl/drawing-text-in-a-double-buffered-opengl-window
-	// https://stackoverflow.com/questions/6287660/win32-opengl-window-creation
-
-	// hglrc := win32.wglCreateContext(hdc)
-	// defer win32.wglDeleteContext(hglrc)
-	// ok := win32.SwapBuffers(hdc)
-
-
-	// Set Window Hints
-	// https://www.glfw.org/docs/3.3/window_guide.html#window_hints
-	// https://www.glfw.org/docs/3.3/group__window.html#ga7d9c8c62384b1e2821c4dc48952d2033
-	glfw.WindowHint(glfw.RESIZABLE, 1)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
-	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-
-	if (!glfw.Init()) {
-		fmt.println("Failed to initialize GLFW")
-		return
-	}
-	defer glfw.Terminate()
-
-	window := glfw.CreateWindow(512, 512, PROGRAMNAME, nil, nil)
-	defer glfw.DestroyWindow(window)
-
-	if window == nil {
-		fmt.println("Unable to create window")
-		return
-	}
-
-	glfw.MakeContextCurrent(window)
-	glfw.SwapInterval(1)
-
-	glfw.SetKeyCallback(window, key_callback)
-	glfw.SetFramebufferSizeCallback(window, size_callback)
-
-	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
-
-	init()
-
-	for (!glfw.WindowShouldClose(window) && running) {
-		// Process waiting events in queue
-		glfw.PollEvents()
-
-		update()
-		draw()
-
-		glfw.SwapBuffers((window))
-	}
-
-	exit()
-	return
-}
-
 draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	assert(hdc != nil)
@@ -236,10 +178,8 @@ sleep :: proc(duration: time.Duration) {
 	}
 }
 
-run2 :: proc() -> (exit_code: int) {
+run :: proc() -> (exit_code: int) {
 	settings := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	//exit_code = owin.run(&settings)
-
 	_, _, hwnd := owin.prepare_run(&settings)
 	res: int
 	stopwatch := owin.create_stopwatch()
@@ -280,7 +220,7 @@ run2 :: proc() -> (exit_code: int) {
 
 main :: proc() {
 	when intrinsics.is_package_imported("obug") {
-		os.exit(obug.tracked_run(run2))
+		os.exit(obug.tracked_run(run))
 	} else {
 		os.exit(run())
 	}
