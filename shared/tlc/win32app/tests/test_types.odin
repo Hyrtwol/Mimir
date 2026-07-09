@@ -1,11 +1,10 @@
 package test_owin
 
 import owin ".."
+//import "shared:owin"
 import "base:intrinsics"
 import "base:runtime"
-import "core:bytes"
 import "core:fmt"
-import "core:mem"
 import "core:strings"
 import win32 "core:sys/windows"
 import "core:testing"
@@ -95,7 +94,7 @@ decode_hresult :: proc(t: ^testing.T) {
 
 @(test)
 get_hresult_details :: proc(t: ^testing.T) {
-	hr : owin.HRESULT_DETAILS
+	hr: owin.HRESULT_DETAILS
 	hr = transmute(owin.HRESULT_DETAILS)(u32(win32.E_INVALIDARG))
 	testing.expect_value(t, hr.IsError, true)
 	testing.expect_value(t, hr.R, false)

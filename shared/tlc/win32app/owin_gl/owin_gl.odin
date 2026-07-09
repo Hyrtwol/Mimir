@@ -31,23 +31,20 @@ load_up_to :: proc(major: int = 4, minor: int = 6) {
 
 choose_and_set_pixel_format :: proc(hdc: win32.HDC) -> (pixelFormat: win32.INT, ok: win32.BOOL) {
 	// odinfmt: disable
-	pfd : win32.PIXELFORMATDESCRIPTOR = {
-		size_of(win32.PIXELFORMATDESCRIPTOR),
-		1,
-		win32.PFD_DRAW_TO_WINDOW | win32.PFD_SUPPORT_OPENGL | win32.PFD_DOUBLEBUFFER,    //Flags
-		win32.PFD_TYPE_RGBA,  // The kind of framebuffer. RGBA or palette.
-		32,                   // Colordepth of the framebuffer.
-		0, 0, 0, 0, 0, 0,
-		0,
-		0,
-		0,
-		0, 0, 0, 0,
-		24,                   // Number of bits for the depthbuffer
-		8,                    // Number of bits for the stencilbuffer
-		0,                    // Number of Aux buffers in the framebuffer.
-		win32.PFD_MAIN_PLANE,
-		0,
-		0, 0, 0
+	pfd: win32.PIXELFORMATDESCRIPTOR = {
+		nSize = size_of(win32.PIXELFORMATDESCRIPTOR),
+		nVersion = 1,
+		dwFlags = win32.PFD_DRAW_TO_WINDOW | win32.PFD_SUPPORT_OPENGL | win32.PFD_DOUBLEBUFFER,
+		iPixelType = win32.PFD_TYPE_RGBA, // The kind of framebuffer. RGBA or palette.
+		cColorBits = 32,                  // Colordepth of the framebuffer.
+		cRedBits = 0, cRedShift = 0, cGreenBits = 0, cGreenShift = 0, cBlueBits = 0, cBlueShift = 0, cAlphaBits = 0, cAlphaShift = 0,
+		cAccumBits = 0, cAccumRedBits = 0, cAccumGreenBits = 0, cAccumBlueBits = 0, cAccumAlphaBits = 0,
+		cDepthBits = 24,                  // Number of bits for the depthbuffer
+		cStencilBits = 8,                 // Number of bits for the stencilbuffer
+		cAuxBuffers = 0,                  // Number of Aux buffers in the framebuffer.
+		iLayerType = win32.PFD_MAIN_PLANE,
+		bReserved = 0,
+		dwLayerMask = 0, dwVisibleMask = 0, dwDamageMask = 0
 	}
 	// odinfmt: enable
 	pixelFormat = win32.ChoosePixelFormat(hdc, &pfd)

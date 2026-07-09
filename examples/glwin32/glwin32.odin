@@ -18,6 +18,7 @@ HEIGHT :: WIDTH * 9 / 16
 
 application :: struct {
 	#subtype settings: owin.window_settings,
+	sleep: time.Duration,
 }
 
 running: b32 = true
@@ -69,7 +70,7 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 	gl.Viewport(0, 0, width, height)
 }
 
-ourOpenGLRenderingContext: win32.HGLRC = nil
+hglrc: win32.HGLRC = nil
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -77,48 +78,21 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 
-	//owin_gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION)
+	assert(gl.impl_GetString == nil)
 	owin_gl.load_up_to()
+	assert(gl.impl_GetString != nil)
 
-	ourWindowHandleToDeviceContext: win32.HDC = win32.GetDC(hwnd)
-	defer win32.ReleaseDC(hwnd, ourWindowHandleToDeviceContext)
+	hdc: win32.HDC = win32.GetDC(hwnd)
+	defer win32.ReleaseDC(hwnd, hdc)
 
-	// odinfmt: disable
-	pfd : win32.PIXELFORMATDESCRIPTOR = {
-		size_of(win32.PIXELFORMATDESCRIPTOR),
-		1,
-		win32.PFD_DRAW_TO_WINDOW | win32.PFD_SUPPORT_OPENGL | win32.PFD_DOUBLEBUFFER,    //Flags
-		win32.PFD_TYPE_RGBA,  // The kind of framebuffer. RGBA or palette.
-		32,                   // Colordepth of the framebuffer.
-		0, 0, 0, 0, 0, 0,
-		0,
-		0,
-		0,
-		0, 0, 0, 0,
-		24,                   // Number of bits for the depthbuffer
-		8,                    // Number of bits for the stencilbuffer
-		0,                    // Number of Aux buffers in the framebuffer.
-		win32.PFD_MAIN_PLANE,
-		0,
-		0, 0, 0
-	}
-	// odinfmt: enable
-
-	pixelFormat := win32.ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd)
-	ok := win32.SetPixelFormat(ourWindowHandleToDeviceContext, pixelFormat, &pfd)
-
-	fmt.println("pixelFormat:", pixelFormat)
-	fmt.println("SetPixelFormat:", ok)
+	pixelFormat, ok := owin_gl.choose_and_set_pixel_format(hdc)
+	fmt.println("pixelFormat:", pixelFormat, "SetPixelFormat:", ok)
 	assert(ok == true)
 
-	// HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
-	ourOpenGLRenderingContext = win32.wglCreateContext(ourWindowHandleToDeviceContext)
-	fmt.println("ourOpenGLRenderingContext:", ourOpenGLRenderingContext)
-	// wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
-	ok = win32.wglMakeCurrent(ourWindowHandleToDeviceContext, ourOpenGLRenderingContext)
-	fmt.println("wglMakeCurrent:", ok)
-
-	assert(gl.impl_GetString != nil)
+	hglrc = win32.wglCreateContext(hdc)
+	assert(hglrc != nil)
+	ok = win32.wglMakeCurrent(hdc, hglrc)
+	assert(ok == true)
 
 	ver := gl.GetString(gl.VERSION)
 	fmt.printfln("GL_VERSION=%s", ver)
@@ -129,8 +103,8 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/deleting-a-rendering-context>
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	// app := get_app(hwnd)
-	// //wglMakeCurrent(ourWindowHandleToDeviceContext, NULL); Unnecessary; wglDeleteContext will make the context not current
-	win32.wglDeleteContext(ourOpenGLRenderingContext)
+	// //wglMakeCurrent(hdc, NULL); Unnecessary; wglDeleteContext will make the context not current
+	win32.wglDeleteContext(hglrc)
 	owin.post_quit_message(0)
 	return 0
 }
@@ -170,17 +144,10 @@ draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	return 0
 }
 
-app_sleep: time.Duration = time.Millisecond * 20
-
-sleep :: proc(duration: time.Duration) {
-	if duration >= 0 {
-		time.accurate_sleep(duration)
-	}
-}
-
 run :: proc() -> (exit_code: int) {
-	settings := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	_, _, hwnd := owin.prepare_run(&settings)
+	app := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
+	app.sleep = time.Millisecond * 20
+	_, _, hwnd := owin.prepare_run(&app)
 	res: int
 	stopwatch := owin.create_stopwatch()
 	stopwatch->start()
@@ -198,7 +165,7 @@ run :: proc() -> (exit_code: int) {
 
 		draw_frame(hwnd)
 
-		sleep(app_sleep)
+		owin.sleep(app.sleep)
 	}
 	stopwatch->stop()
 	exit_code = int(msg.wParam)

@@ -237,12 +237,6 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-sleep :: proc(duration: time.Duration) {
-	if duration >= 0 {
-		time.accurate_sleep(duration)
-	}
-}
-
 run :: proc(app: ^application) -> (exit_code: int) {
 	queue.init(&app.char_queue)
 	defer queue.destroy(&app.char_queue)
@@ -262,7 +256,7 @@ run :: proc(app: ^application) -> (exit_code: int) {
 		res = app.update(app)
 		if res != 0 {break}
 		draw_frame(hwnd)
-		sleep(app.settings.sleep)
+		owin.sleep(app.settings.sleep)
 	}
 	stopwatch->stop()
 	exit_code = int(msg.wParam)
