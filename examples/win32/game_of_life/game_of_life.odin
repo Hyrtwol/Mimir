@@ -25,7 +25,7 @@ import "core:os"
 import "base:runtime"
 import win32 "core:sys/windows"
 import "core:time"
-import owin "libs:tlc/win32app"
+import "shared:owin"
 
 // defines
 L				:: intrinsics.constant_utf16_cstring

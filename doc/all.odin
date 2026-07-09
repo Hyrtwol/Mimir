@@ -16,7 +16,7 @@ import z80             "shared:z80"
 import canvas          "libs:tlc/canvas"
 import csharp          "libs:csharp"
 //import fft             "libs:fft"
-import win32app        "libs:tlc/win32app"
+//import win32app        "libs:tlc/win32app"
 
 main :: proc(){}
 
