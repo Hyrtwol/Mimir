@@ -18,7 +18,9 @@ HEIGHT :: WIDTH * 9 / 16
 
 application :: struct {
 	#subtype settings: owin.window_settings,
-	sleep: time.Duration,
+	delta:    f32,
+	tick:     u32,
+	hglrc:    win32.HGLRC,
 }
 
 running: b32 = true
@@ -28,11 +30,6 @@ get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
-
-// gl_set_proc_address :: proc(p: rawptr, name: cstring) {
-// 	(^rawptr)(p)^ = win32.wglGetProcAddress(name)
-// }
-gl_set_proc_address :: win32.gl_set_proc_address
 
 init :: proc() {
 	// Own initialization code there
@@ -70,8 +67,6 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 	gl.Viewport(0, 0, width, height)
 }
 
-hglrc: win32.HGLRC = nil
-
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := owin.get_settings_from_lparam(lparam, application)
@@ -86,12 +81,12 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	defer win32.ReleaseDC(hwnd, hdc)
 
 	pixelFormat, ok := owin_gl.choose_and_set_pixel_format(hdc)
-	fmt.println("pixelFormat:", pixelFormat, "SetPixelFormat:", ok)
+	fmt.println("pixelFormat:", pixelFormat)
 	assert(ok == true)
 
-	hglrc = win32.wglCreateContext(hdc)
-	assert(hglrc != nil)
-	ok = win32.wglMakeCurrent(hdc, hglrc)
+	app.hglrc = win32.wglCreateContext(hdc)
+	assert(app.hglrc != nil)
+	ok = win32.wglMakeCurrent(hdc, app.hglrc)
 	assert(ok == true)
 
 	ver := gl.GetString(gl.VERSION)
@@ -102,9 +97,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/deleting-a-rendering-context>
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	// app := get_app(hwnd)
-	// //wglMakeCurrent(hdc, NULL); Unnecessary; wglDeleteContext will make the context not current
-	win32.wglDeleteContext(hglrc)
+	app := get_app(hwnd)
+	if app == nil {owin.show_error_and_panic("Missing app!")}
+	// wglMakeCurrent(hdc, NULL); Unnecessary; wglDeleteContext will make the context not current
+	ok := win32.wglDeleteContext(app.hglrc)
+	assert(ok == true)
 	owin.post_quit_message(0)
 	return 0
 }
@@ -124,7 +121,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_SIZE:          return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable
@@ -145,8 +142,10 @@ draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 run :: proc() -> (exit_code: int) {
-	app := owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc)
-	app.sleep = time.Millisecond * 20
+	app := application {
+		settings = owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
+	}
+	app.settings.sleep = time.Millisecond * 20
 	_, _, hwnd := owin.prepare_run(&app)
 	res: int
 	stopwatch := owin.create_stopwatch()
@@ -154,18 +153,15 @@ run :: proc() -> (exit_code: int) {
 	msg: win32.MSG
 	for owin.pull_messages(&msg) {
 
-		// app.delta = f32(stopwatch->get_delta_seconds())
+		app.delta = f32(stopwatch->get_delta_seconds())
 		// frame_stats.frame_time += app.delta
 		// frame_stats.frame_counter += 1
-		// app.tick += 1
+		app.tick += 1
 
 		// res = app.update(app)
 		// if res != 0 {break}
-		// draw_frame(hwnd)
-
 		draw_frame(hwnd)
-
-		owin.sleep(app.sleep)
+		owin.sleep(app.settings.sleep)
 	}
 	stopwatch->stop()
 	exit_code = int(msg.wParam)

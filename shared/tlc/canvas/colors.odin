@@ -357,19 +357,12 @@ to_color :: proc {
 	to_color_byte4,
 }
 
-@(private = "file")
-two_pi_over_3 :: f32(2) * math.PI / 3.0
-
 color_hue_float4 :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> float4 {
+	TWO_PI_OVER_THREE :: 2 * math.PI / 3
 	half_scale := scale * 0.5
-	hue_g := hue + two_pi_over_3
-	hue_b := hue_g + two_pi_over_3
-	return {
-		(f32)((math.sin(hue) + 1.0) * half_scale + bias),
-		(f32)((math.sin(hue_g) + 1.0) * half_scale + bias),
-		(f32)((math.sin(hue_b) + 1.0) * half_scale + bias),
-		scale + bias,
-	}
+	hue_g := hue + TWO_PI_OVER_THREE
+	hue_b := hue_g + TWO_PI_OVER_THREE
+	return {(f32)((math.sin(hue) + 1.0) * half_scale + bias), (f32)((math.sin(hue_g) + 1.0) * half_scale + bias), (f32)((math.sin(hue_b) + 1.0) * half_scale + bias), scale + bias}
 }
 
 color_hue :: #force_inline proc "contextless" (hue: f32, scale: f32 = 1, bias: f32 = 0) -> byte4 {

@@ -33,7 +33,7 @@ run :: proc() -> (exit_code: int) {
 	cpu: Z80
 	init_cpu(&cpu)
 	app: application = {
-		settings = owin.window_settings {
+		settings = {
 			options = {.Center},
 			dwStyle = owin.DEFAULT_WS_STYLE,
 			dwExStyle = owin.DEFAULT_WS_EX_STYLE,
