@@ -53,19 +53,13 @@ exit :: proc() {
 	// Own termination code here
 }
 
-// Called when glfw keystate changes
-key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods: i32) {
-	// Exit program on escape pressed
-	if key == glfw.KEY_ESCAPE {
-		running = false
-	}
-}
-
 // Called when glfw window changes size
 size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 	// Set the OpenGL viewport size
 	gl.Viewport(0, 0, width, height)
 }
+
+//wglSwapIntervalEXT : win32.wglSwapIntervalEXT
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -76,6 +70,11 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	assert(gl.impl_GetString == nil)
 	owin_gl.load_up_to()
 	assert(gl.impl_GetString != nil)
+
+	assert(win32.wglSwapIntervalEXT == nil)
+	//owin_gl.gl_set_proc_address(&win32.wglSwapIntervalEXT, "wglSwapIntervalEXT")
+	win32.wglSwapIntervalEXT = win32.SwapIntervalEXTType(win32.wglGetProcAddress("wglSwapIntervalEXT"))
+	assert(win32.wglSwapIntervalEXT != nil)
 
 	hdc: win32.HDC = win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
