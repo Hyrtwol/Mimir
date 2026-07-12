@@ -4,6 +4,7 @@ import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
 import "core:os"
+import "core:strings"
 import win32 "core:sys/windows"
 import "core:time"
 import "libs:tlc/win32app/owin_gl"
@@ -71,11 +72,6 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	owin_gl.load_up_to()
 	assert(gl.impl_GetString != nil)
 
-	assert(win32.wglSwapIntervalEXT == nil)
-	//owin_gl.gl_set_proc_address(&win32.wglSwapIntervalEXT, "wglSwapIntervalEXT")
-	win32.wglSwapIntervalEXT = win32.SwapIntervalEXTType(win32.wglGetProcAddress("wglSwapIntervalEXT"))
-	assert(win32.wglSwapIntervalEXT != nil)
-
 	hdc: win32.HDC = win32.GetDC(hwnd)
 	defer win32.ReleaseDC(hwnd, hdc)
 
@@ -90,6 +86,35 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	ver := gl.GetString(gl.VERSION)
 	fmt.printfln("GL_VERSION=%s", ver)
+
+	extensions := gl.GetString(gl.EXTENSIONS)
+	fmt.println("gl_extensions", extensions)
+	// extension_list := strings.split(string(extensions), " ", context.temp_allocator) or_else panic("strings.split")
+	// for ex in extension_list {
+	// 	fmt.printfln("   \"%s\"", ex)
+	// }
+
+	win32.wglGetExtensionsStringARB = win32.GetExtensionsStringARBType(win32.wglGetProcAddress("wglGetExtensionsStringARB"))
+	fmt.println("win32.wglGetExtensionsStringARB", win32.wglGetExtensionsStringARB)
+	if (win32.wglGetExtensionsStringARB != nil) {
+		exstr := win32.wglGetExtensionsStringARB(hdc)
+		fmt.println("exstr", exstr)
+	}
+
+	// WGL_EXT_swap_control
+	assert(win32.wglSwapIntervalEXT == nil)
+	//qwglSwapIntervalEXT = ( BOOL ( WINAPI * )(int) )qwglGetProcAddress( "wglSwapIntervalEXT" );
+	//owin_gl.gl_set_proc_address(&win32.wglSwapIntervalEXT, "wglSwapIntervalEXT")
+	win32.wglSwapIntervalEXT = win32.SwapIntervalEXTType(win32.wglGetProcAddress("wglSwapIntervalEXT"))
+	if (win32.wglSwapIntervalEXT != nil) {
+		fmt.println("...using WGL_EXT_swap_control")
+		//r_swapInterval->modified = qtrue;   // force a set next frame
+		swap_ok := win32.wglSwapIntervalEXT(1)
+		assert(swap_ok == true)
+	} else {
+		fmt.println("...WGL_EXT_swap_control not found", win32.wglSwapIntervalEXT)
+	}
+	//assert(win32.wglSwapIntervalEXT != nil)
 
 	return 0
 }
