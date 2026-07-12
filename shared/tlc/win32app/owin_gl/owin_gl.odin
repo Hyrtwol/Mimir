@@ -50,3 +50,29 @@ choose_and_set_pixel_format :: proc(hdc: win32.HDC) -> (pixelFormat: win32.INT, 
 	}
 	return
 }
+
+init_wgl_extensions :: proc() {
+
+	assert(win32.wglCreateContextAttribsARB == nil)
+	assert(win32.wglChoosePixelFormatARB == nil)
+	assert(win32.wglSwapIntervalEXT == nil)
+	assert(win32.wglGetExtensionsStringARB == nil)
+
+	gl_set_proc_address(&win32.wglCreateContextAttribsARB, "wglCreateContextAttribsARB")
+	gl_set_proc_address(&win32.wglChoosePixelFormatARB, "wglChoosePixelFormatARB")
+	gl_set_proc_address(&win32.wglSwapIntervalEXT, "wglSwapIntervalEXT")
+	gl_set_proc_address(&win32.wglGetExtensionsStringARB, "wglGetExtensionsStringARB")
+
+	assert(win32.wglCreateContextAttribsARB != nil)
+	assert(win32.wglChoosePixelFormatARB != nil)
+	assert(win32.wglSwapIntervalEXT != nil)
+	assert(win32.wglGetExtensionsStringARB != nil)
+}
+
+set_swap_interval :: proc(interval: i32) -> (ok: bool) {
+	ok = win32.wglSwapIntervalEXT != nil
+	if ok {
+		ok =  win32.wglSwapIntervalEXT(interval)
+	}
+	return
+}

@@ -16,6 +16,7 @@ import "vendor:glfw"
 TITLE :: "glwin32"
 WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
+SWAP_INTERVAL :: 1
 
 application :: struct {
 	#subtype settings: owin.window_settings,
@@ -60,7 +61,18 @@ size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 	gl.Viewport(0, 0, width, height)
 }
 
-//wglSwapIntervalEXT : win32.wglSwapIntervalEXT
+dump_extensions :: proc(hdc: win32.HDC) {
+	extensions := gl.GetString(gl.EXTENSIONS)
+	fmt.println("gl_extensions", extensions)
+	// extension_list := strings.split(string(extensions), " ", context.temp_allocator) or_else panic("strings.split")
+	// for ex in extension_list {
+	// 	fmt.printfln("   \"%s\"", ex)
+	// }
+	if (win32.wglGetExtensionsStringARB != nil) {
+		exstr := win32.wglGetExtensionsStringARB(hdc)
+		fmt.println("exstr", exstr)
+	}
+}
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
@@ -87,34 +99,15 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	ver := gl.GetString(gl.VERSION)
 	fmt.printfln("GL_VERSION=%s", ver)
 
-	extensions := gl.GetString(gl.EXTENSIONS)
-	fmt.println("gl_extensions", extensions)
-	// extension_list := strings.split(string(extensions), " ", context.temp_allocator) or_else panic("strings.split")
-	// for ex in extension_list {
-	// 	fmt.printfln("   \"%s\"", ex)
-	// }
+	owin_gl.init_wgl_extensions()
 
-	win32.wglGetExtensionsStringARB = win32.GetExtensionsStringARBType(win32.wglGetProcAddress("wglGetExtensionsStringARB"))
-	fmt.println("win32.wglGetExtensionsStringARB", win32.wglGetExtensionsStringARB)
-	if (win32.wglGetExtensionsStringARB != nil) {
-		exstr := win32.wglGetExtensionsStringARB(hdc)
-		fmt.println("exstr", exstr)
-	}
+	//dump_extensions(hdc)
 
-	// WGL_EXT_swap_control
-	assert(win32.wglSwapIntervalEXT == nil)
-	//qwglSwapIntervalEXT = ( BOOL ( WINAPI * )(int) )qwglGetProcAddress( "wglSwapIntervalEXT" );
-	//owin_gl.gl_set_proc_address(&win32.wglSwapIntervalEXT, "wglSwapIntervalEXT")
-	win32.wglSwapIntervalEXT = win32.SwapIntervalEXTType(win32.wglGetProcAddress("wglSwapIntervalEXT"))
-	if (win32.wglSwapIntervalEXT != nil) {
-		fmt.println("...using WGL_EXT_swap_control")
-		//r_swapInterval->modified = qtrue;   // force a set next frame
-		swap_ok := win32.wglSwapIntervalEXT(1)
-		assert(swap_ok == true)
+	if owin_gl.set_swap_interval(SWAP_INTERVAL) {
+		fmt.println("...using WGL_EXT_swap_control", SWAP_INTERVAL)
 	} else {
-		fmt.println("...WGL_EXT_swap_control not found", win32.wglSwapIntervalEXT)
+		fmt.println("...WGL_EXT_swap_control not found")
 	}
-	//assert(win32.wglSwapIntervalEXT != nil)
 
 	return 0
 }
@@ -135,6 +128,8 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	type := owin.WM_SIZE_WPARAM(wparam)
 	app.settings.window_size = owin.decode_lparam_as_int2(lparam)
 	owin.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
+	// Set the OpenGL viewport size
+	gl.Viewport(0, 0, expand_values(app.settings.window_size))
 	return 0
 }
 
