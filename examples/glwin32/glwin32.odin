@@ -1,3 +1,5 @@
+// https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
+
 package main
 
 import "base:intrinsics"
@@ -162,9 +164,18 @@ draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 run :: proc() -> (exit_code: int) {
 	app := application {
-		settings = owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
+		//settings = owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
+		settings = {
+			options     = {.Center},
+			dwStyle     = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC | win32.WS_SYSMENU, // owin.DEFAULT_WS_STYLE,
+			dwExStyle   = owin.DEFAULT_WS_EX_STYLE,
+			sleep       = owin.DEFAULT_SLEEP,
+			window_size = {WIDTH, HEIGHT},
+			wndproc = wndproc,
+			title = TITLE,
+		},
 	}
-	app.settings.sleep = time.Millisecond * 20
+	// app.settings.sleep = time.Millisecond * 20
 	_, _, hwnd := owin.prepare_run(&app)
 	res: int
 	stopwatch := owin.create_stopwatch()
