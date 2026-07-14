@@ -167,43 +167,18 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 
 handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := get_app(hwnd)
-	vk_code := win32.LOWORD(wparam) // virtual-key code
-	key_flags := win32.HIWORD(lparam)
-	repeat_count := win32.LOWORD(lparam) // repeat count, > 0 if several keydown messages was combined into one message
-	scan_code := win32.WORD(win32.LOBYTE(key_flags)) // scan code
-	is_extended_key := (key_flags & win32.KF_EXTENDED) == win32.KF_EXTENDED // extended-key flag, 1 if scancode has 0xE0 prefix
-	if is_extended_key {scan_code = win32.MAKEWORD(scan_code, 0xE0)}
-	was_key_down := (key_flags & win32.KF_REPEAT) == win32.KF_REPEAT // previous key-state flag, 1 on autorepeat
-	is_key_released := (key_flags & win32.KF_UP) == win32.KF_UP // transition-state flag, 1 on keyup
+	input := owin.decode_wm_input(wparam, lparam)
 
-	switch vk_code {
-	case win32.VK_SHIFT: // converts to VK_LSHIFT or VK_RSHIFT
-	case win32.VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
-	case win32.VK_MENU:
-		// converts to VK_LMENU or VK_RMENU
-		vk_code = win32.LOWORD(win32.MapVirtualKeyW(win32.DWORD(scan_code), win32.MAPVK_VSC_TO_VK_EX))
-		break
-	}
-
-	switch vk_code {
+	switch input.vk_code {
 	case win32.VK_ESCAPE:
-		if is_key_released {owin.close_application(hwnd)}
+		if input.is_key_released {owin.close_application(hwnd)}
 	// case: fmt.printfln("key: %4d 0x%4X %8d ke: %t kd: %t kr: %t", vk_code, key_flags, scan_code, is_extended_key, was_key_down, is_key_released)
 	}
 
-	keys := &app.keys
-	if vk_code < key_state_count {
-		keys[vk_code] = !is_key_released
-		// if was_key_down {
-		// }
-		// if is_key_released {
-		// 	keys[vk_code] = false
-		// }
+	if input.vk_code < key_state_count {
+		app.keys[input.vk_code] = !input.is_key_released
 	}
 
-	_ = was_key_down
-	_ = repeat_count
-	_ = app
 	return 0
 }
 

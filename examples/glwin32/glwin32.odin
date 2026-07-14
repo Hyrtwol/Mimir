@@ -132,6 +132,17 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	owin.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
 	// Set the OpenGL viewport size
 	gl.Viewport(0, 0, expand_values(app.settings.window_size))
+	fmt.println("gl.Viewport", 0, 0, expand_values(app.settings.window_size))
+	return 0
+}
+
+handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	input := owin.decode_wm_input(wparam, lparam)
+	//fmt.println("input", input)
+	switch input.vk_code {
+	case win32.VK_ESCAPE:
+		if input.is_key_released {owin.close_application(hwnd)}
+	}
 	return 0
 }
 
@@ -143,6 +154,8 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
 	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_KEYDOWN:      return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_KEYUP:        return handle_key_input(hwnd, wparam, lparam)
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable
@@ -166,10 +179,10 @@ run :: proc() -> (exit_code: int) {
 	app := application {
 		//settings = owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
 		settings = {
-			options     = {.Center},
-			dwStyle     = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC | win32.WS_SYSMENU, // owin.DEFAULT_WS_STYLE,
-			dwExStyle   = owin.DEFAULT_WS_EX_STYLE,
-			sleep       = owin.DEFAULT_SLEEP,
+			options = {.Center},
+			dwStyle = owin.DEFAULT_WS_STYLE,
+			dwExStyle = owin.DEFAULT_WS_EX_STYLE,
+			sleep = owin.DEFAULT_SLEEP,
 			window_size = {WIDTH, HEIGHT},
 			wndproc = wndproc,
 			title = TITLE,

@@ -78,7 +78,7 @@ calc_bounding_sphere :: proc(vertices: []vertex) -> bounding_sphere {
 	for &vertex in vertices {
 		origo += vertex.pos
 	}
-	origo *= (1 / f32(len(vertices)))
+	origo /= f32(len(vertices))
 	for &vertex in vertices {
 		d := glm.distance(origo, vertex.pos)
 		if d > radius {radius = d}

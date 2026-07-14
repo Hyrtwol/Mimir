@@ -19,20 +19,20 @@ package game_of_life
 **********************************************************************/
 
 import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
-import "base:runtime"
 import win32 "core:sys/windows"
 import "core:time"
 import "shared:owin"
 
 // defines
-L				:: intrinsics.constant_utf16_cstring
-wstring			:: win32.wstring
+L :: intrinsics.constant_utf16_cstring
+wstring :: win32.wstring
 //utf8_to_wstring	:: win32.utf8_to_wstring
-color			:: [4]u8
-int2			:: [2]i32
+color :: [4]u8
+int2 :: [2]i32
 
 show_error_and_panic :: owin.show_error_and_panic
 
@@ -198,19 +198,19 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 	bitmap_info := BITMAPINFO {
 		bmiHeader = win32.BITMAPINFOHEADER {
-			biSize          = size_of(win32.BITMAPINFOHEADER),
-			biWidth         = bwidth,
-			biHeight        = -bheight, // minus for top-down
-			biPlanes        = 1,
-			biBitCount      = 8,
-			biCompression   = win32.BI_RGB,
-			biClrUsed       = palette_count,
-			biClrImportant  = 0,
+			biSize         = size_of(win32.BITMAPINFOHEADER),
+			biWidth        = bwidth,
+			biHeight       = -bheight, // minus for top-down
+			biPlanes       = 1,
+			biBitCount     = 8,
+			biCompression  = win32.BI_RGB,
+			biClrUsed      = palette_count,
+			biClrImportant = 0,
 		},
 	}
 
 	if palette_count > 0 {
-		scale := 1 / f32(palette_count - 1);rbg: [3]f32;w: f32
+		scale := 1 / f32(palette_count - 1); rbg: [3]f32; w: f32
 		for i in 0 ..< palette_count {
 			w = scale * f32(i)
 			when COLOR_MODE == 1 {
@@ -337,14 +337,28 @@ center_window :: proc(position: ^int2, size: int2) {
 create_window :: #force_inline proc(
 	atom: win32.ATOM,
 	window_name: win32.LPCTSTR,
-	style: win32.WS_STYLES, ex_style: win32.WS_EX_STYLES,
+	style: win32.WS_STYLES,
+	ex_style: owin.WS_EX_STYLES,
 	position: int2,
 	size: int2,
 	instance: win32.HINSTANCE,
 	lpParam: win32.LPVOID,
 ) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
-	return win32.CreateWindowExW(ex_style, win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))), window_name, style, position.x, position.y, size.x, size.y, nil, nil, instance, lpParam)
+	return win32.CreateWindowExW(
+		transmute(win32.WS_EX_STYLES)ex_style,
+		win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))),
+		window_name,
+		style,
+		position.x,
+		position.y,
+		size.x,
+		size.y,
+		nil,
+		nil,
+		instance,
+		lpParam,
+	)
 }
 
 run :: proc() -> int {
