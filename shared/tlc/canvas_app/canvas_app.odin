@@ -39,7 +39,7 @@ application :: struct {
 
 on_idle :: proc(app: ^application) -> int {return 0}
 
-default_application :: application {
+DEFAULT_APPLICATION :: application {
 	settings = owin.window_settings {
 		options     = {.Center},
 		dwStyle     = owin.DEFAULT_WS_STYLE,

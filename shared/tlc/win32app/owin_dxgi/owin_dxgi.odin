@@ -31,6 +31,7 @@ get_dxgi_factory2 :: proc(raw_device: rawptr) -> ^dxgi.IFactory2 {
 
 	dxgi_factory: ^dxgi.IFactory2 = nil
 	owin.panic_if_failed(dxgi_adapter->GetParent(dxgi.IFactory2_UUID, (^rawptr)(&dxgi_factory)))
+	assert(dxgi_factory != nil)
 
 	return dxgi_factory
 }

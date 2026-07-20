@@ -299,7 +299,7 @@ on_update :: proc(app: ^ca.application) -> int {
 }
 
 run :: proc() -> (exit_code: int) {
-	app := ca.default_application
+	app := ca.DEFAULT_APPLICATION
 	app.size = {width, height}
 	app.create = on_create
 	app.update = on_update

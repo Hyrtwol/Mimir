@@ -120,7 +120,7 @@ Run_Mode: enum {
 run :: proc() -> (exit_code: int) {
 	fmt.println("Raycaster")
 	fmt.printfln("Images: %d x (%dx%d@%d:%d) = %d", len(textures), pics_w, pics_h, pics_pixel_byte_size * 8, pics_buf_byte_size, len(textures) * int(pics_buf_byte_size))
-	app := ca.default_application
+	app := ca.DEFAULT_APPLICATION
 	app.size = {screenWidth, screenHeight}
 	app.settings.window_size = app.size * ZOOM
 	app.settings.sleep = time.Millisecond * 5

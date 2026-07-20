@@ -161,7 +161,7 @@ WM_FOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32
 	return 0
 }
 
-rawinput: win32.RAWINPUT = {}
+rawinput: win32.RAWINPUT
 
 put_it := 0
 

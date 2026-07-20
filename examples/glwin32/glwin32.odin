@@ -15,7 +15,6 @@ import "shared:owin"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
-TITLE :: "glwin32"
 WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
 SWAP_INTERVAL :: 1
@@ -185,7 +184,6 @@ run :: proc() -> (exit_code: int) {
 			sleep = owin.DEFAULT_SLEEP,
 			window_size = {WIDTH, HEIGHT},
 			wndproc = wndproc,
-			title = TITLE,
 		},
 	}
 	// app.settings.sleep = time.Millisecond * 20

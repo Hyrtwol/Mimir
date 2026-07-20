@@ -12,8 +12,8 @@ import win32 "core:sys/windows"
 import "core:time"
 import cv "libs:tlc/canvas"
 import cw "libs:tlc/canvas_win32"
-import "shared:owin"
 import "shared:obug"
+import "shared:owin"
 
 L :: intrinsics.constant_utf16_cstring
 byte4 :: cv.byte4
@@ -24,7 +24,6 @@ double3 :: [3]f64
 DIB :: cw.DIB
 canvas :: cv.canvas
 
-TITLE :: "Flames"
 WIDTH: i32 : 160
 HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
@@ -32,9 +31,13 @@ ZOOM :: 8
 
 settings: owin.window_settings
 
-fps: f64 = 0
-frame_counter := 0
-delta, frame_time: f64 = 0, 0
+delta: f64 = 0
+
+frame_stats: struct {
+	fps:           f64,
+	frame_counter: i32,
+	frame_time:    f64,
+}
 
 TimerTickPS :: 1
 timer_id: win32.UINT_PTR
@@ -151,7 +154,7 @@ dib_flames_2 :: proc(dib: ^canvas) {
 }
 
 set_window_text :: #force_inline proc(hwnd: win32.HWND) {
-	owin.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, fps)
+	owin.set_window_text(hwnd, "%s %v %v FPS: %f", settings.title, settings.window_size, dib.canvas.size, frame_stats.fps)
 }
 
 
@@ -217,10 +220,12 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM) -> win32.LRESULT {
 	// fmt.println(#procedure, hwnd, wparam)
-	fps = f64(frame_counter) / frame_time
-	frame_counter = 0
-	frame_time = 0
-	set_window_text(hwnd)
+	if frame_stats.frame_time >= 0.1 {
+		frame_stats.fps = f64(frame_stats.frame_counter) / frame_stats.frame_time
+		frame_stats.frame_counter = 0
+		frame_stats.frame_time = 0
+		set_window_text(hwnd)
+	}
 	return 0
 }
 
@@ -281,7 +286,7 @@ run :: proc() -> (exit_code: int) {
 
 	settings = owin.DEFAULT_WINDOW_SETTINGS
 	settings.window_size = {WIDTH * ZOOM, HEIGHT * ZOOM}
-	settings.title = TITLE
+	//settings.title = "Flames"
 	settings.wndproc = wndproc
 	settings.sleep = time.Millisecond * 8
 	_, _, hwnd := owin.prepare_run(&settings)
@@ -289,8 +294,8 @@ run :: proc() -> (exit_code: int) {
 	msg: win32.MSG
 	for owin.pull_messages(&msg) {
 		delta = stopwatch->get_delta_seconds()
-		frame_time += delta
-		frame_counter += 1
+		frame_stats.frame_time += delta
+		frame_stats.frame_counter += 1
 		draw_frame(hwnd)
 		owin.sleep(settings.sleep)
 	}
