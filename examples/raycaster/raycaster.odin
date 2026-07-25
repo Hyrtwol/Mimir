@@ -19,7 +19,6 @@ int2 :: cv.int2
 vector2 :: cv.float2
 vector3 :: cv.float3
 scalar :: cv.float
-matrix2_rotate :: linalg.matrix2_rotate_f32
 
 FPS :: 20
 ZOOM :: 4
@@ -31,7 +30,7 @@ mapWidth, mapHeight: i32 : 24, 24
 World_Map :: [mapWidth][mapHeight]u8 // World_Map
 world_map: World_Map
 
-plane_scale: scalar : 2.0 / 3.0
+PLANE_SCALE: scalar : 2.0 / 3.0
 avatar_heading: scalar = cv.PI
 pos: vector3 = {22, 11.5, 0.5} // pos.z = vertical camera strafing up/down, for jumping/crouching. 0 means standard height. Expressed in screen pixels a wall at distance 1 shifts
 dir: vector2
@@ -76,9 +75,9 @@ handle_input :: proc(app: ^ca.application) {
 		avatar_heading += speed_modifier.y
 	}
 
-	rot := matrix2_rotate(avatar_heading)
+	rot := linalg.matrix2_rotate(avatar_heading)
 	dir = rot[0]
-	plane = rot[1] * -plane_scale
+	plane = rot[1] * -PLANE_SCALE
 
 	if keys[win32.VK_UP] {
 		move := dir * speed_modifier.x

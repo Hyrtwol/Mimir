@@ -234,33 +234,25 @@ perspective_divide :: #force_inline proc "contextless" (v: float4) -> float4 {
 	return v / v.w
 }
 
-// viewport_transform :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
-// 	return viewport^ * v
-// }
-
-// normalized_device_coordinates
 normalized_device_coordinates :: #force_inline proc "contextless" (viewport: ^float4x4, v: float4) -> float4 {
-	return viewport^ * (v / v.w)
-	//return apply_viewport(viewport, perspective_divide(v))
+	//return viewport^ * (v / v.w)
+	return viewport^ * perspective_divide(v)
+}
+
+@(private = "file")
+@(require_results)
+reciprocal_abs_scalar :: #force_inline proc "contextless" (x: $T) -> T where intrinsics.type_is_float(intrinsics.type_elem_type(T)) {
+	return (x == 0) ? max(T) : abs(1 / x)
 }
 
 @(require_results)
-fract :: proc "contextless" (x: $T) -> T where IS_FLOAT(ELEM_TYPE(T)) {
-	f := #force_inline math.floor(x)
-	return x - f
-}
-
-@(private = "file")
-reciprocal_abs_scalar :: #force_inline proc "contextless" (v: float) -> float {
-	return (v == 0) ? 1e30 : abs(1 / v)
-}
-
-@(private = "file")
-reciprocal_abs_vector2 :: #force_inline proc "contextless" (v: float2) -> float2 {
-	return float2{reciprocal_abs(v.x), reciprocal_abs(v.y)}
-}
-
-reciprocal_abs :: proc {
-	reciprocal_abs_scalar,
-	reciprocal_abs_vector2,
+reciprocal_abs :: #force_inline proc "contextless" (x: $T) -> (out: T) where intrinsics.type_is_float(intrinsics.type_elem_type(T)) {
+	when intrinsics.type_is_array(T) {
+		#no_bounds_check for i in 0 ..< len(T) {
+			out[i] = #force_inline reciprocal_abs_scalar(x[i])
+		}
+	} else {
+		out = #force_inline reciprocal_abs_scalar(x)
+	}
+	return
 }

@@ -18,6 +18,7 @@ TITLE :: "Minimal D3D11 pt2"
 WIDTH :: 1920 / 2
 HEIGHT :: WIDTH * 9 / 16
 SHADER_FILE :: "shaders.hlsl"
+FLIP_Z_AXIS :: false
 
 float2 :: hlm.float2
 float3 :: hlm.float3
@@ -335,7 +336,7 @@ run :: proc() -> (exit_code: int) {
 	// } // projection matrix
 	// fmt.println("projection:", constants.projection)
 
-	constants.projection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, false) )
+	constants.projection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, FLIP_Z_AXIS) )
 	fmt.println("projection:", constants.projection)
 
 	constants.light_vector = {1.0, -1.0, 1.0, 0.0}

@@ -20,6 +20,7 @@ TITLE :: "Minimal D3D11 pt3"
 WIDTH :: 1920 / 2
 HEIGHT :: WIDTH * 9 / 16
 SHADER_FILE :: "shaders.hlsl"
+FLIP_Z_AXIS :: false
 
 float :: f32
 float2 :: [2]float
@@ -330,7 +331,7 @@ run :: proc() -> (exit_code: int) {
 		// 	0, 0, 1.125, 1,
 		// 	0, 0, -1.125, 0,
 		// },
-		CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, false) ),
+		CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, FLIP_Z_AXIS) ),
 		// light projection matrix (orthographic)
 		LightProjection  = float4x4{0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.125, 0, 0, 0, -0.125, 1},
 		LightRotation    = {0.8, 0.6, 0.0, 0},
@@ -339,7 +340,7 @@ run :: proc() -> (exit_code: int) {
 		ShadowmapSize    = {shadowmapVP.Width, shadowmapVP.Height, 0, 0},
 	}
 	fmt.println("projection:", constants.CameraProjection)
-	// constants.CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, false) )
+	// constants.CameraProjection = linalg.transpose( linalg.matrix4_perspective_f32(fov, aspect, near, far, FLIP_Z_AXIS) )
 	// fmt.println("projection:", constants.CameraProjection)
 
 	fmt.println("constants:", constants)

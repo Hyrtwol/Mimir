@@ -5,6 +5,8 @@ package owin_gl
 import win32 "core:sys/windows"
 import gl "vendor:OpenGL"
 
+int2 :: [2]i32
+
 PIXELFORMATDESCRIPTOR :: win32.PIXELFORMATDESCRIPTOR
 
 wglCreateContext :: win32.wglCreateContext
@@ -72,7 +74,29 @@ init_wgl_extensions :: proc() {
 set_swap_interval :: proc(interval: i32) -> (ok: bool) {
 	ok = win32.wglSwapIntervalEXT != nil
 	if ok {
-		ok =  win32.wglSwapIntervalEXT(interval)
+		ok = win32.wglSwapIntervalEXT(interval)
 	}
 	return
+}
+
+set_viewport_size :: proc(size: int2) {
+	gl.Viewport(0, 0, expand_values(size))
+}
+
+set_viewport :: proc {
+	gl.Viewport,
+	set_viewport_size,
+}
+
+delete_context_and_clear :: proc(hglrc: ^win32.HGLRC) {
+	// wglMakeCurrent(hdc, NULL); Unnecessary; wglDeleteContext will make the context not current
+	ok := win32.wglDeleteContext(hglrc^)
+	if ok {
+		hglrc^ = nil
+	}
+}
+
+delete_context :: proc {
+	win32.wglDeleteContext,
+	delete_context_and_clear,
 }

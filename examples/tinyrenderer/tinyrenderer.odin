@@ -28,9 +28,10 @@ float3x3 :: cv.float3x3
 float4x3 :: cv.float4x3
 float4x4 :: cv.float4x4
 
-width: i32 : 160 * 1
-height: i32 : width * 3 / 4
-ZOOM: i32 : 960 / width
+WIDTH: i32 : 160 * 1
+HEIGHT: i32 : WIDTH * 3 / 4
+ZOOM: i32 : 960 / WIDTH
+FLIP_Z_AXIS :: true
 
 do_rotate := true
 rot_y: f32 = 0
@@ -45,8 +46,7 @@ perspective: Perspective_f32 = {45 * math.RAD_PER_DEG, 1, 1, 10}
 
 viewport, proj, view, rotate: float4x4
 
-zbuffer: [width * height]f32
-flip_z_axis := true
+zbuffer: [WIDTH * HEIGHT]f32
 
 pics_w: i32 : 32
 pics_h: i32 : pics_w
@@ -161,11 +161,11 @@ ps_texture :: proc "contextless" (shader: ^cv.Shader, bc_clip: float3, color: ^b
 }
 
 create_look_at :: #force_inline proc "contextless" (cam: Camera_f32) -> float4x4 {
-	return lg.matrix4_look_at_f32(cam.eye, cam.center, cam.up, flip_z_axis)
+	return lg.matrix4_look_at_f32(cam.eye, cam.center, cam.up, FLIP_Z_AXIS)
 }
 
 create_perspective :: #force_inline proc "contextless" (pers: Perspective_f32) -> float4x4 {
-	return cv.matrix4_perspective_f32_01(pers.fov, pers.aspect, pers.far, pers.near, flip_z_axis)
+	return cv.matrix4_perspective_f32_01(pers.fov, pers.aspect, pers.far, pers.near, FLIP_Z_AXIS)
 }
 
 on_create :: proc(app: ^ca.application) -> int {
@@ -173,12 +173,12 @@ on_create :: proc(app: ^ca.application) -> int {
 	size := cv.get_canvas_size(canvas)
 	perspective.aspect = f32(size.x) / f32(size.y)
 	viewport = cv.create_viewport(size)
-	// view = lg.matrix4_look_at_f32(camera.eye, camera.center, camera.up, flip_z_axis)
+	// view = lg.matrix4_look_at_f32(camera.eye, camera.center, camera.up, FLIP_Z_AXIS)
 	view = create_look_at(camera)
-	//view = camera.look_at(camera.eye, camera.center, camera.up, flip_z_axis)
+	//view = camera.look_at(camera.eye, camera.center, camera.up, FLIP_Z_AXIS)
 	//fmt.println("perspective :", fov, aspect, far, near)
 	fmt.println("perspective:", perspective)
-	//proj = cv.matrix4_perspective_f32_01(perspective.fov, perspective.aspect, perspective.far, perspective.near, flip_z_axis)
+	//proj = cv.matrix4_perspective_f32_01(perspective.fov, perspective.aspect, perspective.far, perspective.near, FLIP_Z_AXIS)
 	proj = create_perspective(perspective)
 	rotate = lg.identity(float4x4)
 	light_dir = lg.normalize(light_dir)
@@ -300,7 +300,7 @@ on_update :: proc(app: ^ca.application) -> int {
 
 run :: proc() -> (exit_code: int) {
 	app := ca.DEFAULT_APPLICATION
-	app.size = {width, height}
+	app.size = {WIDTH, HEIGHT}
 	app.create = on_create
 	app.update = on_update
 	app.settings.window_size = app.size * ZOOM

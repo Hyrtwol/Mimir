@@ -1,4 +1,5 @@
 // https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
+// https://github.com/Lazarus247/project247/blob/master/src/Window.cpp
 
 package main
 
@@ -164,14 +165,16 @@ draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	hdc := win32.GetDC(hwnd)
 	assert(hdc != nil)
 	defer win32.ReleaseDC(hwnd, hdc)
-	// draw_dib(hwnd, hdc)
-
 	draw()
+	swap_buffers(hdc)
+	return 0
+}
+*/
 
+swap_buffers :: proc(hdc: win32.HDC) {
+	assert(hdc != nil)
 	sr := owin_gl.SwapBuffers(hdc)
 	assert(sr == true)
-
-	return 0
 }
 
 run :: proc() -> (exit_code: int) {
@@ -211,7 +214,7 @@ run :: proc() -> (exit_code: int) {
 }
 
 // run3 :: proc() -> (exit_code: int) {
-// 	app := ca.default_application
+// 	app := ca.DEFAULT_APPLICATION
 // 	app.size = {WIDTH, HEIGHT}
 // 	app.create = on_create
 // 	app.update = on_update

@@ -243,7 +243,7 @@ barycentric :: proc(t: ^testing.T) {
 
 	pp := cv.float3{10, 10, 10}
 	b := cv.barycentric(&ABC, pp)
-	fmt.println("barycentric:", b)
+	// fmt.println("barycentric:", b)
 
 	//testing.expectf(t, [3]f32{-3.43, -4.9, 18.33} == b, "b=%v", b)
 	o.expect_vector(t, [3]f32{-3.43, -4.9, 18.33}, b, EPSILON)
@@ -253,12 +253,10 @@ barycentric :: proc(t: ^testing.T) {
 @(test)
 multiply :: proc(t: ^testing.T) {
 	ABC := cv.float3x3{11, 12, 13, 21, 22, 23, 31, 32, 33}
-	fmt.println("ABC:", ABC)
-
+	// fmt.println("ABC:", ABC)
 	b := ABC * cv.float3{1, 0, 0}
-	fmt.println("multiply:", b)
+	// fmt.println("multiply:", b)
 	testing.expectf(t, [3]f32{11, 21, 31} == b, "b=%v", b)
-
 }
 
 /*
@@ -275,16 +273,16 @@ matrix4_perspective_f32 :: proc(t: ^testing.T) {
 	flip_z_axis := true
 	fov, aspect, near, far: f32 = 0.78539819, 1.33333337, 1, 10
 	proj := cv.matrix4_perspective_f32(fov, aspect, near, far)
-	fmt.println("proj:", proj)
+	// fmt.println("proj:", proj)
 	vn := cv.float4{0, 0, -near, 1}
 	vf := cv.float4{0, 0, -far, 1}
 
 	vn = proj * vn
 	vn = cv.perspective_divide(vn)
-	fmt.println("vn:", vn)
+	// fmt.println("vn:", vn)
 	vf = proj * vf
 	vf = cv.perspective_divide(vf)
-	fmt.println("vf:", vf)
+	// fmt.println("vf:", vf)
 
 	o.expect_float(t, vn.z, -1, delta)
 	o.expect_float(t, vf.z, 1, delta)
@@ -295,16 +293,16 @@ matrix4_perspective_f32_01 :: proc(t: ^testing.T) {
 	flip_z_axis := true
 	fov, aspect, near, far: f32 = 0.78539819, 1.33333337, 1, 10
 	proj := cv.matrix4_perspective_f32_01(fov, aspect, near, far)
-	fmt.println("proj:", proj)
+	// fmt.println("proj:", proj)
 	vn := cv.float4{0, 0, -near, 1}
 	vf := cv.float4{0, 0, -far, 1}
 
 	vn = proj * vn
 	vn = cv.perspective_divide(vn)
-	fmt.println("vn:", vn)
+	// fmt.println("vn:", vn)
 	vf = proj * vf
 	vf = cv.perspective_divide(vf)
-	fmt.println("vf:", vf)
+	// fmt.println("vf:", vf)
 
 	o.expect_float(t, vn.z, 0, delta)
 	o.expect_float(t, vf.z, 1, delta)
@@ -316,16 +314,16 @@ reverse_z_perspective :: proc(t: ^testing.T) {
 	fov, aspect: f32 = 0.78539819, 1.33333337
 	near, far: f32 = 1, 10
 	proj := cv.matrix4_perspective_f32_01(fov, aspect, far, near)
-	fmt.println("proj:", proj)
+	// fmt.println("proj:", proj)
 	vn := cv.float4{0, 0, -near, 1}
 	vf := cv.float4{0, 0, -far, 1}
 
 	vn = proj * vn
 	vn = cv.perspective_divide(vn)
-	fmt.println("vn:", vn)
+	// fmt.println("vn:", vn)
 	vf = proj * vf
 	vf = cv.perspective_divide(vf)
-	fmt.println("vf:", vf)
+	// fmt.println("vf:", vf)
 
 	o.expect_float(t, vn.z, 1, delta)
 	o.expect_float(t, vf.z, 0, delta)
@@ -367,4 +365,14 @@ rotate_y :: proc(t: ^testing.T) {
 	o.expect_matrix(t, rot2, cv.float2x2{0, 1, -1, 0}, EPSILON)
 	o.expect_vector(t, rot2[0], -cv.float2_yunit, EPSILON)
 	o.expect_vector(t, rot2[1], cv.float2_xunit, EPSILON)
+}
+
+// @(test)
+// verify_fract :: proc(t: ^testing.T) {
+// }
+
+@(test)
+verify_reciprocal_abs :: proc(t: ^testing.T) {
+	o.expect_scalar(t, cv.reciprocal_abs(0.2), 5)
+	o.expect_vector(t, cv.reciprocal_abs(cv.float4{0.2, -0.5, 0.0, 5.0}), cv.float4{5, 2, max(f32), 0.2}, EPSILON)
 }

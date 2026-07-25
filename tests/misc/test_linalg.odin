@@ -20,7 +20,7 @@ calc_projection :: proc(t: ^T) {
 		0, 0, far / (far - near), near * far / (near - far),
 		0, 0, 1, 0,
 	}
-	projection2 = linalg.matrix4_perspective_f32(fov, aspect, near, far, false)
+	projection2 = linalg.matrix4_perspective_f32(fov, aspect, near, far, flip_z_axis = false)
 	// fmt.println("projection1:", projection1)
 	// fmt.println("projection2:", projection2)
 	// projection1: matrix[2,         0, 0, 0; 0, 2,         0, 0; 0, 0, 1.125, -1.125; 0, 0, 1, 0]

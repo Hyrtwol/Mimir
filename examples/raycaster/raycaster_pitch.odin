@@ -44,14 +44,11 @@ on_create_raycaster_pitch :: proc(app: ^ca.application) -> int {
 on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 
 	handle_input(app)
-	// rot := matrix2_rotate(heading)
-	// dir = rot[0]
-	// plane = rot[1] * -plane_scale
 
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
 
-	w, h := app.size.x, app.size.y
+	w, h := expand_values(app.size)
 	w_half, h_half := scalar(w) / 2, scalar(h) / 2
 
 	// WALL CASTING
