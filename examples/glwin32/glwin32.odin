@@ -21,7 +21,7 @@ HEIGHT :: WIDTH * 9 / 16
 SWAP_INTERVAL :: 1
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 	delta:    f32,
 	tick:     u32,
 	hglrc:    win32.HGLRC,

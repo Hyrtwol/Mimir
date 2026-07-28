@@ -25,7 +25,7 @@ clear_color: COLOR = .BLACK
 select: COLOR = .WHITE
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 }
 
 dib: cw.DIB
@@ -242,7 +242,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 main :: proc() {
 
 	app := application {
-		settings = owin.window_settings {
+		settings = owin.Window_Settings {
 			options     = {.Center},
 			dwStyle     = owin.DEFAULT_WS_STYLE,
 			dwExStyle   = owin.DEFAULT_WS_EX_STYLE,

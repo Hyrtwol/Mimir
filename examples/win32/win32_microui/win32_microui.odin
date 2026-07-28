@@ -32,7 +32,7 @@ char_queue: queue.Queue(u8)
 mouse_queue: queue.Queue(mouse_event)
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 	mu_ctx:          mu.Context,
 	log_buf:         [1 << 16]byte,
 	log_buf_len:     int,

@@ -29,7 +29,7 @@ HEIGHT: i32 : WIDTH * 3 / 4
 PXLCNT: i32 : WIDTH * HEIGHT
 ZOOM :: 8
 
-settings: owin.window_settings
+settings: owin.Window_Settings
 
 delta: f64 = 0
 

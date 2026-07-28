@@ -14,7 +14,7 @@ ROM_PATH : string
 AMSTRAD_PATH : string
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 	pause:    bool,
 	//colors:    []color,
 	//screen_size:     int2,

@@ -18,7 +18,7 @@ WIDTH :: ZOOM * 32
 HEIGHT :: WIDTH
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 }
 
 dib: cw.DIB

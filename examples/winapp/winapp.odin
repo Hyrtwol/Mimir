@@ -30,7 +30,7 @@ timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 }
 
 // TODO GetKeyboardState

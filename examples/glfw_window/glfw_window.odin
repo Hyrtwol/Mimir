@@ -68,7 +68,7 @@ texture_def :: struct {
 vertex :: model.vertex
 
 bounding_sphere :: struct {
-	origo:    vec3,
+	origo:  vec3,
 	radius: f32,
 }
 

@@ -24,7 +24,7 @@ key_state :: bool
 key_states :: [key_state_count]key_state
 
 application :: struct {
-	#subtype settings:       owin.window_settings,
+	#subtype settings:       owin.Window_Settings,
 	pause:                   bool,
 	size:                    int2,
 	timer_id:                win32.UINT_PTR,
@@ -40,7 +40,7 @@ application :: struct {
 on_idle :: proc(app: ^application) -> int {return 0}
 
 DEFAULT_APPLICATION :: application {
-	settings = owin.window_settings {
+	settings = owin.Window_Settings {
 		options     = {.Center},
 		dwStyle     = owin.DEFAULT_WS_STYLE,
 		dwExStyle   = owin.DEFAULT_WS_EX_STYLE,

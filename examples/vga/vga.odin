@@ -37,7 +37,7 @@ BITMAPINFO :: struct {
 }
 
 application :: struct {
-	#subtype settings: owin.window_settings,
+	#subtype settings: owin.Window_Settings,
 	pause:    bool,
 	timer_id: win32.UINT_PTR,
 	delta:    f32,
@@ -307,7 +307,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 run :: proc() -> (exit_code: int) {
 
 	app: application = {
-		settings = owin.window_settings {
+		settings = owin.Window_Settings {
 			options = {.Center, .Raw_Input},
 			dwStyle = owin.DEFAULT_WS_STYLE,
 			dwExStyle = owin.DEFAULT_WS_EX_STYLE,
