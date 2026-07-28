@@ -1,4 +1,4 @@
-package microui_raylib_demo
+package microui_raylib
 
 import "core:fmt"
 import "core:unicode/utf8"

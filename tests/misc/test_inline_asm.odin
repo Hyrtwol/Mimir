@@ -34,7 +34,7 @@ can_i_call_rdtsc :: proc(t: ^testing.T) {
 	act2 := __rdtsc()
 
 	stopwatch->stop()
-	elapsed_ms := stopwatch->get_elapsed_ms()
+	elapsed_ms := stopwatch->get_elapsed_seconds() * owin.TIME_TO_MILLISECONDS
 
 	clock_cycles := act2 - act
 

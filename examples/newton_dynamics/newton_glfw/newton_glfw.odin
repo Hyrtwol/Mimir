@@ -133,7 +133,7 @@ force_and_torque_callback :: proc "c" (body: ^newton.Body, timestep: f32, thread
 		v := origo - position
 		sqrMagnitude := linalg.dot(v, v) // aka vector_length2
 		if sqrMagnitude > 0.1 {
-			v *= FORCE_FACTOR * mass;
+			v *= FORCE_FACTOR * mass
 			if sqrMagnitude > 1 {
 				//v *= FORCE_FACTOR * mass / (sqrMagnitude * math.sqrt(sqrMagnitude))
 				v /= sqrMagnitude * math.sqrt(sqrMagnitude)
@@ -403,6 +403,8 @@ run :: proc() -> (exit_code: int) {
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	}
 
+	// for tex, idx in textures {fmt.println("texture:", idx, tex)}
+
 	gl.ClearColor(0.10, 0.15, 0.20, 1.0)
 	gl.Enable(gl.CULL_FACE)
 	gl.Enable(gl.DEPTH_TEST)
@@ -446,10 +448,15 @@ run :: proc() -> (exit_code: int) {
 		proj_view := proj * view
 		gl.UniformMatrix4fv(u_proj_view.location, 1, false, &proj_view[0, 0])
 
-		ut: float4x4
+		//ut: float4x4
+		cur_tex, tex_idx: u32 = 0, 0
 		for &ri in render_items {
 			//gl.ActiveTexture(gl.TEXTURE0)
-			gl.BindTexture(gl.TEXTURE_2D, textures[ri.texture_index])
+			tex_idx = textures[ri.texture_index]
+			if tex_idx != cur_tex {
+				cur_tex = tex_idx
+				gl.BindTexture(gl.TEXTURE_2D, cur_tex)
+			}
 			//ut = proj_view * ri.transform
 			//gl.UniformMatrix4fv(u_proj_view.location, 1, false, &proj_view[0, 0])
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ri.transform[0, 0])
