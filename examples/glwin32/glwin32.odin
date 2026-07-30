@@ -152,6 +152,7 @@ set_viewport_size :: proc(app: ^application) {
 	} else {
 		fmt.println("  app.hglrc is nil")
 	}
+	perspective.aspect = f32(app.settings.window_size.x) / f32(app.settings.window_size.y)
 }
 
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
@@ -235,7 +236,6 @@ run :: proc() -> (exit_code: int) {
 	// if .Raw_Input in settings.options {
 	// 	register_raw_input(hwnd)
 	// }
-
 	hdc := win32.GetDC(hwnd)
 	assert(hdc != nil)
 	defer {res := win32.ReleaseDC(hwnd, hdc); fmt.println(#procedure, "ReleaseDC", res)}
@@ -279,14 +279,7 @@ run :: proc() -> (exit_code: int) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices) * size_of(indices[0]), raw_data(indices), gl.STATIC_DRAW)
 
-
-	camera_position: glm.vec3 = {0, 0, -2}
-	world_center: glm.vec3 = {0, 0, 0}
-	y_up: glm.vec3 = {0, 1, 0}
-	camera_fov := math.to_radians_f32(45)
 	index_count := i32(len(indices))
-	ASPECT := f32(app.settings.window_size.x) / f32(app.settings.window_size.y)
-
 	t: f32 = 0
 
 	owin.show_and_update_window(hwnd)
@@ -316,14 +309,6 @@ run :: proc() -> (exit_code: int) {
 			//gl.Disable(gl.BLEND)
 
 			gl.BindVertexArray(vao)
-
-			// rotate about Z axis
-			//model := glm.identity(glm.mat4) * glm.mat4Rotate({0, 1, 0}, t)
-			t += app.delta
-			model := glm.mat4Rotate({0, 1, 0}, t)
-			view := glm.mat4LookAt(eye = camera_position, centre = world_center, up = y_up)
-			projection := glm.mat4Perspective(camera_fov, ASPECT, 0.1, 100.0)
-
 			gl.UseProgram(program)
 			transform := projection * view * model
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &transform[0, 0])

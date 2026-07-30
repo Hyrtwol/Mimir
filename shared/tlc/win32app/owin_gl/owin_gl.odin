@@ -1,7 +1,7 @@
 // https://wikis.khronos.org/opengl/Creating_an_OpenGL_Context_(WGL)
 package owin_gl
 
-// import "core:fmt"
+import "core:fmt"
 import win32 "core:sys/windows"
 import gl "vendor:OpenGL"
 
@@ -24,7 +24,9 @@ glGetString :: gl.GetString
 gl_set_proc_address :: win32.gl_set_proc_address
 
 load_up_to :: proc(major: int = 4, minor: int = 6) {
+	fmt.println(#procedure, major, minor)
 	gl.load_up_to(major, minor, gl_set_proc_address)
+	init_wgl_extensions()
 }
 
 choose_and_set_pixel_format :: proc(hdc: win32.HDC) -> (pixelFormat: win32.INT, ok: win32.BOOL) {
