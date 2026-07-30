@@ -4,7 +4,6 @@ import "base:runtime"
 import "core:fmt"
 import "core:io"
 import "core:os"
-import "core:path/filepath"
 import "core:slice"
 import "core:strings"
 import "core:testing"
@@ -28,7 +27,7 @@ EXPECTED_FILE_SIZE :: 3114
 
 @(test)
 read_some_bytes :: proc(t: ^testing.T) {
-	path, _ := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	path, _ := os.join_path({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 	//fmt.printfln("reading %s", path)
 
 	// data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
@@ -44,7 +43,7 @@ read_some_bytes :: proc(t: ^testing.T) {
 
 @(test)
 file_io :: proc(t: ^testing.T) {
-	path, _ := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	path, _ := os.join_path({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
 
 	//fd: os.Handle
 	fd: ^os.File
@@ -94,8 +93,8 @@ file_io :: proc(t: ^testing.T) {
 
 @(test)
 file_reader_writer :: proc(t: ^testing.T) {
-	//input_path := filepath.join({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
-	input_path, _ := filepath.clean("../../README.md", allocator = context.temp_allocator)
+	//input_path := os.join_path({ODIN_ROOT, "README.md"}, allocator = context.temp_allocator)
+	input_path, _ := os.clean_path("../../README.md", allocator = context.temp_allocator)
 	output_path := "file_reader_writer.log"
 
 	// fi, fo: os.Handle
@@ -137,7 +136,7 @@ file_reader_writer :: proc(t: ^testing.T) {
 
 @(test)
 lowercase_dictionary :: proc(t: ^testing.T) {
-	path, _ := filepath.join({"..", "..", "doc", "odin-dictionary.txt"}, context.temp_allocator)
+	path, _ := os.join_path({"..", "..", "doc", "odin-dictionary.txt"}, context.temp_allocator)
 
 	// fmt.printfln("reading %s", path)
 	//data, err := os.read_entire_file_from_filename(path, context.temp_allocator)

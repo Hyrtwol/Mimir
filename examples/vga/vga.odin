@@ -338,7 +338,7 @@ run :: proc() -> (exit_code: int) {
 		//res = app.update(app)
 		//if res != 0 {break}
 
-		for _ in 0..<256 {
+		for _ in 0 ..< 256 {
 			p += d
 			if p.x == 0 || p.x == SCREEN_WIDTH - 1 {
 				d.x = -d.x

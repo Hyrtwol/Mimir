@@ -152,9 +152,9 @@ run :: proc() -> (exit_code: int) {
 		fmt.println("vertices: []vertex = {")
 		for vtx in vertices {
 			fmt.print("\t{")
-			fmt.printf("{{" + FF + ", " + FF + ", " + FF + "}}", expand_values(vtx.pos))
+			fmt.printf("{{" + FF + ", " + FF + ", " + FF + "}}", **vtx.pos)
 			fmt.print(", ")
-			fmt.printf("{{" + FF2 + ", " + FF2 + ", " + FF2 + "}}", expand_values(vtx.nml))
+			fmt.printf("{{" + FF2 + ", " + FF2 + ", " + FF2 + "}}", **vtx.nml)
 			fmt.println("},")
 		}
 		fmt.println("}")

@@ -41,7 +41,7 @@ on_update_raycaster_floor :: proc(app: ^ca.application) -> int {
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
 
-	w, h := expand_values(app.size)
+	w, h := **app.size
 	h_half := h / 2
 
 	// WALL CASTING

@@ -4,7 +4,6 @@ import am ".."
 import "core:encoding/json"
 import "core:fmt"
 import "core:os"
-import "core:path/filepath"
 import "core:strings"
 import "core:testing"
 import o "shared:ounit"
@@ -32,7 +31,7 @@ size_up :: proc(t: ^testing.T) {
 
 //@(test)
 load_disk_image :: proc(t: ^testing.T) {
-	path := filepath.clean("../examples/amstrad/data/pinup.dsk", context.temp_allocator) or_else panic("filepath.clean")
+	path := os.clean_path("../examples/amstrad/data/pinup.dsk", context.temp_allocator) or_else panic("os.clean_path")
 	fmt.printfln("reading %s", path)
 	fd, err := os.open(path)
 	testing.expect(t, err == 0)
@@ -111,7 +110,7 @@ load_disk_image :: proc(t: ^testing.T) {
 
 @(test)
 load_snapshot :: proc(t: ^testing.T) {
-	path := filepath.clean("../../../examples/amstrad/data/pinup.sna", context.temp_allocator) or_else panic("filepath.clean")
+	path := os.clean_path("../../../examples/amstrad/data/pinup.sna", context.temp_allocator) or_else panic("os.clean_path")
 	fmt.printfln("reading %s", path)
 
 	ss: am.snapshot

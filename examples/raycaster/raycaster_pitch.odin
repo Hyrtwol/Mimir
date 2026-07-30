@@ -48,7 +48,7 @@ on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
 	canvas := &ca.dib.canvas
 	cv.canvas_clear(canvas)
 
-	w, h := expand_values(app.size)
+	w, h := **app.size
 	w_half, h_half := scalar(w) / 2, scalar(h) / 2
 
 	// WALL CASTING

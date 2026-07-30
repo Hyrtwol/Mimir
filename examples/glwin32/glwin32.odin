@@ -64,7 +64,7 @@ update :: proc() {
 
 draw :: proc() {
 	//owin_gl.set_viewport(app.settings.window_size)
-	//gl.Viewport(0, 0, expand_values(app.settings.window_size))
+	//gl.Viewport(0, 0, **app.settings.window_size)
 	// Set the opengl clear color
 	// 0-1 rgba values
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
@@ -148,7 +148,7 @@ free_opengl :: proc(app: ^application) {
 set_viewport_size :: proc(app: ^application) {
 	if app.hglrc != nil {
 		owin_gl.set_viewport(app.settings.window_size)
-		fmt.println("  set_viewport", 0, 0, expand_values(app.settings.window_size))
+		fmt.println("  set_viewport", 0, 0, **app.settings.window_size)
 	} else {
 		fmt.println("  app.hglrc is nil")
 	}

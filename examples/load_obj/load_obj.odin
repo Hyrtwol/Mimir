@@ -5,7 +5,6 @@ import "core:fmt"
 import "core:io"
 import "core:math/linalg"
 import "core:os"
-import "core:path/filepath"
 import "core:strings"
 import oz "shared:objzero"
 import "shared:obug"
@@ -253,29 +252,29 @@ run :: proc() -> (exit_code: int) {
 	}
 	for input_path in input_paths {
 
-		input_dir := filepath.dir(input_path, context.temp_allocator)
-		input_name := filepath.stem(input_path)
+		input_dir := os.dir(input_path)
+		input_name := os.stem(input_path)
 
 		output_path := fmt.tprintf("%s/%s.odin", input_dir, input_name)
-		output_path = filepath.clean(output_path, context.temp_allocator) or_else panic("filepath.clean")
-		output_path = filepath.abs(output_path, context.temp_allocator) or_else panic("filepath.abs")
+		output_path = os.clean_path(output_path, context.temp_allocator) or_else panic("os.clean")
+		output_path = os.abs(output_path, context.temp_allocator) or_else panic("os.abs")
 
-		clean_path := filepath.clean(input_path, context.temp_allocator) or_else panic("filepath.clean")
-		clean_path = filepath.abs(clean_path, context.temp_allocator) or_else panic("filepath.abs")
+		clean_path := os.clean_path(input_path, context.temp_allocator) or_else panic("os.clean_path")
+		clean_path = os.get_absolute_path(clean_path, context.temp_allocator) or_else panic("os.get_absolute_path")
 		obj_file := strings.clone_to_cstring(clean_path, context.temp_allocator) or_else panic("strings.clone_to_cstring")
 
 		fmt.printfln("reading %s", obj_file)
 		fmt.printfln("writing %s", output_path)
 
-		fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0)
+		fd, fe := os.open(output_path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
 		if fe != os.ERROR_NONE {return}
 		defer os.close(fd)
 
-		w := io.to_writer(os.stream_from_handle(fd))
+		w := io.to_writer(os.to_stream(fd))
 
 		fmt.wprintfln(w, "package %s", input_name)
 		fmt.wprintln(w)
-		fmt.wprintfln(w, "// %s", filepath.base(input_path))
+		fmt.wprintfln(w, "// %s", os.base(input_path))
 		oz.objz_setProgress(progressCallback)
 		obj := oz.objz_load(obj_file)
 		if obj == nil {

@@ -4,7 +4,6 @@ import "base:runtime"
 import "core:fmt"
 import "core:io"
 import "core:os"
-import "core:path/filepath"
 import "core:slice"
 import "core:strings"
 import "core:testing"
@@ -14,8 +13,8 @@ import "shared:ounit"
 @test
 parse_editorconfig :: proc(t: ^testing.T) {
 
-	path := filepath.clean("../../.editorconfig", allocator = context.temp_allocator) or_else panic("filepath.clean")
-	// path = filepath.abs(path, allocator = context.temp_allocator) or_else panic("filepath.abs")
+	path := os.clean_path("../../.editorconfig", allocator = context.temp_allocator) or_else panic("os.clean_path")
+	// path = os.get_absolute_path(path, allocator = context.temp_allocator) or_else panic("os.get_absolute_path")
 	// fmt.printfln("reading %s", path)
 	bytes := os.read_entire_file(path, allocator = context.temp_allocator) or_else panic("os.read_entire_file")
 	ini_data := strings.clone_from_bytes(bytes, allocator = context.temp_allocator) or_else panic("strings.clone_from_bytes")

@@ -2,7 +2,6 @@ package test_misc
 
 import "core:fmt"
 import "core:os"
-import "core:path/filepath"
 import "core:strings"
 import _t "core:testing"
 import "shared:ounit"
@@ -21,7 +20,7 @@ expect_size :: ounit.expect_size
 
 @(test)
 odin_pragma :: proc(t: ^T) {
-	expect_value(t, filepath.base(#file), "test_misc.odin")
+	expect_value(t, os.base(#file), "test_misc.odin")
 	expect_value(t, #procedure, "odin_pragma")
 }
 
@@ -255,7 +254,7 @@ subtypes :: proc(t: ^_t.T) {
 @(test)
 expand_values_vector :: proc(t: ^T) {
 	v: [2]i32 = {1, 2}
-	x, y := expand_values(v)
+	x, y := **v // same as x, y := expand_values(v)
 	expect_value(t, x, v.x)
 	expect_value(t, y, v.y)
 }

@@ -3,13 +3,12 @@ package main
 import "base:intrinsics"
 import "core:fmt"
 import "core:os"
-import "core:path/filepath"
 import "libs:graphviz"
 import "shared:obug"
 
 generate_graph :: proc(dot, output: string) {
-	dot_path := filepath.clean(dot, context.temp_allocator) or_else panic("filepath.clean")
-	output_file := filepath.clean(output, context.temp_allocator) or_else panic("filepath.clean")
+	dot_path := os.clean_path(dot, context.temp_allocator) or_else panic("os.clean_path")
+	output_file := os.clean_path(output, context.temp_allocator) or_else panic("os.clean_path")
 	graphviz.execute_dot(dot_path, output_file)
 }
 
