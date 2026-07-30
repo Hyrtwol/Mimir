@@ -30,7 +30,7 @@ BITMAPINFO :: struct {
 }
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> papp {
-	app := owin.get_settings(hwnd, application)
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
@@ -46,7 +46,7 @@ fill_screen_with_image :: proc(app: papp) {
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 	//fmt.println(#procedure, hwnd, app)

@@ -29,7 +29,7 @@ pvBits        : screen_buffer
 timer1_id     : win32.UINT_PTR
 timer2_id     : win32.UINT_PTR
 
-application :: struct {
+Application :: struct {
 	#subtype settings: owin.Window_Settings,
 }
 
@@ -54,7 +54,7 @@ set_dot :: proc(pos: owin.int2, col: cv.byte4) {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 	timer1_id = owin.set_timer(hwnd, owin.IDT_TIMER1, 1000)
@@ -86,7 +86,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := owin.get_settings(hwnd, application)
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.kill_timer(hwnd, &timer1_id)
 	owin.kill_timer(hwnd, &timer2_id)
@@ -124,7 +124,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	type := owin.WM_SIZE_WPARAM(wparam)
 	size := owin.decode_lparam_as_int2(lparam)
-	app := owin.get_settings(hwnd, application)
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {return 1}
 	fmt.println(#procedure, hwnd, type, size)
 	app.settings.window_size = size
@@ -135,7 +135,7 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 WM_SIZING :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd, wparam, lparam)
 	// wParam - The edge of the window that is being sized.
-	// lParam - A pointer to a RECT structure with the screen coordinates of the drag rectangle. To change the size or position of the drag rectangle, an application must change the members of this structure.
+	// lParam - A pointer to a RECT structure with the screen coordinates of the drag rectangle. To change the size or position of the drag rectangle, an Application must change the members of this structure.
 	return 0
 }
 
@@ -245,7 +245,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: owin.WM_MSG, wparam: win32.WPAR
 
 main :: proc() {
 
-	app: application = {
+	app: Application = {
 		settings = owin.create_window_settings({WIDTH, HEIGHT}, TITLE, wndproc),
 	}
 

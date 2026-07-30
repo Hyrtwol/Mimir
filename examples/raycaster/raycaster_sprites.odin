@@ -71,13 +71,13 @@ sprites: [numSprites]Sprite = {
 //1D Zbuffer
 z_buffer: [screenWidth]scalar
 
-on_create_raycaster_sprites :: proc(app: ^ca.application) -> int {
+on_create_raycaster_sprites :: proc(app: ^ca.Application) -> int {
 	assert(len(textures) > 0)
 	init_sprites()
 	return 0
 }
 
-on_update_raycaster_sprites :: proc(app: ^ca.application) -> int {
+on_update_raycaster_sprites :: proc(app: ^ca.Application) -> int {
 
 	handle_input(app)
 

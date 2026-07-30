@@ -35,13 +35,13 @@ worldmap_pitch: World_Map = {
 	{2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 5, 5, 5, 5, 5, 5, 5, 5, 5},
 }
 
-on_create_raycaster_pitch :: proc(app: ^ca.application) -> int {
+on_create_raycaster_pitch :: proc(app: ^ca.Application) -> int {
 	assert(len(textures) > 0)
 	init_sprites()
 	return 0
 }
 
-on_update_raycaster_pitch :: proc(app: ^ca.application) -> int {
+on_update_raycaster_pitch :: proc(app: ^ca.Application) -> int {
 
 	handle_input(app)
 

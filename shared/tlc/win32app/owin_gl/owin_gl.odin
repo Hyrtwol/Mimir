@@ -82,7 +82,7 @@ set_swap_interval :: proc(interval: i32) -> (ok: bool) {
 }
 
 set_viewport_size :: proc(size: int2) {
-	gl.Viewport(0, 0, expand_values(size))
+	gl.Viewport(0, 0, **size)
 }
 
 set_viewport :: proc {

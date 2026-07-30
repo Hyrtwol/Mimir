@@ -41,15 +41,15 @@ WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
 SWAP_INTERVAL :: 1
 
-application :: struct {
+Application :: struct {
 	#subtype settings: owin.Window_Settings,
 	delta:    f32,
 	tick:     u32,
 	hglrc:    win32.HGLRC,
 }
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := owin.get_settings(hwnd, application)
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
@@ -103,7 +103,7 @@ gl_set_proc_address_debug :: proc(p: rawptr, name: cstring) {
 	fmt.println(#procedure, name, (^rawptr)(p)^)
 }
 
-init_opengl :: proc(app: ^application, hdc: win32.HDC) {
+init_opengl :: proc(app: ^Application, hdc: win32.HDC) {
 	fmt.println(#procedure)
 	assert(hdc != nil)
 
@@ -138,14 +138,14 @@ init_opengl :: proc(app: ^application, hdc: win32.HDC) {
 	}
 }
 
-free_opengl :: proc(app: ^application) {
+free_opengl :: proc(app: ^Application) {
 	fmt.println(#procedure, app.hglrc)
 	assert(app.hglrc != nil)
 	owin_gl.delete_context(&app.hglrc)
 	assert(app.hglrc == nil)
 }
 
-set_viewport_size :: proc(app: ^application) {
+set_viewport_size :: proc(app: ^Application) {
 	if app.hglrc != nil {
 		owin_gl.set_viewport(app.settings.window_size)
 		fmt.println("  set_viewport", 0, 0, **app.settings.window_size)
@@ -158,7 +158,7 @@ set_viewport_size :: proc(app: ^application) {
 // <https://learn.microsoft.com/en-us/windows/win32/opengl/creating-a-rendering-context-and-making-it-current>
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd, lparam)
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 	// hdc: win32.HDC = win32.GetDC(hwnd)
@@ -220,7 +220,7 @@ swap_buffers :: proc(hdc: win32.HDC) {
 }
 
 run :: proc() -> (exit_code: int) {
-	app := application {
+	app := Application {
 		settings = {
 			options = {.Center},
 			dwStyle = owin.DEFAULT_WS_STYLE,

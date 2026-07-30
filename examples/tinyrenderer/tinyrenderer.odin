@@ -89,8 +89,8 @@ triangles := [?]int3{{3, 4, 0}, {3, 0, 5}, {3, 5, 1}, {3, 1, 4}, {2, 0, 4}, {2, 
 models: [9]cv.Model
 shader: cv.Shader
 
-// application :: struct {
-// 	#subtype app: ca.application,
+// Application :: struct {
+// 	#subtype app: ca.Application,
 // 	shader: cv.Shader
 // }
 
@@ -168,7 +168,7 @@ create_perspective :: #force_inline proc "contextless" (pers: Perspective_f32) -
 	return cv.matrix4_perspective_f32_01(pers.fov, pers.aspect, pers.far, pers.near, FLIP_Z_AXIS)
 }
 
-on_create :: proc(app: ^ca.application) -> int {
+on_create :: proc(app: ^ca.Application) -> int {
 	canvas := &ca.dib.canvas
 	size := cv.get_canvas_size(canvas)
 	perspective.aspect = f32(size.x) / f32(size.y)
@@ -209,7 +209,7 @@ on_create :: proc(app: ^ca.application) -> int {
 	return 0
 }
 
-on_update :: proc(app: ^ca.application) -> int {
+on_update :: proc(app: ^ca.Application) -> int {
 
 	if .MK_LBUTTON in app.mouse_buttons {
 		mp := ca.decode_mouse_pos_ndc(app)

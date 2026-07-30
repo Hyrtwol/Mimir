@@ -17,7 +17,7 @@ ZOOM :: 24
 WIDTH :: ZOOM * 32
 HEIGHT :: WIDTH
 
-application :: struct {
+Application :: struct {
 	#subtype settings: owin.Window_Settings,
 }
 
@@ -50,14 +50,14 @@ set_dot :: #force_inline proc "contextless" (pos: owin.int2, col: cv.byte4) {
 	cv.canvas_set_dot(&dib.canvas, pos, col)
 }
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := owin.get_settings(hwnd, application)
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 	fmt.println(#procedure)

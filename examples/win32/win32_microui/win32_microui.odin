@@ -31,7 +31,7 @@ mouse_event :: struct {
 char_queue: queue.Queue(u8)
 mouse_queue: queue.Queue(mouse_event)
 
-application :: struct {
+Application :: struct {
 	#subtype settings: owin.Window_Settings,
 	mu_ctx:          mu.Context,
 	log_buf:         [1 << 16]byte,
@@ -42,9 +42,9 @@ application :: struct {
 	//char_queue:      queue.Queue(u8),
 	//mouse_queue:     queue.Queue(mouse_event),
 }
-papp :: ^application
+papp :: ^Application
 
-state: application
+state: Application
 
 screen_buffer :: cv.screen_buffer
 
@@ -69,7 +69,7 @@ show_atlas := false
 convert_mu_color :: #force_inline proc(mu_color: mu.Color) -> win32.COLORREF {return (transmute(win32.COLORREF)mu_color) & 0xFFFFFF}
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 
@@ -103,7 +103,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 }
 
 WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	app := owin.get_settings(hwnd, application)
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.kill_timer(hwnd, &timer1_id)
 	if !owin.delete_object(&bitmap_handle) {
@@ -119,7 +119,7 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 // first := 5
 
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	app := owin.get_settings(hwnd, application)
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 
 	ps: win32.PAINTSTRUCT
@@ -209,7 +209,7 @@ WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	app := owin.get_settings(hwnd, application)
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	type := owin.WM_SIZE_WPARAM(wparam)
 	size := owin.decode_lparam_as_int2(lparam)
@@ -245,7 +245,7 @@ WM_EXITSIZEMOVE :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	owin.redraw_window(hwnd)
-	//app := owin.get_settings(hwnd, application)
+	//app := owin.get_settings(hwnd, Application)
 	//fmt.println(#procedure, app.mu_ctx.frame)
 	return 0
 }
@@ -256,7 +256,7 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	//case ' ':    owin.redraw_window(hwnd)
 	case:
 		fmt.printfln("WM_CHAR %4d 0x%4x 0x%4x 0x%4x", wparam, wparam, win32.HIWORD(lparam), win32.LOWORD(lparam))
-		app := owin.get_settings(hwnd, application)
+		app := owin.get_settings(hwnd, Application)
 		if app != nil {
 			//assert(&app.char_queue != nil)
 			//fmt.printfln("char_queue: %v", char_queue)
@@ -341,7 +341,7 @@ main :: proc() {
 	}
 	state.settings.window_size = {800, 600}
 	state.settings.wndproc = wndproc
-	state.settings.dwStyle = owin.DEFAULT_WS_STYLE | win32.WS_SIZEBOX
+	state.settings.dwStyle = owin.DEFAULT_WS_STYLE | owin.WS_SIZEBOX
 
 	//queue.init(&state.char_queue)
 	//defer queue.destroy(&state.char_queue)

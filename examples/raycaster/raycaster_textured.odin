@@ -35,7 +35,7 @@ worldmap_textured: World_Map = {
 	{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3},
 }
 
-on_update_raycaster_textured :: proc(app: ^ca.application) -> int {
+on_update_raycaster_textured :: proc(app: ^ca.Application) -> int {
 
 	handle_input(app)
 

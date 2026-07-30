@@ -4,13 +4,12 @@ import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
 import "core:math/linalg"
-import "core:math/rand"
 import "core:os"
 import win32 "core:sys/windows"
-import "core:time"
 import cv "libs:tlc/canvas"
-import "shared:owin"
 import "shared:obug"
+import "shared:owin"
+//import "core:time"
 
 int2 :: [2]i32
 color :: [4]u8
@@ -36,8 +35,12 @@ BITMAPINFO :: struct {
 	bmiColors: color_palette,
 }
 
-application :: struct {
+Application :: struct {
 	#subtype settings: owin.Window_Settings,
+
+	hwnd: win32.HWND,
+	hdc: win32.HDC,
+
 	pause:    bool,
 	timer_id: win32.UINT_PTR,
 	delta:    f32,
@@ -68,7 +71,7 @@ is_active: bool = true
 is_focused := false
 cursor_state: i32 = 0
 
-show_cursor :: #force_inline proc(app: ^application, show: bool) {
+show_cursor :: #force_inline proc(app: ^Application, show: bool) {
 	cursor_state = owin.show_cursor(show)
 	fmt.println(#procedure, cursor_state)
 }
@@ -88,8 +91,8 @@ set_dot :: #force_inline proc "contextless" (pvBits: screen_buffer, pos: owin.in
 	}
 }
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := owin.get_settings(hwnd, application)
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
@@ -101,62 +104,24 @@ set_window_text :: #force_inline proc(hwnd: win32.HWND) {
 }
 
 @(private = "file")
-draw_dib :: #force_inline proc(hwnd: win32.HWND, hdc: win32.HDC) {
-	app := get_app(hwnd)
+draw_frame :: #force_inline proc(app: ^Application) {
+	assert(app.hdc != nil)
 	if (app.hbitmap != nil) {
-		hdc_source := win32.CreateCompatibleDC(hdc)
+		hdc_source := win32.CreateCompatibleDC(app.hdc)
 		defer win32.DeleteDC(hdc_source)
 
 		ws := app.settings.window_size
 		win32.SelectObject(hdc_source, win32.HGDIOBJ(app.hbitmap))
-		win32.StretchBlt(hdc, 0, 0, ws.x, ws.y, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
+		win32.StretchBlt(app.hdc, 0, 0, ws.x, ws.y, hdc_source, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, win32.SRCCOPY)
 	}
 }
-
-@(private = "file")
-draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
-	hdc := win32.GetDC(hwnd)
-	assert(hdc != nil)
-	defer win32.ReleaseDC(hwnd, hdc)
-	draw_dib(hwnd, hdc)
-	return 0
-}
-
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
-
-	bitmap_info := BITMAPINFO {
-		bmiHeader = win32.BITMAPV5HEADER {
-			bV5Size        = size_of(win32.BITMAPV5HEADER),
-			bV5Width       = SCREEN_WIDTH,
-			bV5Height      = -SCREEN_HEIGHT, // minus for top-down
-			bV5Planes      = 1,
-			bV5BitCount    = color_bits,
-			bV5Compression = win32.BI_RGB,
-			bV5ClrUsed     = palette_count,
-		},
-	}
-
-	for i in 0 ..< min(palette_count, len(cv.VGA_COLORS)) {
-		bitmap_info.bmiColors[i] = cv.VGA_COLORS[i]
-	}
-
-	show_cursor(app, false)
-
-	client_size := owin.get_client_size(hwnd)
-
-	hdc := win32.GetDC(hwnd)
-	defer win32.ReleaseDC(hwnd, hdc)
-
-	app.hbitmap = owin.create_dib_section(hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
-
 	app.timer_id = owin.set_timer(hwnd, IDT_TIMER1, 1000 / IDT_TIMER1_FPS)
-
 	return 0
 }
 
@@ -170,8 +135,13 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	}
 
 	if !owin.delete_object(&app.hbitmap) {owin.show_message_box("Unable to delete hbitmap", "Error")}
-
-	//owin.dib_free(&dib)
+	//if !owin.release_dc(hwnd, &app.hdc) {owin.show_message_box("Unable to release DC", "Error")}
+	owin.release_dc(hwnd, &app.hdc)
+	assert(app.hdc == nil)
+	if app.hwnd == hwnd {
+		app.hwnd = nil
+	}
+	assert(app.hwnd == nil)
 	owin.post_quit_message()
 	return 0
 }
@@ -197,10 +167,9 @@ WM_TIMER :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 WM_PAINT :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	ps: win32.PAINTSTRUCT
-	hdc := win32.BeginPaint(hwnd, &ps)
-	assert(hdc != nil)
+	win32.BeginPaint(hwnd, &ps)
 	defer win32.EndPaint(hwnd, &ps)
-	draw_dib(hwnd, hdc)
+	// draw_dib(hwnd, ps.hdc)
 	return 0
 }
 
@@ -304,9 +273,30 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
+create_dib :: proc(app: ^Application) {
+	assert(app != nil)
+	assert(app.hdc != nil)
+	bitmap_info := BITMAPINFO {
+		bmiHeader = win32.BITMAPV5HEADER {
+			bV5Size        = size_of(win32.BITMAPV5HEADER),
+			bV5Width       = SCREEN_WIDTH,
+			bV5Height      = -SCREEN_HEIGHT, // minus for top-down
+			bV5Planes      = 1,
+			bV5BitCount    = color_bits,
+			bV5Compression = win32.BI_RGB,
+			bV5ClrUsed     = palette_count,
+		},
+	}
+	for i in 0 ..< min(palette_count, len(cv.VGA_COLORS)) {
+		bitmap_info.bmiColors[i] = cv.VGA_COLORS[i]
+	}
+	app.hbitmap = owin.create_dib_section(app.hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
+	return
+}
+
 run :: proc() -> (exit_code: int) {
 
-	app: application = {
+	application: Application = {
 		settings = owin.Window_Settings {
 			options = {.Center, .Raw_Input},
 			dwStyle = owin.DEFAULT_WS_STYLE,
@@ -317,8 +307,16 @@ run :: proc() -> (exit_code: int) {
 			title = TITLE,
 		},
 	}
+	app := &application
 
-	_, _, hwnd := owin.prepare_run(&app)
+	_, _, app.hwnd = owin.prepare_run(app)
+
+	show_cursor(app, false)
+
+	app.hdc = win32.GetDC(app.hwnd)
+	assert(app.hdc != nil)
+
+	create_dib(app)
 
 	stopwatch := owin.create_stopwatch()
 	stopwatch->start()
@@ -350,12 +348,15 @@ run :: proc() -> (exit_code: int) {
 			c += 1
 		}
 
-		draw_frame(hwnd)
+		draw_frame(app)
 		owin.sleep(app.settings.sleep)
 	}
-
 	stopwatch->stop()
 	exit_code = int(msg.wParam)
+
+	assert(app.hwnd == nil)
+	assert(app.hdc == nil)
+	assert(app.hbitmap == nil)
 
 	return
 }

@@ -22,7 +22,7 @@ dudes: [dude_count]dude
 
 dirs: [8]cv.int2 = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}}
 
-on_create :: proc(app: ^ca.application) -> int {
+on_create :: proc(app: ^ca.Application) -> int {
 	size := ca.dib.canvas.size
 	for &d in dudes {
 		d.pos = cv.random_position(size)
@@ -42,7 +42,7 @@ wrap_vector :: #force_inline proc "contextless" (v: ^[$N]i32, size: [N]i32)  {
 	}
 }
 
-on_update :: proc(app: ^ca.application) -> int {
+on_update :: proc(app: ^ca.Application) -> int {
 	pc := &ca.dib.canvas
 	pp: ^cv.int2
 	siz := cv.get_canvas_size(pc)

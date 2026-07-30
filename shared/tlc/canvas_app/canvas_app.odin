@@ -17,13 +17,13 @@ int2 :: cv.int2
 color: cv.color
 dib: cw.DIB
 
-app_action :: #type proc(app: ^application) -> int
+app_action :: #type proc(app: ^Application) -> int
 
 key_state_count :: 128
 key_state :: bool
 key_states :: [key_state_count]key_state
 
-application :: struct {
+Application :: struct {
 	#subtype settings:       owin.Window_Settings,
 	pause:                   bool,
 	size:                    int2,
@@ -37,9 +37,9 @@ application :: struct {
 	char_queue:              queue.Queue(u8),
 }
 
-on_idle :: proc(app: ^application) -> int {return 0}
+on_idle :: proc(app: ^Application) -> int {return 0}
 
-DEFAULT_APPLICATION :: application {
+DEFAULT_APPLICATION :: Application {
 	settings = owin.Window_Settings {
 		options     = {.Center},
 		dwStyle     = owin.DEFAULT_WS_STYLE,
@@ -60,20 +60,20 @@ frame_stats: struct {
 	frame_time:    f32,
 }
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := owin.get_settings(hwnd, application)
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }
 
 // 0..1
-decode_mouse_pos_01 :: #force_inline proc "contextless" (app: ^application) -> cv.float2 {
+decode_mouse_pos_01 :: #force_inline proc "contextless" (app: ^Application) -> cv.float2 {
 	normalized_mouse_pos := cv.to_float2(app.mouse_pos) / cv.to_float2(app.settings.window_size)
 	return linalg.clamp(normalized_mouse_pos, cv.float2_zero, cv.float2_one)
 }
 
 // normalized device coordinates -1..1
-decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^application) -> cv.float2 {
+decode_mouse_pos_ndc :: #force_inline proc "contextless" (app: ^Application) -> cv.float2 {
 	return decode_mouse_pos_01(app) * 2 - 1
 }
 
@@ -100,7 +100,7 @@ draw_frame :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 
 WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
-	app := owin.get_settings_from_lparam(lparam, application)
+	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
 
@@ -212,7 +212,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 	// odinfmt: enable
 }
 
-run :: proc(app: ^application) -> (exit_code: int) {
+run :: proc(app: ^Application) -> (exit_code: int) {
 	queue.init(&app.char_queue)
 	defer queue.destroy(&app.char_queue)
 

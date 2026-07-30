@@ -87,7 +87,7 @@ random_position :: #force_inline proc() -> int2 {
 }
 
 
-on_create :: proc(app: ^ca.application) -> int {
+on_create :: proc(app: ^ca.Application) -> int {
 	//fmt.println(#procedure, app)
 	pc := &ca.dib.canvas
 	for i in 0 ..< map_size {
@@ -114,7 +114,7 @@ on_create :: proc(app: ^ca.application) -> int {
 	return 0
 }
 
-on_destroy :: proc(app: ^ca.application) -> int {
+on_destroy :: proc(app: ^ca.Application) -> int {
 	//fmt.println(#procedure, app)
 	return 0
 }
@@ -127,7 +127,7 @@ when DIR4 {
 	map_check_free :: map_check_free8
 }
 
-on_update :: proc(app: ^ca.application) -> int {
+on_update :: proc(app: ^ca.Application) -> int {
 	pc := &ca.dib.canvas
 	pp: ^int2
 	dir: int2

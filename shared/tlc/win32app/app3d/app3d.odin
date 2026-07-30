@@ -12,13 +12,13 @@ import "shared:owin"
 int2 :: [2]i32
 color: [4]byte
 
-app_action :: #type proc(app: ^application) -> int
+app_action :: #type proc(app: ^Application) -> int
 
 key_state_count :: 128
 key_state :: bool
 key_states :: [key_state_count]key_state
 
-application :: struct {
+Application :: struct {
 	#subtype settings:       owin.Window_Settings,
 	pause:                   bool,
 	size:                    int2,
@@ -32,9 +32,9 @@ application :: struct {
 	char_queue:              queue.Queue(u8),
 }
 
-on_idle :: proc(app: ^application) -> int {return 0}
+on_idle :: proc(app: ^Application) -> int {return 0}
 
-default_application :: application {
+default_application :: Application {
 	settings = owin.Window_Settings {
 		options     = {.Center},
 		dwStyle     = owin.DEFAULT_WS_STYLE,
@@ -55,8 +55,8 @@ frame_stats: struct {
 	frame_time:    f32,
 }
 
-get_app :: #force_inline proc(hwnd: win32.HWND) -> ^application {
-	app := owin.get_settings(hwnd, application)
+get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
+	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	return app
 }

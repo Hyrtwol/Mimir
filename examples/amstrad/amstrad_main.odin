@@ -12,7 +12,7 @@ import "shared:obug"
 ROM_PATH : string
 AMSTRAD_PATH : string
 
-application :: struct {
+Application :: struct {
 	#subtype settings: owin.Window_Settings,
 	pause:    bool,
 	//colors:    []color,
@@ -24,14 +24,14 @@ application :: struct {
 	pvBits:   screen_buffer,
 	cpu:      ^Z80,
 }
-papp :: ^application
+papp :: ^Application
 
 run :: proc() -> (exit_code: int) {
 	fmt.println("Amstrad")
 
 	cpu: Z80
 	init_cpu(&cpu)
-	app: application = {
+	app: Application = {
 		settings = {
 			options = {.Center},
 			dwStyle = owin.DEFAULT_WS_STYLE,

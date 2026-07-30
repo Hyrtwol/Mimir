@@ -63,7 +63,7 @@ sort_sprites_from_far_to_close :: proc() {
 	slice.stable_sort_by(sprite_order[:], sprite_sort_by_dist)
 }
 
-handle_input :: proc(app: ^ca.application) {
+handle_input :: proc(app: ^ca.Application) {
 	frameTime : scalar = app.delta
 	speed_modifier: vector2 = speed_factors * frameTime //the constant value is in squares/second
 	keys := &app.keys
