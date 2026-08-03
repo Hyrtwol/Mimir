@@ -32,14 +32,6 @@ init_sdl_opengl_context :: proc() -> (SDL_Window_Context, bool) {
 		return window_context, false
 	}
 
-    // window := SDL.CreateWindow(
-    //     "Odin SDL2 Demo",
-    //     SDL.WINDOWPOS_UNDEFINED,
-    //     SDL.WINDOWPOS_UNDEFINED,
-    //     WINDOW_WIDTH,
-    //     WINDOW_HEIGHT,
-    //     {.OPENGL},
-    // )
 	window := glfw.CreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin GLFW Demo", nil, nil)
 
     if window == nil {
@@ -47,32 +39,20 @@ init_sdl_opengl_context :: proc() -> (SDL_Window_Context, bool) {
         return window_context, false
     }
 
-    // SDL.GL_SetAttribute(.CONTEXT_PROFILE_MASK, i32(SDL.GLprofile.CORE))
-    // SDL.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, GL_VERSION_MAJOR)
-    // SDL.GL_SetAttribute(.CONTEXT_MINOR_VERSION, GL_VERSION_MINOR)
-
-    //gl_context := SDL.GL_CreateContext(window)
 	glfw.MakeContextCurrent(window)
-    //gl_context := glfw.GetCurrentContext()
 
-    // vsync
-    //SDL.GL_SetSwapInterval(1)
+	// vsync
 	glfw.SwapInterval(1)
 
 	glfw.SetKeyCallback(window, key_callback)
 	glfw.SetFramebufferSizeCallback(window, size_callback)
 
-    //gl.load_up_to(GL_VERSION_MAJOR, GL_VERSION_MINOR, SDL.gl_set_proc_address)
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
     window_context.window = window
-    // window_context.gl_context = gl_context
     return window_context, true
 }
 
 sdl_opengl_cleanup :: proc(window_context : SDL_Window_Context) {
-    // SDL.Quit()
-    // SDL.DestroyWindow(window_context.window)
-    // SDL.GL_DeleteContext(window_context.gl_context)
 	glfw.DestroyWindow(window_context.window)
 	glfw.Terminate()
 }

@@ -300,9 +300,8 @@ run :: proc() -> (exit_code: int) {
 	vertex_buffer_view: d3d12.VERTEX_BUFFER_VIEW
 
 	{
-		vertex :: model.vertex
+		vertex :: model.Vertex
 		vertices := [?]vertex {
-			// pos            color
 			{{0.0, 0.5, 0.0}, {1, 0}, {1, 0, 0}},
 			{{0.5, -0.5, 0.0}, {0, 1}, {0, 1, 0}},
 			{{-0.5, -0.5, 0.0}, {1, 1}, {0, 0, 1}},

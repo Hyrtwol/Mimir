@@ -35,12 +35,12 @@ materials: []material = {
 // Object: 0 'default icosahedron.obj', 20 triangles, 12 vertices, 1 meshes
 //   Mesh 0: 'icosahedron' material, 20 triangles
 
-vertex :: struct {
+Vertex :: struct {
 	pos      : [3]f32 `POSITION`,
 	normal   : [3]f32 `NORMAL`,
 }
 
-vertices: []vertex = {
+vertices: []Vertex = {
 	{{   0.00000,   0.22361,  -0.44721}, {-0.00000, 0.44721,-0.89443}},
 	{{   0.00000,   0.50000,  -0.00000}, { 0.00000, 1.00000, 0.00000}},
 	{{   0.42533,   0.22361,  -0.13820}, { 0.85065, 0.44721,-0.27639}},

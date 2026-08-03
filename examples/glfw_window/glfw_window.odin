@@ -65,7 +65,7 @@ texture_def :: struct {
 	data: []u8,
 }
 
-vertex :: model.vertex
+vertex :: model.Vertex
 
 bounding_sphere :: struct {
 	origo:  vec3,
@@ -174,9 +174,9 @@ run :: proc() -> (exit_code: int) {
 
 	fmt.printfln("vertex_flags: 0b%8b", vertex_flags)
 
-	stride := i32(size_of(model.vertex))
+	stride := i32(size_of(model.Vertex))
 
-	fields := reflect.struct_fields_zipped(model.vertex)
+	fields := reflect.struct_fields_zipped(model.Vertex)
 	for field, i in fields {
 		//fmt.printfln("%d :: %v", i, field)
 		fmt.printfln("%d :: %v %v tag=%v %v %v", i, field.name, field.type, field.tag, field.offset, field.is_using)

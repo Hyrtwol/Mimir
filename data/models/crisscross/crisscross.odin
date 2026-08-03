@@ -35,12 +35,12 @@ materials: []material = {
 // Object: 0 'default crisscross.obj', 132 triangles, 68 vertices, 1 meshes
 //   Mesh 0: 'crisscross' material, 132 triangles
 
-vertex :: struct {
+Vertex :: struct {
 	pos      : [3]f32 `POSITION`,
 	normal   : [3]f32 `NORMAL`,
 }
 
-vertices: []vertex = {
+vertices: []Vertex = {
 	{{  -1.50000,  -0.35355,  -0.35355}, {-0.47596,-0.62188,-0.62188}},
 	{{  -1.50000,  -0.50000,  -0.00000}, {-0.47596,-0.87947,-0.00000}},
 	{{  -1.50000,  -0.35355,   0.35355}, {-0.47596,-0.62188, 0.62188}},

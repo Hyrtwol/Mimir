@@ -8,10 +8,14 @@ import "core:math/linalg"
 import "core:math/rand"
 
 _ :: fmt
-identity :: linalg.identity
-matrix2_rotate_f32 :: linalg.matrix2_rotate_f32
-matrix3_rotate_f32 :: linalg.matrix3_rotate_f32
-matrix4_rotate_f32 :: linalg.matrix4_rotate_f32
+// identity :: linalg.identity
+// matrix2_rotate_f32 :: linalg.matrix2_rotate_f32
+// matrix3_rotate_f32 :: linalg.matrix3_rotate_f32
+// matrix4_rotate_f32 :: linalg.matrix4_rotate_f32
+// ceil :: linalg.ceil
+// floor :: linalg.floor
+// trunc :: linalg.trunc
+// fract :: linalg.fract
 
 to_float4 :: #force_inline proc "contextless" (v: float3, w: f32 = 1) -> float4 {
 	return float4{v.x, v.y, v.z, w}

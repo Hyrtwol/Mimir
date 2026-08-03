@@ -13,12 +13,12 @@ package cow
 // Object: 0 '', 3156 triangles, 9448 vertices, 1 meshes
 //   Mesh 0: <empty> -1 material, 3156 triangles
 
-vertex :: struct {
+Vertex :: struct {
 	pos      : [3]f32 `POSITION`,
 	texcoord : [2]f32 `TEXCOORD`,
 }
 
-vertices: []vertex = {
+vertices: []Vertex = {
 	{{   2.18866,   5.86984,   0.51677}, { 0.27320, 0.28577}},
 	{{   1.79489,   4.83536,   0.48091}, { 0.23717, 0.28452}},
 	{{   2.71731,   6.01616,  -1.11639}, { 0.27830, 0.22888}},

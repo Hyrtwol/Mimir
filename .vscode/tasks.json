@@ -138,7 +138,6 @@
 			"args": [
 				"check",
 				"..${pathSeparator}${relativeFileDirname}",
-				"${config:odin.rc}",
 				"${config:odin.collection.shared}",
 				"${config:odin.collection.libs}",
 				"-vet",

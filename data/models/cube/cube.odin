@@ -13,13 +13,13 @@ package cube
 // Object: 0 'Cube', 12 triangles, 24 vertices, 1 meshes
 //   Mesh 0: <empty> -1 material, 12 triangles
 
-vertex :: struct {
+Vertex :: struct {
 	pos      : [3]f32 `POSITION`,
 	texcoord : [2]f32 `TEXCOORD`,
 	normal   : [3]f32 `NORMAL`,
 }
 
-vertices: []vertex = {
+vertices: []Vertex = {
 	{{   1.00000,  -1.00000,   1.00000}, { 1.00000, 0.00000}, { 0.00000,-1.00000, 0.00000}},
 	{{  -1.00000,  -1.00000,  -1.00000}, { 0.00000, 1.00000}, { 0.00000,-1.00000, 0.00000}},
 	{{   1.00000,  -1.00000,  -1.00000}, { 0.00000, 0.00000}, { 0.00000,-1.00000, 0.00000}},

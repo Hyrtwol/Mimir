@@ -19,7 +19,7 @@ import gl "vendor:OpenGL"
 // cow, cube, gazebo, crisscross
 //import model "../../data/models/cube"
 //import model "../../data/models/platonic/icosahedron"
-//Vertex :: model.vertex
+//Vertex :: model.Vertex
 
 Vertex :: struct {
 	pos: [3]f32 `POSITION`,

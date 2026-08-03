@@ -13,12 +13,12 @@ package gazebo
 // Object: 0 'gazebo_Cylinder', 730 triangles, 1568 vertices, 1 meshes
 //   Mesh 0: <empty> -1 material, 730 triangles
 
-vertex :: struct {
+Vertex :: struct {
 	pos      : [3]f32 `POSITION`,
 	normal   : [3]f32 `NORMAL`,
 }
 
-vertices: []vertex = {
+vertices: []Vertex = {
 	{{   0.55257,   1.35969,   1.24884}, {-0.95277, 0.00000, 0.30369}},
 	{{   0.48506,  -2.44674,   1.03705}, {-0.95277, 0.00000, 0.30369}},
 	{{   0.55257,  -2.44674,   1.24884}, {-0.95277, 0.00000, 0.30369}},

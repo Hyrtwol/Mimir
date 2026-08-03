@@ -23,6 +23,8 @@ when CONFIG_VERTEX_MODE == 1 {
 VERTEX_ELEM :: "\t%-8v : %v `%v`,"
 MAT_ELEM :: "\t%-16v : %v,"
 
+VERTEX_NAME :: "Vertex"
+
 progressCallback :: proc(filename: cstring, progress: i32) {
 	fmt.printf("\rprogress: %3d%% %s", progress, filename)
 }
@@ -102,8 +104,8 @@ print_vertices :: proc(w: io.Writer, model: ^oz.objzModel) {
 	do_texcoord := .OBJZ_FLAG_TEXCOORDS in model.flags
 	do_normals := .OBJZ_FLAG_NORMALS in model.flags
 
-	//fmt.wprintfln(w, "vertices: [%v]vertex = {{", len(vertices))
-	fmt.wprintln(w, "vertices: []vertex = {", flush = false)
+	//fmt.wprintfln(w, "vertices: [%v]"+VERTEX_NAME+" = {{", len(vertices))
+	fmt.wprintln(w, "vertices: []" + VERTEX_NAME + " = {", flush = false)
 	total := len(vertices) - 1
 	for &v, i in vertices {
 
@@ -208,7 +210,7 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 
 	{
 		fmt.wprintln(w, "", flush = false)
-		fmt.wprintln(w, "vertex :: struct {", flush = false)
+		fmt.wprintln(w, VERTEX_NAME + " :: struct {", flush = false)
 		//                                           "POSITION:\"0\""
 		fmt.wprintfln(w, VERTEX_ELEM, "pos", FLOAT3, "POSITION", flush = false)
 		if .OBJZ_FLAG_TEXCOORDS in model.flags {
@@ -257,7 +259,7 @@ run :: proc() -> (exit_code: int) {
 
 		output_path := fmt.tprintf("%s/%s.odin", input_dir, input_name)
 		output_path = os.clean_path(output_path, context.temp_allocator) or_else panic("os.clean")
-		output_path = os.abs(output_path, context.temp_allocator) or_else panic("os.abs")
+		output_path = os.get_absolute_path(output_path, context.temp_allocator) or_else panic("os.abs")
 
 		clean_path := os.clean_path(input_path, context.temp_allocator) or_else panic("os.clean_path")
 		clean_path = os.get_absolute_path(clean_path, context.temp_allocator) or_else panic("os.get_absolute_path")
