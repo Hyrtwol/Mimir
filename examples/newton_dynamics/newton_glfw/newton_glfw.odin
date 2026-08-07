@@ -12,6 +12,7 @@ import newton "shared:newton_dynamics"
 import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
+import "shaders"
 
 float3 :: glm.vec3
 float4x4 :: glm.mat4
@@ -20,22 +21,6 @@ Mesh :: newton.Mesh
 
 g :: 9.8
 TRIANGULATE_WITH_NEWTON :: false
-
-// odinfmt: disable
-vertex_sources:= [?]string {
-	string(#load("shaders/pos.vs")),
-	string(#load("shaders/pos_tex.vs")),
-	string(#load("shaders/pos_nml.vs")),
-	string(#load("shaders/pos_tex_nml.vs")),
-}
-
-fragment_sources:= [?]string {
-	string(#load("shaders/col.fs")),
-	string(#load("shaders/tex.fs")),
-	string(#load("shaders/lit.fs")),
-}
-// odinfmt: enable
-
 
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
@@ -312,8 +297,8 @@ run :: proc() -> (exit_code: int) {
 
 	size_callback(window_handle, glfw.GetFramebufferSize(window_handle))
 
-	vertex_source := vertex_sources[vertex_flags]
-	fragment_source := fragment_sources[2]
+	vertex_source := shaders.vertex_sources[vertex_flags]
+	fragment_source := shaders.fragment_sources[2]
 
 	fmt.println("vertex_source:")
 	fmt.println(vertex_source)
