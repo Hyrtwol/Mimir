@@ -258,8 +258,8 @@ run :: proc() -> (exit_code: int) {
 		input_name := os.stem(input_path)
 
 		output_path := fmt.tprintf("%s/%s.odin", input_dir, input_name)
-		output_path = os.clean_path(output_path, context.temp_allocator) or_else panic("os.clean")
-		output_path = os.get_absolute_path(output_path, context.temp_allocator) or_else panic("os.abs")
+		output_path = os.clean_path(output_path, context.temp_allocator) or_else panic("os.clean_path")
+		output_path = os.get_absolute_path(output_path, context.temp_allocator) or_else panic("os.get_absolute_path")
 
 		clean_path := os.clean_path(input_path, context.temp_allocator) or_else panic("os.clean_path")
 		clean_path = os.get_absolute_path(clean_path, context.temp_allocator) or_else panic("os.get_absolute_path")

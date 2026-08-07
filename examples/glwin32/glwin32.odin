@@ -79,12 +79,6 @@ exit :: proc() {
 	// Own termination code here
 }
 
-// // Called when glfw window changes size
-// size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
-// 	// Set the OpenGL viewport size
-// 	gl.Viewport(0, 0, width, height)
-// }
-
 dump_extensions :: proc(hdc: win32.HDC) {
 	extensions := gl.GetString(gl.EXTENSIONS)
 	fmt.println("gl_extensions", extensions)

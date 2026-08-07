@@ -217,7 +217,6 @@ void main() {
 }
 `
 
-
 fragment_source := `#version 460 core
 
 in vec4 v_color;
