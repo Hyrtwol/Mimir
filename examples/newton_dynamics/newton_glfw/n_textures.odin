@@ -55,3 +55,8 @@ load_texture_data :: proc(texture_data: ^[dynamic]texture_def) {
 create_textures :: proc() {
 
 }
+
+delete_textures :: proc(texture_data: [dynamic]texture_def) {
+	for td in texture_data {delete(td.data)}
+	delete(texture_data)
+}

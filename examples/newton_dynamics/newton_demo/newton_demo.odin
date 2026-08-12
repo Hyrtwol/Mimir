@@ -99,10 +99,6 @@ run :: proc() -> (exit_code: int) {
 		fmt.printfln("  MeshHasUV1Channel      : %v", newton.MeshHasUV1Channel(mesh))
 
 		/*
-		fmt.printfln("  MeshGetPointCount      : %v", newton.MeshGetPointCount(mesh))
-		fmt.printfln("  MeshGetTotalFaceCount  : %v", newton.MeshGetTotalFaceCount(mesh))
-		fmt.printfln("  MeshGetTotalIndexCount : %v", newton.MeshGetTotalIndexCount(mesh))
-		fmt.printfln("  MeshGetVertexCount     : %v", newton.MeshGetVertexCount(mesh))
 		newton.MeshTriangulate(mesh)
 		fmt.println("Triangulate:")
 		*/
@@ -160,7 +156,7 @@ run :: proc() -> (exit_code: int) {
 		fmt.println("}")
 		fmt.println()
 
-		fmt.println("indices: [][3]u16 = {")
+		fmt.println("indices: [][]u16 = {")
 		for face := newton.MeshGetFirstFace(mesh); face != nil; face = newton.MeshGetNextFace(mesh, face) {
 			if !newton.MeshIsFaceOpen(mesh, face) {
 				num := newton.MeshGetFaceIndexCount(mesh, face)

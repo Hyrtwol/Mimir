@@ -38,7 +38,7 @@ global_shader: ShaderProgram
 aspect: f32 = 1
 camera_up: float3 = linalg.normalize(float3{0, 1, 0}) // camera up vector
 
-material :: struct {
+Material :: struct {
 	name:             string,
 	ambient:          [3]f32,
 	diffuse:          [3]f32,
@@ -48,7 +48,7 @@ material :: struct {
 	opacity:          f32,
 }
 
-materials: []material = {
+materials: []Material = {
 	{
 		name = "crisscross",
 		ambient = {0.00000, 0.00000, 0.00000},
@@ -144,10 +144,11 @@ run :: proc() -> (exit_code: int) {
 	defer fmt.println("Done.", exit_code)
 
 	texture_data := make([dynamic]texture_def, 0, 0)
-	defer delete(texture_data)
+	defer delete_textures(texture_data)
+	//defer delete(texture_data)
 	load_texture_data(&texture_data)
 	for td in texture_data {fmt.println("Image:", td.size, len(td.data)); assert(td.data != nil)}
-	defer {for td in texture_data {delete(td.data)}}
+	//defer {for td in texture_data {delete(td.data)}}
 
 	write_globals()
 
@@ -206,7 +207,7 @@ run :: proc() -> (exit_code: int) {
 	indices := make([dynamic]Index, 0, total_point_count)
 	defer delete(indices)
 
-	// Create reader items
+	// Create render items
 
 	render_items = make([dynamic]Render_Item, 0)
 	defer delete(render_items)
