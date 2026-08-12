@@ -1,6 +1,7 @@
 package main
 
 import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
 import "core:io"
 import "core:math/linalg"
@@ -13,13 +14,8 @@ CONFIG_VERTEX_FLAGS :: false
 CONFIG_PRINT_TRIANGLES :: true
 CONFIG_VERTEX_MODE :: 0
 FLOAT1 :: "f32"
-when CONFIG_VERTEX_MODE == 1 {
-	FLOAT2 :: "float2"
-	FLOAT3 :: "float3"
-} else {
-	FLOAT2 :: "[2]" + FLOAT1
-	FLOAT3 :: "[3]" + FLOAT1
-}
+FLOAT2 :: "[2]" + FLOAT1
+FLOAT3 :: "[3]" + FLOAT1
 VERTEX_ELEM :: "\t%-8v : %v `%v`,"
 MAT_ELEM :: "\t%-16v : %v,"
 
@@ -242,6 +238,13 @@ printModel :: proc(w: io.Writer, model: ^oz.objzModel) {
 	}
 }
 
+@(require_results)
+get_clean_absolute_path :: proc(path: string, allocator: runtime.Allocator) -> (absolute_path: string) {
+	clean_path := os.clean_path(path, context.temp_allocator) or_else panic("os.clean_path")
+	absolute_path = os.get_absolute_path(clean_path, allocator) or_else panic("os.get_absolute_path")
+	return
+}
+
 run :: proc() -> (exit_code: int) {
 	fmt.println("objzero Reader")
 
@@ -258,11 +261,9 @@ run :: proc() -> (exit_code: int) {
 		input_name := os.stem(input_path)
 
 		output_path := fmt.tprintf("%s/%s.odin", input_dir, input_name)
-		output_path = os.clean_path(output_path, context.temp_allocator) or_else panic("os.clean_path")
-		output_path = os.get_absolute_path(output_path, context.temp_allocator) or_else panic("os.get_absolute_path")
+		output_path = get_clean_absolute_path(output_path, context.temp_allocator)
 
-		clean_path := os.clean_path(input_path, context.temp_allocator) or_else panic("os.clean_path")
-		clean_path = os.get_absolute_path(clean_path, context.temp_allocator) or_else panic("os.get_absolute_path")
+		clean_path := get_clean_absolute_path(input_path, context.temp_allocator)
 		obj_file := strings.clone_to_cstring(clean_path, context.temp_allocator) or_else panic("strings.clone_to_cstring")
 
 		fmt.printfln("reading %s", obj_file)
