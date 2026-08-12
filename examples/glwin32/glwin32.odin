@@ -11,6 +11,7 @@ import glm "core:math/linalg/glsl"
 import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
+import "libs:ogl"
 import "libs:tlc/win32app/owin_gl"
 import "shared:obug"
 import "shared:owin"
@@ -36,6 +37,18 @@ vertices := []Vertex {
 Index :: u16
 indices := []Index{0, 1, 2, 2, 3, 0}
 
+perspective: ogl.Perspective = {
+	fov    = 45 * math.RAD_PER_DEG,
+	aspect = 1,
+	near   = 0.1,
+	far    = 100.0,
+}
+
+camera: ogl.Camera = {
+	eye    = {0, 0, -2},
+	center = {0, 0, 0},
+	up     = {0, 1, 0},
+}
 
 WIDTH :: 640
 HEIGHT :: WIDTH * 9 / 16
@@ -45,6 +58,8 @@ Application :: struct {
 	#subtype settings: owin.Window_Settings,
 	delta:    f32,
 	tick:     u32,
+	hwnd:     win32.HWND,
+	hdc:      win32.HDC,
 	hglrc:    win32.HGLRC,
 }
 
@@ -97,25 +112,22 @@ gl_set_proc_address_debug :: proc(p: rawptr, name: cstring) {
 	fmt.println(#procedure, name, (^rawptr)(p)^)
 }
 
-init_opengl :: proc(app: ^Application, hdc: win32.HDC) {
+init_opengl :: proc(app: ^Application) {
 	fmt.println(#procedure)
-	assert(hdc != nil)
+	assert(app.hdc != nil)
 
-	pixelFormat, ok := owin_gl.choose_and_set_pixel_format(hdc)
+	pixelFormat, ok := owin_gl.choose_and_set_pixel_format(app.hdc)
 	fmt.println("pixelFormat:", pixelFormat)
 	assert(ok == true)
 
-	app.hglrc = win32.wglCreateContext(hdc)
+	app.hglrc = win32.wglCreateContext(app.hdc)
 	assert(app.hglrc != nil)
-	ok = win32.wglMakeCurrent(hdc, app.hglrc)
+	ok = win32.wglMakeCurrent(app.hdc, app.hglrc)
 	assert(ok == true)
-
 
 	assert(gl.impl_GetString == nil)
 	//fmt.println("load_up_to")
 	owin_gl.load_up_to()
-	//gl.load_up_to(4, 6, win32.gl_set_proc_address)
-	//gl.load_up_to(4, 6, gl_set_proc_address_debug)
 	assert(gl.impl_GetString != nil)
 	assert(gl.impl_DrawArrays != nil)
 	assert(gl.impl_GenBuffers != nil)
@@ -155,10 +167,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
-	// hdc: win32.HDC = win32.GetDC(hwnd)
-	// defer win32.ReleaseDC(hwnd, hdc)
-	// fmt.println("  hdc:", hdc)
-	// init_opengl(app, hdc)
+	//app.hdc = win32.GetDC(hwnd)
 	return 0
 }
 
@@ -167,6 +176,10 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := get_app(hwnd)
 	// free_opengl(app)
+	owin.release_dc(hwnd, &app.hdc)
+	if app.hwnd == hwnd {
+		app.hwnd = nil
+	}
 	owin.post_quit_message(0)
 	return 0
 }
@@ -224,19 +237,19 @@ run :: proc() -> (exit_code: int) {
 			wndproc = wndproc,
 		},
 	}
-	// app.settings.sleep = time.Millisecond * 20
-	//_, _, hwnd := owin.prepare_run(&app)
-	inst, atom, hwnd := owin.register_and_create_window(&app)
+	defer {assert(app.hwnd == nil);assert(app.hdc == nil);assert(app.hglrc == nil)}
+
+	_, _, app.hwnd = owin.register_and_create_window(&app)
 	// if .Raw_Input in settings.options {
 	// 	register_raw_input(hwnd)
 	// }
-	hdc := win32.GetDC(hwnd)
-	assert(hdc != nil)
-	defer {res := win32.ReleaseDC(hwnd, hdc); fmt.println(#procedure, "ReleaseDC", res)}
+	app.hdc = win32.GetDC(app.hwnd)
+	assert(app.hdc != nil)
+	// defer owin.release_dc(app.hwnd, &app.hdc)
 	// defer owin.release_dc(hwnd, &hdc)
-	fmt.println(#procedure, "hdc:", hdc)
+	fmt.println(#procedure, "hdc:", app.hdc)
 
-	init_opengl(&app, hdc)
+	init_opengl(&app)
 	defer free_opengl(&app)
 
 	fmt.println(#procedure, "app:", app)
@@ -251,7 +264,6 @@ run :: proc() -> (exit_code: int) {
 	defer gl.destroy_uniforms(uniforms)
 	ui_transform: ^gl.Uniform_Info = &uniforms["u_transform"]
 	assert(ui_transform != nil)
-
 
 	vao: u32
 	gl.GenVertexArrays(1, &vao); defer gl.DeleteVertexArrays(1, &vao)
@@ -276,7 +288,7 @@ run :: proc() -> (exit_code: int) {
 	index_count := i32(len(indices))
 	t: f32 = 0
 
-	owin.show_and_update_window(hwnd)
+	owin.show_and_update_window(app.hwnd)
 
 	//res: int
 	stopwatch := owin.create_stopwatch()
@@ -297,6 +309,14 @@ run :: proc() -> (exit_code: int) {
 		draw()
 
 		{
+			// rotate about Z axis
+			//model := glm.identity(glm.mat4) * glm.mat4Rotate({0, 1, 0}, t)
+			t += app.delta
+			model := glm.mat4Rotate({0, 1, 0}, t)
+			//view := glm.mat4LookAt(eye = camera.eye, centre = camera.center, up = camera.up)
+			view := ogl.camera_look_at(&camera)
+			//projection := glm.mat4Perspective(perspective.fov, perspective.aspect, 0.1, 100.0)
+			projection := ogl.perspective_projection(&perspective)
 
 			//gl.Enable(gl.DEPTH_TEST)
 			//gl.Disable(gl.SCISSOR_TEST)
@@ -309,7 +329,7 @@ run :: proc() -> (exit_code: int) {
 			gl.DrawElements(gl.TRIANGLES, index_count, gl.UNSIGNED_SHORT, nil)
 		}
 
-		swap_buffers(hdc)
+		swap_buffers(app.hdc)
 
 		owin.sleep(app.settings.sleep)
 	}
