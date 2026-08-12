@@ -10,7 +10,7 @@ package icosahedron
 // vertices        12
 // triangles       20 (60)
 
-material :: struct {
+Material :: struct {
 	name             : string,
 	ambient          : [3]f32,
 	diffuse          : [3]f32,
@@ -20,7 +20,7 @@ material :: struct {
 	opacity          : f32,
 }
 
-materials: []material = {
+materials: []Material = {
 	{
 		name     = "icosahedron",
 		ambient  = {0.00000, 0.00000, 0.00000},

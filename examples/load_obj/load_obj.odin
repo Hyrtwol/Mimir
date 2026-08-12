@@ -20,6 +20,7 @@ VERTEX_ELEM :: "\t%-8v : %v `%v`,"
 MAT_ELEM :: "\t%-16v : %v,"
 
 VERTEX_NAME :: "Vertex"
+MATERIAL_NAME :: "Material"
 
 progressCallback :: proc(filename: cstring, progress: i32) {
 	fmt.printf("\rprogress: %3d%% %s", progress, filename)
@@ -124,7 +125,7 @@ MAT_COMPACT :: false
 
 print_materials :: proc(w: io.Writer, model: ^oz.objzModel) {
 	{
-		fmt.wprintln(w, "material :: struct {", flush = false)
+		fmt.wprintln(w, MATERIAL_NAME + " :: struct {", flush = false)
 		fmt.wprintfln(w, MAT_ELEM, "name", "string", flush = false)
 		fmt.wprintfln(w, MAT_ELEM, "ambient", FLOAT3, flush = false)
 		fmt.wprintfln(w, MAT_ELEM, "diffuse", FLOAT3, flush = false)
@@ -132,12 +133,11 @@ print_materials :: proc(w: io.Writer, model: ^oz.objzModel) {
 		fmt.wprintfln(w, MAT_ELEM, "specular", FLOAT3, flush = false)
 		fmt.wprintfln(w, MAT_ELEM, "specularExponent", FLOAT1, flush = false)
 		fmt.wprintfln(w, MAT_ELEM, "opacity", FLOAT1, flush = false)
-
 		fmt.wprintln(w, "}", flush = false)
 		fmt.wprintln(w, "")
 	}
 	mats := oz.get_materials(model)
-	fmt.wprintln(w, "materials: []material = {", flush = false)
+	fmt.wprintln(w, "materials: []" + MATERIAL_NAME + " = {", flush = false)
 	total := len(mats)
 	for &mat, i in mats {
 		FF :: "%.5f"
@@ -150,7 +150,6 @@ print_materials :: proc(w: io.Writer, model: ^oz.objzModel) {
 		fmt.wprintfln(w, IND + IND + "specular = {{" + FF + ", " + FF + ", " + FF + "}},", mat.specular.x, mat.specular.y, mat.specular.z, flush = false)
 		fmt.wprintfln(w, IND + IND + "specularExponent = " + FF + ",", mat.specularExponent, flush = false)
 		fmt.wprintfln(w, IND + IND + "opacity  = " + FF + ",", mat.opacity, flush = false)
-
 		fmt.wprintln(w, IND + "},", flush = false)
 		progressCallback("materials", i32((i + 1) * 100 / total))
 	}

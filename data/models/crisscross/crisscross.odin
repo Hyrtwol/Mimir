@@ -10,7 +10,7 @@ package crisscross
 // vertices        68
 // triangles      132 (396)
 
-material :: struct {
+Material :: struct {
 	name             : string,
 	ambient          : [3]f32,
 	diffuse          : [3]f32,
@@ -20,7 +20,7 @@ material :: struct {
 	opacity          : f32,
 }
 
-materials: []material = {
+materials: []Material = {
 	{
 		name     = "crisscross",
 		ambient  = {0.00000, 0.00000, 0.00000},
