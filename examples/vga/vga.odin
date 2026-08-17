@@ -13,15 +13,20 @@ import "shared:owin"
 
 int2 :: [2]i32
 color :: [4]u8
-color_bits :: 8
-palette_count :: 1 << color_bits
-color_palette :: [palette_count]color
+COLOR_BITS :: 8
+PALETTE_COUNT :: 1 << COLOR_BITS
+color_palette :: [PALETTE_COUNT]color
+
+#assert(PALETTE_COUNT == 256)
 
 SCREEN_WIDTH :: 320
 SCREEN_HEIGHT :: 200
 SCREEN_PIXEL_COUNT :: SCREEN_WIDTH * SCREEN_HEIGHT
-SCREEN_BYTE_COUNT :: SCREEN_PIXEL_COUNT * color_bits / 8
+SCREEN_BYTE_COUNT :: SCREEN_PIXEL_COUNT * COLOR_BITS / 8
 SCREEN_SIZE :: int2{SCREEN_WIDTH, SCREEN_HEIGHT}
+
+#assert(SCREEN_PIXEL_COUNT == 64000)
+#assert(SCREEN_BYTE_COUNT == 64000)
 
 TITLE :: "VGA"
 ZOOM :: 5
@@ -55,9 +60,6 @@ frame_stats: struct {
 	frame_time:    f32,
 }
 
-#assert(palette_count == 256)
-#assert(SCREEN_PIXEL_COUNT == 64000)
-#assert(SCREEN_BYTE_COUNT == 64000)
 #assert(size_of(win32.BITMAPV5HEADER) == 124)
 //#assert(size_of(color_palette) == 64)
 //#assert(size_of(BITMAPINFO) == 124 + 64)
@@ -282,12 +284,12 @@ create_dib :: proc(app: ^Application) {
 			bV5Width       = SCREEN_WIDTH,
 			bV5Height      = -SCREEN_HEIGHT, // minus for top-down
 			bV5Planes      = 1,
-			bV5BitCount    = color_bits,
+			bV5BitCount    = COLOR_BITS,
 			bV5Compression = win32.BI_RGB,
-			bV5ClrUsed     = palette_count,
+			bV5ClrUsed     = PALETTE_COUNT,
 		},
 	}
-	for i in 0 ..< min(palette_count, len(cv.VGA_COLORS)) {
+	for i in 0 ..< min(PALETTE_COUNT, len(cv.VGA_COLORS)) {
 		bitmap_info.bmiColors[i] = cv.VGA_COLORS[i]
 	}
 	app.hbitmap = owin.create_dib_section(app.hdc, cast(^win32.BITMAPINFO)&bitmap_info, .DIB_RGB_COLORS, &app.pvBits)
