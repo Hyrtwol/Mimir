@@ -337,7 +337,7 @@ center_window :: proc(position: ^int2, size: int2) {
 create_window :: #force_inline proc(
 	atom: win32.ATOM,
 	window_name: win32.LPCTSTR,
-	style: win32.WS_STYLES,
+	style: owin.WS_STYLES,
 	ex_style: owin.WS_EX_STYLES,
 	position: int2,
 	size: int2,
@@ -346,10 +346,10 @@ create_window :: #force_inline proc(
 ) -> win32.HWND {
 	if atom == 0 {show_error_and_panic("atom is zero")}
 	return win32.CreateWindowExW(
-		transmute(win32.WS_EX_STYLES)ex_style,
+		win32.WS_EX_STYLES(ex_style),
 		win32.LPCWSTR((^win32.WCHAR)(uintptr(atom))),
 		window_name,
-		style,
+		win32.WS_STYLES(style),
 		position.x,
 		position.y,
 		size.x,

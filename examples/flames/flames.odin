@@ -185,9 +185,8 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 }
 
 WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	fmt.println(#procedure, hwnd)
-
 	settings.window_size = owin.decode_lparam_as_int2(lparam)
+	fmt.println(#procedure, hwnd, settings.window_size)
 	set_window_text(hwnd)
 	return 0
 }
