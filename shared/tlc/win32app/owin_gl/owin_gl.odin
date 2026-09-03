@@ -10,7 +10,6 @@ int2 :: [2]i32
 PIXELFORMATDESCRIPTOR :: win32.PIXELFORMATDESCRIPTOR
 
 wglCreateContext :: win32.wglCreateContext
-// wglCreateContextAttribsARB :: win32.wglCreateContextAttribsARB
 wglMakeCurrent :: win32.wglMakeCurrent
 wglDeleteContext :: win32.wglDeleteContext
 wglGetProcAddress :: win32.wglGetProcAddress

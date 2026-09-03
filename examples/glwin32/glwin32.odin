@@ -63,6 +63,12 @@ Application :: struct {
 	hglrc:    win32.HGLRC,
 }
 
+frame_stats: struct {
+	fps:           f32,
+	frame_counter: i32,
+	frame_time:    f32,
+}
+
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
 	app := owin.get_settings(hwnd, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
@@ -241,7 +247,7 @@ run :: proc() -> (exit_code: int) {
 
 	_, _, app.hwnd = owin.register_and_create_window(&app)
 	// if .Raw_Input in settings.options {
-	// 	register_raw_input(hwnd)
+	// 	register_raw_input(app.hwnd)
 	// }
 	app.hdc = win32.GetDC(app.hwnd)
 	assert(app.hdc != nil)
@@ -290,16 +296,26 @@ run :: proc() -> (exit_code: int) {
 
 	owin.show_and_update_window(app.hwnd)
 
-	//res: int
-	stopwatch := owin.create_stopwatch()
-	stopwatch->start()
+	tick_now := time.tick_now()
+	last_tick := tick_now
+
 	msg: win32.MSG
 	for owin.pull_messages(&msg) {
 
-		app.delta = f32(stopwatch->get_delta_seconds())
-		// frame_stats.frame_time += app.delta
-		// frame_stats.frame_counter += 1
+		tick_now = time.tick_now()
+		app.delta = f32(time.duration_seconds(time.tick_diff(last_tick, tick_now)))
+		last_tick = tick_now
 		app.tick += 1
+
+		frame_stats.frame_time += app.delta
+		frame_stats.frame_counter += 1
+
+		if frame_stats.frame_time >= 2.0 {
+			frame_stats.fps = f32(frame_stats.frame_counter) / frame_stats.frame_time
+			frame_stats.frame_counter = 0
+			frame_stats.frame_time = 0
+			fmt.println("fps", frame_stats.fps)
+		}
 
 		// res = app.update(app)
 		// if res != 0 {break}
@@ -331,9 +347,9 @@ run :: proc() -> (exit_code: int) {
 
 		swap_buffers(app.hdc)
 
-		owin.sleep(app.settings.sleep)
+		//owin.sleep(app.settings.sleep)
 	}
-	stopwatch->stop()
+	//stopwatch->stop()
 	exit_code = int(msg.wParam)
 
 	return
