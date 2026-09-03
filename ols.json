@@ -6,7 +6,6 @@
 	"enable_snippets": false,
 	"verbose": false,
 	"file_log": false,
-	// "enable_inlay_hints": false,
 	"enable_references": true,
 	"collections": [
 		{
@@ -17,16 +16,5 @@
 			"name": "libs",
 			"path": "shared"
 		}
-	],
-	"profiles": [
-		{
-			"name": "default",
-			"checker_path": [
-				"shared",
-				"examples",
-				"tests"
-			]
-		}
-	],
-	"profile": "default"
+	]
 }
