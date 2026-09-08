@@ -46,7 +46,7 @@ CHANNELS :: 2
 SAMPLES_PER_SEC :: 44100
 BITS_PER_SAMPLE :: size_of(sample) * 8
 
-NUM_BUFFERS :: 8
+NUM_BUFFERS :: 4
 
 WM_STOP_PLAY :: win32.WM_USER
 WM_PREPARE_NEXT_BUFFER :: win32.WM_USER + 1
@@ -145,7 +145,7 @@ OpenFile :: proc(hwnd: win32.HWND) {
 	WaveFormatEx.nAvgBytesPerSec = WaveFormatEx.nSamplesPerSec * win32.DWORD(WaveFormatEx.nBlockAlign)
 	fmt.println("WaveFormatEx:", WaveFormatEx)
 
-	BufferLength = WAVE_DISPLAY_WIDTH << 4
+	BufferLength = WAVE_DISPLAY_WIDTH << 2
 	fmt.println("BufferLength:", BufferLength)
 	CurrentBuffer = 0
 	Ending = 1
@@ -263,10 +263,9 @@ WM_CHAR :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	case '\x1b': CloseFile()
 	case '\t':	 fmt.println("tab")
 	case '\r':	 fmt.println("return")
-	case '1':	 if colidx > 0 {colidx -= 1}
-	case '2':	 if colidx < 15 {colidx += 1}
-	case '3':	 cols = cv.C64_COLORS
-	case '4':	 cols = cv.W95_COLORS
+	case '1':	 DoBuffer = DoBuffer1
+	case '2':	 DoBuffer = DoBuffer2
+	case '3':	 DoBuffer = DoBuffer3
 	}
 	// odinfmt: enable
 	return 0
