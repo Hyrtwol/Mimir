@@ -36,9 +36,7 @@ float4x3 :: matrix[4, 3]float
 float4x4 :: matrix[4, 4]float
 
 color           :: byte4
-color_byte_size :: size_of(color)
-color_bit_count :: color_byte_size * 8
-
+color_bit_count :: size_of(color) * 8
 
 ray2i: struct {
 	pos, dir: int2,

@@ -31,7 +31,7 @@ canvas_clear_color :: #force_inline proc "contextless" (cv: ^canvas, col: byte4)
 
 @(private = "file")
 canvas_clear_fast :: #force_inline proc "contextless" (cv: ^canvas) {
-	mem.zero(raw_data(cv.pvBits), int(cv.pixel_count * 4))
+	mem.zero(raw_data(cv.pvBits), int(cv.pixel_count * size_of(color)))
 }
 
 canvas_clear :: proc {

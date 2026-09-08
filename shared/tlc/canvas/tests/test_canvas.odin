@@ -54,7 +54,6 @@ verify_type_sizes :: proc(t: ^testing.T) {
 	expect_size(t, cv.float4x4, 64)
 
 	expect_size(t, cv.color, 4)
-	expect_value(t, cv.color_byte_size, 4)
 	expect_value(t, cv.color_bit_count, 32)
 }
 
