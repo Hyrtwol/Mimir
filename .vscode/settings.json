@@ -36,6 +36,7 @@
 	"git.enabled": false,
 	"xmlTools.splitXmlnsOnFormat": false,
 	// "ols.server.path": "${env:ODIN_SHARED}${pathSeparator}ols${pathSeparator}ols.exe",
+	"cSpell.enabled": false,
 	"cSpell.language": "en",
 	"#cSpell.enableFiletypes#": [
 		"odin"

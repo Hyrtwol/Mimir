@@ -7,15 +7,19 @@ import "base:intrinsics"
 import "base:runtime"
 import "core:fmt"
 import "core:math"
+import "core:math/linalg"
 import glm "core:math/linalg/glsl"
 import "core:os"
 import win32 "core:sys/windows"
 import "core:time"
+import gl "vendor:OpenGL"
 import "libs:ogl"
 import "libs:tlc/win32app/owin_gl"
 import "shared:obug"
 import "shared:owin"
-import gl "vendor:OpenGL"
+
+int2 :: owin.int2
+float3 :: owin.float3
 
 // cow, cube, gazebo, crisscross
 //import model "../../data/models/cube"
@@ -67,6 +71,24 @@ frame_stats: struct {
 	fps:           f32,
 	frame_counter: i32,
 	frame_time:    f32,
+}
+
+mouse_pos: int2 = {0, 0}
+is_active: bool = true
+is_focused := false
+cursor_state: i32 = 0
+
+state: struct {
+	t: f32
+}
+
+show_cursor :: #force_inline proc(show: bool) {
+	cursor_state = owin.show_cursor(show)
+	fmt.println(#procedure, cursor_state)
+}
+
+clip_cursor :: #force_inline proc "contextless" (hwnd: win32.HWND, clip: bool) -> bool {
+	return owin.clip_cursor(hwnd, clip)
 }
 
 get_app :: #force_inline proc(hwnd: win32.HWND) -> ^Application {
@@ -173,6 +195,7 @@ WM_CREATE :: proc(hwnd: win32.HWND, lparam: win32.LPARAM) -> win32.LRESULT {
 	app := owin.get_settings_from_lparam(lparam, Application)
 	if app == nil {owin.show_error_and_panic("Missing app!")}
 	owin.set_settings(hwnd, app)
+	show_cursor(false)
 	//app.hdc = win32.GetDC(hwnd)
 	return 0
 }
@@ -183,6 +206,12 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	app := get_app(hwnd)
 	// free_opengl(app)
 	owin.release_dc(hwnd, &app.hdc)
+
+	clip_cursor(hwnd, false)
+	if cursor_state < 1 {
+		show_cursor(true)
+	}
+
 	if app.hwnd == hwnd {
 		app.hwnd = nil
 	}
@@ -196,31 +225,128 @@ WM_SIZE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) ->
 	type := owin.WM_SIZE_WPARAM(wparam)
 	app.settings.window_size = owin.decode_lparam_as_int2(lparam)
 	owin.set_window_text(hwnd, "%s %v %v", app.settings.title, app.settings.window_size, type)
+	clip_cursor(hwnd, true)
 	// Set the OpenGL viewport size
 	set_viewport_size(app)
 	return 0
 }
 
-handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	input := owin.decode_wm_input(wparam, lparam)
-	//fmt.println("input", input)
-	switch input.vk_code {
-	case win32.VK_ESCAPE:
-		if input.is_key_released {owin.close_application(hwnd)}
+// Sent when a window belonging to a different application than the active window is about to be activated. The message is sent to the application whose window is being activated and to the application whose window is being deactivated.
+// * wParam: Indicates whether the window is being activated or deactivated. This parameter is TRUE if the window is being activated; it is FALSE if the window is being deactivated.
+// * lParam: The thread identifier. If the wParam parameter is TRUE, lParam is the identifier of the thread that owns the window being deactivated. If wParam is FALSE, lParam is the identifier of the thread that owns the window being activated.
+// * Return: If an application processes this message, it should return zero.
+WM_ACTIVATEAPP :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	active := wparam != 0
+	fmt.println(#procedure, active, cursor_state)
+	if is_active != active {
+		is_active = active
+		clip_cursor(hwnd, active)
 	}
 	return 0
 }
 
+// Sent to both the window being activated and the window being deactivated. If the windows use the same input queue, the message is sent synchronously, first to the window procedure of the top-level window being deactivated, then to the window procedure of the top-level window being activated. If the windows use different input queues, the message is sent asynchronously, so the window is activated immediately.
+// * wParam: The low-order word specifies whether the window is being activated or deactivated. This parameter can be one of the following values. The high-order word specifies the minimized state of the window being activated or deactivated. A nonzero value indicates the window is minimized.
+// * lParam: A handle to the window being activated or deactivated, depending on the value of the wParam parameter. If the low-order word of wParam is WA_INACTIVE, lParam is the handle to the window being activated. If the low-order word of wParam is WA_ACTIVE or WA_CLICKACTIVE, lParam is the handle to the window being deactivated. This handle can be NULL.
+// * Return: If an application processes this message, it should return zero.
+WM_ACTIVATE :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	activate := owin.WM_ACTIVATE_WPARAM(wparam)
+	fmt.println(#procedure, activate, lparam)
+	return 0
+}
+
+// wparam: A handle to the window that has lost the keyboard focus. This parameter can be NULL.
+WM_FOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32.LRESULT {
+	is_focused = focused
+	fmt.println(#procedure, "hwnd=", hwnd, "wparam=", wparam, "is_focused=", is_focused)
+	return 0
+}
+
+// handle_key_input :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+// 	input := owin.decode_wm_input(wparam, lparam)
+// 	//fmt.println("input", input)
+// 	switch input.vk_code {
+// 	case win32.VK_ESCAPE:
+// 		if input.is_key_released {owin.close_application(hwnd)}
+// 	}
+// 	return 0
+// }
+
+rawinput: win32.RAWINPUT
+
+put_it := 0
+
+WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
+	assert(win32.GET_RAWINPUT_CODE_WPARAM(wparam) == .RIM_INPUT)
+	owin.get_raw_input_data(win32.HRAWINPUT(lparam), &rawinput)
+
+	switch rawinput.header.dwType {
+	case win32.RIM_TYPEMOUSE:
+		app := get_app(hwnd)
+		mouse_delta: int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
+		// mouse_delta_f := mouse_delta * 0.1f
+		camera.eye += float3{f32(mouse_delta.x), f32(mouse_delta.y), 0} * 0.1
+		mouse_pos += mouse_delta
+		mouse_pos = linalg.clamp(mouse_pos, int2{0, 0}, app.settings.window_size - 1)
+		button_flags := rawinput.data.mouse.usButtonFlags
+		switch button_flags {
+		case win32.RI_MOUSE_BUTTON_1_DOWN:
+			put_it = 1
+		case win32.RI_MOUSE_BUTTON_1_UP:
+			put_it = 0
+		case win32.RI_MOUSE_BUTTON_2_DOWN:
+			put_it = 2
+		case win32.RI_MOUSE_BUTTON_2_UP:
+			put_it = 0
+		}
+		// switch put_it {
+		// case 1:
+		// 	set_dot(mouse_pos / ZOOM, cols[selected_color])
+		// case 2:
+		// 	set_dot(mouse_pos / ZOOM, cols[0])
+		// }
+		// win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
+	case win32.RIM_TYPEKEYBOARD:
+		switch rawinput.data.keyboard.VKey {
+		case win32.VK_ESCAPE:
+			owin.close_application(hwnd)
+		// case win32.VK_0 ..= win32.VK_9:
+		// 	selected_color = i32(rawinput.data.keyboard.VKey - win32.VK_0)
+		case:
+			fmt.println("keyboard:", rawinput.data.keyboard)
+		}
+	case:
+		fmt.println("dwType:", rawinput.header.dwType)
+	}
+
+	return 0
+}
+
 wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
-	// odinfmt: disable
 	context = runtime.default_context()
+	// odinfmt: disable
 	switch msg {
 	case win32.WM_CREATE:		return WM_CREATE(hwnd, lparam)
 	case win32.WM_DESTROY:		return WM_DESTROY(hwnd)
 	case win32.WM_ERASEBKGND:	return 1
-	case win32.WM_SIZE:         return WM_SIZE(hwnd, wparam, lparam)
-	case win32.WM_KEYDOWN:      return handle_key_input(hwnd, wparam, lparam)
-	case win32.WM_KEYUP:        return handle_key_input(hwnd, wparam, lparam)
+	case win32.WM_SIZE:			return WM_SIZE(hwnd, wparam, lparam)
+	case win32.WM_ACTIVATEAPP:	return WM_ACTIVATEAPP(hwnd, wparam, lparam)
+	case win32.WM_ACTIVATE:     return WM_ACTIVATE(hwnd, wparam, lparam)
+	case win32.WM_SETFOCUS:		return WM_FOCUS(hwnd, wparam, true)
+	case win32.WM_KILLFOCUS:	return WM_FOCUS(hwnd, wparam, false)
+
+	// case win32.WM_KEYDOWN:      return handle_key_input(hwnd, wparam, lparam)
+	// case win32.WM_KEYUP:        return handle_key_input(hwnd, wparam, lparam)
+
+	case win32.WM_INPUT:		return WM_INPUT(hwnd, wparam, lparam)
+
+	case win32.WM_CHAR:         panic("WM_CHAR")
+	case win32.WM_KEYDOWN:      panic("WM_KEYDOWN")
+	case win32.WM_KEYUP:        panic("WM_KEYUP")
+	case win32.WM_MOUSEMOVE:    panic("WM_MOUSEMOVE")
+	case win32.WM_LBUTTONDOWN:  panic("WM_LBUTTONDOWN")
+	case win32.WM_RBUTTONDOWN:  panic("WM_RBUTTONDOWN")
+
 	case:						return win32.DefWindowProcW(hwnd, msg, wparam, lparam)
 	}
 	// odinfmt: enable
@@ -249,6 +375,7 @@ run :: proc() -> (exit_code: int) {
 	// if .Raw_Input in settings.options {
 	// 	register_raw_input(app.hwnd)
 	// }
+	owin.register_raw_input(app.hwnd)
 	app.hdc = win32.GetDC(app.hwnd)
 	assert(app.hdc != nil)
 	// defer owin.release_dc(app.hwnd, &app.hdc)
@@ -292,7 +419,7 @@ run :: proc() -> (exit_code: int) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices) * size_of(indices[0]), raw_data(indices), gl.STATIC_DRAW)
 
 	index_count := i32(len(indices))
-	t: f32 = 0
+	state.t = 0
 
 	owin.show_and_update_window(app.hwnd)
 
@@ -327,9 +454,10 @@ run :: proc() -> (exit_code: int) {
 		{
 			// rotate about Z axis
 			//model := glm.identity(glm.mat4) * glm.mat4Rotate({0, 1, 0}, t)
-			t += app.delta
-			model := glm.mat4Rotate({0, 1, 0}, t)
+			state.t += app.delta
+			model := glm.mat4Rotate({0, 1, 0}, state.t)
 			//view := glm.mat4LookAt(eye = camera.eye, centre = camera.center, up = camera.up)
+
 			view := ogl.camera_look_at(&camera)
 			//projection := glm.mat4Perspective(perspective.fov, perspective.aspect, 0.1, 100.0)
 			projection := ogl.perspective_projection(&perspective)
