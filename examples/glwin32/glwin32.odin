@@ -20,6 +20,11 @@ import "shared:owin"
 
 int2 :: owin.int2
 float3 :: owin.float3
+float4 :: owin.float4
+
+WIDTH :: 640
+HEIGHT :: WIDTH * 9 / 16
+SWAP_INTERVAL :: 1
 
 // cow, cube, gazebo, crisscross
 //import model "../../data/models/cube"
@@ -53,10 +58,6 @@ camera: ogl.Camera = {
 	center = {0, 0, 0},
 	up     = {0, 1, 0},
 }
-
-WIDTH :: 640
-HEIGHT :: WIDTH * 9 / 16
-SWAP_INTERVAL :: 1
 
 Application :: struct {
 	#subtype settings: owin.Window_Settings,
@@ -108,9 +109,23 @@ update :: proc() {
 draw :: proc() {
 	//owin_gl.set_viewport(app.settings.window_size)
 	//gl.Viewport(0, 0, **app.settings.window_size)
+
 	// Set the opengl clear color
 	// 0-1 rgba values
-	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
+	// gl.ClearColor(0.2, 0.3, 0.3, 1.0)
+
+	clear_color := float4{0.2, 0.3, 0.3, 1.0}
+	if mouse_buttons[0] {
+		clear_color.r = .7
+	}
+	if mouse_buttons[1] {
+		clear_color.g = .7
+	}
+	if mouse_buttons[2] {
+		clear_color.b = .7
+	}
+	gl.ClearColor(**clear_color)
+
 	// Clear the screen with the set clearcolor
 	//gl.Clear(gl.COLOR_BUFFER_BIT)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -273,8 +288,9 @@ WM_FOCUS :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, focused: bool) -> win32
 // }
 
 rawinput: win32.RAWINPUT
-
-put_it := 0
+keys: [256]bool
+mouse_buttons: [3]bool
+mouse_delta: int2
 
 WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -> win32.LRESULT {
 	assert(win32.GET_RAWINPUT_CODE_WPARAM(wparam) == .RIM_INPUT)
@@ -283,29 +299,18 @@ WM_INPUT :: proc(hwnd: win32.HWND, wparam: win32.WPARAM, lparam: win32.LPARAM) -
 	switch rawinput.header.dwType {
 	case win32.RIM_TYPEMOUSE:
 		app := get_app(hwnd)
-		mouse_delta: int2 = {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
-		// mouse_delta_f := mouse_delta * 0.1f
-		camera.eye += float3{f32(mouse_delta.x), f32(mouse_delta.y), 0} * 0.1
+		mouse_delta += {rawinput.data.mouse.lLastX, rawinput.data.mouse.lLastY}
+		button_flags := rawinput.data.mouse.usButtonFlags
+		for &mb in mouse_buttons {
+			// is mouse button down
+			if button_flags & 1 > 0 { mb = true }
+			button_flags >>= 1
+			// is mouse button up
+			if button_flags & 1 > 0 { mb = false }
+			button_flags >>= 1
+		}
 		mouse_pos += mouse_delta
 		mouse_pos = linalg.clamp(mouse_pos, int2{0, 0}, app.settings.window_size - 1)
-		button_flags := rawinput.data.mouse.usButtonFlags
-		switch button_flags {
-		case win32.RI_MOUSE_BUTTON_1_DOWN:
-			put_it = 1
-		case win32.RI_MOUSE_BUTTON_1_UP:
-			put_it = 0
-		case win32.RI_MOUSE_BUTTON_2_DOWN:
-			put_it = 2
-		case win32.RI_MOUSE_BUTTON_2_UP:
-			put_it = 0
-		}
-		// switch put_it {
-		// case 1:
-		// 	set_dot(mouse_pos / ZOOM, cols[selected_color])
-		// case 2:
-		// 	set_dot(mouse_pos / ZOOM, cols[0])
-		// }
-		// win32.RedrawWindow(hwnd, nil, nil, .RDW_INVALIDATE | .RDW_UPDATENOW)
 	case win32.RIM_TYPEKEYBOARD:
 		switch rawinput.data.keyboard.VKey {
 		case win32.VK_ESCAPE:
@@ -449,6 +454,10 @@ run :: proc() -> (exit_code: int) {
 
 		// draw_frame(hwnd)
 		// owin_gl.set_viewport(app.settings.window_size)
+
+		camera.eye += float3{f32(mouse_delta.x), f32(mouse_delta.y), 0} * 0.1
+		mouse_delta = {0, 0}
+
 		draw()
 
 		{
@@ -456,10 +465,8 @@ run :: proc() -> (exit_code: int) {
 			//model := glm.identity(glm.mat4) * glm.mat4Rotate({0, 1, 0}, t)
 			state.t += app.delta
 			model := glm.mat4Rotate({0, 1, 0}, state.t)
-			//view := glm.mat4LookAt(eye = camera.eye, centre = camera.center, up = camera.up)
 
 			view := ogl.camera_look_at(&camera)
-			//projection := glm.mat4Perspective(perspective.fov, perspective.aspect, 0.1, 100.0)
 			projection := ogl.perspective_projection(&perspective)
 
 			//gl.Enable(gl.DEPTH_TEST)
