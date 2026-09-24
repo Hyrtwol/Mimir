@@ -9,14 +9,18 @@ import "shared:owin"
 @(test)
 can_i_inline_asm :: proc(t: ^testing.T) {
 	exp: u32 = 10
-	act := asm(u32, u32) -> u32{`add $0, $1
-		 mov $1, $2`,"r,r,=r"}(3, 7)
+	act := asm(x: u32, y: u32) -> (r: u32) {
+		add x, y;
+		mov r, x;
+	}(3, 7)
 	testing.expect(t, act == exp)
 }
 
 // https://learn.microsoft.com/en-us/cpp/intrinsics/rdtsc
 __rdtsc :: #force_inline proc() -> i64 {
-	return asm() -> i64{`rdtsc`,"=r"}()
+	return asm() -> i64 {
+		rdtsc;
+	}()
 }
 
 // not really a test @(test)
@@ -52,11 +56,10 @@ call_asm_proc :: proc(t: ^testing.T) {
 
 inline_asm :: proc "contextless" (x: u32, y: u32) -> u32 {
 	// odinfmt: disable
-	return asm(u32, u32) -> u32 {
-		`add $0, $1
-		 mov $1, $2`,
-		"r,r,=r",
-	}(x, y);
+	return asm(x: u32, y: u32) -> (r: u32) {
+		add x, y;
+		mov y, r;
+	}()
 	// odinfmt: enable
 }
 
@@ -75,6 +78,6 @@ can_call :: proc() {g_res += 1}
 
 inline_asm_call :: proc "contextless" () {
 	// odinfmt: disable
-	asm() {"call can_call",""}();
+	asm() { call can_call }();
 	// odinfmt: enable
 }
