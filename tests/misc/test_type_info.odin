@@ -48,24 +48,24 @@ struct_tags :: proc(t: ^testing.T) {
 	}
 
 	fd, fe := os.open("struct_fields_zipped.log", os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
-	testing.expect(t, fe == 0)
-	if fe != 0 {return}
+	testing.expect(t, fe == nil)
+	if fe != nil {return}
 	defer os.close(fd)
-	w := io.to_writer(os.to_stream(fd))
+	log := io.to_writer(os.to_stream(fd))
 
 	vt: string
 	ok: bool
 	for field in reflect.struct_fields_zipped(vertex) {
-		fmt.wprintfln(w, "%v", field)
+		fmt.wprintfln(log, "%v", field)
 
 		if vt, ok = reflect.struct_tag_lookup(reflect.Struct_Tag(field.tag), "POSITION"); ok {
-			fmt.wprintfln(w, "POSITION: '%v'", vt)
+			fmt.wprintfln(log, "POSITION: '%v'", vt)
 		}
 		if vt, ok = reflect.struct_tag_lookup(reflect.Struct_Tag(field.tag), "NORMAL"); ok {
-			fmt.wprintfln(w, "NORMAL: '%v'", vt)
+			fmt.wprintfln(log, "NORMAL: '%v'", vt)
 		}
 		if vt, ok = reflect.struct_tag_lookup(reflect.Struct_Tag(field.tag), "TEXCOORD"); ok {
-			fmt.wprintfln(w, "TEXCOORD: '%v'", vt)
+			fmt.wprintfln(log, "TEXCOORD: '%v'", vt)
 		}
 	}
 
@@ -77,7 +77,7 @@ name_of_arg :: proc(t: ^testing.T) {
 		return fmt.aprintf("$name=%s", name, allocator = allocator)
 	}
 
-	name : string
+	name: string
 	name = get_name("odd")
 	delete(name)
 

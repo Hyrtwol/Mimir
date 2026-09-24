@@ -22,7 +22,7 @@ load_pcx :: proc(t: ^T) {
 	// fmt.printfln("header: %#v", header)
 	expect_value(t, header.id, pcx.PCX_MAGIC)
 	expect_value(t, header.version, 5)
-	expect_value(t, header.encoding, 1)
+	expect_value(t, header.encoding, pcx.PCX_Encoding.RLE)
 	expect_value(t, header.bits_per_px, 8)
 	expect_value(t, header.min, [2]i16{0, 0})
 	expect_value(t, header.max, [2]i16{63, 63})

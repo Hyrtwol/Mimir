@@ -16,10 +16,10 @@ write_hello_txt :: proc(t: ^testing.T) {
 	data := "ABCD"
 	err: os.Error
 	err = os.write_entire_file(path, transmute([]byte)data)
-	testing.expect_value(t, err, 0)
+	testing.expect_value(t, err, nil)
 	testing.expect(t, os.exists(path))
 	err = os.remove(path)
-	testing.expect_value(t, err, 0)
+	testing.expect_value(t, err, nil)
 	testing.expect(t, !os.exists(path))
 }
 
@@ -32,7 +32,7 @@ read_some_bytes :: proc(t: ^testing.T) {
 
 	// data, ok := os.read_entire_file_from_filename(path, allocator = context.temp_allocator)
 	data, err := os.read_entire_file(path, allocator = context.temp_allocator)
-	testing.expect_value(t, err, 0)
+	testing.expect_value(t, err, nil)
 	testing.expectf(t, len(data) == EXPECTED_FILE_SIZE, "len=%d", len(data))
 	//data: []byte = {65, 66, 67, 68} // "ABCD"
 	// data := "ABCD"
@@ -51,13 +51,13 @@ file_io :: proc(t: ^testing.T) {
 
 	fd, err = os.open(path, os.O_RDONLY)
 	testing.expect_value(t, err, os.ERROR_NONE)
-	if err != 0 {return}
+	if err != nil {return}
 
 	defer os.close(fd)
 
 	length: i64
-	if length, err = os.file_size(fd); err != 0 {
-		testing.expect_value(t, err, 0)
+	if length, err = os.file_size(fd); err != nil {
+		testing.expect_value(t, err, nil)
 		return
 	}
 	testing.expectf(t, length == EXPECTED_FILE_SIZE, "%d != %d", length, EXPECTED_FILE_SIZE)
@@ -141,8 +141,8 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 	// fmt.printfln("reading %s", path)
 	//data, err := os.read_entire_file_from_filename(path, context.temp_allocator)
 	data, err := os.read_entire_file(path, allocator = context.temp_allocator)
-	testing.expect_value(t, err, 0)
-	if err != 0 {return}
+	testing.expect_value(t, err, nil)
+	if err != nil {return}
 
 	newline :: "\r\n"
 
@@ -163,8 +163,8 @@ lowercase_dictionary :: proc(t: ^testing.T) {
 
 	// fmt.printfln("writing %s", path)
 	fd, fe := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
-	testing.expect(t, fe == 0)
-	if fe != 0 {return}
+	testing.expect(t, fe == nil)
+	if fe != nil {return}
 	defer os.close(fd)
 	os.write_string(fd, "# Odin Dictionary Words" + newline)
 	for w in new_words {

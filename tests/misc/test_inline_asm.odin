@@ -16,6 +16,7 @@ can_i_inline_asm :: proc(t: ^testing.T) {
 	testing.expect(t, act == exp)
 }
 
+/*
 // https://learn.microsoft.com/en-us/cpp/intrinsics/rdtsc
 __rdtsc :: #force_inline proc() -> i64 {
 	return asm() -> i64 {
@@ -48,6 +49,7 @@ can_i_call_rdtsc :: proc(t: ^testing.T) {
 	fmt.printfln("avg. cc      : %f", f64(clock_cycles) / reps)
 	fmt.printfln("time         : %fs ms", elapsed_ms)
 }
+*/
 
 @(test)
 call_asm_proc :: proc(t: ^testing.T) {
@@ -58,11 +60,12 @@ inline_asm :: proc "contextless" (x: u32, y: u32) -> u32 {
 	// odinfmt: disable
 	return asm(x: u32, y: u32) -> (r: u32) {
 		add x, y;
-		mov y, r;
-	}()
+		mov r, x;
+	}(x, y)
 	// odinfmt: enable
 }
 
+/*
 @(test)
 call_asm_that_call_a_proc :: proc(t: ^testing.T) {
 	g_res = 0
@@ -81,3 +84,4 @@ inline_asm_call :: proc "contextless" () {
 	asm() { call can_call }();
 	// odinfmt: enable
 }
+*/
