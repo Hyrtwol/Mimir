@@ -5,8 +5,6 @@ import "core:fmt"
 import win32 "core:sys/windows"
 import gl "vendor:OpenGL"
 
-int2 :: [2]i32
-
 PIXELFORMATDESCRIPTOR :: win32.PIXELFORMATDESCRIPTOR
 
 wglCreateContext :: win32.wglCreateContext
@@ -18,13 +16,27 @@ ChoosePixelFormat :: win32.ChoosePixelFormat
 SetPixelFormat :: win32.SetPixelFormat
 SwapBuffers :: win32.SwapBuffers
 
-glGetString :: gl.GetString
-
 gl_set_proc_address :: win32.gl_set_proc_address
 
-load_up_to :: proc(major: int = 4, minor: int = 6) {
-	fmt.println(#procedure, major, minor)
-	gl.load_up_to(major, minor, gl_set_proc_address)
+wglCreateBufferRegionARB: win32.wglCreateBufferRegionARBType
+wglDeleteBufferRegionARB: win32.wglDeleteBufferRegionARBType
+wglSaveBufferRegionARB: win32.wglSaveBufferRegionARBType
+wglRestoreBufferRegionARB: win32.wglRestoreBufferRegionARBType
+
+wglMakeContextCurrentARB: win32.wglMakeContextCurrentARBType
+wglGetCurrentReadDCARB: win32.wglGetCurrentReadDCARBType
+
+wglCreatePbufferARB: win32.wglCreatePbufferARBType
+wglGetPbufferDCARB: win32.wglGetPbufferDCARBType
+wglReleasePbufferDCARB: win32.wglReleasePbufferDCARBType
+wglDestroyPbufferARB: win32.wglDestroyPbufferARBType
+wglQueryPbufferARB: win32.wglQueryPbufferARBType
+
+wglGetPixelFormatAttribivARB: win32.wglGetPixelFormatAttribivARBType
+wglGetPixelFormatAttribfvARB: win32.wglGetPixelFormatAttribfvARBType
+
+load_up_to :: proc(version: [2]int = {4, 6}) {
+	gl.load_up_to(**version, gl_set_proc_address)
 	init_wgl_extensions()
 }
 
@@ -80,7 +92,7 @@ set_swap_interval :: proc(interval: i32) -> (ok: bool) {
 	return
 }
 
-set_viewport_size :: proc(size: int2) {
+set_viewport_size :: proc(size: [2]i32) {
 	gl.Viewport(0, 0, **size)
 }
 
