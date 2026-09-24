@@ -13,6 +13,7 @@ import "shared:obug"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 import "shaders"
+import "textures"
 
 float3 :: glm.vec3
 float4x4 :: glm.mat4
@@ -143,12 +144,10 @@ run :: proc() -> (exit_code: int) {
 	fmt.println("Newton Dynamics")
 	defer fmt.println("Done.", exit_code)
 
-	texture_data := make([dynamic]texture_def, 0, 0)
-	defer delete_textures(texture_data)
-	//defer delete(texture_data)
-	load_texture_data(&texture_data)
+	texture_data := textures.create_textures() or_else panic("create_textures")
+	defer textures.delete_textures(texture_data)
+	textures.load_texture_data(&texture_data, image_file_bytes[:]) or_else panic("load_texture_data")
 	for td in texture_data {fmt.println("Image:", td.size, len(td.data)); assert(td.data != nil)}
-	//defer {for td in texture_data {delete(td.data)}}
 
 	write_globals()
 
@@ -371,12 +370,11 @@ run :: proc() -> (exit_code: int) {
 			gl.TEXTURE_2D, // texture type
 			0, // level of detail number (default = 0)
 			gl.RGBA, // texture format
-			texture_data[ti].size.x, // width
-			texture_data[ti].size.y, // height
+			**texture_data[ti].size, // width, height
 			0, // border, must be 0
 			gl.RGBA, // pixel data format
 			gl.UNSIGNED_BYTE, // data type of pixel data
-			&texture_data[ti].data[0], // image data
+			raw_data(texture_data[ti].data), // image data
 		)
 		gl.GenerateMipmap(gl.TEXTURE_2D)
 
@@ -398,6 +396,9 @@ run :: proc() -> (exit_code: int) {
 	start_tick := time.tick_now()
 	last_tick := start_tick
 	delta: f32
+
+	main_texture: ^gl.Uniform_Info = &uniforms["main_texture"]
+	assert(main_texture != nil)
 
 	ui_transform: ^gl.Uniform_Info = &uniforms["u_transform"]
 	assert(ui_transform != nil)
@@ -437,12 +438,13 @@ run :: proc() -> (exit_code: int) {
 		//ut: float4x4
 		cur_tex, tex_idx: u32 = 0, 0
 		for &ri in render_items {
-			//gl.ActiveTexture(gl.TEXTURE0)
+			gl.ActiveTexture(gl.TEXTURE0)
 			tex_idx = textures[ri.texture_index]
 			if tex_idx != cur_tex {
 				cur_tex = tex_idx
 				gl.BindTexture(gl.TEXTURE_2D, cur_tex)
 			}
+			gl.Uniform1i(main_texture.location, 0)
 			//ut = proj_view * ri.transform
 			//gl.UniformMatrix4fv(u_proj_view.location, 1, false, &proj_view[0, 0])
 			gl.UniformMatrix4fv(ui_transform.location, 1, false, &ri.transform[0, 0])
@@ -475,4 +477,13 @@ main :: proc() {
 	} else {
 		os.exit(run())
 	}
+}
+
+image_file_bytes := [?][]u8 {
+	//#load("../../../data/images/floor_d01.png"),
+	#load("C:\\dev\\odin\\OdinET\\etmain\\maps\\wolfdemo\\lm_0000.tga"),
+	#load("../../../data/images/uv_checker_x.png"),
+	#load("../../../data/images/uv_checker_y.png"),
+	#load("../../../data/images/uv_checker_z.png"),
+	#load("../../../data/images/uv_checker_w.png"),
 }
