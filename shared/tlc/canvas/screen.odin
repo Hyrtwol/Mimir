@@ -228,7 +228,6 @@ draw_triangle :: proc(pc: ^canvas, zbuffer: []f32, viewport: ^float4x4, clip_ver
 			bc_screen := it_abc * pp // barycentric(&abc, pp)
 			if bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 {continue}
 
-			//bc_clip := float3{bc_screen.x / pts[0].w, bc_screen.y / pts[1].w, bc_screen.z / pts[2].w}
 			bc_clip := bc_screen * piw
 			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z) // check https://github.com/ssloy/tinyrenderer/wiki/Technical-difficulties-linear-interpolation-with-perspective-deformations
 
