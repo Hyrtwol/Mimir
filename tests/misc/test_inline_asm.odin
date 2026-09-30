@@ -1,11 +1,5 @@
 package test_misc
 
-import "core:bytes"
-import "core:fmt"
-import "base:runtime"
-import "core:testing"
-import "shared:owin"
-
 @(test)
 can_i_inline_asm :: proc(t: ^testing.T) {
 	exp: u32 = 10

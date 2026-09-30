@@ -1,11 +1,10 @@
 package test_misc
 
-import "core:fmt"
 import "core:image/pcx"
 import "core:os"
 
 @(test)
-load_pcx :: proc(t: ^T) {
+load_pcx :: proc(t: ^testing.T) {
 
 	expect_size(t, pcx.PCXHeader, 128)
 	expect_size(t, pcx.PCXColor, 3)
@@ -36,7 +35,7 @@ load_pcx :: proc(t: ^T) {
 
 	//fmt.println("pal:", header.pal)
 
-	data := buffer[128:]
+	// data := buffer[128:]
 
 	dim := ([2]int)(header.max - header.min + 1)
 	expect_value(t, dim, [2]int{64, 64})
@@ -52,4 +51,5 @@ load_pcx :: proc(t: ^T) {
 	expect_value(t, buffer[palofs], pcx.PAL_MAGIC)
 	palette := (^pcx.PCXPalette)(&buffer[palofs + 1])
 	//fmt.println("palette", palette)
+	expect_value(t, len(palette^), 256)
 }

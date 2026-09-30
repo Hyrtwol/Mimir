@@ -1,13 +1,9 @@
 package test_misc
 
-import "base:runtime"
-import "core:bytes"
 import "core:fmt"
 import "core:math"
 import "core:math/fixed"
 import "core:math/linalg"
-import "core:testing"
-import o "shared:ounit"
 
 int2 :: [2]i32
 float2 :: [2]f32
@@ -15,10 +11,10 @@ float2 :: [2]f32
 @(test)
 can_i_swizzle :: proc(t: ^testing.T) {
 	v: int2 = {3, 7}
-	o.expect_value(t, v[0], 3)
-	o.expect_value(t, v[1], 7)
-	o.expect_value(t, v.x, 3)
-	o.expect_value(t, v.y, 7)
+	expect_value(t, v[0], 3)
+	expect_value(t, v[1], 7)
+	expect_value(t, v.x, 3)
+	expect_value(t, v.y, 7)
 }
 
 @(test)
@@ -29,16 +25,16 @@ swapping :: proc(t: ^testing.T) {
 	// stack swap
 	a, b = b, a
 
-	o.expect_value(t, a, 1337)
-	o.expect_value(t, b, 47)
+	expect_value(t, a, 1337)
+	expect_value(t, b, 47)
 
 	// xor swap
 	a ~= b
 	b ~= a
 	a ~= b
 
-	o.expect_value(t, a, 47)
-	o.expect_value(t, b, 1337)
+	expect_value(t, a, 47)
+	expect_value(t, b, 1337)
 
 }
 
@@ -46,15 +42,15 @@ swapping :: proc(t: ^testing.T) {
 min_max_uintptr :: proc(t: ^testing.T) {
 	act := u64(max(uintptr))
 	exp := max(u64)
-	testing.expect(t, exp == act)
+	expect(t, exp == act)
 }
 
 @(test)
 min_max_consts :: proc(t: ^testing.T) {
 	act := max(f32) //      =  340282320000000000000000000000000000000.000
-	testing.expect_value(t, act, math.F32_MAX) // 3.402823466e+38 == 340282320000000000000000000000000000000.000
-	testing.expect_value(t, 3.402823466e+38, math.F32_MAX) //  340282320000000000000000000000000000000.000 max(f32)
-	testing.expectf(t, fmt.tprintf("%f", math.F32_MAX) == "340282346600000016151267322115014000640.000", "%f", math.F32_MAX)
+	expect_value(t, act, math.F32_MAX) // 3.402823466e+38 == 340282320000000000000000000000000000000.000
+	expect_value(t, 3.402823466e+38, math.F32_MAX) //  340282320000000000000000000000000000000.000 max(f32)
+	expectf(t, fmt.tprintf("%f", math.F32_MAX) == "340282346600000016151267322115014000640.000", "%f", math.F32_MAX)
 }
 
 // Float 32 puzzle
@@ -67,29 +63,29 @@ min_max :: proc(t: ^testing.T) {
 	act = min(f32) //      = -340282320000000000000000000000000000000.000
 	exp = -3.4028232e38 // = -340282300000000000000000000000000000000.000 looks like this will truncate this to -3.402823e38 ? note math.F32_DIG=6
 	diff = abs(act - exp)
-	testing.expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // fails with delta=1e31
+	expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // fails with delta=1e31
 
 	act = max(f32) //      =  340282320000000000000000000000000000000.000
 	exp = 3.4028232e38 //  =  340282300000000000000000000000000000000.000 missing 0.0000002e38
 	diff = abs(act - exp)
-	testing.expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // fails with delta=1e31
+	expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // fails with delta=1e31
 
 	delta = math.F32_EPSILON
 
 	act = max(f32) //     3.4028232e38
 	exp = 3.4028232e38 + 0.0000002e38
 	diff = abs(act - exp)
-	testing.expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // works with delta=F32_EPSILON
+	expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // works with delta=F32_EPSILON
 
 	act = max(f32) //     3.4028232e38
 	exp = 3.402823e38 + 0.0000004e38
 	diff = abs(act - exp)
-	testing.expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // works with delta=F32_EPSILON
+	expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // works with delta=F32_EPSILON
 
 	act = max(f32) //     3.4028232e38
 	exp = math.F32_MAX // 3.402823466e+38
 	diff = abs(act - exp)
-	testing.expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // works with delta=F32_EPSILON
+	expectf(t, diff < delta, "%f (should be: %f) %f", act, exp, diff) // works with delta=F32_EPSILON
 }
 
 /*
@@ -133,11 +129,11 @@ find_epsilon_for_f64 :: proc(t: ^testing.T) {
 		oneplusnext = 1 + next
 	}
 	// fmt.printfln("epsilon = %e", epsilon)
-	testing.expect(t, math.F64_EPSILON == epsilon)
+	expect(t, math.F64_EPSILON == epsilon)
 }
 
 @(test)
-find_epsilon_for_f32 :: proc(t: ^testing.T) { // The AMD CPU finds the same epsilon for both float and double
+find_epsilon_for_f32 :: proc(t: ^testing.T) { 	// The AMD CPU finds the same epsilon for both float and double
 	epsilon, next, one, oneplusnext: f32
 	epsilon = 1
 	next = epsilon / 2
@@ -149,7 +145,7 @@ find_epsilon_for_f32 :: proc(t: ^testing.T) { // The AMD CPU finds the same epsi
 		oneplusnext = 1 + next
 	}
 	// fmt.printfln("epsilon = %e", epsilon)
-	testing.expect(t, math.F32_EPSILON == epsilon)
+	expect(t, math.F32_EPSILON == epsilon)
 }
 
 @(test)
@@ -165,9 +161,9 @@ find_epsilon_for_f16 :: proc(t: ^testing.T) {
 		oneplusnext = 1 + next
 	}
 	// fmt.printfln("epsilon = %e", epsilon)
-	testing.expect(t, 4.8828120e-04 == epsilon)
-	//testing.expect(t, math.F16_EPSILON == epsilon) // fails as F16_EPSILON=0.00097656
-	testing.expect(t, math.F16_EPSILON == epsilon * 2)
+	expect(t, 4.8828120e-04 == epsilon)
+	//expect(t, math.F16_EPSILON == epsilon) // fails as F16_EPSILON=0.00097656
+	expect(t, math.F16_EPSILON == epsilon * 2)
 }
 
 @(test)
@@ -185,7 +181,7 @@ float_01_to_byte :: proc(t: ^testing.T) {
 	}
 
 	for i in 0 ..< 256 {
-		testing.expect(t, b[i] == C)
+		expect(t, b[i] == C)
 	}
 }
 
@@ -194,14 +190,26 @@ vector2_max :: proc(t: ^testing.T) {
 	v1: int2 = {1, 4}
 	v2: int2 = {3, 2}
 	m: int2 = linalg.max(v1, v2)
-	testing.expect(t, m == {3, 4})
+	expect(t, m == {3, 4})
 }
 
 @(test)
 vector_cast :: proc(t: ^testing.T) {
 	v1: int2 = {1, 4}
 	v2 := linalg.array_cast(v1, f32)
-	testing.expect(t, v2 == {1, 4})
+	expect(t, v2 == {1, 4})
+}
+
+@(test)
+array_max :: proc(t: ^testing.T) {
+	v := [3]f32{1, 4, 3}
+	m: f32
+	// @builtin max   :: proc(values: ..T) -> T ---
+	m = max(v[0], v[1], v[2])
+	//m = max(v) // NOGO Expected an ordered numeric type to 'max', got '[3]f32'
+	//m = max(..v) // NOGO Expected an ordered numeric type to 'max', got '[3]f32'
+	//m = max(**v) // NOGO Expected an ordered numeric type to 'max', got 'f32, f32, f32'
+	expect(t, m == 4)
 }
 
 /*
@@ -220,6 +228,15 @@ vec4 :: linalg.Vector4f32
 tri :: [3]vec2
 
 @(test)
+matrix_3x3 :: proc(t: ^testing.T) {
+	mx := mat3x3{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	expect_value(t, mx[0], vec3{1, 4, 7})
+	expect_value(t, mx[1], vec3{2, 5, 8})
+	expect_value(t, mx[2], vec3{3, 6, 9})
+	expect_value(t, (^[9]f32)(&mx)^, [9]f32{1, 4, 7, 2, 5, 8, 3, 6, 9})
+}
+
+@(test)
 determinant_3x3 :: proc(t: ^testing.T) {
 	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
 	//fmt.println("t:", tri)
@@ -229,7 +246,7 @@ determinant_3x3 :: proc(t: ^testing.T) {
 	//if (lg.determinant(ABC)<1e-3) {return {-1,1,1}} // for a degenerate triangle generate negative coordinates, it will be thrown away by the rasterizator
 	det := linalg.matrix3x3_determinant(ABC)
 	//fmt.println("det:", det)
-	o.expect_float(t, det, 10000, 0.0001)
+	expect_float(t, det, 10000, 0.0001)
 }
 
 @(test)
@@ -237,9 +254,9 @@ adjugate_3x3 :: proc(t: ^testing.T) {
 	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
 	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
 	a := linalg.matrix3x3_adjugate(ABC)
-	testing.expectf(t, [3]f32{100, -30, -3500} == a[0], "a[0]=%v", a[0])
-	testing.expectf(t, [3]f32{-0, 100, -5000} == a[1], "a[1]=%v", a[1])
-	testing.expectf(t, [3]f32{-100, -70, 18500} == a[2], "a[2]=%v", a[2])
+	expectf(t, [3]f32{100, -30, -3500} == a[0], "a[0]=%v", a[0])
+	expectf(t, [3]f32{-0, 100, -5000} == a[1], "a[1]=%v", a[1])
+	expectf(t, [3]f32{-100, -70, 18500} == a[2], "a[2]=%v", a[2])
 }
 
 @(test)
@@ -247,9 +264,9 @@ cofactor_3x3 :: proc(t: ^testing.T) {
 	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
 	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
 	a := linalg.matrix3x3_cofactor(ABC)
-	testing.expectf(t, [3]f32{100, -0, -100} == a[0], "a[0]=%v", a[0])
-	testing.expectf(t, [3]f32{-30, 100, -70} == a[1], "a[1]=%v", a[1])
-	testing.expectf(t, [3]f32{-3500, -5000, 18500} == a[2], "a[2]=%v", a[2])
+	expectf(t, [3]f32{100, -0, -100} == a[0], "a[0]=%v", a[0])
+	expectf(t, [3]f32{-30, 100, -70} == a[1], "a[1]=%v", a[1])
+	expectf(t, [3]f32{-3500, -5000, 18500} == a[2], "a[2]=%v", a[2])
 }
 
 @(test)
@@ -257,9 +274,9 @@ transpose_3x3 :: proc(t: ^testing.T) {
 	tri: tri = {vec2{150, 50}, vec2{80, 150}, vec2{50, 50}}
 	ABC := mat3x3{tri[0].x, tri[0].y, 1, tri[1].x, tri[1].y, 1, tri[2].x, tri[2].y, 1}
 	a := linalg.transpose(ABC)
-	testing.expectf(t, [3]f32{150, 50, 1} == a[0], "a[0]=%v", a[0])
-	testing.expectf(t, [3]f32{80, 150, 1} == a[1], "a[1]=%v", a[1])
-	testing.expectf(t, [3]f32{50, 50, 1} == a[2], "a[2]=%v", a[2])
+	expectf(t, [3]f32{150, 50, 1} == a[0], "a[0]=%v", a[0])
+	expectf(t, [3]f32{80, 150, 1} == a[1], "a[1]=%v", a[1])
+	expectf(t, [3]f32{50, 50, 1} == a[2], "a[2]=%v", a[2])
 }
 
 @(test)
@@ -271,9 +288,9 @@ inverse_3x3 :: proc(t: ^testing.T) {
 	a := linalg.inverse(ABC)
 	//fmt.println("inverse:", a)
 
-	testing.expectf(t, [3]f32{0.0099999998, -0.003, -0.34999999} == a[0], "a[0]=%v", a[0])
-	testing.expectf(t, [3]f32{-0, 0.0099999998, -0.5} == a[1], "a[1]=%v", a[1])
-	testing.expectf(t, [3]f32{-0.0099999998, -0.0069999998, 1.8499999} == a[2], "a[2]=%v", a[2])
+	expectf(t, [3]f32{0.0099999998, -0.003, -0.34999999} == a[0], "a[0]=%v", a[0])
+	expectf(t, [3]f32{-0, 0.0099999998, -0.5} == a[1], "a[1]=%v", a[1])
+	expectf(t, [3]f32{-0.0099999998, -0.0069999998, 1.8499999} == a[2], "a[2]=%v", a[2])
 }
 
 @(test)
@@ -285,9 +302,9 @@ inverse_transpose_3x3 :: proc(t: ^testing.T) {
 	a := linalg.matrix3x3_inverse_transpose(ABC)
 	//fmt.println("inverse_transpose:", a)
 
-	testing.expectf(t, [3]f32{0.0099999998, -0, -0.0099999998} == a[0], "a[0]=%v", a[0])
-	testing.expectf(t, [3]f32{-0.003, 0.0099999998, -0.0069999998} == a[1], "a[1]=%v", a[1])
-	testing.expectf(t, [3]f32{-0.34999999, -0.5, 1.8499999} == a[2], "a[2]=%v", a[2])
+	expectf(t, [3]f32{0.0099999998, -0, -0.0099999998} == a[0], "a[0]=%v", a[0])
+	expectf(t, [3]f32{-0.003, 0.0099999998, -0.0069999998} == a[1], "a[1]=%v", a[1])
+	expectf(t, [3]f32{-0.34999999, -0.5, 1.8499999} == a[2], "a[2]=%v", a[2])
 }
 
 fixed_i8_7 :: fixed.Fixed(i8, 7)
@@ -299,11 +316,11 @@ small_fixed_i8 :: proc(t: ^testing.T) {
 	// raw := i8(127)
 	// fv = transmute(fixed_i8_7)raw
 	fixed.init_from_parts(&fv, 0, 127)
-	testing.expect_value(t, fixed.to_f64(fv), 0.9921875)
+	expect_value(t, fixed.to_f64(fv), 0.9921875)
 	fixed.init_from_f64(&fv, 0.9921875)
-	testing.expect_value(t, fixed.to_f64(fv), 0.9921875)
+	expect_value(t, fixed.to_f64(fv), 0.9921875)
 	// fixed.init_from_parts(&fv, -1, 127)
-	// testing.expect_value(t, fixed.to_f64(fv), -0.9921875)
+	// expect_value(t, fixed.to_f64(fv), -0.9921875)
 }
 
 @(test)
@@ -312,19 +329,19 @@ small_fixed_u8 :: proc(t: ^testing.T) {
 	// raw := u8(255)
 	// fv = transmute(fixed_u8_8)raw
 	fixed.init_from_parts(&fv, 0, 255)
-	testing.expect_value(t, fixed.to_f64(fv), 0.99609375)
+	expect_value(t, fixed.to_f64(fv), 0.99609375)
 	// fixed.init_from_f64(&fv, 0.99609375)
-	// testing.expect_value(t, fixed.to_f64(fv), 0.99609375)
+	// expect_value(t, fixed.to_f64(fv), 0.99609375)
 }
 
 @(test)
 bit_shift :: proc(t: ^testing.T) {
 	v: u32 = 0b10101010
-	//testing.expect_value(t, v, 170)
-	o.expect_u32(t, v, 0xAA)
-	o.expect_u32(t, v >> 1, 0x55)
-	o.expect_u32(t, v / 2, 0x55)
-	o.expect_u32(t, v * 0b11110000, 0x00009F60)
+	//expect_value(t, v, 170)
+	expect_u32(t, v, 0xAA)
+	expect_u32(t, v >> 1, 0x55)
+	expect_u32(t, v / 2, 0x55)
+	expect_u32(t, v * 0b11110000, 0x00009F60)
 }
 
 @(test)
@@ -333,5 +350,5 @@ complex_mult :: proc(t: ^testing.T) {
 	ff: complex32 = complex(0.5, 0)
 	c := v * ff
 	e: complex32 = complex(0.5, 1.0)
-	testing.expect_value(t, c, e)
+	expect_value(t, c, e)
 }

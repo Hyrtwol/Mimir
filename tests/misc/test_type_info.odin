@@ -15,8 +15,6 @@ get_type_info :: proc(t: ^testing.T) {
 		nml: [3]f32 `NORMAL`,
 	}
 
-	v := vertex{{1, 2, 3}, {0.1, 0.2, 0.3}}
-
 	type_info: ^runtime.Type_Info = type_info_of(typeid_of(vertex))
 	testing.expect(t, type_info != nil)
 

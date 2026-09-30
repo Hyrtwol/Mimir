@@ -1,9 +1,7 @@
 package test_misc
 
-import "base:runtime"
 import "core:os"
 import "core:strings"
-import "core:testing"
 import "core:encoding/ini"
 
 @test

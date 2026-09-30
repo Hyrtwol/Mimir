@@ -3,11 +3,9 @@ package test_misc
 import "core:fmt"
 import "core:os"
 import "core:strings"
-import _t "core:testing"
-import "shared:ounit"
 
 @(test)
-odin_pragma :: proc(t: ^T) {
+odin_pragma :: proc(t: ^testing.T) {
 	expect_value(t, os.base(#file), "test_misc.odin")
 	expect_value(t, #procedure, "odin_pragma")
 }
@@ -17,7 +15,7 @@ get_version :: proc() -> (res: int, err: bool) {
 }
 
 @(test)
-string_vs_cstring :: proc(t: ^T) {
+string_vs_cstring :: proc(t: ^testing.T) {
 	str: string = "Can i convert"
 
 	//dst = strings.clone_to_cstring(str, allocator = context.temp_allocator)
@@ -25,20 +23,20 @@ string_vs_cstring :: proc(t: ^T) {
 	defer delete(dst)
 
 	//expect_value(t, v[0], 3)
-	_t.expect_value(t, dst, "Can i convert")
+	expect_value(t, dst, "Can i convert")
 
 	// NOTE: This is valid because 'clone_string' appends a NUL terminator
 	// see core\encoding\json\unmarshal.odin unmarshal_string_token
 	dst2 := cstring(raw_data(str))
 
-	_t.expect_value(t, dst2, "Can i convert")
+	expect_value(t, dst2, "Can i convert")
 }
 
 // when
 MODE :: 1
 
 @(test)
-when_to_use_when :: proc(t: ^T) {
+when_to_use_when :: proc(t: ^testing.T) {
 	str: cstring
 	when MODE == 1 {
 		str = "Can i convert"
@@ -46,7 +44,7 @@ when_to_use_when :: proc(t: ^T) {
 		str = "Oh no"
 	}
 
-	_t.expect_value(t, str, "Can i convert")
+	expect_value(t, str, "Can i convert")
 
 	// when ODIN_DEBUG {
 	// 	fmt.println("Debug")
@@ -56,14 +54,14 @@ when_to_use_when :: proc(t: ^T) {
 }
 
 @(test)
-when_to_use_config :: proc(t: ^T) {
+when_to_use_config :: proc(t: ^testing.T) {
 	val: i32
 	val = #config(LA_COUR, -1)
-	_t.expectf(t, val == -1, "%v", val)
+	expectf(t, val == -1, "%v", val)
 }
 
 @(test)
-when_to_use_defer :: proc(t: ^T) {
+when_to_use_defer :: proc(t: ^testing.T) {
 
 	res := 0
 	{
@@ -80,7 +78,7 @@ when_to_use_defer :: proc(t: ^T) {
 }
 
 @(test)
-some_slice :: proc(t: ^T) {
+some_slice :: proc(t: ^testing.T) {
 	slice := []int{1, 4, 9, 7}
 	expect_int(t, slice[1], 4)
 	// fmt.printfln("%v", slice)
@@ -91,14 +89,14 @@ some_slice :: proc(t: ^T) {
 
 // Add leading 0x or 0X for hexadecimal (%#x or %#X)
 @(test)
-format_hex :: proc(t: ^T) {
+format_hex :: proc(t: ^testing.T) {
 	val: u32
 	exp, act: string
 
 	val = 0xDEADBEEF
 	exp = fmt.tprintf("0x%8X", val)
 	act = fmt.tprintf("%#X", val)
-	_t.expectf(t, exp == act, "%s != %s", exp, act) // all good
+	expectf(t, exp == act, "%s != %s", exp, act) // all good
 
 	/* not working atm
 	val = 0xC0DE
@@ -108,7 +106,8 @@ format_hex :: proc(t: ^T) {
 	*/
 }
 
-unroll_for_statement :: proc() {
+@(test)
+unroll_for_statement :: proc(t: ^testing.T) {
 	//fmt.println("\n#'#unroll for' statements")
 
 	// '#unroll for' works the same as if the 'inline' prefix did not
@@ -116,9 +115,14 @@ unroll_for_statement :: proc() {
 	// be very very useful for certain optimizations
 
 	//fmt.println("Ranges")
+	sx, si := 0, 0
 	#unroll for x, i in 1 ..< 4 {
 		//fmt.println(x, i)
+		sx += x
+		si += i
 	}
+	expect_value(t, sx, 6)
+	expect_value(t, si, 3)
 }
 
 // some_slice := []int{1, 4, 9}
@@ -168,7 +172,7 @@ sign :: proc(x: i32) -> i32 {
 callback :: #type proc(_: i32) -> i32
 
 //@(test)
-array_of_procs :: proc(t: ^_t.T) {
+array_of_procs :: proc(t: ^testing.T) {
 	callbacks := make([dynamic]callback, 0, 0)
 	defer delete(callbacks)
 
@@ -205,7 +209,7 @@ do_ta :: proc(v: ^ta) {
 }
 
 //@(test)
-subtypes :: proc(t: ^_t.T) {
+subtypes :: proc(t: ^testing.T) {
 	expect_int(t, size_of(ta), 8)
 	expect_int(t, size_of(tb), 16)
 	expect_int(t, size_of(tc), 16)
@@ -240,7 +244,7 @@ subtypes :: proc(t: ^_t.T) {
 }
 
 @(test)
-expand_values_vector :: proc(t: ^T) {
+expand_values_vector :: proc(t: ^testing.T) {
 	v: [2]i32 = {1, 2}
 	x, y := **v // same as x, y := expand_values(v)
 	expect_value(t, x, v.x)

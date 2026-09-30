@@ -1,9 +1,7 @@
 package test_misc
 
-import _t "core:testing"
-
 @(test)
-use_define :: proc(t: ^_t.T) {
+use_define :: proc(t: ^testing.T) {
 
 	vertex :: struct {
 		pos: [3]f32,
@@ -24,5 +22,5 @@ use_define :: proc(t: ^_t.T) {
 		vertex_attrib += 8
 	}
 
-	_t.expect_value(t, vertex_attrib, 1) // fails with: expected vertex_attrib to be 7, got 1
+	expect_value(t, vertex_attrib, 1) // fails with: expected vertex_attrib to be 7, got 1
 }

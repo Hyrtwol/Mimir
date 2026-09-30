@@ -1,13 +1,10 @@
 package test_misc
 
-import "core:fmt"
-import "core:os"
-import "core:bytes"
 import "core:unicode/utf16"
 import ascii "shared:xterm"
 
 @(test)
-verify_ascii :: proc(t: ^T) {
+verify_ascii :: proc(t: ^testing.T) {
 	expect_any_int(t, ascii.control_characters.BEL, '\a')
 	expect_any_int(t, ascii.control_characters.BS , '\b')
 	expect_any_int(t, ascii.control_characters.TAB, '\t')
@@ -18,7 +15,7 @@ verify_ascii :: proc(t: ^T) {
 }
 
 @(test)
-is_a_rune_the_same_as_in_csharp :: proc(t: ^T) {
+is_a_rune_the_same_as_in_csharp :: proc(t: ^testing.T) {
 	r: rune
 
 	r = rune('A')
@@ -45,7 +42,7 @@ is_a_rune_the_same_as_in_csharp :: proc(t: ^T) {
 }
 
 @(test)
-verify_cstrings :: proc(t: ^T) {
+verify_cstrings :: proc(t: ^testing.T) {
 
 	data: [10]u8 = "1234567890"
 	expect_value(t, len(data), 10)

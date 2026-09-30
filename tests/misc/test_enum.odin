@@ -1,14 +1,9 @@
 package test_misc
 
-import "core:fmt"
-import "core:os"
 import "core:reflect"
-import "core:strings"
-import "core:testing"
-import "shared:ounit"
 
 @(test)
-string_to_enum :: proc(t: ^T) {
+string_to_enum :: proc(t: ^testing.T) {
 
 	output_formats :: enum {
 		png,
