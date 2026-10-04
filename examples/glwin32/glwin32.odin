@@ -14,9 +14,9 @@ import win32 "core:sys/windows"
 import "core:time"
 import gl "vendor:OpenGL"
 import "libs:ogl"
-import "libs:tlc/win32app/owin_gl"
 import "shared:obug"
 import "shared:owin"
+import "shared:ymir/wgl"
 
 int2 :: owin.int2
 float3 :: owin.float3
@@ -107,7 +107,7 @@ update :: proc() {
 }
 
 draw :: proc() {
-	//owin_gl.set_viewport(app.settings.window_size)
+	//wgl.set_viewport(app.settings.window_size)
 	//gl.Viewport(0, 0, **app.settings.window_size)
 
 	// Set the opengl clear color
@@ -159,7 +159,7 @@ init_opengl :: proc(app: ^Application) {
 	fmt.println(#procedure)
 	assert(app.hdc != nil)
 
-	pixelFormat, ok := owin_gl.choose_and_set_pixel_format(app.hdc)
+	pixelFormat, ok := wgl.choose_and_set_pixel_format(app.hdc)
 	fmt.println("pixelFormat:", pixelFormat)
 	assert(ok == true)
 
@@ -170,7 +170,7 @@ init_opengl :: proc(app: ^Application) {
 
 	assert(gl.impl_GetString == nil)
 	//fmt.println("load_up_to")
-	owin_gl.load_up_to()
+	wgl.load_up_to_with_extensions()
 	assert(gl.impl_GetString != nil)
 	assert(gl.impl_DrawArrays != nil)
 	assert(gl.impl_GenBuffers != nil)
@@ -180,7 +180,7 @@ init_opengl :: proc(app: ^Application) {
 
 	//dump_extensions(hdc)
 
-	if owin_gl.set_swap_interval(SWAP_INTERVAL) {
+	if wgl.set_swap_interval(SWAP_INTERVAL) {
 		fmt.println("wglSwapIntervalEXT", SWAP_INTERVAL)
 	} else {
 		fmt.println("...WGL_EXT_swap_control not found")
@@ -190,13 +190,13 @@ init_opengl :: proc(app: ^Application) {
 free_opengl :: proc(app: ^Application) {
 	fmt.println(#procedure, app.hglrc)
 	assert(app.hglrc != nil)
-	owin_gl.delete_context(&app.hglrc)
+	wgl.delete_context(&app.hglrc)
 	assert(app.hglrc == nil)
 }
 
 set_viewport_size :: proc(app: ^Application) {
 	if app.hglrc != nil {
-		owin_gl.set_viewport(app.settings.window_size)
+		wgl.set_viewport(app.settings.window_size)
 		fmt.println("  set_viewport", 0, 0, **app.settings.window_size)
 	} else {
 		fmt.println("  app.hglrc is nil")
@@ -220,7 +220,8 @@ WM_DESTROY :: proc(hwnd: win32.HWND) -> win32.LRESULT {
 	fmt.println(#procedure, hwnd)
 	app := get_app(hwnd)
 	// free_opengl(app)
-	owin.release_dc(hwnd, &app.hdc)
+	err := owin.release_dc(hwnd, &app.hdc)
+	fmt.println(#procedure, "owin.release_dc:", err)
 
 	clip_cursor(hwnd, false)
 	if cursor_state < 1 {
@@ -359,7 +360,7 @@ wndproc :: proc "system" (hwnd: win32.HWND, msg: win32.UINT, wparam: win32.WPARA
 
 swap_buffers :: proc(hdc: win32.HDC) {
 	assert(hdc != nil)
-	sr := owin_gl.SwapBuffers(hdc)
+	sr := wgl.SwapBuffers(hdc)
 	assert(sr == true)
 }
 
@@ -453,7 +454,7 @@ run :: proc() -> (exit_code: int) {
 		// if res != 0 {break}
 
 		// draw_frame(hwnd)
-		// owin_gl.set_viewport(app.settings.window_size)
+		// wgl.set_viewport(app.settings.window_size)
 
 		camera.eye += float3{f32(mouse_delta.x), f32(mouse_delta.y), 0} * 0.1
 		mouse_delta = {0, 0}

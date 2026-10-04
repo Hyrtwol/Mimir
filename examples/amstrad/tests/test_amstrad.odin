@@ -6,8 +6,9 @@ import o "shared:ounit"
 import z80 "shared:z80"
 import z80d ".."
 
-//expect_value :: testing.expect_value
-expect_value :: o.expect_scalar
+expect_value :: o.expect_value
+expect_scalar :: o.expect_scalar
+expect_float :: o.expect_float
 expect_bits :: o.expect_bits
 
 @(test)
@@ -88,13 +89,13 @@ pixel_defines :: proc(t: ^testing.T) {
 
 @(test)
 verify_screen_size :: proc(t: ^testing.T) {
-	expect_value(t, z80.size_16kb, 16384)
+	expect_scalar(t, z80.size_16kb, 16384)
 
 	byte_size : [2]i32 = {80, 200}
-	expect_value(t, byte_size.x * byte_size.y, 16000)
+	expect_scalar(t, byte_size.x * byte_size.y, 16000)
 
-	o.expect_float(t, f32(z80.size_16kb) / 80, 204.800, 0.1)
-	expect_value(t, z80.size_16kb - (80 * 204), 64)
+	expect_float(t, f32(z80.size_16kb) / 80, 204.800, 0.1)
+	expect_scalar(t, z80.size_16kb - (80 * 204), 64)
 }
 
 // @(private, export, link_name="_fltused") _fltused: i32 = 0x9875
@@ -105,6 +106,6 @@ verify_screen_size :: proc(t: ^testing.T) {
 
 @(test)
 tinker :: proc(t: ^testing.T) {
-	expect_value(t, len(z80d.p_image), 16000)
+	expect_scalar(t, len(z80d.p_image), 16000)
 	fmt.printfln("imagedata=0x%X", z80d.p_image[0])
 }
