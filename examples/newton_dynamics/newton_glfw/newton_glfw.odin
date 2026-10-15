@@ -480,8 +480,7 @@ main :: proc() {
 }
 
 image_file_bytes := [?][]u8 {
-	//#load("../../../data/images/floor_d01.png"),
-	#load("C:\\dev\\odin\\OdinET\\etmain\\maps\\wolfdemo\\lm_0000.tga"),
+	#load("../../../data/images/floor_d01.png"),
 	#load("../../../data/images/uv_checker_x.png"),
 	#load("../../../data/images/uv_checker_y.png"),
 	#load("../../../data/images/uv_checker_z.png"),
