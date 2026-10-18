@@ -4,6 +4,7 @@
 package glfw_window
 
 import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
 import "core:image"
 import "core:image/png"
@@ -114,6 +115,7 @@ run :: proc() -> (exit_code: int) {
 	glfw.SwapInterval(1)
 
 	glfw.SetKeyCallback(window_handle, key_callback)
+	glfw.SetMouseButtonCallback(window_handle, mouse_button_callback)
 	glfw.SetFramebufferSizeCallback(window_handle, size_callback)
 
 	// Load OpenGL function pointers with the specified OpenGL major and minor version.
@@ -299,6 +301,11 @@ key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods
 	if key == glfw.KEY_ESCAPE {
 		running = false
 	}
+}
+
+mouse_button_callback :: proc "c" (window: glfw.WindowHandle, button, action, mods: i32) {
+	context = runtime.default_context()
+	fmt.println(#procedure, "button=", button, "action=", action, "mods=", mods)
 }
 
 size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {

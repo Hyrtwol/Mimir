@@ -45,6 +45,9 @@ init_sdl_opengl_context :: proc() -> (SDL_Window_Context, bool) {
 	glfw.SwapInterval(1)
 
 	glfw.SetKeyCallback(window, key_callback)
+	glfw.SetCharCallback(window, char_callback)
+	glfw.SetMouseButtonCallback(window, mouse_button_callback)
+	glfw.SetCursorPosCallback(window, cursor_position_callback)
 	glfw.SetFramebufferSizeCallback(window, size_callback)
 
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
