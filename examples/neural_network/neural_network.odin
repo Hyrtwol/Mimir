@@ -30,12 +30,13 @@ calculate_network :: proc(nn: ^neural_network) {
 }
 
 dump_network :: proc(nn: ^neural_network) {
+	FF :: "%.2f"
 	fmt.println("----------------------------------------")
-	fmt.printfln("input_layer    : %v", nn.input_layer)
-	fmt.printfln("input_weights  : %v", nn.input_weights)
-	fmt.printfln("hidden_layer   : %v", nn.hidden_layer)
-	fmt.printfln("hidden_weights : %v", nn.hidden_weights)
-	fmt.printfln("output_layer   : %v", nn.output_layer)
+	fmt.printfln("input_layer    : " + FF, nn.input_layer)
+	fmt.printfln("input_weights  : " + FF, nn.input_weights)
+	fmt.printfln("hidden_layer   : " + FF, nn.hidden_layer)
+	fmt.printfln("hidden_weights : " + FF, nn.hidden_weights)
+	fmt.printfln("output_layer   : " + FF, nn.output_layer)
 }
 
 main :: proc() {
